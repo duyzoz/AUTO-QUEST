@@ -1,0 +1,21 @@
+node_modules/
+.expo/
+dist/
+dist-ios/
+web-build/
+*.log
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+
+# Native output
+ios/
+android/
+build/
+build-output/
+Payload/
+*.ipa
+
+# OS files
+.DS_Store
+Thumbs.db

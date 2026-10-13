@@ -1,0 +1,20 @@
+{
+	"compilerOptions": {
+		"target": "ES2022",
+		"module": "CommonJS",
+		"moduleResolution": "node",
+		"lib": ["ES2022"],
+		"outDir": "electron/bot",
+		"rootDir": ".",
+		"strict": true,
+		"esModuleInterop": true,
+		"skipLibCheck": true,
+		"resolveJsonModule": true,
+		"forceConsistentCasingInFileNames": true,
+		"sourceMap": false,
+		"declaration": false,
+		"removeComments": false,
+		"types": ["node"]
+	},
+	"include": ["bot.ts", "src/**/*.ts"]
+}

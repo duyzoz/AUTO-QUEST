@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="vi">
+	<head>
+		<meta charset="UTF-8" />
+		<meta
+			http-equiv="Content-Security-Policy"
+			content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self';"
+		/>
+		<title>AUTO-QUEST PRO · Treo Orb Discord</title>
+		<link rel="stylesheet" href="styles.css" />
+	</head>
+	<body>
+		<!-- Header -->
+		<header class="titlebar">
+			<div class="brand">
+				<div class="logo" aria-hidden="true">
+					<img src="icon.png" class="logo-img" alt="AutoQuest" />
+				</div>
+				<div class="brand-text">
+					<div class="brand-badge-wrap">
+						<h1>AUTO-QUEST PRO</h1>
+						<span class="pro-pill">VESPER EDITION</span>
+					</div>
+					<p>Treo Orb & Hoàn thành nhiệm vụ Discord 100% Local · Độc quyền</p>
+				</div>
+			</div>
+			<div class="status" id="status" data-state="idle">
+				<span class="dot"></span>
+				<span id="statusText">Sẵn sàng</span>
+			</div>
+		</header>
+
+		<!-- Security Banner -->
+		<div class="security-banner">
+			<div class="sec-icon">🛡️</div>
+			<div class="sec-text">
+				<strong>Bảo mật 100%:</strong> Đã ngắt toàn bộ endpoint ngoài & webhook. Token được mã hóa an toàn qua Windows DPAPI.
+			</div>
+			<div class="sec-badge">SECURE LOCAL</div>
+		</div>
+
+		<!-- Stats Cards -->
+		<div class="stats-row">
+			<div class="stat-card">
+				<div class="stat-icon">🔮</div>
+				<div class="stat-data">
+					<span class="stat-label">DISCORD ORBS</span>
+					<div class="stat-value-wrap">
+						<span class="stat-value" id="statOrbs">0 Orbs</span>
+						<span class="stat-bonus" id="statOrbsBonus">(+ 0)</span>
+					</div>
+				</div>
+			</div>
+			<div class="stat-card">
+				<div class="stat-icon">📋</div>
+				<div class="stat-data">
+					<span class="stat-label">TIẾN ĐỘ NHIỆM VỤ</span>
+					<span class="stat-value" id="statQuests">0 / 0</span>
+				</div>
+			</div>
+			<div class="stat-card">
+				<div class="stat-icon">⚡</div>
+				<div class="stat-data">
+					<span class="stat-label">CHẾ ĐỘ TREO</span>
+					<span class="stat-value small-val" id="statMode">Treo tự động (30m)</span>
+				</div>
+			</div>
+		</div>
+
+		<div class="app-scroll" id="appScroll">
+			<main class="layout">
+				<!-- Config Section -->
+				<section class="card config-card">
+					<div class="card-head">
+						<h2 class="card-title">⚙️ Cấu hình tài khoản</h2>
+					</div>
+
+					<div class="field">
+						<label for="token">
+							Token Discord
+							<span class="req">Bắt buộc</span>
+						</label>
+						<div class="input-wrap">
+							<input
+								id="token"
+								type="password"
+								spellcheck="false"
+								autocomplete="off"
+								placeholder="Nhập hoặc dán token Discord của bạn..."
+							/>
+							<button class="ghost-btn" id="btnPaste" title="Tự động nhận diện token từ Clipboard">
+								📋 Dán
+							</button>
+							<button class="ghost-btn" id="btnToggleToken" title="Hiện hoặc ẩn token">
+								👁 Hiện
+							</button>
+							<button class="ghost-btn save-btn" id="btnSaveToken" title="Lưu token an toàn">
+								💾 Lưu
+							</button>
+						</div>
+					</div>
+
+					<!-- Guide box for getting token with Allow Pasting + Copy button -->
+					<div class="guide-box">
+						<div class="guide-header">
+							<span class="guide-icon">💡</span>
+							<strong>Hướng dẫn lấy Token trong 5 giây (Console)</strong>
+						</div>
+						<div class="guide-steps">
+							<div class="step-item">
+								<span class="step-num">1</span>
+								<span>Mở Discord (Web/App), bấm <strong>F12</strong> → chọn tab <strong>Console</strong>.</span>
+							</div>
+							<div class="step-item">
+								<span class="step-num">2</span>
+								<span>Nếu Discord chặn dán, gõ <code>allow pasting</code> rồi bấm <strong>Enter</strong>.</span>
+							</div>
+							<div class="step-item">
+								<span class="step-num">3</span>
+								<span>Bấm nút bên dưới để copy lệnh, dán vào Console Discord rồi nhấn <strong>Enter</strong>:</span>
+							</div>
+						</div>
+						<button class="btn-copy-script" id="btnCopyScript">
+							📋 COPY LỆNH LẤY TOKEN (TỰ ĐỘNG)
+						</button>
+					</div>
+
+					<div class="loop-box">
+						<label class="check loop-check">
+							<input type="checkbox" id="loopMode" checked />
+							<span class="loop-title">⚡ Chế độ Treo Orb liên tục (AFK Loop)</span>
+						</label>
+						<p class="hint">Tự động lặp lại kiểm tra và cày nhiệm vụ mới hoặc tự thử lại sau khi hết thời gian giới hạn API.</p>
+						<div class="loop-interval-row" id="loopIntervalRow">
+							<span>Thời gian lặp lại quét:</span>
+							<select id="loopInterval" class="custom-select">
+								<option value="15">Mỗi 15 phút</option>
+								<option value="30" selected>Mỗi 30 phút (Khuyên dùng)</option>
+								<option value="45">Mỗi 45 phút (Chu kỳ Discord)</option>
+								<option value="60">Mỗi 60 phút</option>
+							</select>
+						</div>
+					</div>
+
+					<div class="actions">
+						<button class="btn primary" id="btnStart">
+							<span class="btn-ico">▶</span> Bắt đầu Treo Orb
+						</button>
+						<button class="btn danger" id="btnStop" disabled>
+							<span class="btn-ico">■</span> Dừng lại
+						</button>
+					</div>
+				</section>
+
+				<!-- Quests Section with 2 TABS -->
+				<section class="card quests-card">
+					<div class="card-head quest-head">
+						<div class="tab-buttons">
+							<button class="tab-btn active" id="tabActive">
+								⏳ Đang làm <span class="tab-count" id="countActive">0</span>
+							</button>
+							<button class="tab-btn" id="tabDone">
+								✅ Đã làm <span class="tab-count" id="countDone">0</span>
+							</button>
+						</div>
+						<span class="counter" id="questCounter">0 / 0</span>
+					</div>
+
+					<!-- Tab Content: Active Quests -->
+					<div class="quest-list" id="questListActive">
+						<div class="empty" id="emptyActive">
+							<div class="empty-ico">🔮</div>
+							<p>Không có nhiệm vụ nào đang chạy.</p>
+							<span>Nhập Token và bấm "Bắt đầu Treo Orb" để quét nhiệm vụ.</span>
+						</div>
+					</div>
+
+					<!-- Tab Content: Done / Completed Quests -->
+					<div class="quest-list" id="questListDone" style="display: none;">
+						<div class="empty" id="emptyDone">
+							<div class="empty-ico">🎁</div>
+							<p>Chưa có nhiệm vụ đã hoàn thành.</p>
+							<span>Các nhiệm vụ cày xong hoặc đã làm trước đó sẽ hiển thị tại đây.</span>
+						</div>
+					</div>
+				</section>
+			</main>
+
+			<!-- Logs Section -->
+			<section class="card console-card">
+				<div class="card-head">
+					<h2 class="card-title">📜 Nhật ký hoạt động</h2>
+					<div class="log-tools">
+						<label class="check small">
+							<input type="checkbox" id="autoScroll" checked />
+							<span>Tự cuộn</span>
+						</label>
+						<button class="ghost-btn" id="btnClearLog">Xóa log</button>
+						<button class="ghost-btn" id="btnSaveLog">Lưu log</button>
+						<button class="ghost-btn" id="btnOpenFolder">Thư mục cấu hình</button>
+					</div>
+				</div>
+				<div class="console" id="console"></div>
+			</section>
+		</div>
+
+		<div class="toast" id="toast"></div>
+
+		<script src="renderer.js"></script>
+	</body>
+</html>
