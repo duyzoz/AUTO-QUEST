@@ -1,0 +1,80 @@
+name: Build iOS IPA for TrollStore
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main, master ]
+  release:
+    types: [ created, published ]
+
+jobs:
+  build-ipa:
+    runs-on: macos-14
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: mobile/package-lock.json
+
+      - name: Install Dependencies
+        run: |
+          cd mobile
+          npm install
+
+      - name: Setup CocoaPods
+        run: pod --version
+
+      - name: Prebuild Native iOS Project
+        run: |
+          cd mobile
+          npx expo prebuild --platform ios
+
+      - name: Build iOS App without Code Signing (For TrollStore)
+        run: |
+          cd mobile/ios
+          pod install
+          
+          # Detect workspace name dynamically
+          WORKSPACE=$(ls -d *.xcworkspace 2>/dev/null | head -n 1)
+          echo "Found workspace: $WORKSPACE"
+          
+          xcodebuild clean build \
+            -workspace "$WORKSPACE" \
+            -scheme "AUTO-QUEST PRO" \
+            -configuration Release \
+            -sdk iphoneos \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            PROVISIONING_PROFILE_SPECIFIER=""
+
+      - name: Package into .IPA (Payload format for TrollStore)
+        run: |
+          mkdir -p Payload
+          APP_PATH=$(find mobile/ios/build/Build/Products/Release-iphoneos -name "*.app" -maxdepth 1 | head -n 1)
+          echo "Packaging App: $APP_PATH"
+          cp -r "$APP_PATH" Payload/
+          zip -r "AUTO-QUEST-PRO-TrollStore.ipa" Payload
+          mkdir -p build-output
+          mv "AUTO-QUEST-PRO-TrollStore.ipa" build-output/
+
+      - name: Upload IPA Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: AUTO-QUEST-PRO-TrollStore-IPA
+          path: build-output/AUTO-QUEST-PRO-TrollStore.ipa
+
+      - name: Upload IPA to GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload v1.0.0 build-output/AUTO-QUEST-PRO-TrollStore.ipa --clobber || true
+

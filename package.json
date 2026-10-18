@@ -1,0 +1,67 @@
+{
+	"name": "autoquest-pro",
+	"productName": "AUTO-QUEST",
+	"version": "1.0.0",
+	"description": "Auto Quest Discord Treo Orb - Ung dung desktop 100% Local khong co endpoint ben ngoai",
+	"main": "electron/main.js",
+	"author": "AUTO-QUEST",
+	"license": "MIT",
+	"type": "commonjs",
+	"scripts": {
+		"build:bot": "tsc -p tsconfig.build.json",
+		"dev": "npm run build:bot && electron .",
+		"start": "electron .",
+		"build": "node tools/build.js"
+	},
+	"devDependencies": {
+		"@types/node": "^24.10.1",
+		"discord-api-types": "^0.38.42",
+		"electron": "^38.0.0",
+		"electron-builder": "^26.0.12",
+		"typescript": "^5.8.3"
+	},
+	"dependencies": {
+		"@discordjs/core": "2.4.0",
+		"@discordjs/rest": "2.6.0",
+		"@discordjs/ws": "2.0.4",
+		"undici": "^6.24.1"
+	},
+	"build": {
+		"appId": "com.autoquest.pro",
+		"productName": "AUTO-QUEST",
+		"asar": true,
+		"npmRebuild": false,
+		"compression": "maximum",
+		"directories": {
+			"output": "release",
+			"buildResources": "resources"
+		},
+		"files": [
+			"electron/**/*",
+			"package.json"
+		],
+		"extraResources": [
+			{
+				"from": "resources/icon.ico",
+				"to": "icon.ico"
+			}
+		],
+		"win": {
+			"target": [
+				{
+					"target": "portable",
+					"arch": [
+						"x64"
+					]
+				}
+			],
+			"icon": "resources/icon.ico",
+			"artifactName": "AUTO-QUEST.${ext}"
+		},
+		"portable": {
+			"unicode": true,
+			"requestExecutionLevel": "user",
+			"artifactName": "AUTO-QUEST.${ext}"
+		}
+	}
+}

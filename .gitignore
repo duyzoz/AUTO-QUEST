@@ -1,0 +1,31 @@
+# Dependencies
+node_modules/
+mobile/node_modules/
+
+# Build outputs
+release/
+dist/
+dist-ios/
+build/
+build-output/
+Payload/
+*.ipa
+AUTO-QUEST.exe
+
+# Cache & Logs
+.expo/
+mobile/.expo/
+*.log
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Secrets & Tokens
+*token*.txt
+*.token
+*.pem
+*.key
