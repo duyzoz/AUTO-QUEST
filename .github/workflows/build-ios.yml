@@ -45,9 +45,13 @@ jobs:
           WORKSPACE=$(ls -d *.xcworkspace 2>/dev/null | head -n 1)
           echo "Found workspace: $WORKSPACE"
           
+          # Detect scheme dynamically
+          SCHEME=$(xcodebuild -workspace "$WORKSPACE" -list | awk '/Schemes:/{flag=1; next} flag && NF {print $1; exit}')
+          echo "Found scheme: $SCHEME"
+          
           xcodebuild clean build \
             -workspace "$WORKSPACE" \
-            -scheme "AUTO-QUEST PRO" \
+            -scheme "$SCHEME" \
             -configuration Release \
             -sdk iphoneos \
             -derivedDataPath build \
@@ -59,7 +63,10 @@ jobs:
       - name: Package into .IPA (Payload format for TrollStore)
         run: |
           mkdir -p Payload
-          APP_PATH=$(find mobile/ios/build/Build/Products/Release-iphoneos -name "*.app" -maxdepth 1 | head -n 1)
+          APP_PATH=$(find mobile/ios/build/Build/Products/Release-iphoneos -name "*.app" 2>/dev/null | head -n 1)
+          if [ -z "$APP_PATH" ]; then
+            APP_PATH=$(find . -name "*.app" 2>/dev/null | head -n 1)
+          fi
           echo "Packaging App: $APP_PATH"
           cp -r "$APP_PATH" Payload/
           zip -r "AUTO-QUEST-PRO-TrollStore.ipa" Payload
@@ -72,9 +79,11 @@ jobs:
           name: AUTO-QUEST-PRO-TrollStore-IPA
           path: build-output/AUTO-QUEST-PRO-TrollStore.ipa
 
-      - name: Upload IPA to GitHub Release
+      - name: Create or Upload to Release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          gh release create v1.0.0 build-output/AUTO-QUEST-PRO-TrollStore.ipa --title "AUTO-QUEST PRO iOS (TrollStore)" --notes "Bản .ipa tương thích iOS 15.0+ cho TrollStore" || \
           gh release upload v1.0.0 build-output/AUTO-QUEST-PRO-TrollStore.ipa --clobber || true
+
 
