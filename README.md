@@ -39,21 +39,21 @@ flowchart LR
 
 ```mermaid
 mindmap
-  root((⚡ AUTO-QUEST PRO))
-    🖥️ Desktop
+  root((AUTO-QUEST PRO))
+    Desktop
       Electron 38
-      Quét → Chọn → Auto ORBs
+      Quét - Chọn - Auto ORBs
       Account Chip Login
       Dark Vesper UI
-    📱 iOS TrollStore
+    iOS TrollStore
       React Native Expo
       IPA No Revoke
       OLED Saver
-    🧠 Core Bot
+    Core Bot
       TypeScript
       Discord API trực tiếp
       Quest Manager
-    🛡️ Bảo mật
+    Bảo mật
       Token DPAPI
       Chặn endpoint ngoài
       Security Guard
