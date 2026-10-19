@@ -4,6 +4,9 @@
 [![Platform](https://img.shields.io/badge/Platforms-Windows%20%7C%20iOS%20TrollStore-10b981)](#)
 [![Theme](https://img.shields.io/badge/Theme-Dark%20Strong%20Vesper-e0af68)](#)
 
+> ## 🤖 LƯU Ý CHO AI AGENT (BẮT BUỘC ĐỌC TRƯỚC KHI VIẾT/SỬA CODE)
+> Trước khi viết hoặc sửa bất kỳ dòng code nào trong repo này, agent **PHẢI đọc hết README này** và mục **`---- Log AI Agent ----`** ở cuối file để nắm bối cảnh: đã làm gì, đang làm dở gì, quy ước gì. Không đọc trước = làm lệch kiến trúc. Sau khi hoàn thành nhiệm vụ, agent **PHẢI ghi log ngắn gọn** vào mục Log AI Agent (và `.brain/` theo ngày) — tối đa 3–5 dòng, tiết kiệm token, ghi rõ model + việc đã làm + việc còn dở.
+
 Hệ thống tự động cày nhiệm vụ Discord (Discord Quests) và cày **Discord Orbs** đa nền tảng:
 - 🖥️ **Windows Desktop:** Ứng dụng Portable EXE (`AUTO-QUEST.exe`) gọn nhẹ, không cần cài đặt.
 - 📱 **iOS Mobile (TrollStore):** Ứng dụng Native iOS tương thích từ **iOS 15.0+** (đặc biệt tối ưu riêng cho **iPhone 7 Plus chạy iOS 15.8.8** và các dòng tai thỏ / Dynamic Island), cài qua **TrollStore** vĩnh viễn không bao giờ bị thu hồi chứng chỉ (No Revoke/No 7 days).
@@ -15,10 +18,12 @@ Hệ thống tự động cày nhiệm vụ Discord (Discord Quests) và cày **
 | Tính năng | Mô tả chi tiết |
 |-----------|----------------|
 | **Dark Strong Vesper** | Nền đen tuyền OLED `#000000`, bề mặt bo tròn than/nâu `#100d14`, điểm nhấn màu hổ phách/đồng `#ff9e64`. |
+| **Account Chip Login** | Nút đăng nhập góc phải trên: dán token là tự xác thực qua `discord.com/api` → hiện `@username` + avatar thật từ Discord CDN. |
+| **Quét trước — Chạy sau** | Bấm **Quét nhiệm vụ** để lấy danh sách → tab **"⏳ Chưa làm"** (khung viền đỏ, có ô tích từng nhiệm vụ + **Chọn tất cả**) → bấm **Auto ORBs (N)** để chạy đúng những gì đã chọn. |
+| **Tab "✅ Đã làm"** | Nhiệm vụ hoàn thành tự chuyển tab, xanh đẹp, dấu tích ✓ — chỉ hiện nhiệm vụ gần đây, không sổ lại nhiệm vụ cũ. |
+| **Orbs chuẩn 100%** | Số Orb cộng đúng một lần mỗi nhiệm vụ (dedupe theo quest id), không cộng ảo khi quét lại. |
 | **Bảo mật tuyệt đối 100%** | Kết nối trực tiếp 100% tới Discord API (`discord.com`). **Chặn đứng hoàn toàn** mọi webhook hay endpoint bên ngoài. Không lưu token trên bất kỳ server nào. |
-| **Lưu Token an toàn** | Nút **"💾 Lưu"** lưu token vào máy. Mở lại app token tự động nạp dạng `●●●●●●`, có nút `👁️` ẩn/hiện. |
-| **Thống kê Orb chuẩn** | Số dư Orb tài khoản giữ nguyên, chỉ hiển thị nhãn tăng dần **(+X)** màu xanh lá/vàng theo từng nhiệm vụ hoàn thành trong phiên. |
-| **Hệ thống 2 Tab** | Tab **"⏳ Đang làm"** (thanh tiến độ %, thời gian) và Tab **"✅ Đã làm"** (lịch sử hoàn thành & nhận thưởng). |
+| **Lưu Token an toàn** | Nút **"💾 Lưu"** lưu token vào máy (mã hóa Windows DPAPI). Mở lại app token tự động nạp, có nút `👁️` ẩn/hiện. |
 | **Treo AFK Loop** | Chế độ tự động đếm ngược chu kỳ 15, 30, 60 phút để quét và làm nhiệm vụ mới. |
 | **🌙 Màn hình Treo Pin (iOS)** | Chế độ OLED Saver giữ app hoạt động liên tục qua đêm với 0% hao pin. |
 | **Hỗ trợ đầy đủ nhiệm vụ** | Tự động làm nhiệm vụ Video, Game Heartbeat, Activity, quét nhiệm vụ bổ sung (excluded quests) và tự nhận quà (Claim Reward). |
@@ -80,3 +85,12 @@ Trong app đã có sẵn nút **"📋 COPY SCRIPT LẤY TOKEN DISCORD"**:
 
 ## 📜 Giấy phép & Tuyên bố miễn trừ trách nhiệm
 Dự án được xây dựng phục vụ mục đích học tập và tối ưu trải nghiệm cá nhân. Không liên kết chính thức với Discord Inc.
+
+---
+
+## ---- Log AI Agent ----
+
+> Agent đọc mục này TRƯỚC khi code. Ghi log ngắn gọn (3–5 dòng) sau mỗi đợt làm việc. Log chi tiết theo ngày nằm trong `.brain/`.
+
+- **[2026-10-19 ~19:00 · GLM (Z.ai) · Wave 3 HOÀN THÀNH]** Fix orbs cộng ảo (dedupe quest id, bỏ fallback 300), thêm event `quest:inventory`/`scan:complete`/`quest:redeem` + id cho mọi event; bot tách MODE `scan`/`run`/`full` + pacing chậm (enroll 3s, heartbeat 25s) chống rate-limit; UI mới: account chip login góc phải trên (dán token tự xác thực, hiện @user + avatar CDN), tab "Chưa làm" viền đỏ + checkbox từng nhiệm vụ + Chọn tất cả + nút Auto ORBs(N), quest card update theo node, log tự tắt auto-scroll khi cuộn lên, CSS `.invalid` + responsive <900px + focus states + reduced-motion; dọn repo: `build-ipa/` → `build-release/build-ipa/`, docs → `docs/`. **Đang dở:** chạy `npm run dev` xem giao diện, chưa build EXE (chờ lệnh chủ), chưa push (chờ lệnh).
+- **[2026-10-19 ~18:30 · GLM (Z.ai) · Audit]** Đọc toàn bộ repo, lập danh sách 13 lỗi UI/UX + logic, đề xuất Wave 3A/3B/3C/4. Không sửa code.

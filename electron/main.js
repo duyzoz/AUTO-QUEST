@@ -130,12 +130,28 @@ function stopChild(silent = false) {
 	if (!child) return;
 	const proc = child;
 	child = null;
-	if (process.platform === 'win32') {
-		spawn('taskkill', ['/pid', String(proc.pid), '/T', '/F'], {
-			windowsHide: true,
-		});
-	} else {
-		proc.kill('SIGKILL');
+	try {
+		if (process.platform === 'win32') {
+			spawn('taskkill', ['/pid', String(proc.pid), '/T', '/F'], {
+				windowsHide: true,
+			});
+		} else {
+			proc.kill('SIGKILL');
+		}
+		// Fallback: nếu taskkill không có tác dụng, kill trực tiếp.
+		setTimeout(() => {
+			try {
+				if (proc.exitCode === null && !proc.killed) proc.kill('SIGKILL');
+			} catch {
+				/* ignore */
+			}
+		}, 1500);
+	} catch {
+		try {
+			proc.kill('SIGKILL');
+		} catch {
+			/* ignore */
+		}
 	}
 	if (!silent) setState('stopping');
 }
@@ -174,6 +190,10 @@ function startChild(config) {
 		TOKEN: token,
 		LOOP_MODE: config.loopMode ? '1' : '0',
 		LOOP_INTERVAL: String(config.loopInterval || 30),
+		MODE: config.mode || 'full',
+		SELECTED_QUESTS: Array.isArray(config.selectedQuests)
+			? config.selectedQuests.join(',')
+			: '',
 	};
 
 	try {
@@ -298,6 +318,37 @@ ipcMain.handle('bot:stop', () => {
 });
 ipcMain.handle('bot:state', () => ({ state: childState }));
 
+// Kiểm tra token Discord hợp lệ bằng cách gọi /users/@me (chỉ tới discord.com).
+ipcMain.handle('auth:check', async (_e, token) => {
+	const clean = String(token || '').trim();
+	if (!clean) return { ok: false, message: 'Chưa có token.' };
+	try {
+		const res = await fetch('https://discord.com/api/v10/users/@me', {
+			headers: { Authorization: clean },
+			signal: AbortSignal.timeout(10000),
+		});
+		if (!res.ok) {
+			return {
+				ok: false,
+				message: res.status === 401 ? 'Token không hợp lệ hoặc đã hết hạn.' : `Discord trả lỗi ${res.status}.`,
+			};
+		}
+		const user = await res.json();
+		return {
+			ok: true,
+			user: {
+				id: user.id,
+				username: user.username,
+				globalName: user.global_name || user.username,
+				avatar: user.avatar,
+				discriminator: user.discriminator,
+			},
+		};
+	} catch (err) {
+		return { ok: false, message: `Không kết nối được Discord: ${err.message}` };
+	}
+});
+
 ipcMain.handle('clipboard:read', () => clipboard.readText());
 ipcMain.handle('clipboard:write', (_e, text) => {
 	clipboard.writeText(String(text || ''));
@@ -309,12 +360,16 @@ ipcMain.handle('shell:open-data-folder', () => {
 });
 ipcMain.handle('log:save', async (_e, content) => {
 	const stamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
-	const result = await dialog.showSaveDialog(mainWindow, {
-		title: 'Lưu nhật ký AUTO-QUEST',
-		defaultPath: path.join(app.getPath('desktop'), `autoquest-${stamp}.log`),
-		filters: [{ name: 'Log File', extensions: ['log', 'txt'] }],
-	});
-	if (result.canceled || !result.filePath) return { ok: false };
-	fs.writeFileSync(result.filePath, content || logBuffer, 'utf8');
-	return { ok: true, filePath: result.filePath };
+	try {
+		const result = await dialog.showSaveDialog(mainWindow, {
+			title: 'Lưu nhật ký AUTO-QUEST',
+			defaultPath: path.join(app.getPath('desktop'), `autoquest-${stamp}.log`),
+			filters: [{ name: 'Log File', extensions: ['log', 'txt'] }],
+		});
+		if (result.canceled || !result.filePath) return { ok: false };
+		fs.writeFileSync(result.filePath, content || logBuffer, 'utf8');
+		return { ok: true, filePath: result.filePath };
+	} catch (err) {
+		return { ok: false, message: err.message };
+	}
 });

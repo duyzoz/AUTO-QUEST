@@ -82,8 +82,23 @@ class QuestManager {
             !quest.isExpired(reference) &&
             quest.isStarted(reference));
     }
-    filterQuestsValidToRedeem() {
-        return this.list().filter((quest) => quest.isCompleted() && !quest.hasClaimedRewards());
+    filterQuestsValidToRedeem(allowed) {
+        return this.list().filter((quest) => quest.isCompleted() &&
+            !quest.hasClaimedRewards() &&
+            (!allowed || allowed(quest)));
+    }
+    /** Id ổn định của quest — dùng làm khóa dedupe trên UI. */
+    static getQuestId(quest) {
+        try {
+            return String(quest.id ?? quest.raw?.id ?? '');
+        }
+        catch {
+            return '';
+        }
+    }
+    /** Nhận thưởng công khai (bot.ts gọi trực tiếp thay vì đụng redeemQuest private flow). */
+    claimReward(quest) {
+        return this.redeemQuest(quest);
     }
     /**
      * Trích xuất số lượng Orb Discord từ cấu hình phần thưởng của quest
@@ -223,7 +238,7 @@ class QuestManager {
             }));
             console.log(`🎁 ĐÃ NHẬN THƯỞNG: "${name}" -> Nhận: ${rewardName}!`);
             quest.updateUserStatus(res);
-            (0, events_1.report)('quest:done', { name, orbs, rewardName });
+            (0, events_1.report)('quest:done', { id: QuestManager.getQuestId(quest), name, orbs, rewardName });
         }
         catch (err) {
             const message = err?.message || String(err);
@@ -232,17 +247,18 @@ class QuestManager {
                 message.includes('No Description') ||
                 message.toLowerCase().includes('captcha')) {
                 console.log(`✅ Nhiệm vụ "${name}" đã hoàn thành 100%! (Discord yêu cầu captcha khi nhận thưởng: bạn mở Kho quà trên Discord bấm Nhận nhé).`);
-                (0, events_1.report)('quest:done', { name, orbs, rewardName, note: 'Yêu cầu mở Kho quà nhận thủ công (Captcha)' });
+                (0, events_1.report)('quest:done', { id: QuestManager.getQuestId(quest), name, orbs, rewardName, note: 'Yêu cầu mở Kho quà nhận thủ công (Captcha)' });
             }
             else {
                 console.warn(`Không thể tự nhận thưởng cho "${name}":`, message);
             }
         }
     }
-    async doingQuest(quest) {
+    async doingQuest(quest, heartbeatIntervalS = 20) {
         const questName = quest.config.messages.quest_name;
         const orbs = QuestManager.getQuestOrbs(quest);
         const rewardName = QuestManager.getQuestRewardName(quest);
+        const questId = QuestManager.getQuestId(quest);
         const isAndroid = Boolean(quest.config.task_config_v2.tasks.WATCH_VIDEO_ON_MOBILE) &&
             !Boolean(quest.config.task_config_v2.tasks.WATCH_VIDEO);
         if (!quest.isEnrolledQuest()) {
@@ -260,7 +276,7 @@ class QuestManager {
                 }
                 else {
                     console.error(`Không thể đăng ký nhiệm vụ "${questName}": ${message}`);
-                    (0, events_1.report)('quest:error', { name: questName, message });
+                    (0, events_1.report)('quest:error', { id: QuestManager.getQuestId(quest), name: questName, message });
                     return;
                 }
             }
@@ -283,6 +299,7 @@ class QuestManager {
         if (!taskName || !taskConfig.tasks[taskName]) {
             console.warn(`Nhiệm vụ "${questName}" không có loại nhiệm vụ tự động tương thích.`);
             (0, events_1.report)('quest:skip', {
+                id: QuestManager.getQuestId(quest),
                 name: questName,
                 reason: 'Cấu hình nhiệm vụ không được hỗ trợ',
             });
@@ -291,6 +308,7 @@ class QuestManager {
         const secondsNeeded = taskConfig.tasks[taskName].target;
         let secondsDone = quest.userStatus?.progress?.[taskName]?.value ?? 0;
         (0, events_1.report)('quest:start', {
+            id: questId,
             name: questName,
             task: taskName,
             application: applicationName,
@@ -308,16 +326,17 @@ class QuestManager {
             case 'PLAY_ON_XBOX':
             case 'PLAY_ON_PLAYSTATION':
             case 'PLAY_ON_DESKTOP': {
-                await this.doingPlayOnPlatformQuest(quest, questName, secondsNeeded, taskName, applicationName);
+                await this.doingPlayOnPlatformQuest(quest, questName, secondsNeeded, taskName, applicationName, heartbeatIntervalS);
                 break;
             }
             case 'PLAY_ACTIVITY': {
-                await this.doingPlayActivityQuest(quest, questName, secondsNeeded, taskName, applicationName);
+                await this.doingPlayActivityQuest(quest, questName, secondsNeeded, taskName, applicationName, heartbeatIntervalS);
                 break;
             }
             case 'STREAM_ON_DESKTOP': {
                 console.log(`[Lưu ý] Nhiệm vụ "${questName}" yêu cầu livestream trong voice channel Discord với bạn bè. Vui lòng mở app Discord để stream màn hình nhé!`);
                 (0, events_1.report)('quest:skip', {
+                    id: QuestManager.getQuestId(quest),
                     name: questName,
                     reason: 'Yêu cầu Stream trong voice call Discord',
                 });
@@ -354,6 +373,7 @@ class QuestManager {
                 quest.updateUserStatus(res);
                 secondsDone = Math.min(secondsNeeded, timestamp);
                 (0, events_1.report)('quest:progress', {
+                    id: QuestManager.getQuestId(quest),
                     name: questName,
                     secondsDone,
                     secondsNeeded,
@@ -372,14 +392,15 @@ class QuestManager {
         }
         console.log(`🎉 ĐÃ HOÀN THÀNH VIDEO: "${questName}"!`);
         (0, events_1.report)('quest:done', {
+            id: QuestManager.getQuestId(quest),
             name: questName,
             orbs: QuestManager.getQuestOrbs(quest),
             rewardName: QuestManager.getQuestRewardName(quest),
         });
         await this.redeemQuest(quest);
     }
-    async doingPlayOnPlatformQuest(quest, questName, secondsNeeded, taskName, applicationName) {
-        const interval = 20;
+    async doingPlayOnPlatformQuest(quest, questName, secondsNeeded, taskName, applicationName, heartbeatIntervalS = 20) {
+        const interval = heartbeatIntervalS;
         console.log(`🎮 Đang giả lập chơi game "${applicationName}" cho "${questName}" (Thời gian yêu cầu: ${Math.ceil(secondsNeeded / 60)} phút)...`);
         let consecutiveErrors = 0;
         while (!quest.isCompleted()) {
@@ -397,6 +418,7 @@ class QuestManager {
                     secondsDone;
                 console.log(`  [Tín hiệu game: ${applicationName}] Tiến độ: ${Math.floor(currentDone / 60)}/${Math.ceil(secondsNeeded / 60)} phút.`);
                 (0, events_1.report)('quest:progress', {
+                    id: QuestManager.getQuestId(quest),
                     name: questName,
                     secondsDone: currentDone,
                     secondsNeeded,
@@ -431,14 +453,15 @@ class QuestManager {
         }
         console.log(`🎉 ĐÃ HOÀN THÀNH NHIỆM VỤ GAME: "${questName}"!`);
         (0, events_1.report)('quest:done', {
+            id: QuestManager.getQuestId(quest),
             name: questName,
             orbs: QuestManager.getQuestOrbs(quest),
             rewardName: QuestManager.getQuestRewardName(quest),
         });
         await this.redeemQuest(quest);
     }
-    async doingPlayActivityQuest(quest, questName, secondsNeeded, taskName, applicationName) {
-        const interval = 20;
+    async doingPlayActivityQuest(quest, questName, secondsNeeded, taskName, applicationName, heartbeatIntervalS = 20) {
+        const interval = heartbeatIntervalS;
         const streamKey = 'call:1:1';
         console.log(`🎯 Đang giả lập hoạt động voice/activity "${applicationName}" cho "${questName}" (${Math.ceil(secondsNeeded / 60)} phút)...`);
         let consecutiveErrors = 0;
@@ -454,6 +477,7 @@ class QuestManager {
                     secondsDone;
                 console.log(`  [Hoạt động: ${applicationName}] Tiến độ: ${Math.floor(currentDone / 60)}/${Math.ceil(secondsNeeded / 60)} phút.`);
                 (0, events_1.report)('quest:progress', {
+                    id: QuestManager.getQuestId(quest),
                     name: questName,
                     secondsDone: currentDone,
                     secondsNeeded,
@@ -485,6 +509,7 @@ class QuestManager {
         }
         console.log(`🎉 ĐÃ HOÀN THÀNH HOẠT ĐỘNG: "${questName}"!`);
         (0, events_1.report)('quest:done', {
+            id: QuestManager.getQuestId(quest),
             name: questName,
             orbs: QuestManager.getQuestOrbs(quest),
             rewardName: QuestManager.getQuestRewardName(quest),
@@ -523,21 +548,21 @@ class QuestManager {
         if (!authCode) {
             const message = `Không lấy được mã xác thực cho ứng dụng ${applicationName}.`;
             console.error(message);
-            (0, events_1.report)('quest:error', { name: questName, message });
+            (0, events_1.report)('quest:error', { id: QuestManager.getQuestId(quest), name: questName, message });
             return;
         }
         const { token, error: authError, activityReferrer } = await utils_1.Utils.authorizeDiscordSays(applicationId, quest.id, authCode, this.client);
         if (authError || !token) {
             const message = `Không cấp được token từ Discord Says cho ứng dụng ${applicationName}.`;
             console.error(message, authError);
-            (0, events_1.report)('quest:error', { name: questName, message });
+            (0, events_1.report)('quest:error', { id: QuestManager.getQuestId(quest), name: questName, message });
             return;
         }
         const { success, error: progressError } = await utils_1.Utils.progressDiscordSays(applicationId, quest.id, token, questTarget, activityReferrer);
         if (progressError || !success) {
             const message = `Không gửi được tiến độ tới Discord Says cho ứng dụng ${applicationName}.`;
             console.error(message, progressError);
-            (0, events_1.report)('quest:error', { name: questName, message });
+            (0, events_1.report)('quest:error', { id: QuestManager.getQuestId(quest), name: questName, message });
             return;
         }
         // Thu hồi quyền ứng dụng sau khi hoàn thành
@@ -565,6 +590,7 @@ class QuestManager {
         }
         console.log(`🎉 ĐÃ HOÀN THÀNH THÀNH TỰU: "${questName}"!`);
         (0, events_1.report)('quest:done', {
+            id: QuestManager.getQuestId(quest),
             name: questName,
             orbs: QuestManager.getQuestOrbs(quest),
             rewardName: QuestManager.getQuestRewardName(quest),

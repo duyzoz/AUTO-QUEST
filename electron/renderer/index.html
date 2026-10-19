@@ -24,9 +24,21 @@
 					<p>Treo Orb & Hoàn thành nhiệm vụ Discord 100% Local · Độc quyền</p>
 				</div>
 			</div>
-			<div class="status" id="status" data-state="idle">
-				<span class="dot"></span>
-				<span id="statusText">Sẵn sàng</span>
+			<div class="header-right">
+				<!-- Account chip: hiển thị @user sau khi đăng nhập -->
+				<button class="account-chip" id="accountChip" title="Đăng nhập & xem thông tin tài khoản" aria-label="Đăng nhập tài khoản Discord">
+					<span class="chip-avatar" id="chipAvatar" aria-hidden="true">
+						<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true">
+							<path d="M12 12c2.7 0 4.8-2.2 4.8-4.9S14.7 2.3 12 2.3 7.2 4.4 7.2 7.1 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.9v2.4h19.2v-2.4c0-3.3-6.4-4.9-9.6-4.9z"/>
+						</svg>
+					</span>
+					<span class="chip-name" id="chipName">@//user/</span>
+					<span class="chip-badge" id="chipBadge">Đăng nhập</span>
+				</button>
+				<div class="status" id="status" data-state="idle">
+					<span class="dot"></span>
+					<span id="statusText">Sẵn sàng</span>
+				</div>
 			</div>
 		</header>
 
@@ -143,21 +155,25 @@
 					</div>
 
 					<div class="actions">
-						<button class="btn primary" id="btnStart">
-							<span class="btn-ico">▶</span> Bắt đầu Treo Orb
+						<button class="btn scan" id="btnScan">
+							<span class="btn-ico">🔍</span> Quét nhiệm vụ
+						</button>
+						<button class="btn primary" id="btnStart" disabled>
+							<span class="btn-ico">▶</span> Auto ORBs
 						</button>
 						<button class="btn danger" id="btnStop" disabled>
-							<span class="btn-ico">■</span> Dừng lại
+							<span class="btn-ico">■</span> Dừng
 						</button>
 					</div>
+					<p class="hint actions-hint">Bấm <strong>Quét nhiệm vụ</strong> để lấy danh sách → tích chọn nhiệm vụ cần cày → bấm <strong>Auto ORBs</strong> để chạy.</p>
 				</section>
 
-				<!-- Quests Section with 2 TABS -->
+				<!-- Quests Section with 2 TABS: Chưa làm (chọn được) / Đã làm -->
 				<section class="card quests-card">
 					<div class="card-head quest-head">
 						<div class="tab-buttons">
 							<button class="tab-btn active" id="tabActive">
-								⏳ Đang làm <span class="tab-count" id="countActive">0</span>
+								⏳ Chưa làm <span class="tab-count" id="countActive">0</span>
 							</button>
 							<button class="tab-btn" id="tabDone">
 								✅ Đã làm <span class="tab-count" id="countDone">0</span>
@@ -166,12 +182,23 @@
 						<span class="counter" id="questCounter">0 / 0</span>
 					</div>
 
-					<!-- Tab Content: Active Quests -->
+					<!-- Thanh công cụ chọn nhiệm vụ (chỉ hiện ở tab Chưa làm) -->
+					<div class="select-tools" id="selectTools" style="display: none;">
+						<label class="check small select-all-wrap">
+							<input type="checkbox" id="selectAll" />
+							<span>Chọn tất cả</span>
+						</label>
+						<button class="ghost-btn run-selected" id="btnRunSelected" disabled>
+							▶ Auto ORBs (<span id="selectedCount">0</span>)
+						</button>
+					</div>
+
+					<!-- Tab Content: Active Quests (có checkbox chọn) -->
 					<div class="quest-list" id="questListActive">
 						<div class="empty" id="emptyActive">
 							<div class="empty-ico">🔮</div>
-							<p>Không có nhiệm vụ nào đang chạy.</p>
-							<span>Nhập Token và bấm "Bắt đầu Treo Orb" để quét nhiệm vụ.</span>
+							<p>Chưa có nhiệm vụ nào.</p>
+							<span>Nhập Token → bấm "Quét nhiệm vụ" để lấy danh sách.</span>
 						</div>
 					</div>
 
@@ -190,15 +217,16 @@
 			<section class="card console-card">
 				<div class="card-head">
 					<h2 class="card-title">📜 Nhật ký hoạt động</h2>
-					<div class="log-tools">
-						<label class="check small">
-							<input type="checkbox" id="autoScroll" checked />
-							<span>Tự cuộn</span>
-						</label>
-						<button class="ghost-btn" id="btnClearLog">Xóa log</button>
-						<button class="ghost-btn" id="btnSaveLog">Lưu log</button>
-						<button class="ghost-btn" id="btnOpenFolder">Thư mục cấu hình</button>
-					</div>
+				<div class="log-tools">
+					<label class="check small">
+						<input type="checkbox" id="autoScroll" checked />
+						<span>Tự cuộn</span>
+					</label>
+					<button class="ghost-btn" id="btnScrollBottom" title="Cuộn xuống cuối nhật ký">↓ Về cuối</button>
+					<button class="ghost-btn" id="btnClearLog">Xóa log</button>
+					<button class="ghost-btn" id="btnSaveLog">Lưu log</button>
+					<button class="ghost-btn" id="btnOpenFolder">Thư mục cấu hình</button>
+				</div>
 				</div>
 				<div class="console" id="console"></div>
 			</section>

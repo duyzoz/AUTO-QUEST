@@ -1,0 +1,18 @@
+# 2026-10-19 — AUTO-QUEST .brain log
+> Agent đọc README (mục Log AI Agent) trước khi code. Ghi ngắn gọn, tiết kiệm token.
+
+## ~18:30 · GLM (Z.ai) · AUDIT
+- Đọc toàn bộ repo. 13 lỗi: orbs cộng ảo, fallback 300, .invalid thiếu CSS, HTML injection, grid cứng, re-render nặng...
+- Đề xuất Wave 3A/3B/3C/4. Không sửa code.
+
+## ~19:00 · GLM (Z.ai) · WAVE 3 DONE (3A+3B+3C)
+- bot core: dedupe quest:done theo id, bỏ fallback 300, MODE scan/run/full, pacing chậm chống rate-limit, event mới quest:inventory/scan:complete/quest:redeem.
+- UI: account chip login (@user + avatar CDN), tab Chưa làm (viền đỏ + checkbox + chọn tất cả + Auto ORBs(N)), node-level render, auto-scroll pause, CSS .invalid + responsive + a11y.
+- main.js: IPC auth:check, env MODE/SELECTED_QUESTS, harden log:save + kill fallback.
+- Dọn repo: build-ipa → build-release/build-ipa, docs → docs/. README thêm Log AI Agent + luật agent đọc README trước.
+- Chưa làm: npm run dev xem UI (chờ chủ xem), build EXE + push (CHỜ LỆNH).
+
+## QUY TẮC (cho agent sau)
+- CẤM push sang repo khác. CẤM build EXE/push main/release nếu chủ chưa ra lệnh.
+- KHÔNG đụng mobile/, .github/workflows/build-ios.yml.
+- Token file `push github(token).txt` chỉ đọc khi chủ yêu cầu push.
