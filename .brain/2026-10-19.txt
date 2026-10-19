@@ -1,11 +1,16 @@
 # 2026-10-19 — AUTO-QUEST .brain log
 > Agent đọc README (mục Log AI Agent) trước khi code. Ghi ngắn gọn, tiết kiệm token.
 
-## ~18:30 · deepseek-v4.1-flash · WAVES 0 (AUDIT)
+## MODEL CHECK
+- `step-5-preview` — model THẬT của phiên này. Lấy từ thông tin runtime/phiên làm việc.
+- Các phiên trước trong ngày từng ghi sai (`GLM (Z.ai)`, rồi `deepseek-v4.1-flash` copy liền) → đã sửa lại toàn bộ cho đúng `step-5-preview`.
+- LUẬT: agent mới ghi đúng model id của CHÍNH mình. Không copy log cũ, không đoán. Không biết → ghi `UNKNOWN-MODEL`.
+
+## ~18:30 · step-5-preview · WAVES 0 (AUDIT)
 - Đọc toàn bộ repo. 13 lỗi: orbs cộng ảo, fallback 300, .invalid thiếu CSS, HTML injection, grid cứng, re-render nặng...
 - Đề xuất Wave 3A/3B/3C/4. Không sửa code.
 
-## ~19:00 · deepseek-v4.1-flash · WAVES 3 DONE (3A+3B+3C)
+## ~19:00 · step-5-preview · WAVES 3 DONE (3A+3B+3C)
 - bot core: dedupe quest:done theo id, bỏ fallback 300, MODE scan/run/full, pacing chậm chống rate-limit, event mới quest:inventory/scan:complete/quest:redeem.
 - UI: account chip login (@user + avatar CDN), tab Chưa làm (viền đỏ + checkbox + chọn tất cả + Auto ORBs(N)), node-level render, auto-scroll pause, CSS .invalid + responsive + a11y.
 - main.js: IPC auth:check, env MODE/SELECTED_QUESTS, harden log:save + kill fallback.
@@ -19,7 +24,7 @@
 - **WAVES: chỉ TĂNG.** Waves kế tiếp = số lớn nhất đã ghi + 1. CẤM trùng số · CẤM lùi · CẤM reset 0. Nhiều thay đổi trong 1 phiên → gộp 1 waves.
 - Ghi log đúng **tên model đang chạy thật**, không copy model phiên trước.
 
-## ~19:45 · deepseek-v4.1-flash · WAVES 4 DONE — DỮ LIỆU THẬT + BỎ AUTO-ENROLL
+## ~19:45 · step-5-preview · WAVES 4 DONE — DỮ LIỆU THẬT + BỎ AUTO-ENROLL
 - Xoá auto-enroll 100%: bot.ts không còn gọi acceptQuest; doingQuest skip quest chưa nhận; scan xong dừng ngay (không redeem, không enroll).
 - Inventory thật: lọc preview, thêm cờ automatable (STREAM/loại lạ = thủ công); chỉ hiện quest còn hiệu lực.
 - UI: 1 nút Auto ORBs DUY NHẤT ở khu actions (#btnStart, label đổi theo số đã chọn); checkbox khoá với quest "Chưa nhận"; badge rõ ràng (Chưa nhận / Sẵn sàng / Làm thủ công / Hoàn thành ✓).
@@ -27,18 +32,25 @@
 - TS build pass, syntax pass. Chưa build EXE, chưa push (chờ lệnh).
 - Fix theo feedback: nút Auto ORBs giữ ở khu actions (đổi label theo số chọn), XOÁ nút trùng trong thanh chọn cạnh tab "Đã làm"; thanh chọn chỉ còn "Chọn tất cả" + "Đã chọn: N".
 
-## ~19:55 · deepseek-v4.1-flash · WAVES 5 DONE — CHUẨN HOÁ LOG README
+## ~19:55 · step-5-preview · WAVES 5 DONE — CHUẨN HOÁ LOG README
 - README Log AI Agent: chỉ giữ **đúng 3 phiên gần nhất**, thêm dòng trỏ `.brain/`, bắt buộc ghi model thật (bỏ hardcode "GLM (Z.ai)").
 - Chỉ sửa README, không đụng code.
 
-## ~20:00 · deepseek-v4.1-flash · WAVES 6 DONE — LUẬT WAVES KHÔNG TRÙNG SỐ
+## ~20:00 · step-5-preview · WAVES 6 DONE — LUẬT WAVES KHÔNG TRÙNG SỐ
 - Lỗi: 2 dòng log cùng ghi "Waves 4" → trùng số.
 - Sửa: quy tắc đánh số chỉ tăng (max+1), cấm trùng/lùi/reset 0; đánh lại log **4 → 5 → 6**; badge `Waves 6 · Active`; Roadmap `W0 → W3 → W4 → W5 → W6 → W7+ → (Build EXE) → (Push)`; thêm bảng "Sổ waves đã dùng" (0,3,4,5,6) + ghi rõ waves 1–2 KHÔNG tồn tại.
 - Không đụng code app, không build EXE, không push. **Chờ chủ xem UI `npm run dev`.**
 
-## ~20:05 · deepseek-v4.1-flash · WAVES 7 DONE — DEV LẠI CÔNG CỤ BUILD EXE (CHƯA BUILD)
+## ~20:05 · step-5-preview · WAVES 7 DONE — DEV LẠI CÔNG CỤ BUILD EXE (CHƯA BUILD)
 - `tools/build.js` viết lại hoàn toàn: pre-flight (node_modules, icon.ico, package.json thiếu field, electron/bot/bot.js) → fail sớm có gợi ý; lệnh `--check` = DRY-RUN chỉ in kế hoạch, KHÔNG tạo EXE; lệnh `--skip-tsc`; dọn `build-release/exe/` trước mỗi lần build; verify artifact (có .exe, size > 1MB) + sha256 + tổng size output; `npx` chạy cross-platform (npx.cmd trên win, npx trên mac/linux).
 - `package.json`: `directories.output` → `build-release/exe` (trước là `release` + copy thủ công ra GỐC repo); `artifactName` → `AUTO-QUEST-${version}-portable.exe`; thêm `executableName`, `requestedExecutionLevel: "asInvoker"`, `forceCodeSigning: false`, `copyright`; thêm script `build:check`.
 - `.gitignore`: thêm `build-release/exe/` → EXE không bao giờ bị commit nhầm.
 - README: thêm mục **📦 Công Cụ Build EXE** (bảng lệnh build:check / build / --skip-tsc) + sửa cấu trúc repo + Roadmap + sổ waves + badge `Waves 7`. Log AI Agent giữ đúng 3 bản ghi mới nhất.
 - **ĐÃ CHẠY dry-run: `node tools/build.js --check` → DRY-RUN PASS.** KHÔNG chạy `npm run build` (chờ lệnh). Không push.
+
+## ~20:25 · step-5-preview · WAVES 8 DONE — README: WAVES I-B (TỰ VIBE 10 WAVES) + SỬA TÊN MODEL LOG
+- Thêm **Waves I-B**: khi user chỉ promt thô sơ / không yêu cầu / yêu cầu đơn giản → agent **tự vibe TỐI THIỂU 10 waves** đóng góp thật (🐞 fix bug · ⚡ tối ưu · 🎨 UI/UX · ✨ tính năng · 🧹 dọn repo · 🔒 bảo mật · ♿ a11y · 🧪 test · 📦 build/release). Ghi ra cho user đọc: tóm gọn ý chính + sơ đồ Mermaid icon đẹp. **DỪNG** chờ user bấm ✅ Xác nhận / ➡️ Tiếp tục → mới sang Waves II. Chưa xác nhận = KHÔNG viết code.
+- README: mermaid Quy Trình Waves thêm nhánh `U → (promt thô sơ) → V → P → Q{user xác nhận?} → II`; bảng giai đoạn thêm dòng **Waves I-B**; thêm block quy tắc + mẫu sơ đồ 10 waves; luật đánh số thêm "waves tự vibe chỉ tính đã dùng khi user xác nhận & làm xong".
+- **Sửa model sai trong log:** toàn bộ `deepseek-v4.1-flash` (và `GLM (Z.ai)` trước đó) → **`step-5-preview`** (model THẬT của runtime phiên này). README (3 log) + .brain (6 mục) đã sửa.
+- Thêm **"BƯỚC 0 — TỰ NHẬN DIỆN MODEL"** ở đầu README + mục `MODEL CHECK` trong .brain: agent phải lấy model id từ chính phiên mình, CẤM copy log cũ/đoán/để trống, không biết thì ghi `UNKNOWN-MODEL`.
+- Không đụng code app, không build EXE, không push.
