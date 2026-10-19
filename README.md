@@ -3,54 +3,128 @@
 [![Release](https://img.shields.io/github/v/release/duyzoz/AUTO-QUEST?color=ff9e64&label=Version)](https://github.com/duyzoz/AUTO-QUEST/releases)
 [![Platform](https://img.shields.io/badge/Platforms-Windows%20%7C%20iOS%20TrollStore-10b981)](#)
 [![Theme](https://img.shields.io/badge/Theme-Dark%20Strong%20Vesper-e0af68)](#)
+[![Waves](https://img.shields.io/badge/Waves-4%20%C2%B7%20Active-e0af68)](#-quy-tr%C3%ACnh-waves)
 
 > ## 🤖 LƯU Ý CHO AI AGENT (BẮT BUỘC ĐỌC TRƯỚC KHI VIẾT/SỬA CODE)
-> Trước khi viết hoặc sửa bất kỳ dòng code nào trong repo này, agent **PHẢI đọc hết README này** và mục **`---- Log AI Agent ----`** ở cuối file để nắm bối cảnh: đã làm gì, đang làm dở gì, quy ước gì. Không đọc trước = làm lệch kiến trúc. Sau khi hoàn thành nhiệm vụ, agent **PHẢI ghi log ngắn gọn** vào mục Log AI Agent (và `.brain/` theo ngày) — tối đa 3–5 dòng, tiết kiệm token, ghi rõ model + việc đã làm + việc còn dở.
-
-Hệ thống tự động cày nhiệm vụ Discord (Discord Quests) và cày **Discord Orbs** đa nền tảng:
-- 🖥️ **Windows Desktop:** Ứng dụng Portable EXE (`AUTO-QUEST.exe`) gọn nhẹ, không cần cài đặt.
-- 📱 **iOS Mobile (TrollStore):** Ứng dụng Native iOS tương thích từ **iOS 15.0+** (đặc biệt tối ưu riêng cho **iPhone 7 Plus chạy iOS 15.8.8** và các dòng tai thỏ / Dynamic Island), cài qua **TrollStore** vĩnh viễn không bao giờ bị thu hồi chứng chỉ (No Revoke/No 7 days).
+> Trước khi viết hoặc sửa bất kỳ dòng code nào, agent **PHẢI đọc hết README này** (đặc biệt mục **Quy trình Waves** và **`---- Log AI Agent ----`** ở cuối) để nắm bối cảnh, quy ước và việc đang làm dở. Không đọc trước = làm lệch kiến trúc.
+> Sau khi xong nhiệm vụ, agent **PHẢI ghi log 3–5 dòng** vào mục Log AI Agent + file `.brain/YYYY-MM-DD.txt` — ngắn gọn, tiết kiệm token.
 
 ---
 
-## 🎨 Giao Diện & Tính Năng Đột Phá
+## 🌊 Quy Trình Waves (BẮT BUỘC)
 
-| Tính năng | Mô tả chi tiết |
-|-----------|----------------|
-| **Dark Strong Vesper** | Nền đen tuyền OLED `#000000`, bề mặt bo tròn than/nâu `#100d14`, điểm nhấn màu hổ phách/đồng `#ff9e64`. |
-| **Account Chip Login** | Nút đăng nhập góc phải trên: dán token là tự xác thực qua `discord.com/api` → hiện `@username` + avatar thật từ Discord CDN. |
-| **Quét trước — Chạy sau** | Bấm **Quét nhiệm vụ** để lấy danh sách → tab **"⏳ Chưa làm"** (khung viền đỏ, có ô tích từng nhiệm vụ + **Chọn tất cả**) → bấm **Auto ORBs (N)** để chạy đúng những gì đã chọn. |
-| **Tab "✅ Đã làm"** | Nhiệm vụ hoàn thành tự chuyển tab, xanh đẹp, dấu tích ✓ — chỉ hiện nhiệm vụ gần đây, không sổ lại nhiệm vụ cũ. |
-| **Orbs chuẩn 100%** | Số Orb cộng đúng một lần mỗi nhiệm vụ (dedupe theo quest id), không cộng ảo khi quét lại. |
-| **Bảo mật tuyệt đối 100%** | Kết nối trực tiếp 100% tới Discord API (`discord.com`). **Chặn đứng hoàn toàn** mọi webhook hay endpoint bên ngoài. Không lưu token trên bất kỳ server nào. |
-| **Lưu Token an toàn** | Nút **"💾 Lưu"** lưu token vào máy (mã hóa Windows DPAPI). Mở lại app token tự động nạp, có nút `👁️` ẩn/hiện. |
-| **Treo AFK Loop** | Chế độ tự động đếm ngược chu kỳ 15, 30, 60 phút để quét và làm nhiệm vụ mới. |
-| **🌙 Màn hình Treo Pin (iOS)** | Chế độ OLED Saver giữ app hoạt động liên tục qua đêm với 0% hao pin. |
-| **Hỗ trợ đầy đủ nhiệm vụ** | Tự động làm nhiệm vụ Video, Game Heartbeat, Activity, quét nhiệm vụ bổ sung (excluded quests) và tự nhận quà (Claim Reward). |
+Mọi phiên làm việc đều chạy theo 3 giai đoạn cố định:
+
+```mermaid
+flowchart LR
+    I["🌊 Waves I<br/>Triển khai waves<br/>& nhận yêu cầu waves nhỏ"] --> II["⚙️ Waves II<br/>Coder bắt đầu làm việc"]
+    II --> III["🧪 Waves III<br/>Kiểm thử — TS build pass<br/>(theo yêu cầu người dùng)"]
+    III -.->|"feedback / yêu cầu mới"| I
+```
+
+| Giai đoạn | Nội dung | Ai quyết định |
+|---|---|---|
+| **Waves I** | Triển khai waves, tiếp nhận yêu cầu waves nhỏ từ người dùng | Người dùng + Agent |
+| **Waves II** | Bắt đầu làm việc (coder) — sửa code, UI/UX, logic | Agent |
+| **Waves III** | Kiểm thử — `tsc` build pass, syntax check, smoke test | Agent (theo yêu cầu người dùng) |
+
+**Quy tắc đánh số:**
+- Agent **tự gán số waves từ `0` → `∞`** theo tiến độ thực tế.
+- Người dùng **yêu cầu waves** → xác định số waves theo tiến độ hiện tại.
+- Người dùng **không yêu cầu** → mặc định gán **waves mới cho từng phiên edit**.
+
+---
+
+## 🧠 Sơ Đồ Tư Duy Dự Án
+
+```mermaid
+mindmap
+  root((⚡ AUTO-QUEST PRO))
+    🖥️ Desktop
+      Electron 38
+      Quét → Chọn → Auto ORBs
+      Account Chip Login
+      Dark Vesper UI
+    📱 iOS TrollStore
+      React Native Expo
+      IPA No Revoke
+      OLED Saver
+    🧠 Core Bot
+      TypeScript
+      Discord API trực tiếp
+      Quest Manager
+    🛡️ Bảo mật
+      Token DPAPI
+      Chặn endpoint ngoài
+      Security Guard
+```
+
+## 🔄 Luồng Hoạt Động Chuẩn
+
+```mermaid
+flowchart TD
+    A["🔑 Dán Token<br/>(tự xác thực @user)"] --> B["🔍 Quét nhiệm vụ"]
+    B --> C["📋 Danh sách THẬT<br/>từ Discord API"]
+    C --> D{"Phân loại theo<br/>completed_at"}
+    D -->|"đã hoàn thành"| E["✅ Tab Đã làm<br/>xanh · dấu tích ✓"]
+    D -->|"chưa hoàn thành"| F["⏳ Tab Chưa làm<br/>viền đỏ · checkbox"]
+    F --> G["☑️ Tích chọn / Chọn tất cả"]
+    G --> H["▶ Auto ORBs (N)"]
+    H --> I["🎮 Cày nhiệm vụ<br/>pacing chậm chống rate-limit"]
+    I --> E
+    E --> J["🎁 Tự nhận thưởng"]
+```
+
+> ⚠️ **Nguyên tắc vàng:** App **KHÔNG tự nhận nhiệm vụ** (không auto-enroll). Chỉ quét danh sách thật — người dùng tự nhận nhiệm vụ trong app Discord nếu muốn, sau đó tích chọn trong app và bấm **Auto ORBs**.
+
+## 🗺️ Hướng Đi (Roadmap)
+
+```mermaid
+flowchart LR
+    W0["Waves 0<br/>Audit repo"] --> W3["Waves 3<br/>Fix orbs + UI/UX"]
+    W3 --> W4["Waves 4<br/>Dữ liệu thật<br/>bỏ auto-enroll"]
+    W4 --> W5["Waves 5<br/>Polish UI theo feedback"]
+    W5 --> W6["Waves 6<br/>Build EXE (chờ lệnh)"]
+    W6 --> W7["Waves 7<br/>Push GitHub (chờ lệnh)"]
+```
+
+---
+
+## 🎨 Tính Năng
+
+| Tính năng | Mô tả |
+|-----------|-------|
+| **Dark Strong Vesper** | Nền OLED `#000000`, bề mặt than/nâu `#100d14`, điểm nhấn hổ phách `#ff9e64`. |
+| **Account Chip Login** | Dán token → tự xác thực `discord.com/api` → hiện `@username` + avatar thật từ Discord CDN. |
+| **Quét trước — Chạy sau** | **Quét nhiệm vụ** lấy danh sách thật → tab "⏳ Chưa làm" (viền đỏ, checkbox từng nhiệm vụ + **Chọn tất cả**) → **Auto ORBs (N)** chạy đúng nhiệm vụ đã chọn. |
+| **Không tự nhận nhiệm vụ** | App tuyệt đối không auto-enroll. Nhiệm vụ "Chưa nhận" hiển thị đúng trạng thái Discord, checkbox khoá cho tới khi bạn nhận trong app Discord. |
+| **Số liệu chuẩn 100%** | "Đã làm" chỉ chứa nhiệm vụ Discord xác nhận `completed_at`; "Chưa làm" chỉ chứa nhiệm vụ còn hiệu lực (đã bắt đầu, chưa hết hạn, không preview). |
+| **Orbs chuẩn** | Mỗi nhiệm vụ cộng Orbs đúng **một lần** (dedupe theo quest id), không cộng ảo khi quét lại. |
+| **Bảo mật 100%** | Chỉ kết nối `discord.com` — chặn đứng mọi webhook/endpoint ngoài. Token mã hóa Windows DPAPI. |
+| **Treo AFK Loop** | Tự đếm ngược chu kỳ 15/30/45/60 phút để quét lại nhiệm vụ mới. |
+| **🌙 OLED Saver (iOS)** | Giữ app hoạt động qua đêm với 0% hao pin. |
 
 ---
 
 ## 📥 TẢI VỀ CÀI ĐẶT
 
-### 🖥️ 1. Dành cho Windows Desktop:
-- Vào mục **[Releases](https://github.com/duyzoz/AUTO-QUEST/releases)** trên GitHub.
-- Tải file **`AUTO-QUEST.exe`**.
-- Mở file lên, dán token Discord và bấm **BẮT ĐẦU TREO ORB**.
+### 🖥️ Windows Desktop
+- Vào **[Releases](https://github.com/duyzoz/AUTO-QUEST/releases)** → tải **`AUTO-QUEST.exe`**.
+- Mở file, dán token, bấm **Quét nhiệm vụ** → chọn → **Auto ORBs**.
 
-### 📱 2. Dành cho iPhone (TrollStore):
-- Vào mục **[Releases](https://github.com/duyzoz/AUTO-QUEST/releases)** hoặc tab **[Actions](https://github.com/duyzoz/AUTO-QUEST/actions)**.
-- Tải file **`AUTO-QUEST-PRO-TrollStore.ipa`**.
-- Mở file `.ipa` trên iPhone bằng **TrollStore** ➔ Bấm **Install** là xong (chạy vĩnh viễn không lo hết hạn).
+### 📱 iPhone (TrollStore)
+- Tải **`AUTO-QUEST-PRO-TrollStore.ipa`** từ Releases/Actions.
+- Mở bằng **TrollStore** → **Install** (chạy vĩnh viễn, không hết hạn chứng chỉ).
 
 ---
 
 ## 🔑 HƯỚNG DẪN LẤY TOKEN DISCORD
 
-### Cách 1: Trên Máy Tính (Console)
-1. Mở Discord trên trình duyệt (Web hoặc Desktop App), bấm `F12` (hoặc `Ctrl + Shift + I`) để mở Developer Tools.
-2. Chọn tab **Console**.
-3. Nếu Discord chặn dán, gõ chữ: `allow pasting` rồi bấm **Enter**.
-4. Dán đoạn mã sau vào bấm **Enter**:
+### Cách 1: Máy tính (Console)
+1. Mở Discord (Web/App), bấm `F12` → tab **Console**.
+2. Nếu Discord chặn dán: gõ `allow pasting` rồi Enter.
+3. Dán đoạn mã sau rồi Enter:
+
 ```javascript
 window.webpackChunkdiscord_app.push([
 	[Symbol()],
@@ -71,26 +145,60 @@ window.webpackChunkdiscord_app.push([
 window.webpackChunkdiscord_app.pop();
 console.log('%c🎉 ĐÃ COPY TOKEN DISCORD THÀNH CÔNG! 🎉', 'color: #10b981; font-size: 22px; font-weight: bold; background: #000; padding: 10px; border-radius: 8px;');
 ```
-Token sẽ tự động copy vào bộ nhớ tạm. Quay lại app bấm **Dán** ➔ Bấm **Lưu**!
 
-### Cách 2: Trên iPhone (Safari)
-Trong app đã có sẵn nút **"📋 COPY SCRIPT LẤY TOKEN DISCORD"**:
-1. Mở **Safari** vào `discord.com/app` đăng nhập nick của bạn.
-2. Mở app bấm **COPY SCRIPT LẤY TOKEN**.
-3. Trên thanh địa chỉ Safari, gõ `javascript:` rồi dán script vào bấm **Đi (Enter)**.
-4. Script sẽ trích xuất token vào Clipboard và hiện popup thông báo thành công.
-5. Quay lại app bấm **Dán** ➔ Bấm **Lưu Token**!
+4. Quay lại app bấm **Dán** → chip góc phải tự hiện `@username` → **Lưu**.
+
+### Cách 2: iPhone (Safari)
+1. Safari → `discord.com/app`, đăng nhập.
+2. Trong app bấm **COPY SCRIPT LẤY TOKEN**.
+3. Thanh địa chỉ Safari: gõ `javascript:` rồi dán script, Enter.
+4. Quay lại app bấm **Dán** → **Lưu Token**.
 
 ---
 
-## 📜 Giấy phép & Tuyên bố miễn trừ trách nhiệm
-Dự án được xây dựng phục vụ mục đích học tập và tối ưu trải nghiệm cá nhân. Không liên kết chính thức với Discord Inc.
+## 📁 Cấu Trúc Repo
+
+```
+AUTO-QUEST-main/
+├── bot.ts                  # Entry point bot (compile → electron/bot/)
+├── src/                    # Core logic TypeScript
+│   ├── client.ts           # Discord REST + Gateway
+│   ├── questManager.ts     # Quản lý & thực thi nhiệm vụ
+│   ├── security.ts         # Chặn endpoint ngoài
+│   └── ...
+├── electron/               # Desktop app
+│   ├── main.js             # Main process + IPC
+│   ├── preload.js          # Bridge an toàn
+│   └── renderer/           # UI (index.html, renderer.js, styles.css)
+├── mobile/                 # iOS (React Native) — KHÔNG ĐỤNG
+├── build-release/          # Script build/release (IPA, desktop)
+├── docs/                   # Hướng dẫn sử dụng
+├── .brain/                 # Log AI Agent theo ngày (YYYY-MM-DD.txt)
+└── README.md
+```
+
+---
+
+## 🧪 Dev Mode (xem giao diện trước khi build)
+
+```bash
+npm install        # lần đầu
+npm run dev        # build bot TS + mở Electron
+```
+
+Chỉ build EXE khi có lệnh: `npm run build`.
+
+---
+
+## 📜 Giấy phép & Miễn trừ trách nhiệm
+Dự án phục vụ mục đích học tập và tối ưu trải nghiệm cá nhân. Không liên kết chính thức với Discord Inc.
 
 ---
 
 ## ---- Log AI Agent ----
 
-> Agent đọc mục này TRƯỚC khi code. Ghi log ngắn gọn (3–5 dòng) sau mỗi đợt làm việc. Log chi tiết theo ngày nằm trong `.brain/`.
+> Agent đọc mục này **TRƯỚC** khi code. Ghi log ngắn gọn (3–5 dòng) sau mỗi đợt làm việc. Log chi tiết theo ngày nằm trong `.brain/`.
 
-- **[2026-10-19 ~19:00 · GLM (Z.ai) · Wave 3 HOÀN THÀNH]** Fix orbs cộng ảo (dedupe quest id, bỏ fallback 300), thêm event `quest:inventory`/`scan:complete`/`quest:redeem` + id cho mọi event; bot tách MODE `scan`/`run`/`full` + pacing chậm (enroll 3s, heartbeat 25s) chống rate-limit; UI mới: account chip login góc phải trên (dán token tự xác thực, hiện @user + avatar CDN), tab "Chưa làm" viền đỏ + checkbox từng nhiệm vụ + Chọn tất cả + nút Auto ORBs(N), quest card update theo node, log tự tắt auto-scroll khi cuộn lên, CSS `.invalid` + responsive <900px + focus states + reduced-motion; dọn repo: `build-ipa/` → `build-release/build-ipa/`, docs → `docs/`. **Đang dở:** chạy `npm run dev` xem giao diện, chưa build EXE (chờ lệnh chủ), chưa push (chờ lệnh).
-- **[2026-10-19 ~18:30 · GLM (Z.ai) · Audit]** Đọc toàn bộ repo, lập danh sách 13 lỗi UI/UX + logic, đề xuất Wave 3A/3B/3C/4. Không sửa code.
+- **[2026-10-19 ~19:45 · GLM (Z.ai) · Waves 4 — Dữ liệu thật + bỏ auto-enroll]** Xoá `redeemPending` khỏi luồng quét/scan: quét xong dừng ngay, **không tự nhận/đăng ký nhiệm vụ**. Inventory lọc `preview` + chỉ giữ quest thật; thêm cờ `automatable` (STREAM/loại lạ = làm thủ công). UI: bỏ nút Auto ORBs trùng lặp trong tab, chỉ còn 1 nút; checkbox khoá với quest "Chưa nhận". **Đang dở:** chờ user chạy `npm run dev` xem UI; chưa build EXE, chưa push (chờ lệnh).
+- **[2026-10-19 ~19:00 · GLM (Z.ai) · Waves 3]** Fix orbs cộng ảo (dedupe quest id, bỏ fallback 300), event `quest:inventory`/`scan:complete`/`quest:redeem` + id cho mọi event; bot tách MODE `scan`/`run`/`full` + pacing chống rate-limit; UI account chip login, tab "Chưa làm" viền đỏ + checkbox + Chọn tất cả + Auto ORBs(N); dọn repo `build-ipa/` → `build-release/`, docs → `docs/`.
+- **[2026-10-19 ~18:30 · GLM (Z.ai) · Waves 0 — Audit]** Đọc toàn bộ repo, lập danh sách 13 lỗi UI/UX + logic, đề xuất roadmap waves.

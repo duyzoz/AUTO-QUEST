@@ -17,8 +17,6 @@ const selectedIds = new Set(
 		.filter(Boolean),
 );
 // Pacing: chậm rãi, tránh kích thích rate-limit của Discord.
-const ENROLL_DELAY_MS = 3000;
-const REDEEM_DELAY_MS = 2000;
 const STAGGER_MS = 2000;
 const HEARTBEAT_INTERVAL_S = 25;
 
@@ -67,6 +65,7 @@ function taskNameOf(quest: Quest): string {
  * Quét danh sách nhiệm vụ và báo về UI.
  * - quest:inventory: toàn bộ trạng thái (chưa làm / đã làm) — UI tự phân tab theo id.
  * - KHÔNG phát quest:done ảo cho quest đã xong từ trước (nguyên nhân orbs cộng ảo).
+ * - KHÔNG tự đăng ký (enroll) nhiệm vụ nào cả — đăng ký chỉ xảy ra khi người dùng bấm chạy.
  */
 async function scanQuests(): Promise<QuestManager> {
 	console.log('\n========================================');
@@ -98,100 +97,58 @@ async function scanQuests(): Promise<QuestManager> {
 				| 'new',
 			claimable: isDone && !quest.hasClaimedRewards(),
 			expired: quest.isExpired(),
+			preview: quest.preview === true,
 		};
 	});
 
-	report('quest:inventory', { quests: inventory });
+	// Chỉ nạp nhiệm vụ THẬT: loại preview (nhiệm vụ nội bộ Discord chưa công khai)
+	const realInventory = inventory.filter((q) => !q.preview);
+	report('quest:inventory', { quests: realInventory });
 
-	const pending = inventory.filter((q) => q.status !== 'done');
+	const pending = realInventory.filter((q) => q.status !== 'done');
 	console.log(
-		`📋 Quét xong: ${inventory.length} nhiệm vụ (${pending.length} chưa hoàn thành, ${
-			inventory.length - pending.length
+		`📋 Quét xong: ${realInventory.length} nhiệm vụ thật (${pending.length} chưa hoàn thành, ${
+			realInventory.length - pending.length
 		} đã xong).`,
 	);
 	return questManager;
 }
 
-/** Nhận thưởng cho quest đã hoàn thành nhưng chưa claim (có filter tùy chọn). */
-async function redeemPending(questManager: QuestManager, allowed?: (q: Quest) => boolean) {
-	const questsToRedeem = questManager.filterQuestsValidToRedeem(allowed);
-	if (questsToRedeem.length === 0) return;
-	console.log(
-		`🎁 Phát hiện ${questsToRedeem.length} nhiệm vụ đã hoàn thành nhưng chưa nhận thưởng. Đang tự động nhận...`,
-	);
-	for (const quest of questsToRedeem) {
-		if (isStopping) return;
-		await questManager.claimReward(quest);
-		report('quest:redeem', {
-			id: QuestManager.getQuestId(quest),
-			name: quest.config.messages.quest_name,
-			orbs: QuestManager.getQuestOrbs(quest),
-			rewardName: QuestManager.getQuestRewardName(quest),
-		});
-		await sleep(REDEEM_DELAY_MS);
-	}
-}
-
-/** Cày một danh sách quest cụ thể — tuần tự đăng ký + stagger chậm tránh rate-limit. */
+/**
+ * Cày danh sách quest người dùng đã chọn.
+ * QUY TẮC BẮT BUỘC: TUYỆT ĐỐI KHÔNG tự đăng ký (enroll) nhiệm vụ.
+ * Chỉ cày những nhiệm vụ đã được người dùng nhận sẵn trong app Discord.
+ */
 async function runSelectedQuests(questManager: QuestManager, quests: Quest[]) {
 	if (quests.length === 0) return;
-	console.log(`\n--- Bắt đầu thực hiện ${quests.length} nhiệm vụ ---`);
 
-	// Giai đoạn 1: đăng ký tuần tự
-	let hasRateLimit = false;
+	const runnable: Quest[] = [];
 	for (const quest of quests) {
 		if (isStopping) return;
-		const questName = quest.config.messages.quest_name;
 		if (!quest.isEnrolledQuest()) {
-			const taskConfig = quest.config.task_config_v2;
-			const isAndroid =
-				Boolean(taskConfig.tasks.WATCH_VIDEO_ON_MOBILE) &&
-				!Boolean(taskConfig.tasks.WATCH_VIDEO);
-			console.log(`Đang đăng ký: "${questName}" (${isAndroid ? 'Android' : 'Desktop'})...`);
-			try {
-				await questManager.acceptQuest(quest, isAndroid);
-				console.log(`Đã đăng ký thành công: "${questName}".`);
-				await sleep(ENROLL_DELAY_MS);
-			} catch (err: any) {
-				const message = err?.message || String(err);
-				if (message.toLowerCase().includes('ratelimit') || err?.status === 429) {
-					hasRateLimit = true;
-					console.warn('[Giới hạn Discord] Tạm bị giới hạn nhận nhiệm vụ qua API (~45 phút).');
-					console.log(
-						`💡 Mẹo: Mở app Discord bấm "Nhận nhiệm vụ" cho "${questName}", app sẽ cày ngay ở đợt kế.`,
-					);
-					report('quest:skip', {
-						id: QuestManager.getQuestId(quest),
-						name: questName,
-						reason: 'Giới hạn API Discord — sẽ tự thử lại ở đợt quét kế',
-					});
-				} else {
-					console.warn(`Không thể nhận nhiệm vụ "${questName}": ${message}`);
-					report('quest:error', {
-						id: QuestManager.getQuestId(quest),
-						name: questName,
-						message,
-					});
-				}
-			}
-		} else {
-			console.log(`Nhiệm vụ "${questName}" đã được nhận trước đó.`);
+			const questName = quest.config.messages.quest_name;
+			console.log(
+				`⏭ Bỏ qua "${questName}": chưa nhận nhiệm vụ. App KHÔNG tự nhận — hãy mở Discord bấm "Nhận nhiệm vụ".`,
+			);
+			report('quest:skip', {
+				id: QuestManager.getQuestId(quest),
+				name: questName,
+				reason: 'Chưa nhận nhiệm vụ trong Discord (app không tự nhận)',
+			});
+			continue;
 		}
+		runnable.push(quest);
 	}
 
-	// Giai đoạn 2: cày song song có stagger
-	const executable = quests.filter((q) => q.isEnrolledQuest() && !q.isCompleted());
-	if (executable.length === 0) {
-		if (hasRateLimit) {
-			console.log('⏳ Các nhiệm vụ còn lại đang bị giới hạn nhận tự động qua API.');
-			console.log('👉 Giữ app ở chế độ Treo Orb để tự thử lại sau.');
-		} else {
-			console.log('Không còn nhiệm vụ nào cần thực hiện.');
-		}
+	if (runnable.length === 0) {
+		console.log(
+			'⚠️ Không có nhiệm vụ nào đã nhận để cày. Hãy mở app Discord bấm "Nhận nhiệm vụ" rồi quét lại.',
+		);
 		return;
 	}
-	console.log(`\n--- Cày ${executable.length} nhiệm vụ (chậm rãi, tránh rate-limit) ---`);
-	const tasks = executable.map(async (quest, index) => {
+
+	console.log(`\n--- Cày ${runnable.length} nhiệm vụ ĐÃ NHẬN (chậm rãi, tránh rate-limit) ---`);
+	const tasks = runnable.map(async (quest, index) => {
 		if (isStopping) return;
 		if (index > 0) await sleep(index * STAGGER_MS);
 		return questManager.doingQuest(quest, HEARTBEAT_INTERVAL_S);
@@ -208,19 +165,19 @@ async function runQuestCycle(): Promise<void> {
 	try {
 		const questManager = await scanQuests();
 
-		// Nhận thưởng quest đã xong nhưng chưa claim.
-		await redeemPending(questManager);
-
 		if (runMode === 'scan') {
-			console.log('🧭 Chế độ quét: đã trả danh sách nhiệm vụ, chờ người dùng chọn.');
+			// QUY TRÌNH CHUẨN: quét xong dừng ngay, KHÔNG tự nhận nhiệm vụ,
+			// KHÔNG tự đăng ký. Chờ người dùng tích chọn rồi bấm chạy.
+			console.log('🧭 Quét xong — dừng tại đây, chờ người dùng chọn nhiệm vụ.');
 			report('scan:complete', { total: questManager.size });
 			report('finish', { scanned: true });
 			return;
 		}
 
+		// MODE 'run': chỉ chạy danh sách người dùng tích chọn (id từ UI).
+		// MODE 'full' (mặc định cũ): tự chạy tất cả nhiệm vụ khả dụng KHÔNG đăng ký hộ nhiệm vụ ngoài danh sách.
 		let questsValid = questManager.filterQuestsValidToDo();
 		if (runMode === 'run') {
-			// Chỉ chạy những quest người dùng tích chọn ở UI.
 			questsValid = questsValid.filter((q) => selectedIds.has(QuestManager.getQuestId(q)));
 			console.log(
 				`🎯 Chế độ chạy theo lựa chọn: ${questsValid.length} nhiệm vụ khớp danh sách chọn.`,

@@ -16,3 +16,10 @@
 - CẤM push sang repo khác. CẤM build EXE/push main/release nếu chủ chưa ra lệnh.
 - KHÔNG đụng mobile/, .github/workflows/build-ios.yml.
 - Token file `push github(token).txt` chỉ đọc khi chủ yêu cầu push.
+
+## ~19:45 · GLM (Z.ai) · WAVES 4 DONE — DỮ LIỆU THẬT + BỎ AUTO-ENROLL
+- Xoá auto-enroll 100%: bot.ts không còn gọi acceptQuest; doingQuest skip quest chưa nhận; scan xong dừng ngay (không redeem, không enroll).
+- Inventory thật: lọc preview, thêm cờ automatable (STREAM/loại lạ = thủ công); chỉ hiện quest còn hiệu lực.
+- UI: bỏ nút Auto ORBs trùng (chỉ còn 1 nút trong select-tools); checkbox khoá với quest "Chưa nhận"; badge rõ ràng (Chưa nhận / Sẵn sàng / Làm thủ công / Hoàn thành ✓).
+- README: thêm quy trình Waves I/II/III + quy tắc đánh số 0→∞ + 3 sơ đồ Mermaid (mindmap, luồng chạy, roadmap).
+- TS build pass, syntax pass. Chưa build EXE, chưa push (chờ lệnh).

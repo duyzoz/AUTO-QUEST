@@ -878,12 +878,9 @@ body {
 	background: rgba(247, 118, 142, 0.18);
 	color: #fca5a5;
 }
-.quest[data-status="new"] .quest-name::after {
-	content: "· chưa làm";
-	font-size: 0.68rem;
-	color: #fca5a5;
-	font-weight: 600;
-	margin-left: 6px;
+.quest[data-status="new"] .quest-check input:disabled {
+	cursor: not-allowed;
+	opacity: 0.45;
 }
 .quest[data-status="enrolled"] {
 	border-color: rgba(255, 158, 100, 0.3);

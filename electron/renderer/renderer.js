@@ -11,7 +11,6 @@ const ui = {
 	loopInterval: el('loopInterval'),
 	loopIntervalRow: el('loopIntervalRow'),
 	autoScroll: el('autoScroll'),
-	btnStart: el('btnStart'),
 	btnStop: el('btnStop'),
 	btnScan: el('btnScan'),
 	btnPaste: el('btnPaste'),
@@ -85,12 +84,12 @@ function toast(message, isError = false) {
 
 function setBusyFlags() {
 	const busy = state === 'starting' || state === 'running' || state === 'stopping' || state === 'scanning';
-	ui.btnStart.disabled = busy || selected.size === 0;
 	ui.btnStop.disabled = !busy;
 	ui.btnScan.disabled = busy || !ui.token.value.trim();
 	ui.token.disabled = busy;
 	ui.loopMode.disabled = busy;
 	ui.loopInterval.disabled = busy;
+	ui.btnRunSelected.disabled = busy || selected.size === 0;
 }
 
 function setState(next, extra = {}) {
@@ -208,6 +207,12 @@ function escapeHtml(text) {
 		.replace(/'/g, '&#39;');
 }
 
+function canSelectQuest(q) {
+	// Chỉ chọn được nhiệm vụ ĐÃ NHẬN trong Discord và app hỗ trợ tự động.
+	// Nhiệm vụ "chưa nhận" phải mở app Discord bấm Nhận trước (app KHÔNG tự nhận).
+	return q.status !== 'done' && q.status !== 'new' && q.automatable !== false;
+}
+
 function buildQuestNode(q) {
 	const node = document.createElement('div');
 	node.className = 'quest';
@@ -215,10 +220,17 @@ function buildQuestNode(q) {
 
 	const isDone = q.status === 'done';
 
-	// Checkbox chọn (chỉ quest chưa hoàn thành)
-	const checkboxHtml = !isDone
-		? `<label class="quest-check" title="Chọn nhiệm vụ này"><input type="checkbox" data-quest-check="${escapeHtml(q.id)}" aria-label="Chọn ${escapeHtml(q.name)}"/></label>`
-		: '';
+	// Checkbox chọn — khoá nếu quest chưa nhận hoặc không hỗ trợ tự động
+	let checkboxHtml = '';
+	if (!isDone) {
+		const disabled = canSelectQuest(q) ? '' : ' disabled';
+		const hint = q.status === 'new'
+			? 'Mở app Discord bấm "Nhận nhiệm vụ" trước'
+			: q.automatable === false
+				? 'Nhiệm vụ này phải làm thủ công'
+				: 'Chọn nhiệm vụ này';
+		checkboxHtml = `<label class="quest-check" title="${hint}"><input type="checkbox" data-quest-check="${escapeHtml(q.id)}" aria-label="Chọn ${escapeHtml(q.name)}"${disabled}/></label>`;
+	}
 
 	node.innerHTML = `
 		<div class="quest-top">
@@ -260,13 +272,18 @@ function updateQuestNode(node, q) {
 	const badges = node.querySelector('.quest-badges');
 	const orbBadge = q.orbs > 0 ? `<span class="orb-pill">+${q.orbs} Orbs</span>` : '';
 	let statusBadge;
-	switch (q.status) {
-		case 'running': statusBadge = '<span class="quest-badge">Đang chạy</span>'; break;
-		case 'done': statusBadge = '<span class="quest-badge">Hoàn thành ✓</span>'; break;
-		case 'skip': statusBadge = '<span class="quest-badge">Bỏ qua</span>'; break;
-		case 'error': statusBadge = '<span class="quest-badge">Lỗi</span>'; break;
-		case 'enrolled': statusBadge = '<span class="quest-badge">Đã nhận</span>'; break;
-		default: statusBadge = '<span class="quest-badge">Chưa làm</span>';
+	if (q.automatable === false && q.status !== 'done') {
+		statusBadge = '<span class="quest-badge">Làm thủ công</span>';
+	} else {
+		switch (q.status) {
+			case 'running': statusBadge = '<span class="quest-badge">Đang chạy</span>'; break;
+			case 'done': statusBadge = '<span class="quest-badge">Hoàn thành ✓</span>'; break;
+			case 'skip': statusBadge = '<span class="quest-badge">Bỏ qua</span>'; break;
+			case 'error': statusBadge = '<span class="quest-badge">Lỗi</span>'; break;
+			case 'enrolled': statusBadge = '<span class="quest-badge">Sẵn sàng</span>'; break;
+			case 'new': statusBadge = '<span class="quest-badge">Chưa nhận</span>'; break;
+			default: statusBadge = '<span class="quest-badge">Chưa làm</span>';
+		}
 	}
 	const badgesHtml = `${orbBadge}${statusBadge}`;
 	if (badges.innerHTML !== badgesHtml) badges.innerHTML = badgesHtml;
@@ -286,9 +303,19 @@ function updateQuestNode(node, q) {
 	if (taskEl.textContent !== taskText) taskEl.textContent = taskText;
 	if (pctEl.textContent !== pctText) pctEl.textContent = pctText;
 
-	// Checkbox state
+	// Checkbox state: đồng bộ theo trạng thái thật
 	const check = node.querySelector('input[data-quest-check]');
-	if (check) check.checked = selected.has(q.id);
+	if (check) {
+		if (q.status === 'done') {
+			check.closest('.quest-check')?.remove();
+			if (selected.has(q.id)) {
+				selected.delete(q.id);
+			}
+		} else {
+			check.checked = selected.has(q.id);
+			check.disabled = !canSelectQuest(q);
+		}
+	}
 }
 
 function renderQuests() {
@@ -342,14 +369,14 @@ function renderQuests() {
 
 function updateSelectionUi() {
 	ui.selectedCount.textContent = selected.size;
-	ui.btnRunSelected.disabled = selected.size === 0 || state !== 'idle';
-	const pendingIds = questOrder.filter((id) => {
+	const busy = state !== 'idle';
+	ui.btnRunSelected.disabled = selected.size === 0 || busy;
+	const selectableIds = questOrder.filter((id) => {
 		const q = quests.get(id);
-		return q && q.status !== 'done';
+		return q && canSelectQuest(q);
 	});
-	ui.selectAll.checked = pendingIds.length > 0 && pendingIds.every((id) => selected.has(id));
-	ui.selectAll.indeterminate = !ui.selectAll.checked && pendingIds.some((id) => selected.has(id));
-	ui.btnStart.disabled = state !== 'idle' || selected.size === 0;
+	ui.selectAll.checked = selectableIds.length > 0 && selectableIds.every((id) => selected.has(id));
+	ui.selectAll.indeterminate = !ui.selectAll.checked && selectableIds.some((id) => selected.has(id));
 }
 
 /* ---------------- Selection handlers ---------------- */
@@ -364,14 +391,14 @@ ui.questListActive.addEventListener('change', (e) => {
 });
 
 ui.selectAll.addEventListener('change', () => {
-	const pendingIds = questOrder.filter((id) => {
+	const selectableIds = questOrder.filter((id) => {
 		const q = quests.get(id);
-		return q && q.status !== 'done';
+		return q && canSelectQuest(q);
 	});
 	if (ui.selectAll.checked) {
-		for (const id of pendingIds) selected.add(id);
+		for (const id of selectableIds) selected.add(id);
 	} else {
-		for (const id of pendingIds) selected.delete(id);
+		for (const id of selectableIds) selected.delete(id);
 	}
 	renderQuests();
 	updateSelectionUi();
@@ -414,7 +441,7 @@ function handleEvent(evt) {
 			break;
 
 		case 'quest:inventory': {
-			// Danh sách quét: nạp toàn bộ, UI tự phân tab. KHÔNG cộng orbs ở đây.
+			// Danh sách quét THẬT từ Discord API. KHÔNG cộng orbs, KHÔNG tự nhận nhiệm vụ.
 			const list = Array.isArray(d.quests) ? d.quests : [];
 			for (const item of list) {
 				if (!item.id) continue;
@@ -425,10 +452,17 @@ function handleEvent(evt) {
 					secondsNeeded: item.secondsNeeded,
 					secondsDone: item.secondsDone,
 					orbs: item.orbs || 0,
+					automatable: item.automatable !== false,
 					status: item.status === 'done' ? 'done' : item.status === 'enrolled' ? 'enrolled' : 'new',
 				});
 			}
-			appendLog(`[Hệ thống] Đã nạp ${list.length} nhiệm vụ vào danh sách.`, 'system');
+			const doneCount = list.filter((x) => x.status === 'done').length;
+			appendLog(
+				`[Hệ thống] Đã nạp ${list.length} nhiệm vụ thật từ Discord (${doneCount} đã xong, ${
+					list.length - doneCount
+				} chưa xong).`,
+				'system',
+			);
 			break;
 		}
 
@@ -671,14 +705,6 @@ async function startRun(mode, extra = {}) {
 		toast(`▶ Chạy ${extra.selectedQuests?.length || 0} nhiệm vụ đã chọn...`);
 	}
 }
-
-ui.btnStart.addEventListener('click', () => {
-	if (selected.size === 0) {
-		toast('Hãy tích chọn ít nhất một nhiệm vụ (hoặc "Chọn tất cả").', true);
-		return;
-	}
-	startRun('run', { selectedQuests: Array.from(selected) });
-});
 
 ui.btnRunSelected.addEventListener('click', () => {
 	if (selected.size === 0) {

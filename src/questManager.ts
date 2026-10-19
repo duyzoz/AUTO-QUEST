@@ -117,7 +117,8 @@ export class QuestManager implements Iterable<Quest> {
 			(quest) =>
 				!quest.isCompleted() &&
 				!quest.isExpired(reference) &&
-				quest.isStarted(reference),
+				quest.isStarted(reference) &&
+				!quest.preview,
 		);
 	}
 
@@ -331,39 +332,19 @@ export class QuestManager implements Iterable<Quest> {
 		const rewardName = QuestManager.getQuestRewardName(quest);
 		const questId = QuestManager.getQuestId(quest);
 
-		const isAndroid =
-			Boolean(quest.config.task_config_v2.tasks.WATCH_VIDEO_ON_MOBILE) &&
-			!Boolean(quest.config.task_config_v2.tasks.WATCH_VIDEO);
-
+		// QUY TẮC: KHÔNG tự nhận nhiệm vụ. Chỉ cày quest người dùng đã nhận trong Discord.
 		if (!quest.isEnrolledQuest()) {
 			console.log(
-				`📝 Đang đăng ký nhận nhiệm vụ "${questName}" (chế độ ${
-					isAndroid ? 'Android' : 'Desktop'
-				})...`,
+				`⏭ Bỏ qua "${questName}": chưa nhận nhiệm vụ. Hãy mở Discord bấm "Nhận nhiệm vụ" rồi quét lại.`,
 			);
-			try {
-				await this.acceptQuest(quest, isAndroid);
-				console.log(`Đã đăng ký thành công nhiệm vụ "${questName}".`);
-			} catch (err: any) {
-				const message = err?.message || String(err);
-				const isAlreadyEnrolled =
-					message.toLowerCase().includes('already enrolled') ||
-					message.toLowerCase().includes('already_enrolled');
-				if (isAlreadyEnrolled) {
-					console.log(
-						`Nhiệm vụ "${questName}" đã được đăng ký từ trước. Tiếp tục xử lý...`,
-					);
-				} else {
-					console.error(
-						`Không thể đăng ký nhiệm vụ "${questName}": ${message}`,
-					);
-					report('quest:error', { id: QuestManager.getQuestId(quest), name: questName, message });
-					return;
-				}
-			}
-		} else {
-			console.log(`Nhiệm vụ "${questName}" đã sẵn sàng.`);
+			report('quest:skip', {
+				id: questId,
+				name: questName,
+				reason: 'Chưa nhận nhiệm vụ trong Discord (app không tự nhận)',
+			});
+			return;
 		}
+		console.log(`Nhiệm vụ "${questName}" đã sẵn sàng.`);
 
 		const applicationName = quest.config.application.name;
 		const taskConfig = quest.config.task_config_v2;
