@@ -11,6 +11,7 @@ const ui = {
 	loopInterval: el('loopInterval'),
 	loopIntervalRow: el('loopIntervalRow'),
 	autoScroll: el('autoScroll'),
+	btnStart: el('btnStart'),
 	btnStop: el('btnStop'),
 	btnScan: el('btnScan'),
 	btnPaste: el('btnPaste'),
@@ -21,7 +22,6 @@ const ui = {
 	btnSaveLog: el('btnSaveLog'),
 	btnOpenFolder: el('btnOpenFolder'),
 	btnScrollBottom: el('btnScrollBottom'),
-	btnRunSelected: el('btnRunSelected'),
 	selectAll: el('selectAll'),
 	selectTools: el('selectTools'),
 	selectedCount: el('selectedCount'),
@@ -89,7 +89,7 @@ function setBusyFlags() {
 	ui.token.disabled = busy;
 	ui.loopMode.disabled = busy;
 	ui.loopInterval.disabled = busy;
-	ui.btnRunSelected.disabled = busy || selected.size === 0;
+	ui.btnStart.disabled = busy || selected.size === 0;
 }
 
 function setState(next, extra = {}) {
@@ -369,8 +369,13 @@ function renderQuests() {
 
 function updateSelectionUi() {
 	ui.selectedCount.textContent = selected.size;
+	const label = selected.size > 0 ? `Auto ORBs (${selected.size})` : 'Auto ORBs';
+	if (ui.btnStart.dataset.label !== label) {
+		ui.btnStart.dataset.label = label;
+		ui.btnStart.innerHTML = `<span class="btn-ico">▶</span> ${label}`;
+	}
 	const busy = state !== 'idle';
-	ui.btnRunSelected.disabled = selected.size === 0 || busy;
+	ui.btnStart.disabled = selected.size === 0 || busy;
 	const selectableIds = questOrder.filter((id) => {
 		const q = quests.get(id);
 		return q && canSelectQuest(q);
@@ -706,7 +711,7 @@ async function startRun(mode, extra = {}) {
 	}
 }
 
-ui.btnRunSelected.addEventListener('click', () => {
+ui.btnStart.addEventListener('click', () => {
 	if (selected.size === 0) {
 		toast('Chưa chọn nhiệm vụ nào.', true);
 		return;

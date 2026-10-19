@@ -844,15 +844,14 @@ body {
 	font-weight: 700;
 	color: #fca5a5;
 }
-.ghost-btn.run-selected {
-	background: rgba(255, 158, 100, 0.15);
-	color: var(--accent-vesper);
-	border-color: rgba(255, 158, 100, 0.35);
-	font-weight: 700;
+.selected-info {
+	font-size: 0.74rem;
+	font-weight: 600;
+	color: var(--text-secondary);
 }
-.ghost-btn.run-selected:hover:not(:disabled) {
-	background: rgba(255, 158, 100, 0.28);
-	color: #fff;
+.selected-info strong {
+	color: var(--accent-vesper);
+	font-size: 0.86rem;
 }
 
 /* ---- Quest checkbox ---- */

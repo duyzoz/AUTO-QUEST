@@ -158,11 +158,14 @@
 						<button class="btn scan" id="btnScan">
 							<span class="btn-ico">🔍</span> Quét nhiệm vụ
 						</button>
+						<button class="btn primary" id="btnStart" disabled>
+							<span class="btn-ico">▶</span> Auto ORBs
+						</button>
 						<button class="btn danger" id="btnStop" disabled>
 							<span class="btn-ico">■</span> Dừng
 						</button>
 					</div>
-					<p class="hint actions-hint">Bấm <strong>Quét nhiệm vụ</strong> → danh sách nhiệm vụ thật hiện ra ở tab "Chưa làm" → tích chọn → bấm <strong>Auto ORBs</strong> trong tab để chạy.</p>
+					<p class="hint actions-hint">Bấm <strong>Quét nhiệm vụ</strong> → tab "Chưa làm" hiện danh sách thật → tích chọn (hoặc Chọn tất cả) → bấm <strong>Auto ORBs</strong> để chạy.</p>
 				</section>
 
 				<!-- Quests Section: Chưa làm (chọn được) / Đã làm -->
@@ -185,9 +188,7 @@
 							<input type="checkbox" id="selectAll" />
 							<span>Chọn tất cả</span>
 						</label>
-						<button class="ghost-btn run-selected" id="btnRunSelected" disabled>
-							▶ Auto ORBs (<span id="selectedCount">0</span>)
-						</button>
+						<span class="selected-info">Đã chọn: <strong id="selectedCount">0</strong></span>
 					</div>
 
 					<!-- Tab Content: Active Quests (có checkbox chọn) -->
