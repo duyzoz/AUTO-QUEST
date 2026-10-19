@@ -3,7 +3,7 @@
 [![Release](https://img.shields.io/github/v/release/duyzoz/AUTO-QUEST?color=ff9e64&label=Version)](https://github.com/duyzoz/AUTO-QUEST/releases)
 [![Platform](https://img.shields.io/badge/Platforms-Windows%20%7C%20iOS%20TrollStore-10b981)](#)
 [![Theme](https://img.shields.io/badge/Theme-Dark%20Strong%20Vesper-e0af68)](#)
-[![Waves](https://img.shields.io/badge/Waves-6%20%C2%B7%20Active-e0af68)](#-quy-tr%C3%ACnh-waves)
+[![Waves](https://img.shields.io/badge/Waves-7%20%C2%B7%20Active-e0af68)](#-quy-tr%C3%ACnh-waves)
 
 > ## 🤖 LƯU Ý CHO AI AGENT (BẮT BUỘC ĐỌC TRƯỚC KHI VIẾT/SỬA CODE)
 > Trước khi viết/sửa code, agent **PHẢI đọc hết README này** (mục **Quy trình Waves** + **`---- Log AI Agent ----`** ở cuối). Không đọc = làm lệch kiến trúc.
@@ -89,8 +89,9 @@ flowchart LR
     W3 --> W4["Waves 4<br/>Dữ liệu thật<br/>bỏ auto-enroll"]
     W4 --> W5["Waves 5<br/>Chuẩn hoá log<br/>3 phiên gần nhất"]
     W5 --> W6["Waves 6<br/>Luật waves<br/>không trùng số"]
-    W6 --> W7["Waves 7+<br/>Phiên edit kế tiếp<br/>(tự tăng)"]
-    W7 --> B["⏸ Build EXE<br/>(chờ lệnh)"]
+    W6 --> W7["Waves 7<br/>Dev lại<br/>công cụ build EXE"]
+    W7 --> W8["Waves 8+<br/>Phiên edit kế tiếp<br/>(tự tăng)"]
+    W8 --> B["⏸ Build EXE<br/>(chờ lệnh)"]
     B --> P["⏸ Push GitHub<br/>(chờ lệnh)"]
 ```
 
@@ -103,9 +104,10 @@ flowchart LR
 | **4** | Dữ liệu thật + bỏ auto-enroll | ✅ Xong |
 | **5** | Chuẩn hoá log — giữ 3 phiên | ✅ Xong |
 | **6** | Luật waves không trùng số | ✅ Xong |
-| **7+** | Phiên edit kế tiếp | 🔜 Kế tiếp |
+| **7** | Dev lại công cụ build EXE | ✅ Xong |
+| **8+** | Phiên edit kế tiếp | 🔜 Kế tiếp |
 
-> 👉 Phiên edit tiếp theo **bắt buộc** là **`Waves 7`**, sau đó `8`, `9`… **Waves 1–2 không tồn tại** trong dự án này → **cấm** dùng lại.
+> 👉 Phiên edit tiếp theo **bắt buộc** là **`Waves 8`**, sau đó `9`, `10`… **Waves 1–2 không tồn tại** trong dự án này → **cấm** dùng lại.
 
 ---
 
@@ -190,9 +192,12 @@ AUTO-QUEST-main/
 │   ├── preload.js          # Bridge an toàn
 │   └── renderer/           # UI (index.html, renderer.js, styles.css)
 ├── mobile/                 # iOS (React Native) — KHÔNG ĐỤNG
-├── build-release/          # Script build/release (IPA, desktop)
-├── docs/                   # Hướng dẫn sử dụng
-├── .brain/                 # Log AI Agent theo ngày (YYYY-MM-DD.txt)
+├── tools/                  # Công cụ build (build.js EXE, upload IPA)
+├── build-release/         # Script + output build/release
+│   ├── build-ipa/         # Script build IPA iOS
+│   └── exe/               # Output EXE portable (gitignore)
+├── docs/                  # Hướng dẫn sử dụng
+├── .brain/                # Log AI Agent theo ngày (YYYY-MM-DD.txt)
 └── README.md
 ```
 
@@ -205,7 +210,22 @@ npm install        # lần đầu
 npm run dev        # build bot TS + mở Electron
 ```
 
-Chỉ build EXE khi có lệnh: `npm run build`.
+## 📦 Công Cụ Build EXE
+
+```bash
+npm run build:check   # DRY-RUN: kiểm tra môi trường + in kế hoạch, KHÔNG tạo EXE
+npm run build         # build thật (chỉ khi có lệnh)
+```
+
+| Lệnh | Tác dụng |
+|---|---|
+| `npm run build:check` | Kiểm tra `node_modules`, icon, `package.json`, bot core đã compile chưa. In kế hoạch build. **Không tạo file EXE.** |
+| `npm run build` | `tsc` → `electron-builder --win portable` → xác minh artifact + sha256. Kết quả nằm gọn trong **`build-release/exe/`**. |
+| `node tools/build.js --skip-tsc` | Bỏ qua biên dịch TS (dùng lại `electron/bot/` cũ). |
+
+Output luôn về `build-release/exe/` (đã `.gitignore`) — không còn copy EXE ra gốc repo nữa.
+
+> ⚠️ **Không tự ý chạy `npm run build`** nếu chủ dự án chưa ra lệnh — riêng phiên Waves 7 chỉ chỉnh công cụ, **chưa build**.
 
 ---
 
@@ -218,6 +238,6 @@ Dự án phục vụ mục đích học tập và tối ưu trải nghiệm cá 
 
 > **Luật:** chỉ giữ **đúng 3 log gần nhất** (mới nhất trên cùng). Log cũ hơn xoá khỏi README. Muốn hiểu thật kĩ mọi thay đổi → đọc **`.brain/`**. Mỗi dòng ghi **đúng model của phiên đó**.
 
+- **[2026-10-19 ~20:05 · deepseek-v4.1-flash · Waves 7 — Dev lại công cụ build EXE (chưa build)]** Viết mới `tools/build.js`: pre-flight (node_modules/icon/package.json/bot.js), dry-run `--check`, `--skip-tsc`, dọn output trước khi build, verify artifact + kích thước + sha256, báo lỗi rõ ràng, không còn copy EXE ra gốc repo. `package.json`: output → `build-release/exe/`, tên file `AUTO-QUEST-${version}-portable.exe`, `executableName`, `requestedExecutionLevel: asInvoker`, `forceCodeSigning: false`; thêm script `build:check`. `.gitignore`: bỏ qua `build-release/exe/`. README: thêm mục **Công Cụ Build EXE** + cập nhật cấu trúc repo, Roadmap, sổ waves.
 - **[2026-10-19 ~20:00 · deepseek-v4.1-flash · Waves 6 — Luật waves không trùng số]** Sửa quy tắc đánh số: chỉ tăng (`max + 1`), cấm trùng / cấm lùi / cấm reset `0`. Đánh lại số log cho đúng thứ tự **4 → 5 → 6** (trước đó 2 dòng cùng ghi "Waves 4"), cập nhật badge (`Waves 6 · Active`), sơ đồ Roadmap và thêm bảng **"Sổ waves đã dùng"** để agent mới không đánh lại số cũ. Không đụng code app, không build EXE, không push.
 - **[2026-10-19 ~19:55 · deepseek-v4.1-flash · Waves 5 — chuẩn hoá log]** Sửa README: log chỉ giữ 3 phiên gần nhất, thêm dòng trỏ `.brain/`, bắt buộc ghi đúng model thật từng phiên (không hardcode).
-- **[2026-10-19 ~19:45 · deepseek-v4.1-flash · Waves 4 — Dữ liệu thật + bỏ auto-enroll]** Xoá `redeemPending` khỏi luồng quét/scan: quét xong dừng ngay, **không tự nhận/đăng ký nhiệm vụ**. Inventory lọc `preview` + cờ `automatable` (STREAM/loại lạ = làm thủ công). UI: chỉ còn 1 nút Auto ORBs ở khu actions; checkbox khoá với quest "Chưa nhận". **Đang dở:** chưa build EXE, chưa push (chờ lệnh).

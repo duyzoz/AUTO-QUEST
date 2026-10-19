@@ -35,3 +35,10 @@
 - Lỗi: 2 dòng log cùng ghi "Waves 4" → trùng số.
 - Sửa: quy tắc đánh số chỉ tăng (max+1), cấm trùng/lùi/reset 0; đánh lại log **4 → 5 → 6**; badge `Waves 6 · Active`; Roadmap `W0 → W3 → W4 → W5 → W6 → W7+ → (Build EXE) → (Push)`; thêm bảng "Sổ waves đã dùng" (0,3,4,5,6) + ghi rõ waves 1–2 KHÔNG tồn tại.
 - Không đụng code app, không build EXE, không push. **Chờ chủ xem UI `npm run dev`.**
+
+## ~20:05 · deepseek-v4.1-flash · WAVES 7 DONE — DEV LẠI CÔNG CỤ BUILD EXE (CHƯA BUILD)
+- `tools/build.js` viết lại hoàn toàn: pre-flight (node_modules, icon.ico, package.json thiếu field, electron/bot/bot.js) → fail sớm có gợi ý; lệnh `--check` = DRY-RUN chỉ in kế hoạch, KHÔNG tạo EXE; lệnh `--skip-tsc`; dọn `build-release/exe/` trước mỗi lần build; verify artifact (có .exe, size > 1MB) + sha256 + tổng size output; `npx` chạy cross-platform (npx.cmd trên win, npx trên mac/linux).
+- `package.json`: `directories.output` → `build-release/exe` (trước là `release` + copy thủ công ra GỐC repo); `artifactName` → `AUTO-QUEST-${version}-portable.exe`; thêm `executableName`, `requestedExecutionLevel: "asInvoker"`, `forceCodeSigning: false`, `copyright`; thêm script `build:check`.
+- `.gitignore`: thêm `build-release/exe/` → EXE không bao giờ bị commit nhầm.
+- README: thêm mục **📦 Công Cụ Build EXE** (bảng lệnh build:check / build / --skip-tsc) + sửa cấu trúc repo + Roadmap + sổ waves + badge `Waves 7`. Log AI Agent giữ đúng 3 bản ghi mới nhất.
+- **ĐÃ CHẠY dry-run: `node tools/build.js --check` → DRY-RUN PASS.** KHÔNG chạy `npm run build` (chờ lệnh). Không push.

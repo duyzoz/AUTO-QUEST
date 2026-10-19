@@ -11,6 +11,7 @@
 		"build:bot": "tsc -p tsconfig.build.json",
 		"dev": "npm run build:bot && electron .",
 		"start": "electron .",
+		"build:check": "node tools/build.js --check",
 		"build": "node tools/build.js"
 	},
 	"devDependencies": {
@@ -29,11 +30,13 @@
 	"build": {
 		"appId": "com.autoquest.pro",
 		"productName": "AUTO-QUEST",
+		"copyright": "AUTO-QUEST — dự án học tập, không liên kết chính thức với Discord Inc.",
 		"asar": true,
 		"npmRebuild": false,
 		"compression": "maximum",
+		"forceCodeSigning": false,
 		"directories": {
-			"output": "release",
+			"output": "build-release/exe",
 			"buildResources": "resources"
 		},
 		"files": [
@@ -55,13 +58,15 @@
 					]
 				}
 			],
+			"executableName": "AUTO-QUEST",
+			"requestedExecutionLevel": "asInvoker",
 			"icon": "resources/icon.ico",
-			"artifactName": "AUTO-QUEST.${ext}"
+			"artifactName": "AUTO-QUEST-${version}-portable.${ext}"
 		},
 		"portable": {
 			"unicode": true,
 			"requestExecutionLevel": "user",
-			"artifactName": "AUTO-QUEST.${ext}"
+			"artifactName": "AUTO-QUEST-${version}-portable.${ext}"
 		}
 	}
 }

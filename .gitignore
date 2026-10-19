@@ -12,6 +12,9 @@ Payload/
 *.ipa
 AUTO-QUEST.exe
 
+# Output EXE desktop (chỉ giữ script build, không commit file .exe)
+build-release/exe/
+
 # Cache & Logs
 .expo/
 mobile/.expo/
