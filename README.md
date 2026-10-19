@@ -3,7 +3,7 @@
 [![Release](https://img.shields.io/github/v/release/duyzoz/AUTO-QUEST?color=ff9e64&label=Version)](https://github.com/duyzoz/AUTO-QUEST/releases)
 [![Platform](https://img.shields.io/badge/Platforms-Windows%20%7C%20iOS%20TrollStore-10b981)](#)
 [![Theme](https://img.shields.io/badge/Theme-Dark%20Strong%20Vesper-e0af68)](#)
-[![Waves](https://img.shields.io/badge/Waves-4%20%C2%B7%20Active-e0af68)](#-quy-tr%C3%ACnh-waves)
+[![Waves](https://img.shields.io/badge/Waves-6%20%C2%B7%20Active-e0af68)](#-quy-tr%C3%ACnh-waves)
 
 > ## 🤖 LƯU Ý CHO AI AGENT (BẮT BUỘC ĐỌC TRƯỚC KHI VIẾT/SỬA CODE)
 > Trước khi viết/sửa code, agent **PHẢI đọc hết README này** (mục **Quy trình Waves** + **`---- Log AI Agent ----`** ở cuối). Không đọc = làm lệch kiến trúc.
@@ -30,10 +30,12 @@ flowchart LR
 | **Waves II** | Bắt đầu làm việc (coder) — sửa code, UI/UX, logic | Agent |
 | **Waves III** | Kiểm thử — `tsc` build pass, syntax check, smoke test | Agent (theo yêu cầu người dùng) |
 
-**Quy tắc đánh số:**
-- Agent **tự gán số waves từ `0` → `∞`** theo tiến độ thực tế.
-- Người dùng **yêu cầu waves** → xác định số waves theo tiến độ hiện tại.
-- Người dùng **không yêu cầu** → mặc định gán **waves mới cho từng phiên edit**.
+**Quy tắc đánh số (BẮT BUỘC — không được vi phạm):**
+- Dải số: **`0` → `∞`**, mỗi phiên edit = **1 waves mới**.
+- **Chỉ TĂNG**: waves kế tiếp = **số lớn nhất đã ghi + 1**.
+- **CẤM** trùng số waves · **CẤM** lùi số · **CẤM** reset về `0` · **CẤM** dùng số nhỏ hơn log gần nhất.
+- Người dùng yêu cầu waves → vẫn tăng dần theo tiến độ, **không đánh lại số cũ**.
+- Người dùng nhắn nhiều thay đổi trong 1 phiên → gộp vào **1 waves duy nhất** (không tách trùng số).
 
 ---
 
@@ -85,10 +87,25 @@ flowchart TD
 flowchart LR
     W0["Waves 0<br/>Audit repo"] --> W3["Waves 3<br/>Fix orbs + UI/UX"]
     W3 --> W4["Waves 4<br/>Dữ liệu thật<br/>bỏ auto-enroll"]
-    W4 --> W5["Waves 5<br/>Polish UI theo feedback"]
-    W5 --> W6["Waves 6<br/>Build EXE (chờ lệnh)"]
-    W6 --> W7["Waves 7<br/>Push GitHub (chờ lệnh)"]
+    W4 --> W5["Waves 5<br/>Chuẩn hoá log<br/>3 phiên gần nhất"]
+    W5 --> W6["Waves 6<br/>Luật waves<br/>không trùng số"]
+    W6 --> W7["Waves 7+<br/>Phiên edit kế tiếp<br/>(tự tăng)"]
+    W7 --> B["⏸ Build EXE<br/>(chờ lệnh)"]
+    B --> P["⏸ Push GitHub<br/>(chờ lệnh)"]
 ```
+
+**Sổ waves đã dùng (agent mới KHÔNG được đánh lại số trong bảng này):**
+
+| Waves | Nội dung | Trạng thái |
+|---|---|---|
+| **0** | Audit repo — 13 lỗi, đề xuất waves | ✅ Xong |
+| **3** | Fix orbs cộng ảo + UI/UX + dọn repo | ✅ Xong |
+| **4** | Dữ liệu thật + bỏ auto-enroll | ✅ Xong |
+| **5** | Chuẩn hoá log — giữ 3 phiên | ✅ Xong |
+| **6** | Luật waves không trùng số | ✅ Xong |
+| **7+** | Phiên edit kế tiếp | 🔜 Kế tiếp |
+
+> 👉 Phiên edit tiếp theo **bắt buộc** là **`Waves 7`**, sau đó `8`, `9`… **Waves 1–2 không tồn tại** trong dự án này → **cấm** dùng lại.
 
 ---
 
@@ -201,6 +218,6 @@ Dự án phục vụ mục đích học tập và tối ưu trải nghiệm cá 
 
 > **Luật:** chỉ giữ **đúng 3 log gần nhất** (mới nhất trên cùng). Log cũ hơn xoá khỏi README. Muốn hiểu thật kĩ mọi thay đổi → đọc **`.brain/`**. Mỗi dòng ghi **đúng model của phiên đó**.
 
-- **[2026-10-19 ~19:55 · deepseek-v4.1-flash · Waves 4 — chuẩn hoá log]** Sửa README: log chỉ giữ 3 phiên gần nhất, thêm dòng trỏ `.brain/`, bắt buộc ghi đúng model thật từng phiên (không hardcode).
+- **[2026-10-19 ~20:00 · deepseek-v4.1-flash · Waves 6 — Luật waves không trùng số]** Sửa quy tắc đánh số: chỉ tăng (`max + 1`), cấm trùng / cấm lùi / cấm reset `0`. Đánh lại số log cho đúng thứ tự **4 → 5 → 6** (trước đó 2 dòng cùng ghi "Waves 4"), cập nhật badge (`Waves 6 · Active`), sơ đồ Roadmap và thêm bảng **"Sổ waves đã dùng"** để agent mới không đánh lại số cũ. Không đụng code app, không build EXE, không push.
+- **[2026-10-19 ~19:55 · deepseek-v4.1-flash · Waves 5 — chuẩn hoá log]** Sửa README: log chỉ giữ 3 phiên gần nhất, thêm dòng trỏ `.brain/`, bắt buộc ghi đúng model thật từng phiên (không hardcode).
 - **[2026-10-19 ~19:45 · deepseek-v4.1-flash · Waves 4 — Dữ liệu thật + bỏ auto-enroll]** Xoá `redeemPending` khỏi luồng quét/scan: quét xong dừng ngay, **không tự nhận/đăng ký nhiệm vụ**. Inventory lọc `preview` + cờ `automatable` (STREAM/loại lạ = làm thủ công). UI: chỉ còn 1 nút Auto ORBs ở khu actions; checkbox khoá với quest "Chưa nhận". **Đang dở:** chưa build EXE, chưa push (chờ lệnh).
-- **[2026-10-19 ~19:00 · deepseek-v4.1-flash · Waves 3]** Fix orbs cộng ảo (dedupe quest id, bỏ fallback 300), event `quest:inventory`/`scan:complete`/`quest:redeem` + id cho mọi event; bot tách MODE `scan`/`run`/`full` + pacing chống rate-limit; UI account chip login, tab "Chưa làm" viền đỏ + checkbox + Chọn tất cả; dọn repo `build-ipa/` → `build-release/`, docs → `docs/`.

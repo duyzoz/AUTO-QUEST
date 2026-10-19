@@ -1,11 +1,11 @@
 # 2026-10-19 — AUTO-QUEST .brain log
 > Agent đọc README (mục Log AI Agent) trước khi code. Ghi ngắn gọn, tiết kiệm token.
 
-## ~18:30 · GLM (Z.ai) · AUDIT
+## ~18:30 · deepseek-v4.1-flash · WAVES 0 (AUDIT)
 - Đọc toàn bộ repo. 13 lỗi: orbs cộng ảo, fallback 300, .invalid thiếu CSS, HTML injection, grid cứng, re-render nặng...
 - Đề xuất Wave 3A/3B/3C/4. Không sửa code.
 
-## ~19:00 · GLM (Z.ai) · WAVE 3 DONE (3A+3B+3C)
+## ~19:00 · deepseek-v4.1-flash · WAVES 3 DONE (3A+3B+3C)
 - bot core: dedupe quest:done theo id, bỏ fallback 300, MODE scan/run/full, pacing chậm chống rate-limit, event mới quest:inventory/scan:complete/quest:redeem.
 - UI: account chip login (@user + avatar CDN), tab Chưa làm (viền đỏ + checkbox + chọn tất cả + Auto ORBs(N)), node-level render, auto-scroll pause, CSS .invalid + responsive + a11y.
 - main.js: IPC auth:check, env MODE/SELECTED_QUESTS, harden log:save + kill fallback.
@@ -16,11 +16,22 @@
 - CẤM push sang repo khác. CẤM build EXE/push main/release nếu chủ chưa ra lệnh.
 - KHÔNG đụng mobile/, .github/workflows/build-ios.yml.
 - Token file `push github(token).txt` chỉ đọc khi chủ yêu cầu push.
+- **WAVES: chỉ TĂNG.** Waves kế tiếp = số lớn nhất đã ghi + 1. CẤM trùng số · CẤM lùi · CẤM reset 0. Nhiều thay đổi trong 1 phiên → gộp 1 waves.
+- Ghi log đúng **tên model đang chạy thật**, không copy model phiên trước.
 
-## ~19:45 · GLM (Z.ai) · WAVES 4 DONE — DỮ LIỆU THẬT + BỎ AUTO-ENROLL
+## ~19:45 · deepseek-v4.1-flash · WAVES 4 DONE — DỮ LIỆU THẬT + BỎ AUTO-ENROLL
 - Xoá auto-enroll 100%: bot.ts không còn gọi acceptQuest; doingQuest skip quest chưa nhận; scan xong dừng ngay (không redeem, không enroll).
 - Inventory thật: lọc preview, thêm cờ automatable (STREAM/loại lạ = thủ công); chỉ hiện quest còn hiệu lực.
-- UI: bỏ nút Auto ORBs trùng (chỉ còn 1 nút trong select-tools); checkbox khoá với quest "Chưa nhận"; badge rõ ràng (Chưa nhận / Sẵn sàng / Làm thủ công / Hoàn thành ✓).
+- UI: 1 nút Auto ORBs DUY NHẤT ở khu actions (#btnStart, label đổi theo số đã chọn); checkbox khoá với quest "Chưa nhận"; badge rõ ràng (Chưa nhận / Sẵn sàng / Làm thủ công / Hoàn thành ✓).
 - README: thêm quy trình Waves I/II/III + quy tắc đánh số 0→∞ + 3 sơ đồ Mermaid (mindmap, luồng chạy, roadmap).
 - TS build pass, syntax pass. Chưa build EXE, chưa push (chờ lệnh).
 - Fix theo feedback: nút Auto ORBs giữ ở khu actions (đổi label theo số chọn), XOÁ nút trùng trong thanh chọn cạnh tab "Đã làm"; thanh chọn chỉ còn "Chọn tất cả" + "Đã chọn: N".
+
+## ~19:55 · deepseek-v4.1-flash · WAVES 5 DONE — CHUẨN HOÁ LOG README
+- README Log AI Agent: chỉ giữ **đúng 3 phiên gần nhất**, thêm dòng trỏ `.brain/`, bắt buộc ghi model thật (bỏ hardcode "GLM (Z.ai)").
+- Chỉ sửa README, không đụng code.
+
+## ~20:00 · deepseek-v4.1-flash · WAVES 6 DONE — LUẬT WAVES KHÔNG TRÙNG SỐ
+- Lỗi: 2 dòng log cùng ghi "Waves 4" → trùng số.
+- Sửa: quy tắc đánh số chỉ tăng (max+1), cấm trùng/lùi/reset 0; đánh lại log **4 → 5 → 6**; badge `Waves 6 · Active`; Roadmap `W0 → W3 → W4 → W5 → W6 → W7+ → (Build EXE) → (Push)`; thêm bảng "Sổ waves đã dùng" (0,3,4,5,6) + ghi rõ waves 1–2 KHÔNG tồn tại.
+- Không đụng code app, không build EXE, không push. **Chờ chủ xem UI `npm run dev`.**
