@@ -6,8 +6,10 @@
 [![Waves](https://img.shields.io/badge/Waves-4%20%C2%B7%20Active-e0af68)](#-quy-tr%C3%ACnh-waves)
 
 > ## 🤖 LƯU Ý CHO AI AGENT (BẮT BUỘC ĐỌC TRƯỚC KHI VIẾT/SỬA CODE)
-> Trước khi viết hoặc sửa bất kỳ dòng code nào, agent **PHẢI đọc hết README này** (đặc biệt mục **Quy trình Waves** và **`---- Log AI Agent ----`** ở cuối) để nắm bối cảnh, quy ước và việc đang làm dở. Không đọc trước = làm lệch kiến trúc.
-> Sau khi xong nhiệm vụ, agent **PHẢI ghi log 3–5 dòng** vào mục Log AI Agent + file `.brain/YYYY-MM-DD.txt` — ngắn gọn, tiết kiệm token.
+> Trước khi viết/sửa code, agent **PHẢI đọc hết README này** (mục **Quy trình Waves** + **`---- Log AI Agent ----`** ở cuối). Không đọc = làm lệch kiến trúc.
+> Sau mỗi phiên: ghi **1 dòng log** vào mục Log AI Agent (model thật + việc đã làm + đang dở) và **chỉ giữ đúng 3 log gần nhất** — log cũ hơn xoá khỏi README.
+> Muốn hiểu thật kĩ mọi thay đổi: đọc thư mục **`.brain/`** (log đầy đủ theo ngày `YYYY-MM-DD.txt`).
+> **Ghi đúng tên model đang chạy** (VD: `deepseek-v4.1-flash`, `gemini-3.8-flash`, `claude-...`) — không copy model phiên trước, không ghi chung chung.
 
 ---
 
@@ -197,8 +199,8 @@ Dự án phục vụ mục đích học tập và tối ưu trải nghiệm cá 
 
 ## ---- Log AI Agent ----
 
-> Agent đọc mục này **TRƯỚC** khi code. Ghi log ngắn gọn (3–5 dòng) sau mỗi đợt làm việc. Log chi tiết theo ngày nằm trong `.brain/`.
+> **Luật:** chỉ giữ **đúng 3 log gần nhất** (mới nhất trên cùng). Log cũ hơn xoá khỏi README. Muốn hiểu thật kĩ mọi thay đổi → đọc **`.brain/`**. Mỗi dòng ghi **đúng model của phiên đó**.
 
-- **[2026-10-19 ~19:45 · GLM (Z.ai) · Waves 4 — Dữ liệu thật + bỏ auto-enroll]** Xoá `redeemPending` khỏi luồng quét/scan: quét xong dừng ngay, **không tự nhận/đăng ký nhiệm vụ**. Inventory lọc `preview` + chỉ giữ quest thật; thêm cờ `automatable` (STREAM/loại lạ = làm thủ công). UI: bỏ nút Auto ORBs trùng lặp trong tab, chỉ còn 1 nút; checkbox khoá với quest "Chưa nhận". **Đang dở:** chờ user chạy `npm run dev` xem UI; chưa build EXE, chưa push (chờ lệnh).
-- **[2026-10-19 ~19:00 · GLM (Z.ai) · Waves 3]** Fix orbs cộng ảo (dedupe quest id, bỏ fallback 300), event `quest:inventory`/`scan:complete`/`quest:redeem` + id cho mọi event; bot tách MODE `scan`/`run`/`full` + pacing chống rate-limit; UI account chip login, tab "Chưa làm" viền đỏ + checkbox + Chọn tất cả + Auto ORBs(N); dọn repo `build-ipa/` → `build-release/`, docs → `docs/`.
-- **[2026-10-19 ~18:30 · GLM (Z.ai) · Waves 0 — Audit]** Đọc toàn bộ repo, lập danh sách 13 lỗi UI/UX + logic, đề xuất roadmap waves.
+- **[2026-10-19 ~19:55 · deepseek-v4.1-flash · Waves 4 — chuẩn hoá log]** Sửa README: log chỉ giữ 3 phiên gần nhất, thêm dòng trỏ `.brain/`, bắt buộc ghi đúng model thật từng phiên (không hardcode).
+- **[2026-10-19 ~19:45 · deepseek-v4.1-flash · Waves 4 — Dữ liệu thật + bỏ auto-enroll]** Xoá `redeemPending` khỏi luồng quét/scan: quét xong dừng ngay, **không tự nhận/đăng ký nhiệm vụ**. Inventory lọc `preview` + cờ `automatable` (STREAM/loại lạ = làm thủ công). UI: chỉ còn 1 nút Auto ORBs ở khu actions; checkbox khoá với quest "Chưa nhận". **Đang dở:** chưa build EXE, chưa push (chờ lệnh).
+- **[2026-10-19 ~19:00 · deepseek-v4.1-flash · Waves 3]** Fix orbs cộng ảo (dedupe quest id, bỏ fallback 300), event `quest:inventory`/`scan:complete`/`quest:redeem` + id cho mọi event; bot tách MODE `scan`/`run`/`full` + pacing chống rate-limit; UI account chip login, tab "Chưa làm" viền đỏ + checkbox + Chọn tất cả; dọn repo `build-ipa/` → `build-release/`, docs → `docs/`.
