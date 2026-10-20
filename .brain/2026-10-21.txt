@@ -1,0 +1,21 @@
+# 2026-10-21 — AUTO-QUEST .brain log (ngày mới)
+
+## ~00:10 · step-5-preview · WAVES 15 DONE — PROFILE CENTERPIECE & LOGOUT GUARD (waves con của Waves II)
+- Requirenemts bro (kèm screenshot): (1) XOÁ khung hero guest ở đầu trang; hero profile giữa PHẢI cân bằng, không che khuất; (2) khung "Số dư khả dụng" đáy sidebar phải có NỀN XANH EMERALD như tiền (hơi xanh, glow); (3) hiệu ứng khung TÊN (nameplate collectible Discord) bọc quanh tên + khung wuwa (clan tag) — màu riêng từng user (accentColor), hero giữa BẮT BUỘC có, pop khung quản lý chỉ khi MỞ RA; (4) bấm Đăng xuất phải có popup xác nhận 2 nút: Huỷ / Đăng xuất; (5) gọi chuẩn decoration avatar từ Discord CDN (đã có từ W11).
+- index.html:
+  - XOÁ #heroGuest (guest hero card + CTA). Chỉ còn #heroProfile (hidden khi guest — guest không có hero).
+  - Tên trong hero bọc `<span class="ph-nameplate" id="phNameplate">` quanh #phDisplay; clan tag thêm class .ph-tag. Pop: tên bọc .ph-nameplate.up-nameplate#dpNameplate; tag .up-tag.
+  - Thêm modal #logoutModal (.modal-veil > .modal-card: icon logout đỏ, title "Bạn có muốn đăng xuất tài khoản này không?", desc động theo tên user, 2 nút #btnLogoutCancel "Huỷ" / #btnLogoutConfirm "Đăng xuất").
+- styles.css:
+  - .side-balance: NỀN XANH EMERALD thật — 2 lớp radial-gradient emerald + rgba(0,92,66,.13), viền rgba(0,210,148,.3), inset highlight + glow xanh đổ xuống; ::after sheen chéo kiểu thẻ ngân hàng; [data-state=live] tăng đậm (viền .55, glow mạnh); [data-state=guest] lặng về gần tối (tint 5%).
+  - .ph-nameplate: khung bọc tên bo tròn 12px — nền gradient màu --np (set từ accentColor user qua JS, fallback #8b5cf6), 2 lớp ring (1px màu + 4px alpha), mask-composite viền gradient chạy quanh, ::before, ::after light sweep quét ngang 5.5s (npSweep). text-shadow màu user. .up-nameplate bản nhỏ 9px padding cho pop.
+  - .up-tag/.ph-tag: viền+nền theo màu --np (wuwa đúng tone user).
+  - .modal-veil (blur backdrop, veilIn) + .modal-card (ink-850, radius 1.125rem, icon đỏ bo 14px) + .btn-danger (#fb2c36) + .btn-ghost.
+- renderer.js:
+  - Bỏ ui.heroGuest + handler .js-hero-cta (element đã xoá).
+  - Thêm ui refs: phNameplate, dpNameplate, logoutModal, btnLogoutCancel, btnLogoutConfirm.
+  - renderDiscordProfile: set --np = intToHex(accentColor) || #8b5cf6 lên heroProfile + cả 2 nameplate → hiệu ứng tên MÀU RIÊNG TỪNG USER; heroProfile.hidden = false (bắt buộc hiện khi login).
+  - logout() cũ → openLogoutModal()/closeLogoutModal()/confirmLogout(): modal mở focus nút Đăng xuất, bấm Huỷ/outside/Escape đóng, Đăng xuất mới xoá token + reset.
+- Guest vẫn thấy: sidebar (balance block guest tint) + stats + quest card; không còn hero chữ giữa trang.
+- Kiểm thử: node --check ×3 pass; DOM-id 76 refs / 79 ids — 0 missing; emoji scan 5 file = 0; nameplate/modal CSS classes verified.
+- KHÔNG build EXE, KHÔNG push. Waves kế tiếp = 16.

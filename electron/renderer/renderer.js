@@ -41,24 +41,29 @@ const ui = {
 	dpAvatar: el('dpAvatar'),
 	dpDecoration: el('dpDecoration'),
 	dpDisplay: el('dpDisplay'),
+	dpNameplate: el('dpNameplate'),
 	dpUsername: el('dpUsername'),
 	dpClanBadge: el('dpClanBadge'),
 	dpClanTag: el('dpClanTag'),
 	dpBadge: el('dpBadge'),
-	// Hero trung tâm: guest vs profile (Waves 14)
-	heroGuest: el('heroGuest'),
+	// Hero trung tâm: guest vs profile (Waves 15: guest hero đã bỏ, chỉ còn profile)
 	heroProfile: el('heroProfile'),
 	phBanner: el('phBanner'),
 	phAvatar: el('phAvatar'),
 	phDecoration: el('phDecoration'),
 	phDisplay: el('phDisplay'),
+	phNameplate: el('phNameplate'),
 	phUsername: el('phUsername'),
 	phClanBadge: el('phClanBadge'),
 	phClanTag: el('phClanTag'),
-	// Số dư ORB (khối đáy sidebar, Waves 14)
+	// Số dư ORB (khối đáy sidebar, nền xanh emerald)
 	sideBalance: el('sideBalance'),
 	orbBalance: el('orbBalance'),
 	orbPending: el('orbPending'),
+	// Modal xác nhận đăng xuất (Waves 15)
+	logoutModal: el('logoutModal'),
+	btnLogoutCancel: el('btnLogoutCancel'),
+	btnLogoutConfirm: el('btnLogoutConfirm'),
 	// Nav
 	navQuest: el('navQuest'),
 	navSettings: el('navSettings'),
@@ -745,9 +750,12 @@ function renderDiscordProfile(user) {
 	ui.dprofile.dataset.state = 'logged-in';
 	ui.dpBadge.textContent = 'Đóng khung quản lý';
 
-	// ---- Hero giữa trang (Waves 14): banner / avatar / decoration / tên ----
-	ui.heroGuest.hidden = true;
+	// ---- Hero giữa trang (Waves 15): BẮT BUỘC hiện khi đăng nhập, nameplate bọc tên ----
 	ui.heroProfile.hidden = false;
+	const npColor = accentColor ? intToHex(accentColor) : '#8b5cf6'; // màu hiệu ứng riêng từng user
+	ui.heroProfile.style.setProperty('--np', npColor);
+	if (ui.phNameplate) ui.phNameplate.style.setProperty('--np', npColor);
+	if (ui.dpNameplate) ui.dpNameplate.style.setProperty('--np', npColor);
 	ui.phDisplay.textContent = display;
 	ui.phUsername.textContent = username ? `@${username}` : '';
 	ui.phAvatar.innerHTML = '';
@@ -850,9 +858,8 @@ function resetDiscordProfile() {
 	// Về trạng thái guest: đóng pop
 	ui.upPop.hidden = true;
 	ui.upRow.setAttribute('aria-expanded', 'false');
-	// Hero giữa trang → guest (Waves 14)
+	// Hero giữa trang → ẩn (Waves 15: guest hero đã bỏ, guest không có hero)
 	ui.heroProfile.hidden = true;
-	ui.heroGuest.hidden = false;
 	ui.phDisplay.textContent = 'Chưa đăng nhập';
 	ui.phUsername.textContent = 'Dán token ở Cài đặt để hiển thị profile Discord';
 	ui.phAvatar.innerHTML = '';
@@ -901,8 +908,21 @@ ui.upRow.addEventListener('click', (e) => {
 	ui.upRow.setAttribute('aria-expanded', String(willShow));
 });
 
-// Nút ĐĂNG XUẤT: xoá token khỏi app → về guest (không gọi Discord gì cả)
-async function logout() {
+// Nút ĐĂNG XUẤT: KHÔNG thoát ngay — mở modal xác nhận (Waves 15)
+function openLogoutModal() {
+	const name = ui.upName.textContent.trim();
+	ui.logoutDesc.textContent =
+		name && name !== 'Chưa đăng nhập'
+			? `Token của "${name}" sẽ bị xoá khỏi thiết bị. Bạn có thể đăng nhập lại bất cứ lúc nào.`
+			: 'Token sẽ được xoá khỏi thiết bị. Bạn có thể đăng nhập lại bất cứ lúc nào.';
+	ui.logoutModal.hidden = false;
+	ui.btnLogoutConfirm.focus();
+}
+function closeLogoutModal() {
+	ui.logoutModal.hidden = true;
+}
+async function confirmLogout() {
+	closeLogoutModal();
 	try {
 		await api.saveConfig({ token: '', remember: false, loopMode: ui.loopMode.checked, loopInterval: parseInt(ui.loopInterval.value, 10) || 30, autoScroll: ui.autoScroll.checked });
 	} catch { /* ignore */ }
@@ -913,14 +933,23 @@ async function logout() {
 }
 ui.btnLogout.addEventListener('click', (e) => {
 	e.stopPropagation();
-	logout();
+	openLogoutModal();
 });
 ui.btnLogout.addEventListener('keydown', (e) => {
 	if (e.key === 'Enter' || e.key === ' ') {
 		e.preventDefault();
 		e.stopPropagation();
-		logout();
+		openLogoutModal();
 	}
+});
+ui.btnLogoutCancel.addEventListener('click', closeLogoutModal);
+ui.btnLogoutConfirm.addEventListener('click', confirmLogout);
+// Bấm ra ngoài / Escape để huỷ
+ui.logoutModal.addEventListener('click', (e) => {
+	if (e.target === ui.logoutModal) closeLogoutModal();
+});
+document.addEventListener('keydown', (e) => {
+	if (e.key === 'Escape' && !ui.logoutModal.hidden) closeLogoutModal();
 });
 
 // Nút trong khung profile: guest → login; logged-in → nhắc nơi đổi token
@@ -974,18 +1003,6 @@ function closeDrawer() {
 }
 ui.btnDrawer.addEventListener('click', openDrawer);
 ui.drawerOverlay.addEventListener('click', closeDrawer);
-
-/* Hero CTA: guest → về Cài đặt dán token; logged-in → về Auto Quest */
-document.querySelectorAll('.js-hero-cta').forEach((btn) => {
-	btn.addEventListener('click', () => {
-		if (ui.dprofile.dataset.state === 'guest') {
-			switchPage('settings');
-			ui.token.focus();
-		} else {
-			switchPage('quest');
-		}
-	});
-});
 
 /* ---------------- User Actions ---------------- */
 

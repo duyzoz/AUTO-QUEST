@@ -3,7 +3,7 @@
 [![Release](https://img.shields.io/github/v/release/duyzoz/AUTO-QUEST?color=ff9e64&label=Version)](https://github.com/duyzoz/AUTO-QUEST/releases)
 [![Platform](https://img.shields.io/badge/Platforms-Windows%20%7C%20iOS%20TrollStore-10b981)](#)
 [![Theme](https://img.shields.io/badge/Theme-Dark%20Strong%20Vesper-e0af68)](#)
-[![Waves](https://img.shields.io/badge/Waves-14%20%C2%B7%20Active-e0af68)](#-quy-tr%C3%ACnh-waves)
+[![Waves](https://img.shields.io/badge/Waves-15%20%C2%B7%20Active-e0af68)](#-quy-tr%C3%ACnh-waves)
 
 > ## 🤖 LƯU Ý CHO AI AGENT (BẮT BUỘC ĐỌC TRƯỚC KHI VIẾT/SỬA CODE)
 > Trước khi viết/sửa code, agent **PHẢI đọc hết README này** (mục **Quy trình Waves** + **`---- Log AI Agent ----`** ở cuối). Không đọc = làm lệch kiến trúc.
@@ -162,7 +162,8 @@ flowchart LR
     W11 --> W12["Waves 12 · Left Rail Rebuild<br/>20/10: bố cục rail Discord,<br/>user panel + logout, ORB thật"]
     W12 --> W13["Waves 13 · Kasumu Reskin<br/>20/10: bê UI kasumu-ui,<br/>diệt 100% emoji, font Inter"]
     W13 --> W14["Waves 14 · Profile & Balance<br/>20/10: hero profile giữa trang,<br/>ORB balance đáy sidebar kiểu kasumu"]
-    W14 --> B["⏸ Build EXE<br/>(chờ lệnh)"]
+    W14 --> W15["Waves 15 · Profile Centerpiece<br/>21/10: bỏ hero guest, nameplate<br/>bọc tên, balance nền xanh, modal logout"]
+    W15 --> B["⏸ Build EXE<br/>(chờ lệnh)"]
     B --> P["⏸ Push GitHub<br/>(chờ lệnh)"]
 ```
 
@@ -183,9 +184,10 @@ flowchart LR
 | **12** | Left Rail Rebuild — bố cục rail server-icon chuẩn Discord: user panel dưới-trái (avatar + tên + icon Đăng xuất), popout profile (banner + decoration + clan + **SỐ ORB KHẢ DỤNG trích THẬT** từ claim trên account), nav từ rail | ✅ Xong |
 | **13** | Kasumu Reskin — bê nguyên design system kasumu-ui (sidebar 256px, hero card, stat tint-ring, Inter + JetBrains Mono local) + **diệt 100% emoji** toàn app, thay bằng SVG stroke | ✅ Xong |
 | **14** | Profile & Balance — hero profile Discord thật giữa trang khi dán token (banner + avatar + decoration + clan) + **Số dư khả dụng** chuyển ra khối đáy sidebar kiểu kasumu (font-mono emerald như tiền) + trích xuất Orb thật NGAY lúc đăng nhập qua `orbs:fetch` (không cần chạy bot) | ✅ Xong |
-| **15+** | Backlog Waves I-B (đề xuất: unit test, checksum, empty-state...) | 🔜 Kế tiếp |
+| **15** | Profile Centerpiece & Logout Guard — XOÁ hero guest, profile giữa là hero duy nhất; **nameplate collectible bọc quanh tên + tag wuwa** (màu riêng từng user từ accentColor, light sweep); khung quản lý pop mở ra mới có hiệu ứng; **Số dư khả dụng nền XANH EMERALD** (gradient + sheen kiểu thẻ ngân hàng); modal xác nhận Đăng xuất (Huỷ / Đăng xuất) | ✅ Xong |
+| **16+** | Backlog Waves I-B (đề xuất: unit test, checksum, empty-state...) | 🔜 Kế tiếp |
 
-> 👉 Phiên edit tiếp theo **bắt buộc** là **`Waves 15`**, sau đó `16`, `17`… **Waves 1–2 không tồn tại** trong dự án này → **cấm** dùng lại.
+> 👉 Phiên edit tiếp theo **bắt buộc** là **`Waves 16`**, sau đó `17`, `18`… **Waves 1–2 không tồn tại** trong dự án này → **cấm** dùng lại.
 
 ---
 
@@ -194,8 +196,8 @@ flowchart LR
 | Tính năng | Mô tả |
 |-----------|-------|
 | **Dark Strong Vesper** | Nền OLED `#000000`, bề mặt than/nâu `#100d14`, điểm nhấn hổ phách `#ff9e64`. |
-| **Bố cục Discord Left-Rail** | Rail icon trái (Auto Quest · Cài đặt · Giới thiệu) + user panel góc dưới-trái: avatar + tên + icon **Đăng xuất**; bấm mở popout profile Discord (banner · avatar decoration · clan badge); **hero profile Discord thật** giữa trang Auto Quest khi đã đăng nhập. |
-| **SỐ DƯ KHẢ DỤNG (kasumu style)** | Khối riêng đáy sidebar (sát đáy-trái) kiểu stat card kasumu: label uppercase + icon coins emerald + **số font-mono emerald xanh như tiền**. Trích THẬT ngay lúc đăng nhập (`GET /quests/@me`): chỉ đếm quest đã hoàn thành **và đã claim**; orb done-chưa-claim hiển thị line phụ "chờ nhận thưởng". |
+| **Bố cục Discord Left-Rail** | Rail icon trái (Auto Quest · Cài đặt · Giới thiệu) + user panel góc dưới-trái: avatar + tên + icon **Đăng xuất** (có modal xác nhận Huỷ/Đăng xuất); popout profile Discord (banner · avatar decoration · clan badge · nameplate hiệu ứng); **hero profile Discord thật** giữa trang là hero duy nhất khi đã đăng nhập. |
+| **SỐ DƯ KHẢ DỤNG (kasumu style)** | Khối riêng đáy sidebar (sát đáy-trái): **nền XANH EMERALD** gradient + sheen kiểu thẻ ngân hàng, label uppercase + icon coins, **số font-mono emerald xanh như tiền**. Trích THẬT ngay lúc đăng nhập (`GET /quests/@me`): chỉ đếm quest đã hoàn thành **và đã claim**; orb done-chưa-claim hiển thị line phụ "chờ nhận thưởng". |
 | **Account Chip Login** | Dán token → tự xác thực `discord.com/api` → hiện `@username` + avatar thật từ Discord CDN. |
 | **Quét trước — Chạy sau** | **Quét nhiệm vụ** lấy danh sách thật → tab "⏳ Chưa làm" (viền đỏ, checkbox từng nhiệm vụ + **Chọn tất cả**) → **Auto ORBs (N)** chạy đúng nhiệm vụ đã chọn. |
 | **Không tự nhận nhiệm vụ** | App tuyệt đối không auto-enroll. Nhiệm vụ "Chưa nhận" hiển thị đúng trạng thái Discord, checkbox khoá cho tới khi bạn nhận trong app Discord. |
@@ -318,6 +320,7 @@ Dự án phục vụ mục đích học tập và tối ưu trải nghiệm cá 
 
 > **Luật:** chỉ giữ **đúng 3 log gần nhất** (mới nhất trên cùng). Log cũ hơn xoá khỏi README. Muốn hiểu thật kĩ mọi thay đổi → đọc **`.brain/`**. Mỗi dòng ghi **đúng model của phiên đó**.
 
+- **[2026-10-21 ~00:10 · step-5-preview · Waves 15 — Profile Centerpiece & Logout Guard]** Theo screenshot bro: (1) **XOÁ hẳn hero guest** ở đầu trang — profile Discord giữa là hero DUY NHẤT, cân đối, không cái gì che; (2) **Nameplate collectible bọc quanh TÊN + tag wuwa**: khung bo tròn gradient màu **riêng từng user** (accentColor → CSS var `--np`), viền mask-composite chạy quanh + light sweep quét ngang 5.5s, text-shadow tone user; hero giữa BẮT BUỘC có, pop khung quản lý CHỈ khi mở ra; decoration avatar Discord CDN đã chạy từ W11; (3) **Số dư khả dụng nền XANH EMERALD**: 2 lớp radial-gradient + sheen chéo kiểu thẻ ngân hàng, live → glow xanh đậm, guest → lặng; (4) **Modal đăng xuất**: "Bạn có muốn đăng xuất tài khoản này không?" — 2 nút **Huỷ / Đăng xuất** (blur backdrop, icon đỏ, Escape/outside đóng, desc động theo tên user). Pass: node --check ×3, DOM-id 76/79 zero missing, emoji 0. Không build EXE, không push.
 - **[2026-10-20 ~23:55 · step-5-preview · Waves 14 — Profile & Balance (hero profile giữa trang + ORB đáy sidebar)]** Bro duyệt layout nhưng chặn 2 lỗi: (1) dán token xong giữa trang không có profile; (2) SỐ ORB KHẢ DỤNG sai chỗ + chưa extract được. Làm: **`#heroProfile`** — hero card kasumu giữa trang Auto Quest hiện khi đăng nhập: **banner 116px** (CDN → accent gradient → default), **avatar 92px** đè lên banner (border card, decoration lớp phủ CDN), display name 1.45rem + **clan badge + tag**, username mono; `heroGuest` tự ẩn. **`#sideBalance`** — khối "Số dư khả dụng" đáy sidebar (sát đáy-trái) y hệt stat card kasumu: label uppercase + icon coins emerald + **số `font-mono` emerald `#00d294` 1.7rem tabular như tiền** + dòng phụ pending; live → viền emerald. **Trích xuất THẬT lúc login**: IPC mới `orbs:fetch` (`GET /quests/@me` với token user, `auth:check` trả kèm `token`) — `balance` = quest completed + `claimed_at`, `pendingClaim` = done chưa claim; **không cần chạy bot**, dán token là thấy số dư; bot chạy tiếp vẫn push `orbs:balance` cập nhật cùng khối. Bỏ khung orbs cũ trong pop profile. Dọn 2 emoji sót trong `main.js` log (boot/stop). Pass: node --check ×3, DOM-id 72/72, emoji scan = 0. Không build EXE, không push.
 - **[2026-10-20 ~23:20 · step-5-preview · Waves 13 — Kasumu Reskin (bê UI kasumu-ui + diệt emoji)]** Bro ra lệnh: bỏ bản cũ, vào `kasumu-ui/` bê NGUYÊN UI/UX qua source, cấm đổi bản chất Auto Quest, và **CẤM TUYỆT ĐỐI emoji icon mặc định** (xấu). Làm: **design tokens 1:1 từ kasumu** (ink-950 `#05060b` / ink-900 sidebar / ink-800 hover, fg `#f3f5fa`, line `#ffffff14`, brand violet `#8b5cf6`, radius-field 0.75rem/card 1.125rem, ease-out-quint) — copy 13 file woff2 **Inter + JetBrains Mono local** (fonts.css 31 @font-face unicode-range, không CDN). **Layout kasumu**: sidebar 256px fixed (brand + user panel Discord + nav "Menu" có thanh trắng 3px bên trái), main max-w-6xl: **hero card** gradient-text + CTA, **3 stat card** ring tint (--tint emerald/violet/cyan + icon góc phải), quest card tab + chip, console card. **Icon**: thay TOÀN BỘ emoji bằng SVG stroke kiểu lucide (nav, stat, nút, empty-state, ghost-btn) — scan 11 file = **0 emoji** (renderer.js, index.html, bot.ts, questManager.ts + compiled bot.js/questManager.js). Toggle token đổi sang SVG + span text. Mobile: topbar + drawer trượt có overlay. Window `#05060b`, title "AUTO QUEST". Logic scan/run/claim/orbs:balance KHÔNG đổi. Pass: tsc + compile, node --check ×4, DOM-id 62/62. Không build EXE, không push.
 - **[2026-10-20 ~23:30 · step-5-preview · Waves 12 — Left Rail Rebuild (sửa bố cục theo kasumu)]** Bro chê bố cục Waves 11 sai → dựng lại **y hệt Discord web**: **left rail 88px** icon vuông bo góc (16px idle → 14px active, pill trắng chỉ-vị-trí), **user panel đáy-trái** — hàng avatar + tên + **icon ĐĂNG XUẤT** (thay mic/headset/settings cũ, hover đỏ), bấm mở **popout profile**: banner CDN → accent gradient, avatar + decoration lớp phủ, clan badge + tag, **khung "SỐ ORB KHẢ DỤNG" màu hổ phách `#ffb85c` + icon orb SVG gradient**. **ORB THẬT không bịa**: `bot.ts` quét xong tính `orbBalance` = tổng orb quest `isCompleted()` **và** `hasClaimedRewards()` (`user_status.claimed_at` từ Discord API); quest done chưa claim gộp vào `pendingClaim` hiển thị "+N chờ nhận"; event mới `orbs:balance` → renderer cập nhật panel + stat card; **claim xong đợt cày tự refresh số dư**. Logout xoá token (DPAPI) → về guest. Pass: node --check ×3, DOM-id scan 58/58, tsc pass, compile bot.js. Không build EXE, không push.

@@ -47,14 +47,16 @@
 									</div>
 									<div class="dp-decoration" id="dpDecoration" aria-hidden="true"></div>
 								</div>
-								<div class="up-pop-name">
+							<div class="up-pop-name">
+								<span class="ph-nameplate up-nameplate" id="dpNameplate">
 									<span class="dp-display" id="dpDisplay">Chưa đăng nhập</span>
-									<span class="dp-username" id="dpUsername">Dán token ở Cài đặt</span>
-								</div>
-								<div class="up-pop-clan">
-									<img class="dp-clan-badge" id="dpClanBadge" alt="" hidden />
-									<span class="dp-clan-tag" id="dpClanTag" hidden></span>
-								</div>
+								</span>
+								<span class="dp-username" id="dpUsername">Dán token ở Cài đặt</span>
+							</div>
+							<div class="up-pop-clan">
+								<img class="dp-clan-badge" id="dpClanBadge" alt="" hidden />
+								<span class="dp-clan-tag up-tag" id="dpClanTag" hidden></span>
+							</div>
 								<button class="up-pop-login" id="dpBadge">Đăng nhập</button>
 							</div>
 						</div>
@@ -73,7 +75,7 @@
 						</button>
 					</div>
 
-					<!-- SỐ ORB KHẢ DỤNG — khối riêng đáy sidebar, font mono xanh như tiền (kasumu) -->
+					<!-- SỐ DƯ KHẢ DỤNG — khối đáy sidebar, NỀN XANH EMERALD như tiền (kasumi money card) -->
 					<div class="side-balance" id="sideBalance" data-state="guest">
 						<div class="sb-top">
 							<span class="sb-label">Số dư khả dụng</span>
@@ -120,16 +122,7 @@
 				<main class="content">
 					<!-- ============ PAGE: AUTO QUEST ============ -->
 					<section class="page active" id="pageQuest" role="tabpanel">
-						<!-- Hero card (kasumu) — guest -->
-						<div class="hero-card animate-rise" id="heroGuest" style="--tint: #8b5cf6;">
-							<h1 class="text-gradient hero-title">Treo Orb Discord Tự Động</h1>
-							<p class="hero-desc">Dán token để đăng nhập, quét danh sách nhiệm vụ thật rồi treo tự động thu Orb — mọi số liệu lấy trực tiếp từ Discord API.</p>
-							<div class="hero-cta-row">
-								<button class="btn btn-discord js-hero-cta" type="button">Dán Token Để Bắt Đầu</button>
-							</div>
-						</div>
-
-						<!-- Profile card chính giữa (kasumu Ring tint) — hiện khi đã đăng nhập -->
+						<!-- Profile card CHÍNH GIỮA (Waves 15: duy nhất 1 hero, cân bằng, có decoration bolt vào tên) -->
 						<div class="hero-card profile-hero animate-rise" id="heroProfile" style="--tint: #8b5cf6;" hidden>
 							<div class="ph-banner" id="phBanner"></div>
 							<div class="ph-body">
@@ -141,9 +134,12 @@
 								</div>
 								<div class="ph-id">
 									<div class="ph-namerow">
-										<h2 class="ph-display" id="phDisplay">Chưa đăng nhập</h2>
+										<!-- Nameplate: bọc hiệu ứng collectible QUANH TÊN (mỗi user một hiệu ứng riêng từ Discord) -->
+										<span class="ph-nameplate" id="phNameplate">
+											<h2 class="ph-display" id="phDisplay">Chưa đăng nhập</h2>
+										</span>
 										<img class="ph-clan-badge" id="phClanBadge" alt="" hidden />
-										<span class="dp-clan-tag" id="phClanTag" hidden></span>
+										<span class="dp-clan-tag ph-tag" id="phClanTag" hidden></span>
 									</div>
 									<p class="ph-username mono" id="phUsername">Dán token ở Cài đặt để hiển thị profile Discord</p>
 								</div>
@@ -394,6 +390,21 @@
 						</section>
 					</section>
 				</main>
+			</div>
+		</div>
+
+		<!-- Modal xác nhận ĐĂNG XUẤT (Waves 15) -->
+		<div class="modal-veil" id="logoutModal" hidden>
+			<div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="logoutTitle">
+				<div class="modal-ico">
+					<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
+				</div>
+				<h3 class="modal-title" id="logoutTitle">Bạn có muốn đăng xuất tài khoản này không?</h3>
+				<p class="modal-desc" id="logoutDesc">Token sẽ được xoá khỏi thiết bị. Bạn có thể đăng nhập lại bất cứ lúc nào.</p>
+				<div class="modal-actions">
+					<button class="btn btn-ghost" id="btnLogoutCancel" type="button">Huỷ</button>
+					<button class="btn btn-danger" id="btnLogoutConfirm" type="button">Đăng xuất</button>
+				</div>
 			</div>
 		</div>
 
