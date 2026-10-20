@@ -243,9 +243,9 @@ function createWindow() {
 		minWidth: 520,
 		minHeight: 520,
 		show: false,
-		backgroundColor: '#000000',
+		backgroundColor: '#05060b',
 		autoHideMenuBar: true,
-		title: 'AUTO-QUEST PRO · Treo Orb Discord',
+		title: 'AUTO QUEST · Treo Orb Discord',
 		icon: app.isPackaged
 			? path.join(process.resourcesPath, 'icon.ico')
 			: path.join(__dirname, '..', 'resources', 'icon.ico'),

@@ -60,8 +60,8 @@ function taskNameOf(quest) {
  */
 async function scanQuests() {
     console.log('\n========================================');
-    console.log('🔍 [BẢO MẬT] Kết nối an toàn 100% trực tiếp tới Discord API.');
-    console.log('📡 Đang quét toàn bộ danh sách nhiệm vụ trên tài khoản...');
+    console.log('[BẢO MẬT] Kết nối an toàn 100% trực tiếp tới Discord API.');
+    console.log('Đang quét toàn bộ danh sách nhiệm vụ trên tài khoản...');
     await client.fetchQuests(true);
     const questManager = client.questManager;
     const inventory = questManager.list().map((quest) => {
@@ -90,7 +90,7 @@ async function scanQuests() {
     const realInventory = inventory.filter((q) => !q.preview);
     (0, events_1.report)('quest:inventory', { quests: realInventory });
     const pending = realInventory.filter((q) => q.status !== 'done');
-    console.log(`📋 Quét xong: ${realInventory.length} nhiệm vụ thật (${pending.length} chưa hoàn thành, ${realInventory.length - pending.length} đã xong).`);
+    console.log(`Quét xong: ${realInventory.length} nhiệm vụ thật (${pending.length} chưa hoàn thành, ${realInventory.length - pending.length} đã xong).`);
     // Số dư ORB THẬT từ account: chỉ đếm quest đã hoàn thành và ĐÃ CLAIM thưởng
     // (claim mới => orb thật vào ví; quest done chưa claim thì báo riêng để UI gợi ý).
     let orbBalance = 0;
@@ -107,7 +107,7 @@ async function scanQuests() {
             orbPendingClaim += q.orbs;
     }
     (0, events_1.report)('orbs:balance', { balance: orbBalance, pendingClaim: orbPendingClaim });
-    console.log(`🔮 Số dư Orb (đã claim từ nhiệm vụ): ${orbBalance}` +
+    console.log(`Số dư Orb (đã claim từ nhiệm vụ): ${orbBalance}` +
         (orbPendingClaim > 0 ? ` · chờ claim: ${orbPendingClaim} Orbs` : ''));
     return questManager;
 }
@@ -136,7 +136,7 @@ async function runSelectedQuests(questManager, quests) {
         runnable.push(quest);
     }
     if (runnable.length === 0) {
-        console.log('⚠️ Không có nhiệm vụ nào đã nhận để cày. Hãy mở app Discord bấm "Nhận nhiệm vụ" rồi quét lại.');
+        console.log('CẢNH BÁO: Không có nhiệm vụ nào đã nhận để cày. Hãy mở app Discord bấm "Nhận nhiệm vụ" rồi quét lại.');
         return;
     }
     console.log(`\n--- Cày ${runnable.length} nhiệm vụ ĐÃ NHẬN (chậm rãi, tránh rate-limit) ---`);
@@ -150,7 +150,7 @@ async function runSelectedQuests(questManager, quests) {
     await Promise.allSettled(tasks);
     const updatedOrbStats = questManager.getOrbsSummary();
     (0, events_1.report)('orb:summary', updatedOrbStats);
-    console.log(`🎉 Hoàn thành đợt cày! Tổng Orb đã đạt: ${updatedOrbStats.completedOrbs} Orbs.`);
+    console.log(`Hoàn thành đợt cày! Tổng Orb đã đạt: ${updatedOrbStats.completedOrbs} Orbs.`);
     // Cập nhật lại số dư Orb khả dụng sau khi claim thưởng xong (số liệu THẬT, không bịa).
     let freshBalance = 0;
     let freshPending = 0;
@@ -173,7 +173,7 @@ async function runQuestCycle() {
         if (runMode === 'scan') {
             // QUY TRÌNH CHUẨN: quét xong dừng ngay, KHÔNG tự nhận nhiệm vụ,
             // KHÔNG tự đăng ký. Chờ người dùng tích chọn rồi bấm chạy.
-            console.log('🧭 Quét xong — dừng tại đây, chờ người dùng chọn nhiệm vụ.');
+            console.log('Quét xong — dừng tại đây, chờ người dùng chọn nhiệm vụ.');
             (0, events_1.report)('scan:complete', { total: questManager.size });
             (0, events_1.report)('finish', { scanned: true });
             return;
@@ -183,11 +183,11 @@ async function runQuestCycle() {
         let questsValid = questManager.filterQuestsValidToDo();
         if (runMode === 'run') {
             questsValid = questsValid.filter((q) => selectedIds.has(questManager_1.QuestManager.getQuestId(q)));
-            console.log(`🎯 Chế độ chạy theo lựa chọn: ${questsValid.length} nhiệm vụ khớp danh sách chọn.`);
+            console.log(`Chế độ chạy theo lựa chọn: ${questsValid.length} nhiệm vụ khớp danh sách chọn.`);
         }
         (0, events_1.report)('quests', { total: questsValid.length });
         if (questsValid.length === 0) {
-            console.log('✅ Không có nhiệm vụ nào cần thực hiện trong đợt này.');
+            console.log('Không có nhiệm vụ nào cần thực hiện trong đợt này.');
             (0, events_1.report)('finish', {});
             return;
         }
@@ -220,12 +220,12 @@ client.once(v10_1.GatewayDispatchEvents.Ready, async ({ data }) => {
         await shutdown(0);
     }
     else {
-        console.log(`⚡ ĐÃ BẬT CHẾ ĐỘ TREO ORB TỰ ĐỘNG (Quét lại mỗi ${loopIntervalMinutes} phút).`);
+        console.log(`ĐÃ BẬT CHẾ ĐỘ TREO ORB TỰ ĐỘNG (Quét lại mỗi ${loopIntervalMinutes} phút).`);
         while (!isStopping) {
             await runQuestCycle();
             if (isStopping)
                 break;
-            console.log(`\n💤 Đang treo Orb... Tự động quét lại sau ${loopIntervalMinutes} phút.`);
+            console.log(`\nĐang treo Orb... Tự động quét lại sau ${loopIntervalMinutes} phút.`);
             const totalSeconds = loopIntervalMinutes * 60;
             for (let remaining = totalSeconds; remaining > 0; remaining--) {
                 if (isStopping)

@@ -18,7 +18,7 @@ class QuestManager {
         const questManager = new QuestManager(client, response.quests.map((quest) => quest_1.Quest.create(quest)));
         // Quét toàn bộ nhiệm vụ phụ / excluded_quests để không xót bất kỳ nhiệm vụ nào
         if (fetchExcludedQuests && Array.isArray(response.excluded_quests) && response.excluded_quests.length > 0) {
-            console.log(`🔍 Tìm thấy ${response.excluded_quests.length} nhiệm vụ phụ/bổ sung. Đang nạp chi tiết để không xót nhiệm vụ...`);
+            console.log(`Tìm thấy ${response.excluded_quests.length} nhiệm vụ phụ/bổ sung. Đang nạp chi tiết để không xót nhiệm vụ...`);
             for (const quest of response.excluded_quests) {
                 if (quest.id && !questManager.hasQuest(quest.id)) {
                     await questManager.addExcludedQuest(quest.id);
@@ -37,11 +37,11 @@ class QuestManager {
                 targeted_content: 0,
                 preview: false,
             });
-            console.log(`  + Đã nạp thành công nhiệm vụ bổ sung: "${quest.config.messages.quest_name}".`);
+            console.log(`Đã nạp thành công nhiệm vụ bổ sung: "${quest.config.messages.quest_name}".`);
             this.quests.set(quest.id, quest);
         }
         catch (err) {
-            console.warn(`  ! Không thể lấy chi tiết nhiệm vụ bổ sung "${questId}": ${err.message}`);
+            console.warn(`KHONG THE lay chi tiet nhiem vu bo sung "${questId}": ${err.message}`);
         }
     }
     [Symbol.iterator]() {
@@ -237,7 +237,7 @@ class QuestManager {
                     traffic_metadata_sealed: quest.raw.traffic_metadata_sealed,
                 },
             }));
-            console.log(`🎁 ĐÃ NHẬN THƯỞNG: "${name}" -> Nhận: ${rewardName}!`);
+            console.log(`ĐÃ NHẬN THƯỞNG: "${name}" -> Nhận: ${rewardName}!`);
             quest.updateUserStatus(res);
             (0, events_1.report)('quest:done', { id: QuestManager.getQuestId(quest), name, orbs, rewardName });
         }
@@ -247,7 +247,7 @@ class QuestManager {
             if (rawError.captcha_key ||
                 message.includes('No Description') ||
                 message.toLowerCase().includes('captcha')) {
-                console.log(`✅ Nhiệm vụ "${name}" đã hoàn thành 100%! (Discord yêu cầu captcha khi nhận thưởng: bạn mở Kho quà trên Discord bấm Nhận nhé).`);
+                console.log(`Nhiệm vụ "${name}" đã hoàn thành 100%! (Discord yêu cầu captcha khi nhận thưởng: bạn mở Kho quà trên Discord bấm Nhận nhé).`);
                 (0, events_1.report)('quest:done', { id: QuestManager.getQuestId(quest), name, orbs, rewardName, note: 'Yêu cầu mở Kho quà nhận thủ công (Captcha)' });
             }
             else {
@@ -345,7 +345,7 @@ class QuestManager {
         const maxFuture = 10, speed = 7, interval = 7;
         const enrolledAt = new Date(quest.userStatus?.enrolled_at).getTime();
         let completed = false;
-        console.log(`▶ Đang giả lập xem video nhiệm vụ: "${questName}" (${secondsNeeded} giây)...`);
+        console.log(`Đang giả lập xem video nhiệm vụ: "${questName}" (${secondsNeeded} giây)...`);
         while (true) {
             const maxAllowed = Math.floor((Date.now() - enrolledAt) / 1000) + maxFuture;
             const diff = maxAllowed - secondsDone;
@@ -377,7 +377,7 @@ class QuestManager {
             });
             quest.updateUserStatus(finalRes);
         }
-        console.log(`🎉 ĐÃ HOÀN THÀNH VIDEO: "${questName}"!`);
+        console.log(`ĐÃ HOÀN THÀNH VIDEO: "${questName}"!`);
         (0, events_1.report)('quest:done', {
             id: QuestManager.getQuestId(quest),
             name: questName,
@@ -388,7 +388,7 @@ class QuestManager {
     }
     async doingPlayOnPlatformQuest(quest, questName, secondsNeeded, taskName, applicationName, heartbeatIntervalS = 20) {
         const interval = heartbeatIntervalS;
-        console.log(`🎮 Đang giả lập chơi game "${applicationName}" cho "${questName}" (Thời gian yêu cầu: ${Math.ceil(secondsNeeded / 60)} phút)...`);
+        console.log(`Đang giả lập chơi game "${applicationName}" cho "${questName}" (Thời gian yêu cầu: ${Math.ceil(secondsNeeded / 60)} phút)...`);
         let consecutiveErrors = 0;
         while (!quest.isCompleted()) {
             const secondsDone = quest.userStatus?.progress?.[taskName]?.value || 0;
@@ -438,7 +438,7 @@ class QuestManager {
         catch {
             /* ignore terminal heartbeat error */
         }
-        console.log(`🎉 ĐÃ HOÀN THÀNH NHIỆM VỤ GAME: "${questName}"!`);
+        console.log(`ĐÃ HOÀN THÀNH NHIỆM VỤ GAME: "${questName}"!`);
         (0, events_1.report)('quest:done', {
             id: QuestManager.getQuestId(quest),
             name: questName,
@@ -450,7 +450,7 @@ class QuestManager {
     async doingPlayActivityQuest(quest, questName, secondsNeeded, taskName, applicationName, heartbeatIntervalS = 20) {
         const interval = heartbeatIntervalS;
         const streamKey = 'call:1:1';
-        console.log(`🎯 Đang giả lập hoạt động voice/activity "${applicationName}" cho "${questName}" (${Math.ceil(secondsNeeded / 60)} phút)...`);
+        console.log(`Đang giả lập hoạt động voice/activity "${applicationName}" cho "${questName}" (${Math.ceil(secondsNeeded / 60)} phút)...`);
         let consecutiveErrors = 0;
         while (!quest.isCompleted()) {
             const secondsDone = quest.userStatus?.progress?.[taskName]?.value || 0;
@@ -494,7 +494,7 @@ class QuestManager {
         catch {
             /* ignore terminal heartbeat error */
         }
-        console.log(`🎉 ĐÃ HOÀN THÀNH HOẠT ĐỘNG: "${questName}"!`);
+        console.log(`ĐÃ HOÀN THÀNH HOẠT ĐỘNG: "${questName}"!`);
         (0, events_1.report)('quest:done', {
             id: QuestManager.getQuestId(quest),
             name: questName,
@@ -507,7 +507,7 @@ class QuestManager {
         const applicationId = quest.config.application.id;
         const applicationName = quest.config.application.name;
         const questTarget = quest.config.task_config_v2.tasks.ACHIEVEMENT_IN_ACTIVITY.target;
-        console.log(`🏆 Đang xử lý thành tựu ứng dụng: "${applicationName}" cho "${questName}"...`);
+        console.log(`Đang xử lý thành tựu ứng dụng: "${applicationName}" cho "${questName}"...`);
         const query = new URLSearchParams({
             response_type: 'code',
             client_id: applicationId,
@@ -575,7 +575,7 @@ class QuestManager {
                 progress: {},
             });
         }
-        console.log(`🎉 ĐÃ HOÀN THÀNH THÀNH TỰU: "${questName}"!`);
+        console.log(`ĐÃ HOÀN THÀNH THÀNH TỰU: "${questName}"!`);
         (0, events_1.report)('quest:done', {
             id: QuestManager.getQuestId(quest),
             name: questName,

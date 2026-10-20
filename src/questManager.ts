@@ -33,7 +33,7 @@ export class QuestManager implements Iterable<Quest> {
 		// Quét toàn bộ nhiệm vụ phụ / excluded_quests để không xót bất kỳ nhiệm vụ nào
 		if (fetchExcludedQuests && Array.isArray(response.excluded_quests) && response.excluded_quests.length > 0) {
 			console.log(
-				`🔍 Tìm thấy ${response.excluded_quests.length} nhiệm vụ phụ/bổ sung. Đang nạp chi tiết để không xót nhiệm vụ...`,
+				`Tìm thấy ${response.excluded_quests.length} nhiệm vụ phụ/bổ sung. Đang nạp chi tiết để không xót nhiệm vụ...`,
 			);
 			for (const quest of response.excluded_quests) {
 				if (quest.id && !questManager.hasQuest(quest.id)) {
@@ -56,12 +56,12 @@ export class QuestManager implements Iterable<Quest> {
 				preview: false,
 			});
 			console.log(
-				`  + Đã nạp thành công nhiệm vụ bổ sung: "${quest.config.messages.quest_name}".`,
+				`Đã nạp thành công nhiệm vụ bổ sung: "${quest.config.messages.quest_name}".`,
 			);
 			this.quests.set(quest.id, quest);
 		} catch (err: any) {
 			console.warn(
-				`  ! Không thể lấy chi tiết nhiệm vụ bổ sung "${questId}": ${err.message}`,
+				`KHONG THE lay chi tiet nhiem vu bo sung "${questId}": ${err.message}`,
 			);
 		}
 	}
@@ -304,7 +304,7 @@ export class QuestManager implements Iterable<Quest> {
 			)) as any;
 
 			console.log(
-				`🎁 ĐÃ NHẬN THƯỞNG: "${name}" -> Nhận: ${rewardName}!`,
+				`ĐÃ NHẬN THƯỞNG: "${name}" -> Nhận: ${rewardName}!`,
 			);
 			quest.updateUserStatus(res);
 			report('quest:done', { id: QuestManager.getQuestId(quest), name, orbs, rewardName });
@@ -317,7 +317,7 @@ export class QuestManager implements Iterable<Quest> {
 				message.toLowerCase().includes('captcha')
 			) {
 				console.log(
-					`✅ Nhiệm vụ "${name}" đã hoàn thành 100%! (Discord yêu cầu captcha khi nhận thưởng: bạn mở Kho quà trên Discord bấm Nhận nhé).`,
+					`Nhiệm vụ "${name}" đã hoàn thành 100%! (Discord yêu cầu captcha khi nhận thưởng: bạn mở Kho quà trên Discord bấm Nhận nhé).`,
 				);
 				report('quest:done', { id: QuestManager.getQuestId(quest), name, orbs, rewardName, note: 'Yêu cầu mở Kho quà nhận thủ công (Captcha)' });
 			} else {
@@ -460,7 +460,7 @@ export class QuestManager implements Iterable<Quest> {
 		).getTime();
 		let completed = false;
 
-		console.log(`▶ Đang giả lập xem video nhiệm vụ: "${questName}" (${secondsNeeded} giây)...`);
+		console.log(`Đang giả lập xem video nhiệm vụ: "${questName}" (${secondsNeeded} giây)...`);
 
 		while (true) {
 			const maxAllowed =
@@ -506,7 +506,7 @@ export class QuestManager implements Iterable<Quest> {
 			quest.updateUserStatus(finalRes as any);
 		}
 
-		console.log(`🎉 ĐÃ HOÀN THÀNH VIDEO: "${questName}"!`);
+		console.log(`ĐÃ HOÀN THÀNH VIDEO: "${questName}"!`);
 		report('quest:done', {
 			id: QuestManager.getQuestId(quest),
 			name: questName,
@@ -526,7 +526,7 @@ export class QuestManager implements Iterable<Quest> {
 	) {
 		const interval = heartbeatIntervalS;
 		console.log(
-			`🎮 Đang giả lập chơi game "${applicationName}" cho "${questName}" (Thời gian yêu cầu: ${Math.ceil(
+			`Đang giả lập chơi game "${applicationName}" cho "${questName}" (Thời gian yêu cầu: ${Math.ceil(
 				secondsNeeded / 60,
 			)} phút)...`,
 		);
@@ -597,7 +597,7 @@ export class QuestManager implements Iterable<Quest> {
 			/* ignore terminal heartbeat error */
 		}
 
-		console.log(`🎉 ĐÃ HOÀN THÀNH NHIỆM VỤ GAME: "${questName}"!`);
+		console.log(`ĐÃ HOÀN THÀNH NHIỆM VỤ GAME: "${questName}"!`);
 		report('quest:done', {
 			id: QuestManager.getQuestId(quest),
 			name: questName,
@@ -618,7 +618,7 @@ export class QuestManager implements Iterable<Quest> {
 		const interval = heartbeatIntervalS;
 		const streamKey = 'call:1:1';
 		console.log(
-			`🎯 Đang giả lập hoạt động voice/activity "${applicationName}" cho "${questName}" (${Math.ceil(
+			`Đang giả lập hoạt động voice/activity "${applicationName}" cho "${questName}" (${Math.ceil(
 				secondsNeeded / 60,
 			)} phút)...`,
 		);
@@ -683,7 +683,7 @@ export class QuestManager implements Iterable<Quest> {
 			/* ignore terminal heartbeat error */
 		}
 
-		console.log(`🎉 ĐÃ HOÀN THÀNH HOẠT ĐỘNG: "${questName}"!`);
+		console.log(`ĐÃ HOÀN THÀNH HOẠT ĐỘNG: "${questName}"!`);
 		report('quest:done', {
 			id: QuestManager.getQuestId(quest),
 			name: questName,
@@ -699,7 +699,7 @@ export class QuestManager implements Iterable<Quest> {
 		const questTarget =
 			quest.config.task_config_v2.tasks.ACHIEVEMENT_IN_ACTIVITY.target;
 
-		console.log(`🏆 Đang xử lý thành tựu ứng dụng: "${applicationName}" cho "${questName}"...`);
+		console.log(`Đang xử lý thành tựu ứng dụng: "${applicationName}" cho "${questName}"...`);
 
 		const query = new URLSearchParams({
 			response_type: 'code',
@@ -789,7 +789,7 @@ export class QuestManager implements Iterable<Quest> {
 			} as any);
 		}
 
-		console.log(`🎉 ĐÃ HOÀN THÀNH THÀNH TỰU: "${questName}"!`);
+		console.log(`ĐÃ HOÀN THÀNH THÀNH TỰU: "${questName}"!`);
 		report('quest:done', {
 			id: QuestManager.getQuestId(quest),
 			name: questName,

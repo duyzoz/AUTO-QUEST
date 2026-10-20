@@ -6,283 +6,370 @@
 			http-equiv="Content-Security-Policy"
 			content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' https://cdn.discordapp.com data:; font-src 'self';"
 		/>
-		<title>AUTO-QUEST PRO · Treo Orb Discord</title>
+		<title>AUTO QUEST · Treo Orb Discord</title>
+		<link rel="stylesheet" href="fonts.css" />
 		<link rel="stylesheet" href="styles.css" />
 	</head>
 	<body>
-		<div class="shell">
-			<!-- ============ LEFT RAIL (giống web Discord) ============ -->
-			<aside class="rail">
-				<div class="rail-icons">
-					<button class="rail-btn active" id="navQuest" title="Auto Quest" aria-label="Auto Quest" aria-selected="true">
-						<span class="rail-pill" aria-hidden="true"></span>
-						<span class="rail-ico">
-							<svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true"><path d="M12 2 4 6v6c0 5 3.4 9.4 8 10 4.6-.6 8-5 8-10V6l-8-4zm-1 14-4-4 1.4-1.4L11 13.2l4.6-4.6L17 10l-6 6z"/></svg>
-						</span>
-					</button>
-					<button class="rail-btn" id="navSettings" title="Cài đặt" aria-label="Cài đặt">
-						<span class="rail-pill" aria-hidden="true"></span>
-						<span class="rail-ico">
-							<svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true"><path d="M19.4 13c0-.3.1-.7.1-1s0-.7-.1-1l2.1-1.6c.2-.2.3-.5.1-.7l-2-3.4c-.1-.2-.4-.3-.6-.2l-2.5 1c-.5-.4-1.1-.7-1.7-1l-.4-2.6c0-.3-.3-.5-.5-.5h-4c-.2 0-.5.2-.5.5l-.4 2.6c-.6.2-1.2.6-1.7 1l-2.5-1c-.2-.1-.5 0-.6.2l-2 3.4c-.1.2-.1.5.1.7L4.5 11c0 .3-.1.7-.1 1s0 .7.1 1l-2.1 1.6c-.2.2-.3.5-.1.7l2 3.4c.1.2.4.3.6.2l2.5-1c.5.4 1.1.7 1.7 1l.4 2.6c0 .3.3.5.5.5h4c.2 0 .5-.2.5-.5l.4-2.6c.6-.2 1.2-.6 1.7-1l2.5 1c.2.1.5 0 .6-.2l2-3.4c.1-.2.1-.5-.1-.7L19.4 13zM12 15.5c-1.9 0-3.5-1.6-3.5-3.5s1.6-3.5 3.5-3.5 3.5 1.6 3.5 3.5-1.6 3.5-3.5 3.5z"/></svg>
-						</span>
-					</button>
-					<button class="rail-btn" id="navAbout" title="Giới thiệu" aria-label="Giới thiệu">
-						<span class="rail-pill" aria-hidden="true"></span>
-						<span class="rail-ico">
-							<svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
-						</span>
-					</button>
-				</div>
+		<!-- Lớp nền kasumu: base + 2 radial glow + overlay -->
+		<div class="bg-layers" aria-hidden="true">
+			<div class="bg-base"></div>
+			<div class="bg-glow"></div>
+			<div class="bg-overlay"></div>
+		</div>
 
-				<!-- ============ USER PANEL góc trái dưới (login/logout) ============ -->
-				<div class="userpanel" id="dprofile" data-state="guest">
-					<!-- Khung profile mở lên khi bấm panel -->
-					<div class="up-pop" id="upPop" hidden>
-						<div class="up-pop-banner" id="dpBanner"></div>
-						<div class="up-pop-body">
-							<div class="up-pop-avatarwrap">
-								<div class="dp-avatar" id="dpAvatar">
-									<svg viewBox="0 0 24 24" width="30" height="30" fill="currentColor" aria-hidden="true"><path d="M12 12c2.7 0 4.8-2.2 4.8-4.9S14.7 2.3 12 2.3 7.2 4.4 7.2 7.1 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.9v2.4h19.2v-2.4c0-3.3-6.4-4.9-9.6-4.9z"/></svg>
-								</div>
-								<div class="dp-decoration" id="dpDecoration" aria-hidden="true"></div>
-							</div>
-							<div class="up-pop-name">
-								<span class="dp-display" id="dpDisplay">Chưa đăng nhập</span>
-								<span class="dp-username" id="dpUsername">Dán token ở Cài đặt</span>
-							</div>
-							<div class="up-pop-clan">
-								<img class="dp-clan-badge" id="dpClanBadge" alt="" hidden />
-								<span class="dp-clan-tag" id="dpClanTag" hidden></span>
-							</div>
-							<!-- Số ORB khả dụng (trích THẬT từ account) -->
-							<div class="up-pop-orbs">
-								<span class="orb-ico" aria-hidden="true">
-									<svg viewBox="0 0 24 24" width="18" height="18"><defs><radialGradient id="orbGrad" cx="35%" cy="30%" r="75%"><stop offset="0%" stop-color="#ffe9c4"/><stop offset="45%" stop-color="#ffb85c"/><stop offset="100%" stop-color="#e0821a"/></radialGradient></defs><circle cx="12" cy="12" r="10" fill="url(#orbGrad)"/><ellipse cx="9.2" cy="8.6" rx="3.4" ry="2.2" fill="#fff" opacity="0.35" transform="rotate(-24 9.2 8.6)"/></svg>
-								</span>
-								<div class="orb-data">
-									<span class="orb-label">SỐ ORB KHẢ DỤNG</span>
-									<strong class="orb-value" id="orbBalance">—</strong>
-									<span class="orb-sub" id="orbPending"></span>
-								</div>
-							</div>
-							<button class="up-pop-login" id="dpBadge">Đăng nhập</button>
-						</div>
+		<!-- Topbar mobile -->
+		<header class="topbar">
+			<button type="button" class="topbar-btn" id="btnDrawer" aria-label="Mở menu">
+				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18" aria-hidden="true"><path d="M4 5h16"/><path d="M4 12h16"/><path d="M4 19h16"/></svg>
+			</button>
+			<span class="topbar-brand">AUTO QUEST</span>
+		</header>
+		<div class="drawer-overlay" id="drawerOverlay" aria-hidden="true"></div>
+
+		<div class="shell">
+			<!-- ============ SIDEBAR 256px (kasumu) ============ -->
+			<aside class="sidebar" id="sidebar">
+				<div class="side-inner">
+					<div class="side-brand">
+						<span class="brand-name">AUTO QUEST</span>
 					</div>
-					<!-- Hàng panel chính: avatar + tên + icon đăng xuất -->
-					<button class="up-row" id="upRow" aria-haspopup="true" aria-expanded="false">
-						<span class="up-avatar" id="upAvatar">
-							<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true"><path d="M12 12c2.7 0 4.8-2.2 4.8-4.9S14.7 2.3 12 2.3 7.2 4.4 7.2 7.1 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.9v2.4h19.2v-2.4c0-3.3-6.4-4.9-9.6-4.9z"/></svg>
-						</span>
-						<span class="up-text">
-							<strong class="up-name" id="upName">Chưa đăng nhập</strong>
-							<small class="up-sub" id="upSub">Bấm để đăng nhập</small>
-						</span>
-						<!-- Logo ĐĂNG XUẤT (thay mic/tai-phone/cài đặt cũ) -->
-						<span class="up-logout" id="btnLogout" title="Đăng xuất" role="button" tabindex="0" aria-label="Đăng xuất">
-							<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M16 13v-2H7V8l-5 4 5 4v-3h9zm3-10H9c-1.1 0-2 .9-2 2v3h2V5h10v14H9v-3H7v3c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z"/></svg>
-						</span>
-					</button>
+
+					<!-- Thẻ tài khoản / đăng nhập (Discord profile + ORB) -->
+					<div class="userpanel" id="dprofile" data-state="guest">
+						<!-- Popout profile mở XUỐNG dưới (userpanel nằm trên sidebar) -->
+						<div class="up-pop" id="upPop" hidden>
+							<div class="up-pop-banner" id="dpBanner"></div>
+							<div class="up-pop-body">
+								<div class="up-pop-avatarwrap">
+									<div class="dp-avatar" id="dpAvatar">
+										<svg viewBox="0 0 24 24" width="30" height="30" fill="currentColor" aria-hidden="true"><path d="M12 12c2.7 0 4.8-2.2 4.8-4.9S14.7 2.3 12 2.3 7.2 4.4 7.2 7.1 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.9v2.4h19.2v-2.4c0-3.3-6.4-4.9-9.6-4.9z"/></svg>
+									</div>
+									<div class="dp-decoration" id="dpDecoration" aria-hidden="true"></div>
+								</div>
+								<div class="up-pop-name">
+									<span class="dp-display" id="dpDisplay">Chưa đăng nhập</span>
+									<span class="dp-username" id="dpUsername">Dán token ở Cài đặt</span>
+								</div>
+								<div class="up-pop-clan">
+									<img class="dp-clan-badge" id="dpClanBadge" alt="" hidden />
+									<span class="dp-clan-tag" id="dpClanTag" hidden></span>
+								</div>
+								<!-- Số ORB khả dụng (trích THẬT từ account) -->
+								<div class="up-pop-orbs">
+									<span class="orb-ico" aria-hidden="true">
+										<svg viewBox="0 0 24 24" width="18" height="18"><defs><radialGradient id="orbGrad" cx="35%" cy="30%" r="75%"><stop offset="0%" stop-color="#ffe9c4"/><stop offset="45%" stop-color="#ffb85c"/><stop offset="100%" stop-color="#e0821a"/></radialGradient></defs><circle cx="12" cy="12" r="10" fill="url(#orbGrad)"/><ellipse cx="9.2" cy="8.6" rx="3.4" ry="2.2" fill="#fff" opacity="0.35" transform="rotate(-24 9.2 8.6)"/></svg>
+									</span>
+									<div class="orb-data">
+										<span class="orb-label">SỐ ORB KHẢ DỤNG</span>
+										<strong class="orb-value" id="orbBalance">—</strong>
+										<span class="orb-sub" id="orbPending"></span>
+									</div>
+								</div>
+								<button class="up-pop-login" id="dpBadge">Đăng nhập</button>
+							</div>
+						</div>
+						<!-- Hàng panel: avatar + tên + đăng xuất -->
+						<button class="up-row" id="upRow" aria-haspopup="true" aria-expanded="false">
+							<span class="up-avatar" id="upAvatar">
+								<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true"><path d="M12 12c2.7 0 4.8-2.2 4.8-4.9S14.7 2.3 12 2.3 7.2 4.4 7.2 7.1 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.9v2.4h19.2v-2.4c0-3.3-6.4-4.9-9.6-4.9z"/></svg>
+							</span>
+							<span class="up-text">
+								<strong class="up-name" id="upName">Chưa đăng nhập</strong>
+								<small class="up-sub" id="upSub">Bấm để đăng nhập</small>
+							</span>
+							<span class="up-logout" id="btnLogout" title="Đăng xuất" role="button" tabindex="0" aria-label="Đăng xuất">
+								<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
+							</span>
+						</button>
+					</div>
+
+					<!-- Điều hướng chính -->
+					<nav class="side-nav" aria-label="Điều hướng chính">
+						<p class="nav-label">Menu</p>
+						<ul class="nav-list">
+							<li>
+								<button class="nav-item active" id="navQuest" aria-selected="true">
+									<span class="nav-ind" aria-hidden="true"></span>
+									<svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
+									<span class="nav-text">Auto Quest</span>
+								</button>
+							</li>
+							<li>
+								<button class="nav-item" id="navSettings">
+									<span class="nav-ind" aria-hidden="true"></span>
+									<svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915"/><circle cx="12" cy="12" r="3"/></svg>
+									<span class="nav-text">Cài Đặt</span>
+								</button>
+							</li>
+							<li>
+								<button class="nav-item" id="navAbout">
+									<span class="nav-ind" aria-hidden="true"></span>
+									<svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+									<span class="nav-text">Giới Thiệu</span>
+								</button>
+							</li>
+						</ul>
+					</nav>
 				</div>
 			</aside>
 
-			<!-- ============ MAIN AREA ============ -->
-			<div class="app-scroll" id="appScroll">
-				<!-- ============ PAGE: AUTO QUEST ============ -->
-				<main class="page active" id="pageQuest" role="tabpanel">
-					<div class="stats-row">
-						<div class="stat-card">
-							<div class="stat-icon">🔮</div>
-							<div class="stat-data">
-								<span class="stat-label">SỐ ORB KHẢ DỤNG</span>
+			<!-- ============ MAIN (kasumu max-w-6xl) ============ -->
+			<div class="main-wrap" id="appScroll">
+				<main class="content">
+					<!-- ============ PAGE: AUTO QUEST ============ -->
+					<section class="page active" id="pageQuest" role="tabpanel">
+						<!-- Hero card (kasumu) -->
+						<div class="hero-card animate-rise" style="--tint: #8b5cf6;">
+							<h1 class="text-gradient hero-title">Treo Orb Discord Tự Động</h1>
+							<p class="hero-desc">Dán token để đăng nhập, quét danh sách nhiệm vụ thật rồi treo tự động thu Orb — mọi số liệu lấy trực tiếp từ Discord API.</p>
+							<div class="hero-cta-row">
+								<button class="btn btn-discord js-hero-cta" type="button">Dán Token Để Bắt Đầu</button>
+							</div>
+						</div>
+
+						<!-- 3 stat cards (kasumu tint ring) -->
+						<div class="stats-row">
+							<div class="stat-card animate-rise stagger-1" style="--tint: #00d294;">
+								<div class="stat-top">
+									<span class="stat-label">Số Orb khả dụng</span>
+									<span class="stat-ico tint-emerald">
+										<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13.744 17.736a6 6 0 1 1-7.48-7.48"/><path d="M15 6h1v4"/><path d="m6.134 14.768.866-.5 2 3.464"/><circle cx="16" cy="8" r="6"/></svg>
+									</span>
+								</div>
 								<div class="stat-value-wrap">
-									<span class="stat-value" id="statOrbs">—</span>
-									<span class="stat-bonus" id="statOrbsBonus">(+ 0 phiên này)</span>
+									<span class="stat-value mono" id="statOrbs">—</span>
+									<span class="stat-bonus mono" id="statOrbsBonus">(+ 0 phiên này)</span>
 								</div>
+								<p class="stat-desc">Chỉ đếm nhiệm vụ đã hoàn thành và đã claim thưởng trên account</p>
 							</div>
-						</div>
-						<div class="stat-card">
-							<div class="stat-icon">📋</div>
-							<div class="stat-data">
-								<span class="stat-label">TIẾN ĐỘ NHIỆM VỤ</span>
-								<span class="stat-value" id="statQuests">0 / 0</span>
+							<div class="stat-card animate-rise stagger-2" style="--tint: #8b5cf6;">
+								<div class="stat-top">
+									<span class="stat-label">Tiến độ nhiệm vụ</span>
+									<span class="stat-ico tint-violet">
+										<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 17 2 2 4-4"/><path d="m3 7 2 2 4-4"/><path d="M13 6h8"/><path d="M13 12h8"/><path d="M13 18h8"/></svg>
+									</span>
+								</div>
+								<span class="stat-value mono" id="statQuests">0 / 0</span>
+								<p class="stat-desc">Tỷ lệ nhiệm vụ đã xong trong đợt quét gần nhất</p>
 							</div>
-						</div>
-						<div class="stat-card">
-							<div class="stat-icon">⚡</div>
-							<div class="stat-data">
-								<span class="stat-label">CHẾ ĐỘ TREO</span>
-								<span class="stat-value small-val" id="statMode">Treo tự động (30m)</span>
-							</div>
-						</div>
-					</div>
-
-					<section class="card quests-card">
-						<div class="card-head quest-head">
-							<div class="tab-buttons">
-								<button class="tab-btn active" id="tabActive">
-									⏳ Chưa làm <span class="tab-count" id="countActive">0</span>
-								</button>
-								<button class="tab-btn" id="tabDone">
-									✅ Đã làm <span class="tab-count" id="countDone">0</span>
-								</button>
-							</div>
-							<span class="counter" id="questCounter">0 / 0</span>
-						</div>
-
-						<div class="select-tools" id="selectTools" style="display: none;">
-							<label class="check small select-all-wrap">
-								<input type="checkbox" id="selectAll" />
-								<span>Chọn tất cả</span>
-							</label>
-							<span class="selected-info">Đã chọn: <strong id="selectedCount">0</strong> <span class="selected-orbs" id="selectedOrbs"></span></span>
-						</div>
-
-						<div class="quest-list" id="questListActive">
-							<div class="empty" id="emptyActive">
-								<div class="empty-ico">🔮</div>
-								<p>Chưa có nhiệm vụ nào.</p>
-								<span>Vào Cài đặt → dán Token → bấm "Quét nhiệm vụ".</span>
+							<div class="stat-card animate-rise stagger-3" style="--tint: #00d2ef;">
+								<div class="stat-top">
+									<span class="stat-label">Chế độ treo</span>
+									<span class="stat-ico tint-cyan">
+										<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="10" x2="14" y1="2" y2="2"/><line x1="12" x2="15" y1="14" y2="11"/><circle cx="12" cy="14" r="8"/></svg>
+									</span>
+								</div>
+								<span class="stat-value small-val mono" id="statMode">Treo tự động (30m)</span>
+								<p class="stat-desc">Tự quét lại nhiệm vụ mới theo chu kỳ đã chọn</p>
 							</div>
 						</div>
 
-						<div class="quest-list" id="questListDone" style="display: none;">
-							<div class="empty" id="emptyDone">
-								<div class="empty-ico">🎁</div>
-								<p>Chưa có nhiệm vụ đã hoàn thành.</p>
-								<span>Các nhiệm vụ cày xong hoặc đã làm trước đó sẽ hiển thị tại đây.</span>
+						<!-- Quests card -->
+						<section class="card quests-card animate-rise stagger-4">
+							<div class="card-head quest-head">
+								<div class="tab-buttons">
+									<button class="tab-btn active" id="tabActive">
+										Chưa làm
+										<span class="tab-count mono" id="countActive">0</span>
+									</button>
+									<button class="tab-btn" id="tabDone">
+										Đã làm
+										<span class="tab-count mono" id="countDone">0</span>
+									</button>
+								</div>
+								<span class="chip mono" id="questCounter">0 / 0</span>
 							</div>
-						</div>
-					</section>
 
-					<!-- Hành động chính ngay dưới danh sách quest -->
-					<div class="actions quest-actions">
-						<button class="btn scan" id="btnScan">
-							<span class="btn-ico">🔍</span> Quét nhiệm vụ
-						</button>
-						<button class="btn primary" id="btnStart" disabled>
-							<span class="btn-ico">▶</span> Auto ORBs
-						</button>
-						<button class="btn danger" id="btnStop" disabled>
-							<span class="btn-ico">■</span> Dừng
-						</button>
-					</div>
-
-					<section class="card console-card">
-						<div class="card-head">
-							<h2 class="card-title">📜 Nhật ký hoạt động</h2>
-							<div class="log-tools">
-								<label class="check small">
-									<input type="checkbox" id="autoScroll" checked />
-									<span>Tự cuộn</span>
+							<div class="select-tools" id="selectTools" hidden>
+								<label class="check small select-all-wrap">
+									<input type="checkbox" id="selectAll" />
+									<span>Chọn tất cả</span>
 								</label>
-								<button class="ghost-btn" id="btnScrollBottom" title="Cuộn xuống cuối nhật ký">↓ Về cuối</button>
-								<button class="ghost-btn" id="btnClearLog">Xóa log</button>
-								<button class="ghost-btn" id="btnSaveLog">Lưu log</button>
+								<span class="selected-info">Đã chọn: <strong id="selectedCount">0</strong> <span class="selected-orbs mono" id="selectedOrbs"></span></span>
 							</div>
-						</div>
-						<div class="console" id="console" role="log" aria-live="polite" aria-label="Nhật ký hoạt động"></div>
+
+							<div class="quest-list" id="questListActive">
+								<div class="empty" id="emptyActive">
+									<span class="empty-ico">
+										<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="34" height="34" aria-hidden="true"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>
+									</span>
+									<p>Chưa có nhiệm vụ nào.</p>
+									<span>Vào Cài đặt → dán Token → bấm "Quét nhiệm vụ".</span>
+								</div>
+							</div>
+
+							<div class="quest-list" id="questListDone" hidden>
+								<div class="empty" id="emptyDone">
+									<span class="empty-ico">
+										<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="34" height="34" aria-hidden="true"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>
+									</span>
+									<p>Chưa có nhiệm vụ đã hoàn thành.</p>
+									<span>Các nhiệm vụ cày xong hoặc đã làm trước đó sẽ hiển thị tại đây.</span>
+								</div>
+							</div>
+
+							<!-- Hành động chính -->
+							<div class="actions quest-actions">
+								<button class="btn btn-outline" id="btnScan">
+									<svg class="btn-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
+									Quét nhiệm vụ
+								</button>
+								<button class="btn btn-primary" id="btnStart" disabled>
+									<svg class="btn-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="6 3 20 12 6 21 6 3"/></svg>
+									Auto ORBs
+								</button>
+								<button class="btn btn-danger" id="btnStop" disabled>
+									<svg class="btn-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="18" x="3" y="3" rx="2"/></svg>
+									Dừng
+								</button>
+							</div>
+						</section>
+
+						<!-- Console card -->
+						<section class="card console-card animate-rise stagger-4">
+							<div class="card-head">
+								<div class="card-title-group">
+									<span class="card-ico tint-violet">
+										<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="4 17 10 11 4 5"/><line x1="12" x2="20" y1="19" y2="19"/></svg>
+									</span>
+									<h2 class="card-title">Nhật ký hoạt động</h2>
+								</div>
+								<div class="log-tools">
+									<label class="check small">
+										<input type="checkbox" id="autoScroll" checked />
+										<span>Tự cuộn</span>
+									</label>
+									<button class="ghost-btn" id="btnScrollBottom">Về cuối</button>
+									<button class="ghost-btn" id="btnClearLog">Xóa log</button>
+									<button class="ghost-btn" id="btnSaveLog">Lưu log</button>
+								</div>
+							</div>
+							<div class="console mono" id="console" role="log" aria-live="polite" aria-label="Nhật ký hoạt động"></div>
+						</section>
 					</section>
-				</main>
 
-				<!-- ============ PAGE: CÀI ĐẶT ============ -->
-				<main class="page" id="pageSettings" role="tabpanel" hidden>
-					<section class="card config-card">
-						<div class="card-head">
-							<h2 class="card-title">⚙️ Cấu hình tài khoản</h2>
-						</div>
-
-						<div class="field">
-							<label for="token">
-								Token Discord
-								<span class="req">Bắt buộc</span>
-							</label>
-							<div class="input-wrap">
-								<input
-									id="token"
-									type="password"
-									spellcheck="false"
-									autocomplete="off"
-									placeholder="Nhập hoặc dán token Discord của bạn..."
-								/>
-								<button class="ghost-btn" id="btnPaste" title="Tự động nhận diện token từ Clipboard">
-									📋 Dán
-								</button>
-								<button class="ghost-btn" id="btnToggleToken" title="Hiện hoặc ẩn token">
-									👁 Hiện
-								</button>
-								<button class="ghost-btn save-btn" id="btnSaveToken" title="Lưu token an toàn">
-									💾 Lưu
-								</button>
-							</div>
-						</div>
-
-						<div class="guide-box">
-							<div class="guide-header">
-								<span class="guide-icon">💡</span>
-								<strong>Hướng dẫn lấy Token trong 5 giây (Console)</strong>
-							</div>
-							<div class="guide-steps">
-								<div class="step-item">
-									<span class="step-num">1</span>
-									<span>Mở Discord (Web/App), bấm <strong>F12</strong> → chọn tab <strong>Console</strong>.</span>
-								</div>
-								<div class="step-item">
-									<span class="step-num">2</span>
-									<span>Nếu Discord chặn dán, gõ <code>allow pasting</code> rồi bấm <strong>Enter</strong>.</span>
-								</div>
-								<div class="step-item">
-									<span class="step-num">3</span>
-									<span>Bấm nút bên dưới copy lệnh, dán vào Console Discord rồi nhấn <strong>Enter</strong>:</span>
+					<!-- ============ PAGE: CÀI ĐẶT ============ -->
+					<section class="page" id="pageSettings" role="tabpanel" hidden>
+						<section class="card config-card">
+							<div class="card-head">
+								<div class="card-title-group">
+									<span class="card-ico tint-violet">
+										<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915"/><circle cx="12" cy="12" r="3"/></svg>
+									</span>
+									<h2 class="card-title">Cấu hình tài khoản</h2>
 								</div>
 							</div>
-							<button class="btn-copy-script" id="btnCopyScript">
-								📋 COPY LỆNH LẤY TOKEN (TỰ ĐỘNG)
-							</button>
-						</div>
 
-						<div class="loop-box">
-							<label class="check loop-check">
-								<input type="checkbox" id="loopMode" checked />
-								<span class="loop-title">⚡ Chế độ Treo Orb liên tục (AFK Loop)</span>
-							</label>
-							<p class="hint">Tự động lặp lại kiểm tra và cày nhiệm vụ mới hoặc tự thử lại sau khi hết thời gian giới hạn API.</p>
-							<div class="loop-interval-row" id="loopIntervalRow">
-								<span>Thời gian lặp lại quét:</span>
-								<select id="loopInterval" class="custom-select">
-									<option value="15">Mỗi 15 phút</option>
-									<option value="30" selected>Mỗi 30 phút (Khuyên dùng)</option>
-									<option value="45">Mỗi 45 phút (Chu kỳ Discord)</option>
-									<option value="60">Mỗi 60 phút</option>
-								</select>
+							<div class="field">
+								<label for="token">
+									Token Discord
+									<span class="req">Bắt buộc</span>
+								</label>
+								<div class="input-wrap">
+									<input
+										id="token"
+										type="password"
+										spellcheck="false"
+										autocomplete="off"
+										placeholder="Nhập hoặc dán token Discord của bạn..."
+									/>
+									<button class="ghost-btn" id="btnPaste" title="Tự động nhận diện token từ Clipboard">
+										<svg class="ghost-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg>
+										Dán
+									</button>
+									<button class="ghost-btn" id="btnToggleToken" title="Hiện hoặc ẩn token">
+										<svg class="ghost-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg>
+										<span id="btnToggleTokenText">Hiện</span>
+									</button>
+									<button class="ghost-btn save-btn" id="btnSaveToken" title="Lưu token an toàn">
+										<svg class="ghost-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7"/><path d="M7 3v4a1 1 0 0 0 1 1h7"/></svg>
+										Lưu
+									</button>
+								</div>
 							</div>
-						</div>
 
-						<div class="field-extra">
-							<button class="ghost-btn" id="btnOpenFolder">📂 Thư mục cấu hình</button>
-						</div>
+							<div class="guide-box">
+								<div class="guide-header">
+									<span class="guide-icon">
+										<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" aria-hidden="true"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg>
+									</span>
+									<strong>Hướng dẫn lấy Token trong 5 giây (Console)</strong>
+								</div>
+								<div class="guide-steps">
+									<div class="step-item">
+										<span class="step-num mono">1</span>
+										<span>Mở Discord (Web/App), bấm <strong>F12</strong> → chọn tab <strong>Console</strong>.</span>
+									</div>
+									<div class="step-item">
+										<span class="step-num mono">2</span>
+										<span>Nếu Discord chặn dán, gõ <code>allow pasting</code> rồi bấm <strong>Enter</strong>.</span>
+									</div>
+									<div class="step-item">
+										<span class="step-num mono">3</span>
+										<span>Bấm nút bên dưới copy lệnh, dán vào Console Discord rồi nhấn <strong>Enter</strong>:</span>
+									</div>
+								</div>
+								<button class="btn-copy-script" id="btnCopyScript">
+									<svg class="ghost-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+									COPY LỆNH LẤY TOKEN (TỰ ĐỘNG)
+								</button>
+							</div>
+
+							<div class="loop-box">
+								<label class="check loop-check">
+									<input type="checkbox" id="loopMode" checked />
+									<span class="loop-title">Chế độ Treo Orb liên tục (AFK Loop)</span>
+								</label>
+								<p class="hint">Tự động lặp lại kiểm tra và cày nhiệm vụ mới hoặc tự thử lại sau khi hết thời gian giới hạn API.</p>
+								<div class="loop-interval-row" id="loopIntervalRow">
+									<span>Thời gian lặp lại quét:</span>
+									<select id="loopInterval" class="custom-select">
+										<option value="15">Mỗi 15 phút</option>
+										<option value="30" selected>Mỗi 30 phút (Khuyên dùng)</option>
+										<option value="45">Mỗi 45 phút (Chu kỳ Discord)</option>
+										<option value="60">Mỗi 60 phút</option>
+									</select>
+								</div>
+							</div>
+
+							<div class="field-extra">
+								<button class="ghost-btn" id="btnOpenFolder">
+									<svg class="ghost-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg>
+									Thư mục cấu hình
+								</button>
+							</div>
+						</section>
 					</section>
-				</main>
 
-				<!-- ============ PAGE: GIỚI THIỆU ============ -->
-				<main class="page" id="pageAbout" role="tabpanel" hidden>
-					<section class="card about-card">
-						<div class="card-head">
-							<h2 class="card-title">🛡️ Về AUTO-QUEST PRO</h2>
-						</div>
-						<div class="security-banner">
-							<div class="sec-icon">🛡️</div>
-							<div class="sec-text">
-								<strong>Bảo mật 100%:</strong> Đã ngắt toàn bộ endpoint ngoài &amp; webhook. Token được mã hóa an toàn qua Windows DPAPI.
+					<!-- ============ PAGE: GIỚI THIỆU ============ -->
+					<section class="page" id="pageAbout" role="tabpanel" hidden>
+						<section class="card about-card">
+							<div class="card-head">
+								<div class="card-title-group">
+									<span class="card-ico tint-emerald">
+										<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1 1 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></svg>
+									</span>
+									<h2 class="card-title">Về AUTO QUEST</h2>
+								</div>
 							</div>
-							<div class="sec-badge">SECURE LOCAL</div>
-						</div>
-						<ul class="about-list">
-							<li>✅ Chỉ kết nối <strong>discord.com</strong> — chặn đứng mọi webhook/endpoint ngoài.</li>
-							<li>✅ Không tự nhận nhiệm vụ — chỉ cày nhiệm vụ bạn đã nhận trong Discord.</li>
-							<li>✅ Số ORB là số THẬT: đếm từ quest đã hoàn thành + đã claim thưởng trên account.</li>
-							<li>✅ 100% local: không telemetry, không tracking, không link kiếm tiền.</li>
-						</ul>
-						<p class="hint">Dự án phục vụ mục đích học tập và tối ưu trải nghiệm cá nhân. Không liên kết chính thức với Discord Inc.</p>
+							<div class="security-banner">
+								<span class="sec-icon tint-emerald">
+									<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18" aria-hidden="true"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1 1 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>
+								</span>
+								<div class="sec-text">
+									<strong>Bảo mật 100%:</strong> Đã ngắt toàn bộ endpoint ngoài và webhook. Token được mã hóa an toàn qua Windows DPAPI.
+								</div>
+								<span class="chip sec-chip">SECURE LOCAL</span>
+							</div>
+							<ul class="about-list">
+								<li>Chỉ kết nối <strong>discord.com</strong> — chặn đứng mọi webhook/endpoint ngoài.</li>
+								<li>Không tự nhận nhiệm vụ — chỉ cày nhiệm vụ bạn đã nhận trong Discord.</li>
+								<li>Số ORB là số THẬT: đếm từ quest đã hoàn thành + đã claim thưởng trên account.</li>
+								<li>100% local: không telemetry, không tracking, không link kiếm tiền.</li>
+							</ul>
+							<p class="hint">Dự án phục vụ mục đích học tập và tối ưu trải nghiệm cá nhân. Không liên kết chính thức với Discord Inc.</p>
+						</section>
 					</section>
 				</main>
 			</div>

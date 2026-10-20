@@ -15,12 +15,16 @@ const ui = {
 	btnScan: el('btnScan'),
 	btnPaste: el('btnPaste'),
 	btnToggleToken: el('btnToggleToken'),
+	btnToggleTokenText: el('btnToggleTokenText'),
 	btnSaveToken: el('btnSaveToken'),
 	btnCopyScript: el('btnCopyScript'),
 	btnClearLog: el('btnClearLog'),
 	btnSaveLog: el('btnSaveLog'),
 	btnOpenFolder: el('btnOpenFolder'),
 	btnScrollBottom: el('btnScrollBottom'),
+	btnDrawer: el('btnDrawer'),
+	drawerOverlay: el('drawerOverlay'),
+	sidebar: el('sidebar'),
 	selectAll: el('selectAll'),
 	selectTools: el('selectTools'),
 	selectedCount: el('selectedCount'),
@@ -144,9 +148,9 @@ function switchTab(tab) {
 	currentTab = tab;
 	ui.tabActive.classList.toggle('active', tab === 'active');
 	ui.tabDone.classList.toggle('active', tab === 'done');
-	ui.questListActive.style.display = tab === 'active' ? 'flex' : 'none';
-	ui.questListDone.style.display = tab === 'done' ? 'flex' : 'none';
-	ui.selectTools.style.display = tab === 'active' && ui.questListActive.querySelector('.quest') ? 'flex' : 'none';
+	ui.questListActive.hidden = tab !== 'active';
+	ui.questListDone.hidden = tab !== 'done';
+	ui.selectTools.hidden = !(tab === 'active' && ui.questListActive.querySelector('.quest'));
 }
 
 ui.tabActive.addEventListener('click', () => switchTab('active'));
@@ -291,7 +295,7 @@ function updateQuestNode(node, q) {
 	} else {
 		switch (q.status) {
 			case 'running': statusBadge = '<span class="quest-badge">Đang chạy</span>'; break;
-			case 'done': statusBadge = '<span class="quest-badge">Hoàn thành ✓</span>'; break;
+			case 'done': statusBadge = '<span class="quest-badge">Hoàn thành</span>'; break;
 			case 'skip': statusBadge = '<span class="quest-badge">Bỏ qua</span>'; break;
 			case 'error': statusBadge = '<span class="quest-badge">Lỗi</span>'; break;
 			case 'enrolled': statusBadge = '<span class="quest-badge">Sẵn sàng</span>'; break;
@@ -377,7 +381,7 @@ function renderQuests() {
 
 	// Thanh công cụ chọn: chỉ hiện khi có quest chưa làm ở tab active
 	const hasPending = countActive > 0;
-	ui.selectTools.style.display = currentTab === 'active' && hasPending ? 'flex' : 'none';
+	ui.selectTools.hidden = !(currentTab === 'active' && hasPending);
 	updateSelectionUi();
 }
 
@@ -386,7 +390,11 @@ function updateSelectionUi() {
 	const label = selected.size > 0 ? `Auto ORBs (${selected.size})` : 'Auto ORBs';
 	if (ui.btnStart.dataset.label !== label) {
 		ui.btnStart.dataset.label = label;
-		ui.btnStart.innerHTML = `<span class="btn-ico">▶</span> ${label}`;
+		// Giữ nguyên SVG icon, chỉ đổi text node cuối
+		const keep = ui.btnStart.querySelector('.btn-ico');
+		ui.btnStart.textContent = '';
+		if (keep) ui.btnStart.appendChild(keep);
+		ui.btnStart.appendChild(document.createTextNode(` ${label}`));
 	}
 	const busy = state !== 'idle';
 	ui.btnStart.disabled = selected.size === 0 || busy;
@@ -578,8 +586,8 @@ function handleEvent(evt) {
 			});
 			sessionOrbsBonus += earned;
 			ui.statOrbsBonus.textContent = `(+ ${sessionOrbsBonus})`;
-			if (earned > 0) toast(`🔮 Hoàn thành "${d.name || q.name}"! (+${earned} Orbs)`);
-			else toast(`🔮 Hoàn thành "${d.name || q.name}"!`);
+			if (earned > 0) toast(`Hoàn thành "${d.name || q.name}" (+${earned} Orbs)`);
+			else toast(`Hoàn thành "${d.name || q.name}"`);
 			break;
 		}
 
@@ -755,7 +763,7 @@ async function loginChip() {
 	const result = await api.authCheck(token);
 	if (result.ok) {
 		renderDiscordProfile(result.user);
-		toast(`✅ Đăng nhập OK: @${result.user.username}`);
+		toast(`Đăng nhập thành công: @${result.user.username}`);
 		appendLog(`[Hệ thống] Xác thực token thành công: @${result.user.username}`, 'ok');
 	} else {
 		resetDiscordProfile();
@@ -828,15 +836,42 @@ function switchPage(name) {
 	}
 	// Thanh công cụ chọn chỉ thuộc trang Auto Quest
 	if (name !== 'quest') {
-		ui.selectTools.style.display = 'none';
+		ui.selectTools.hidden = true;
 	} else {
 		renderQuests(); // vẽ lại để tính lại select-tools hiển thị
 	}
+	// Đóng drawer mobile sau khi chọn trang
+	closeDrawer();
 }
 
 ui.navQuest.addEventListener('click', () => switchPage('quest'));
 ui.navSettings.addEventListener('click', () => switchPage('settings'));
 ui.navAbout.addEventListener('click', () => switchPage('about'));
+
+/* ---------------- Drawer mobile (sidebar trượt trên màn hẹp) ---------------- */
+
+function openDrawer() {
+	ui.sidebar.classList.add('open');
+	ui.drawerOverlay.classList.add('show');
+}
+function closeDrawer() {
+	ui.sidebar.classList.remove('open');
+	ui.drawerOverlay.classList.remove('show');
+}
+ui.btnDrawer.addEventListener('click', openDrawer);
+ui.drawerOverlay.addEventListener('click', closeDrawer);
+
+/* Hero CTA: guest → về Cài đặt dán token; logged-in → về Auto Quest */
+document.querySelectorAll('.js-hero-cta').forEach((btn) => {
+	btn.addEventListener('click', () => {
+		if (ui.dprofile.dataset.state === 'guest') {
+			switchPage('settings');
+			ui.token.focus();
+		} else {
+			switchPage('quest');
+		}
+	});
+});
 
 /* ---------------- User Actions ---------------- */
 
@@ -879,7 +914,7 @@ async function saveTokenDirectly() {
 	}
 	const result = await api.saveConfig(collectConfig());
 	if (result.ok) {
-		toast('✅ Đã lưu token thành công! Lần sau vào không cần dán lại.');
+		toast('Đã lưu token thành công! Lần sau vào không cần dán lại.');
 	} else {
 		toast(`Lỗi khi lưu token: ${result.message}`, true);
 	}
@@ -912,7 +947,7 @@ ui.btnScan.addEventListener('click', async () => {
 	} else {
 		setState('scanning');
 		switchPage('quest'); // về trang Auto Quest xem kết quả quét
-		toast('🔍 Đang quét nhiệm vụ…');
+		toast('Đang quét nhiệm vụ…');
 	}
 });
 
@@ -934,7 +969,7 @@ async function startRun(mode, extra = {}) {
 	} else {
 		setState('starting');
 		switchPage('quest'); // chạy thì hiện ngay trang Auto Quest để theo dõi console
-		toast(`▶ Chạy ${extra.selectedQuests?.length || 0} nhiệm vụ đã chọn...`);
+		toast(`Đang chạy ${extra.selectedQuests?.length || 0} nhiệm vụ đã chọn...`);
 	}
 }
 
@@ -970,7 +1005,7 @@ ui.btnPaste.addEventListener('click', async () => {
 ui.btnToggleToken.addEventListener('click', () => {
 	const isPassword = ui.token.type === 'password';
 	ui.token.type = isPassword ? 'text' : 'password';
-	ui.btnToggleToken.textContent = isPassword ? '🙈 Ẩn' : '👁 Hiện';
+	ui.btnToggleTokenText.textContent = isPassword ? 'Ẩn' : 'Hiện';
 });
 
 // Nút Copy mã script Console
@@ -991,7 +1026,7 @@ const CONSOLE_TOKEN_SCRIPT = `window.webpackChunkdiscord_app.push([
 	},
 ]);
 window.webpackChunkdiscord_app.pop();
-console.log('%c🎉 ĐÃ COPY TOKEN DISCORD THÀNH CÔNG! 🎉', 'color: #10b981; font-size: 22px; font-weight: bold; background: #000; padding: 10px; border-radius: 8px;');`;
+console.log('%cDA COPY TOKEN DISCORD THANH CONG!', 'color: #a78bfa; font-size: 22px; font-weight: bold; background: #05060b; padding: 10px; border-radius: 8px;');`;
 
 // Lưu tuỳ chọn autoScroll vào config (pref bền vững giữa các lần mở app)
 ui.autoScroll.addEventListener('change', async () => {
@@ -1006,7 +1041,7 @@ ui.autoScroll.addEventListener('change', async () => {
 ui.btnCopyScript.addEventListener('click', async () => {
 	try {
 		await api.writeClipboard(CONSOLE_TOKEN_SCRIPT);
-		toast('📋 Đã copy lệnh lấy Token! Dán vào Console Discord (F12) và ấn Enter.');
+		toast('Đã copy lệnh lấy Token! Dán vào Console Discord (F12) và ấn Enter.');
 	} catch {
 		toast('Không thể copy tự động, vui lòng thử lại.', true);
 	}
@@ -1048,7 +1083,7 @@ api.onState((payload) => setState(payload.state, payload));
 					`[Cảnh báo] Token đã lưu không còn hợp lệ: ${auth.message || 'không xác định'}. Hãy dán token mới (tab Cài đặt).`,
 					'warn',
 				);
-				toast('⚠️ Token đã lưu hết hạn — dán token mới để tiếp tục.', true);
+				toast('Token đã lưu hết hạn — dán token mới để tiếp tục.', true);
 			}
 		}
 		ui.loopMode.checked = cfg.loopMode !== false;

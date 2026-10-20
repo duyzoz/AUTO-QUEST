@@ -69,8 +69,8 @@ function taskNameOf(quest: Quest): string {
  */
 async function scanQuests(): Promise<QuestManager> {
 	console.log('\n========================================');
-	console.log('🔍 [BẢO MẬT] Kết nối an toàn 100% trực tiếp tới Discord API.');
-	console.log('📡 Đang quét toàn bộ danh sách nhiệm vụ trên tài khoản...');
+	console.log('[BẢO MẬT] Kết nối an toàn 100% trực tiếp tới Discord API.');
+	console.log('Đang quét toàn bộ danh sách nhiệm vụ trên tài khoản...');
 
 	await client.fetchQuests(true);
 	const questManager = client.questManager!;
@@ -107,7 +107,7 @@ async function scanQuests(): Promise<QuestManager> {
 
 	const pending = realInventory.filter((q) => q.status !== 'done');
 	console.log(
-		`📋 Quét xong: ${realInventory.length} nhiệm vụ thật (${pending.length} chưa hoàn thành, ${
+		`Quét xong: ${realInventory.length} nhiệm vụ thật (${pending.length} chưa hoàn thành, ${
 			realInventory.length - pending.length
 		} đã xong).`,
 	);
@@ -125,7 +125,7 @@ async function scanQuests(): Promise<QuestManager> {
 	}
 	report('orbs:balance', { balance: orbBalance, pendingClaim: orbPendingClaim });
 	console.log(
-		`🔮 Số dư Orb (đã claim từ nhiệm vụ): ${orbBalance}` +
+		`Số dư Orb (đã claim từ nhiệm vụ): ${orbBalance}` +
 			(orbPendingClaim > 0 ? ` · chờ claim: ${orbPendingClaim} Orbs` : ''),
 	);
 	return questManager;
@@ -159,7 +159,7 @@ async function runSelectedQuests(questManager: QuestManager, quests: Quest[]) {
 
 	if (runnable.length === 0) {
 		console.log(
-			'⚠️ Không có nhiệm vụ nào đã nhận để cày. Hãy mở app Discord bấm "Nhận nhiệm vụ" rồi quét lại.',
+			'CẢNH BÁO: Không có nhiệm vụ nào đã nhận để cày. Hãy mở app Discord bấm "Nhận nhiệm vụ" rồi quét lại.',
 		);
 		return;
 	}
@@ -174,7 +174,7 @@ async function runSelectedQuests(questManager: QuestManager, quests: Quest[]) {
 
 	const updatedOrbStats = questManager.getOrbsSummary();
 	report('orb:summary', updatedOrbStats);
-	console.log(`🎉 Hoàn thành đợt cày! Tổng Orb đã đạt: ${updatedOrbStats.completedOrbs} Orbs.`);
+	console.log(`Hoàn thành đợt cày! Tổng Orb đã đạt: ${updatedOrbStats.completedOrbs} Orbs.`);
 
 	// Cập nhật lại số dư Orb khả dụng sau khi claim thưởng xong (số liệu THẬT, không bịa).
 	let freshBalance = 0;
@@ -196,7 +196,7 @@ async function runQuestCycle(): Promise<void> {
 		if (runMode === 'scan') {
 			// QUY TRÌNH CHUẨN: quét xong dừng ngay, KHÔNG tự nhận nhiệm vụ,
 			// KHÔNG tự đăng ký. Chờ người dùng tích chọn rồi bấm chạy.
-			console.log('🧭 Quét xong — dừng tại đây, chờ người dùng chọn nhiệm vụ.');
+			console.log('Quét xong — dừng tại đây, chờ người dùng chọn nhiệm vụ.');
 			report('scan:complete', { total: questManager.size });
 			report('finish', { scanned: true });
 			return;
@@ -208,13 +208,13 @@ async function runQuestCycle(): Promise<void> {
 		if (runMode === 'run') {
 			questsValid = questsValid.filter((q) => selectedIds.has(QuestManager.getQuestId(q)));
 			console.log(
-				`🎯 Chế độ chạy theo lựa chọn: ${questsValid.length} nhiệm vụ khớp danh sách chọn.`,
+				`Chế độ chạy theo lựa chọn: ${questsValid.length} nhiệm vụ khớp danh sách chọn.`,
 			);
 		}
 
 		report('quests', { total: questsValid.length });
 		if (questsValid.length === 0) {
-			console.log('✅ Không có nhiệm vụ nào cần thực hiện trong đợt này.');
+			console.log('Không có nhiệm vụ nào cần thực hiện trong đợt này.');
 			report('finish', {});
 			return;
 		}
@@ -249,11 +249,11 @@ client.once(GatewayDispatchEvents.Ready, async ({ data }) => {
 		console.log('Hoàn thành toàn bộ nhiệm vụ. Đang ngắt kết nối an toàn...');
 		await shutdown(0);
 	} else {
-		console.log(`⚡ ĐÃ BẬT CHẾ ĐỘ TREO ORB TỰ ĐỘNG (Quét lại mỗi ${loopIntervalMinutes} phút).`);
+		console.log(`ĐÃ BẬT CHẾ ĐỘ TREO ORB TỰ ĐỘNG (Quét lại mỗi ${loopIntervalMinutes} phút).`);
 		while (!isStopping) {
 			await runQuestCycle();
 			if (isStopping) break;
-			console.log(`\n💤 Đang treo Orb... Tự động quét lại sau ${loopIntervalMinutes} phút.`);
+			console.log(`\nĐang treo Orb... Tự động quét lại sau ${loopIntervalMinutes} phút.`);
 			const totalSeconds = loopIntervalMinutes * 60;
 			for (let remaining = totalSeconds; remaining > 0; remaining--) {
 				if (isStopping) break;
