@@ -54,3 +54,11 @@
 - **Sửa model sai trong log:** toàn bộ `deepseek-v4.1-flash` (và `GLM (Z.ai)` trước đó) → **`step-5-preview`** (model THẬT của runtime phiên này). README (3 log) + .brain (6 mục) đã sửa.
 - Thêm **"BƯỚC 0 — TỰ NHẬN DIỆN MODEL"** ở đầu README + mục `MODEL CHECK` trong .brain: agent phải lấy model id từ chính phiên mình, CẤM copy log cũ/đoán/để trống, không biết thì ghi `UNKNOWN-MODEL`.
 - Không đụng code app, không build EXE, không push.
+
+## ~21:30 · step-5-preview · WAVES 9 DONE — CẢI THIỆN / FIX / FEATURE BUNDLE
+- Bro gõ "dc rồi thêm các waves cải thiện fix lỗi hay thêm tính năng" = xác nhận Waves I-B → làm luôn (Waves II).
+- `renderer.js`: **FIX `escapeHtml`** (trước là no-op: `.replace(/</g, '<')` → giờ escape đúng `&amp; &lt; &gt; &quot; &#39;` => chống HTML-injection qua tên quest); thêm nút **"↗ Discord"** trên mỗi quest mở `https://discord.com/quests` qua IPC mới `openUrl`; tính `selectedOrbs` = tổng Orbs các quest đã chọn, hiển thị trong `.selected-orbs`.
+- `index.html`: console thêm `role="log" aria-live="polite"` (a11y). `preload.js`: thêm `openUrl`. `main.js`: thêm `ipcMain.handle('shell:open-url')` — chỉ cho phép host `discord.com` / `www.discord.com` / `ptb.discord.com`, chặn mọi URL ngoài (bảo mật). `styles.css`: style `.quest-open`, `.selected-orbs`.
+- `node --check` pass cả 3 file JS. README: badge -> Waves 9; Roadmap + sổ waves thêm W9; thêm mục **Backlog Waves I-B (W10–W20 đề xuất)** có sơ đồ Mermaid 12 nodes (W9 done, W10–W20 queued).
+- W10–W20 (đề xuất, chưa làm): throttle progress, security guard test, dọn console.log, unit test, checksum build, empty-state, lưu pref, toast token hết hạn...
+- Không build EXE, không push.

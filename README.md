@@ -3,7 +3,7 @@
 [![Release](https://img.shields.io/github/v/release/duyzoz/AUTO-QUEST?color=ff9e64&label=Version)](https://github.com/duyzoz/AUTO-QUEST/releases)
 [![Platform](https://img.shields.io/badge/Platforms-Windows%20%7C%20iOS%20TrollStore-10b981)](#)
 [![Theme](https://img.shields.io/badge/Theme-Dark%20Strong%20Vesper-e0af68)](#)
-[![Waves](https://img.shields.io/badge/Waves-8%20%C2%B7%20Active-e0af68)](#-quy-tr%C3%ACnh-waves)
+[![Waves](https://img.shields.io/badge/Waves-10%20%C2%B7%20Active-e0af68)](#-quy-tr%C3%ACnh-waves)
 
 > ## 🤖 LƯU Ý CHO AI AGENT (BẮT BUỘC ĐỌC TRƯỚC KHI VIẾT/SỬA CODE)
 > Trước khi viết/sửa code, agent **PHẢI đọc hết README này** (mục **Quy trình Waves** + **`---- Log AI Agent ----`** ở cuối). Không đọc = làm lệch kiến trúc.
@@ -20,6 +20,11 @@
 ---
 
 ## 🌊 Quy Trình Waves (BẮT BUỘC)
+
+**Waves I / I-B / II / III là các MỤC CHÍNH bắt buộc** (khung cố định). Bên trong mỗi mục chính:
+- Waves con được agent **tự vibe sáng tạo** hoặc theo promt của người dùng.
+- **CẤM đặt tên waves con trùng tên đề mục chính** (`Waves I`, `Waves I-B`, `Waves II`, `Waves III`). Waves con dùng **số riêng** + **tên riêng sáng tạo** (VD: `Waves 10 · Boost progress bar`, `Waves 11 · Ninja log cleanup`).
+- Mỗi waves con vẫn tuân luật đánh số `0 → ∞` chỉ tăng bên dưới.
 
 Các giai đoạn cố định: **Waves I → Waves I-B (tự vibe 10 waves, nếu cần) → Waves II → Waves III**.
 
@@ -75,6 +80,28 @@ flowchart LR
 - Người dùng nhắn nhiều thay đổi trong 1 phiên → gộp vào **1 waves duy nhất** (không tách trùng số).
 - Waves **tự vibe** cũng tuân luật trên: ghi trước vào kế hoạch, **chỉ tính là "đã dùng" khi user xác nhận và agent làm xong**.
 
+### 📋 Backlog Waves I-B (đề xuất — chờ bro duyệt)
+
+Khi bro chỉ cần "cải thiện / fix lỗi / thêm tính năng", agent vibe ra **≥10 waves** như sau (đã làm **Waves 9**, còn lại là đề xuất, chưa chạm code):
+
+```mermaid
+flowchart LR
+    A["🐞 W9 ✅<br/>Fix escapeHtml<br/>(chống injection)"] --> B["✨ W10<br/>Nút mở Discord<br/>(locked IPC)"]
+    B --> C["♿ W11<br/>a11y: aria-live<br/>focus rõ"]
+    C --> D["📊 W12<br/>Tổng Orbs<br/>đã chọn"]
+    D --> E["⚡ W13<br/>Throttle progress<br/>giảm reflow"]
+    E --> F["🔒 W14<br/>Security guard<br/>chặn URL ngoài"]
+    F --> G["🧹 W15<br/>Dọn console.log<br/>chuẩn hoá log level"]
+    G --> H["🧪 W16<br/>Unit test<br/>escapeHtml/dedupe"]
+    H --> I["📦 W17<br/>Checksum log<br/>khi build EXE"]
+    I --> J["🎨 W18<br/>Empty-state<br/>hướng dẫn rõ"]
+    J --> K["💾 W19<br/>Lưu pref<br/>autoScroll/loop"]
+    K --> L["🔔 W20<br/>Toast cảnh báo<br/>khi token hết hạn"]
+```
+
+> 🟢 **Waves 9 đã làm xong** (bro xác nhận): `escapeHtml` đúng chuẩn · nút "↗ Discord" mở `discord.com/quests` qua IPC chỉ cho phép `discord.com` · `role="log" aria-live` cho nhật ký · hiển thị tổng Orbs của các quest đã chọn.
+> ⚪ **W10–W20** là backlog đề xuất — bro bấm **✅ Xác nhận** / gõ "làm tiếp" để agent triển khai từng wave (mỗi wave = 1 số mới, không trùng).
+
 ---
 
 ## 🧠 Sơ Đồ Tư Duy Dự Án
@@ -129,8 +156,9 @@ flowchart LR
     W5 --> W6["Waves 6<br/>Luật waves<br/>không trùng số"]
     W6 --> W7["Waves 7<br/>Dev lại<br/>công cụ build EXE"]
     W7 --> W8["Waves 8<br/>README Waves I-B<br/>+ model đúng"]
-    W8 --> W9["Waves 9+<br/>Phiên edit kế tiếp<br/>(tự tăng)"]
-    W9 --> B["⏸ Build EXE<br/>(chờ lệnh)"]
+    W8 --> W9["Waves 9<br/>Cải thiện:<br/>fix escapeHtml · mở Discord · a11y"]
+    W9 --> W10["Waves 10 · Smooth Progress<br/>20/10: throttle render,<br/>pref autoScroll, cảnh báo token"]
+    W10 --> B["⏸ Build EXE<br/>(chờ lệnh)"]
     B --> P["⏸ Push GitHub<br/>(chờ lệnh)"]
 ```
 
@@ -145,9 +173,11 @@ flowchart LR
 | **6** | Luật waves không trùng số | ✅ Xong |
 | **7** | Dev lại công cụ build EXE | ✅ Xong |
 | **8** | README: Waves I-B (tự vibe 10 waves) + sửa model log | ✅ Xong |
-| **9+** | Phiên edit kế tiếp | 🔜 Kế tiếp |
+| **9** | Cải thiện/fix/feature bundle (escapeHtml, mở Discord, a11y, tổng Orbs) | ✅ Xong |
+| **10** | Smooth Progress — throttle render	defer + pref autoScroll + cảnh báo token hết hạn | ✅ Xong |
+| **11+** | Backlog Waves I-B (đề xuất: W11 Ninja Log, W12 Fort Knox, W13 Lab Test...) | 🔜 Kế tiếp |
 
-> 👉 Phiên edit tiếp theo **bắt buộc** là **`Waves 9`**, sau đó `10`, `11`… **Waves 1–2 không tồn tại** trong dự án này → **cấm** dùng lại.
+> 👉 Phiên edit tiếp theo **bắt buộc** là **`Waves 11`**, sau đó `12`, `13`… **Waves 1–2 không tồn tại** trong dự án này → **cấm** dùng lại.
 
 ---
 
@@ -278,6 +308,6 @@ Dự án phục vụ mục đích học tập và tối ưu trải nghiệm cá 
 
 > **Luật:** chỉ giữ **đúng 3 log gần nhất** (mới nhất trên cùng). Log cũ hơn xoá khỏi README. Muốn hiểu thật kĩ mọi thay đổi → đọc **`.brain/`**. Mỗi dòng ghi **đúng model của phiên đó**.
 
+- **[2026-10-20 ~21:45 · step-5-preview · Waves 10 — Smooth Progress]** Luật mới: **Waves I/I-B/II/III là mục chính**, waves con tự vibe sáng tạo + **cấm trùng tên đề mục chính** (đã ghi vào README + `.brain/2026-10-20.txt`). Code: **throttle render** — `quest:progress` gộp render qua `requestAnimationFrame` (`upsertQuest(..., {defer:true})`, `scheduleRender()`) → không re-render hàng chục lần/giây khi chạy nhiều quest; dọn rác `ui.remember` (id không tồn tại); **pref `autoScroll`** lưu/đọc qua config (main + renderer + preload đã có sẵn API); **cảnh báo token hết hạn** ngay khi mở app (auth fail → log warn + toast). Kiểm thử: `node --check` 3 file JS pass · DOM-id scan pass · `tsc --noEmit` pass. Không build EXE, không push.
+- **[2026-10-19 ~21:30 · step-5-preview · Waves 9 — Cải thiện/fix/feature bundle]** Bro duyệt Waves I-B → làm luôn. `renderer.js`: **fix `escapeHtml`** (trước là no-op, giờ escape đúng `& < > " '` → chống HTML-injection qua tên quest); thêm nút **"↗ Discord"** mở `discord.com/quests` qua IPC `openUrl` mới (main kiểm duyệt chỉ cho `discord.com`); `selectedOrbs` hiển thị **tổng Orbs** của quest đã chọn. `index.html`: console thêm `role="log" aria-live="polite"`. `preload.js`: thêm `openUrl`. `main.js`: thêm `shell:open-url` (chặn mọi host không phải discord.com). `styles.css`: style `.quest-open` + `.selected-orbs`. JS syntax pass. Thêm **Backlog Waves I-B (W10–W20)** vào README. Không build EXE, không push.
 - **[2026-10-19 ~20:25 · step-5-preview · Waves 8 — README Waves I-B + sửa model log]** Thêm **Waves I-B**: khi user chỉ promt thô sơ / không yêu cầu / yêu cầu đơn giản → agent **tự vibe TỐI THIỂU 10 waves** đóng góp thật (fix bug · tối ưu · UI/UX · thêm tính năng · dọn repo · bảo mật · a11y · test · build), trình bày gọn bằng sơ đồ Mermaid icon đẹp, **dừng chờ user bấm ✅ Xác nhận / ➡️ Tiếp tục** mới sang Waves II — chưa xác nhận thì không viết code. **Sửa model sai trong log:** `deepseek-v4.1-flash` (và `GLM (Z.ai)` trước đó) → **`step-5-preview`** đúng model thật; thêm **BƯỚC 0 — Tự nhận diện model** + mục `MODEL CHECK` trong `.brain/`.
-- **[2026-10-19 ~20:05 · step-5-preview · Waves 7 — Dev lại công cụ build EXE (chưa build)]** Viết mới `tools/build.js`: pre-flight (node_modules/icon/package.json/bot.js), dry-run `--check`, `--skip-tsc`, dọn output trước khi build, verify artifact + kích thước + sha256, báo lỗi rõ ràng, không còn copy EXE ra gốc repo. `package.json`: output → `build-release/exe/`, tên file `AUTO-QUEST-${version}-portable.exe`, `executableName`, `requestedExecutionLevel: asInvoker`, `forceCodeSigning: false`; thêm script `build:check`. `.gitignore`: bỏ qua `build-release/exe/`. README: thêm mục **Công Cụ Build EXE** + cập nhật cấu trúc repo, Roadmap, sổ waves.
-- **[2026-10-19 ~20:00 · step-5-preview · Waves 6 — Luật waves không trùng số]** Sửa quy tắc đánh số: chỉ tăng (`max + 1`), cấm trùng / cấm lùi / cấm reset `0`. Đánh lại số log cho đúng thứ tự **4 → 5 → 6** (trước đó 2 dòng cùng ghi "Waves 4"), cập nhật badge, sơ đồ Roadmap và thêm bảng **"Sổ waves đã dùng"** để agent mới không đánh lại số cũ. Không đụng code app, không build EXE, không push.

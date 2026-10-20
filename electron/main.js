@@ -25,7 +25,7 @@ let logBuffer = '';
 const configPath = () => path.join(app.getPath('userData'), 'autoquest_config.json');
 
 function readConfig() {
-	const base = { token: '', remember: true, loopMode: true, loopInterval: 30 };
+	const base = { token: '', remember: true, loopMode: true, loopInterval: 30, autoScroll: true };
 	try {
 		const raw = fs.readFileSync(configPath(), 'utf8');
 		const parsed = JSON.parse(raw);
@@ -45,17 +45,19 @@ function readConfig() {
 			remember: parsed.remember !== false,
 			loopMode: parsed.loopMode !== false,
 			loopInterval: typeof parsed.loopInterval === 'number' ? parsed.loopInterval : 30,
+			autoScroll: parsed.autoScroll !== false,
 		};
 	} catch {
 		return base;
 	}
 }
 
-function writeConfig({ token, remember, loopMode, loopInterval }) {
+function writeConfig({ token, remember, loopMode, loopInterval, autoScroll }) {
 	const payload = {
 		remember: remember !== false,
 		loopMode: loopMode !== false,
 		loopInterval: typeof loopInterval === 'number' ? loopInterval : 30,
+		autoScroll: autoScroll !== false,
 	};
 	if (remember && token) {
 		const buf = safeStorage.isEncryptionAvailable()
@@ -304,6 +306,7 @@ ipcMain.handle('config:save', (_e, config) => {
 			remember: config.remember,
 			loopMode: config.loopMode,
 			loopInterval: config.loopInterval,
+			autoScroll: config.autoScroll,
 		});
 		return { ok: true };
 	} catch (err) {
@@ -357,6 +360,21 @@ ipcMain.handle('clipboard:write', (_e, text) => {
 ipcMain.handle('shell:open-data-folder', () => {
 	shell.openPath(app.getPath('userData'));
 	return { ok: true };
+});
+
+// Chỉ mở các URL thuộc discord.com — chặn tuyệt đối mọi endpoint ngoài (bảo mật).
+ipcMain.handle('shell:open-url', async (_e, url) => {
+	try {
+		const parsed = new URL(String(url || ''));
+		const host = parsed.hostname.toLowerCase();
+		if (host !== 'discord.com' && host !== 'www.discord.com' && host !== 'ptb.discord.com') {
+			return { ok: false, message: `Chặn mở liên kết không phải discord.com: ${host}` };
+		}
+		await shell.openExternal(parsed.toString());
+		return { ok: true };
+	} catch (err) {
+		return { ok: false, message: err.message };
+	}
 });
 ipcMain.handle('log:save', async (_e, content) => {
 	const stamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);

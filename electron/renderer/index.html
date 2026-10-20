@@ -188,7 +188,7 @@
 							<input type="checkbox" id="selectAll" />
 							<span>Chọn tất cả</span>
 						</label>
-						<span class="selected-info">Đã chọn: <strong id="selectedCount">0</strong></span>
+						<span class="selected-info">Đã chọn: <strong id="selectedCount">0</strong> <span class="selected-orbs" id="selectedOrbs"></span></span>
 					</div>
 
 					<!-- Tab Content: Active Quests (có checkbox chọn) -->
@@ -226,7 +226,7 @@
 					<button class="ghost-btn" id="btnOpenFolder">Thư mục cấu hình</button>
 				</div>
 				</div>
-				<div class="console" id="console"></div>
+				<div class="console" id="console" role="log" aria-live="polite" aria-label="Nhật ký hoạt động"></div>
 			</section>
 		</div>
 

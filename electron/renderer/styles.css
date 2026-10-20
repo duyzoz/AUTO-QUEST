@@ -853,6 +853,33 @@ body {
 	color: var(--accent-vesper);
 	font-size: 0.86rem;
 }
+.selected-orbs {
+	color: var(--accent-gold);
+	font-weight: 800;
+}
+
+/* ---- Nút "Mở trong Discord" trên mỗi quest ---- */
+.quest-open {
+	margin-left: auto;
+	background: rgba(88, 101, 242, 0.14);
+	color: #a5adf5;
+	border: 1px solid rgba(88, 101, 242, 0.35);
+	border-radius: 6px;
+	font-size: 0.68rem;
+	font-weight: 700;
+	padding: 3px 8px;
+	cursor: pointer;
+	transition: background 0.15s ease, color 0.15s ease;
+	flex-shrink: 0;
+}
+.quest-open:hover {
+	background: rgba(88, 101, 242, 0.28);
+	color: #fff;
+}
+.quest-open:focus-visible {
+	outline: 2px solid var(--accent-vesper);
+	outline-offset: 1px;
+}
 
 /* ---- Quest checkbox ---- */
 .quest-check {

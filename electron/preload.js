@@ -18,6 +18,7 @@ contextBridge.exposeInMainWorld('autoquest', {
 	readClipboard: () => ipcRenderer.invoke('clipboard:read'),
 	writeClipboard: (text) => ipcRenderer.invoke('clipboard:write', text),
 	openDataFolder: () => ipcRenderer.invoke('shell:open-data-folder'),
+	openUrl: (url) => ipcRenderer.invoke('shell:open-url', url),
 	saveLog: (content) => ipcRenderer.invoke('log:save', content),
 	onLog: (handler) => subscribe('log', handler),
 	onEvent: (handler) => subscribe('event', handler),

@@ -6,7 +6,6 @@ const el = (id) => document.getElementById(id);
 
 const ui = {
 	token: el('token'),
-	remember: el('remember'),
 	loopMode: el('loopMode'),
 	loopInterval: el('loopInterval'),
 	loopIntervalRow: el('loopIntervalRow'),
@@ -25,6 +24,7 @@ const ui = {
 	selectAll: el('selectAll'),
 	selectTools: el('selectTools'),
 	selectedCount: el('selectedCount'),
+	selectedOrbs: el('selectedOrbs'),
 	accountChip: el('accountChip'),
 	chipName: el('chipName'),
 	chipBadge: el('chipBadge'),
@@ -200,10 +200,10 @@ const TASK_LABEL = {
 
 function escapeHtml(text) {
 	return String(text ?? '')
-		.replace(/&/g, '&')
-		.replace(/</g, '<')
-		.replace(/>/g, '>')
-		.replace(/"/g, '"')
+		.replace(/&/g, '&amp;')
+		.replace(/</g, '&lt;')
+		.replace(/>/g, '&gt;')
+		.replace(/"/g, '&quot;')
 		.replace(/'/g, '&#39;');
 }
 
@@ -237,6 +237,7 @@ function buildQuestNode(q) {
 			${checkboxHtml}
 			<span class="quest-name" title=""></span>
 			<div class="quest-badges"></div>
+			<button type="button" class="quest-open" data-open="1" title="Mở trang nhiệm vụ Discord (discord.com/quests)">↗ Discord</button>
 		</div>
 		<div class="bar"><i style="width:0%"></i></div>
 		<div class="quest-meta">
@@ -382,6 +383,14 @@ function updateSelectionUi() {
 	});
 	ui.selectAll.checked = selectableIds.length > 0 && selectableIds.every((id) => selected.has(id));
 	ui.selectAll.indeterminate = !ui.selectAll.checked && selectableIds.some((id) => selected.has(id));
+
+	// Tổng Orbs của các nhiệm vụ đang được chọn (tính năng tóm tắt nhanh)
+	let selOrbs = 0;
+	for (const id of selected) {
+		const q = quests.get(id);
+		if (q) selOrbs += q.orbs || 0;
+	}
+	ui.selectedOrbs.textContent = selected.size > 0 ? `(+${selOrbs} Orbs)` : '';
 }
 
 /* ---------------- Selection handlers ---------------- */
@@ -409,9 +418,35 @@ ui.selectAll.addEventListener('change', () => {
 	updateSelectionUi();
 });
 
+// Mở trang nhiệm vụ Discord (chỉ mở URL discord.com, được main process kiểm duyệt).
+function openQuestInDiscord() {
+	api.openUrl('https://discord.com/quests').catch(() => {
+		toast('Không thể mở liên kết Discord.', true);
+	});
+}
+ui.questListActive.addEventListener('click', (e) => {
+	const btn = e.target.closest('[data-open]');
+	if (btn) openQuestInDiscord();
+});
+ui.questListDone.addEventListener('click', (e) => {
+	const btn = e.target.closest('[data-open]');
+	if (btn) openQuestInDiscord();
+});
+
 /* ---------------- Quest store helpers ---------------- */
 
-function upsertQuest(id, patch) {
+/* Gộp các event cập nhật tiến độ trong 1 frame -> tránh re-render hàng chục lần/giây. */
+let renderScheduled = false;
+function scheduleRender() {
+	if (renderScheduled) return;
+	renderScheduled = true;
+	requestAnimationFrame(() => {
+		renderScheduled = false;
+		renderQuests();
+	});
+}
+
+function upsertQuest(id, patch, opts = {}) {
 	if (!id) return;
 	if (!quests.has(id)) {
 		questOrder.push(id);
@@ -425,7 +460,11 @@ function upsertQuest(id, patch) {
 		});
 	}
 	Object.assign(quests.get(id), patch);
-	renderQuests();
+	if (opts.defer) {
+		scheduleRender(); // gộp: render 1 lần duy nhất mỗi frame
+	} else {
+		renderQuests();
+	}
 }
 
 /* ---------------- Event Dispatcher ---------------- */
@@ -489,10 +528,14 @@ function handleEvent(evt) {
 			break;
 
 		case 'quest:progress':
-			upsertQuest(d.id || d.name, {
-				secondsDone: d.secondsDone,
-				secondsNeeded: d.secondsNeeded,
-			});
+			upsertQuest(
+				d.id || d.name,
+				{
+					secondsDone: d.secondsDone,
+					secondsNeeded: d.secondsNeeded,
+				},
+				{ defer: true }, // event tần suất cao -> gộp render
+			);
 			break;
 
 		case 'quest:done': {
@@ -766,6 +809,16 @@ const CONSOLE_TOKEN_SCRIPT = `window.webpackChunkdiscord_app.push([
 window.webpackChunkdiscord_app.pop();
 console.log('%c🎉 ĐÃ COPY TOKEN DISCORD THÀNH CÔNG! 🎉', 'color: #10b981; font-size: 22px; font-weight: bold; background: #000; padding: 10px; border-radius: 8px;');`;
 
+// Lưu tuỳ chọn autoScroll vào config (pref bền vững giữa các lần mở app)
+ui.autoScroll.addEventListener('change', async () => {
+	try {
+		const cfg = collectConfig();
+		await api.saveConfig({ ...cfg, autoScroll: ui.autoScroll.checked });
+	} catch {
+		/* im lặng — pref không quan trọng bằng dữ liệu */
+	}
+});
+
 ui.btnCopyScript.addEventListener('click', async () => {
 	try {
 		await api.writeClipboard(CONSOLE_TOKEN_SCRIPT);
@@ -804,11 +857,21 @@ api.onState((payload) => setState(payload.state, payload));
 				setAccount(auth.user.username, auth.user.id, auth.user.avatar);
 			} else {
 				ui.chipBadge.textContent = 'Đăng nhập';
+				// Token đã lưu nhưng hết hạn/hỏng → cảnh báo rõ ràng ngay khi mở app
+				appendLog(
+					`[Cảnh báo] Token đã lưu không còn hợp lệ: ${auth.message || 'không xác định'}. Hãy dán token mới.`,
+					'warn',
+				);
+				toast('⚠️ Token đã lưu hết hạn — dán token mới để tiếp tục.', true);
 			}
 		}
 		ui.loopMode.checked = cfg.loopMode !== false;
 		if (cfg.loopInterval) {
 			ui.loopInterval.value = String(cfg.loopInterval);
+		}
+		// Khôi phục tuỳ chọn người dùng đã lưu (autoScroll)
+		if (typeof cfg.autoScroll === 'boolean') {
+			ui.autoScroll.checked = cfg.autoScroll;
 		}
 		ui.loopIntervalRow.style.display = ui.loopMode.checked ? 'flex' : 'none';
 		updateModeDisplay();

@@ -1,0 +1,38 @@
+# 2026-10-20 — AUTO-QUEST .brain log
+> Agent đọc README (mục Log AI Agent + Quy Trình Waves) trước khi code. Ghi ngắn gọn, tiết kiệm token.
+
+## MODEL CHECK
+- `step-5-preview` — model THẬT của phiên này (lấy từ runtime thông tin phiên làm việc).
+- CẤM copy model phiên trước. Không biết → ghi `UNKNOWN-MODEL`.
+
+## QUY TẮC (cho agent sau)
+- CẤM push sang repo khác. CẤM build EXE/push main/release nếu chủ chưa ra lệnh.
+- KHÔNG đụng mobile/, .github/workflows/build-ios.yml.
+- Token file `push github(token).txt` chỉ đọc khi chủ yêu cầu push.
+- **WAVES: chỉ TĂNG** (max+1). CẤM trùng/lùi/reset 0. Nhiều thay đổi 1 phiên → gộp 1 waves.
+- Bổ sung 20/10: **Waves I/I-B/II/III là MỤC CHÍNH** (khung bắt buộc). Waves con **tự vibe sáng tạo** hoặc theo promt user — **CẤM đặt tên trùng đề mục chính**; waves con dùng số riêng + tên riêng sáng tạo.
+- Ghi log đúng **tên model đang chạy thật**, không copy phiên trước.
+
+## Backlog đã vibe (chờ duỵệt / làm dần) — ngày 20/10
+- W10 ✨ Nút "Mở trong Discord" (locked IPC discord.com only) — **đã làm xong trong Waves 9 ngày 19/10** (gộp).
+- W11 ♿ a11y log (aria-live) — **đã làm trong Waves 9** (gộp).
+- W12 📊 Tổng Orbs đã chọn — **đã làm trong Waves 9** (gộp).
+- W13 ⚡ Throttle progress event → giảm reflow khi chạy nhiều quest.
+- W14 🔒 Test security guard: zero-call xác nhận chặn URL ngoài + chặn webhook.
+- W15 🧹 Chuẩn hoá log level bot (đổi console.log emoji → structured log).
+- W16 🧪 Unit test cho escapeHtml + dedupe quest:done.
+- W17 📦 Build checksum: ghi sha256 vào build-release/exe/CHECKSUMS.txt.
+- W18 🎨 Empty-state có nút action (Quét ngay) thay vì chữ trống.
+- W19 💾 Lưu pref autoScroll/loopMode vào config.
+- W20 🔔 Toast cảnh báo token hết hạn khi auth:check fail ở init.
+
+## ~21:45 · step-5-preview · WAVES 10 DONE — SMOOTH PROGRESS (mục chính: Waves II)
+- Luật mới từ chủ: Waves I/I-B/II/III = **mục chính**; waves con tự vibe/tên riêng sáng tạo, CẤM trùng tên đề mục chính. Đã ghi vào README + file log này.
+- Code (waves con "Smooth Progress" — tên riêng, không trùng đề mục):
+  - renderer.js: `scheduleRender()` + `upsertQuest(id, patch, {defer:true})` — event `quest:progress` (tần suất cao) được gộp render mỗi 1 frame (requestAnimationFrame) thay vì re-render mỗi event.
+  - Dọn `ui.remember` — tham chiếu id `#remember` không tồn tại trong HTML (rác từ phiên bản cũ).
+  - Pref `autoScroll`: lưu qua `saveConfig({autoScroll})` khi toggle; main.js `readConfig/writeConfig` thêm field `autoScroll` (mặc định true); init đọc lại.
+  - Cảnh báo token hết hạn: init auth fail → appendLog warn + toast "Token đã lưu hết hạn".
+- Kiểm thử (Waves III): node --check 3 file JS, DOM-id scan (42 el() ids khớp HTML), tsc --noEmit — tất cả pass.
+- README: badge Waves 10, roadmap + sổ waves thêm W10 "Smooth Progress", log 3 bản ghi mới nhất (9 → 8 → 10 mới nhất trên cùng... đúng thứ tự: 10, 9, 8).
+- Không build EXE, không push.
