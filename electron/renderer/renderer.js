@@ -25,8 +25,14 @@ const ui = {
 	selectTools: el('selectTools'),
 	selectedCount: el('selectedCount'),
 	selectedOrbs: el('selectedOrbs'),
-	// Discord profile (đại cải tổ Waves 11)
+	// Discord profile (left rail + pop, Waves 12)
 	dprofile: el('dprofile'),
+	upRow: el('upRow'),
+	upPop: el('upPop'),
+	upAvatar: el('upAvatar'),
+	upName: el('upName'),
+	upSub: el('upSub'),
+	btnLogout: el('btnLogout'),
 	dpBanner: el('dpBanner'),
 	dpAvatar: el('dpAvatar'),
 	dpDecoration: el('dpDecoration'),
@@ -35,6 +41,8 @@ const ui = {
 	dpClanBadge: el('dpClanBadge'),
 	dpClanTag: el('dpClanTag'),
 	dpBadge: el('dpBadge'),
+	orbBalance: el('orbBalance'),
+	orbPending: el('orbPending'),
 	// Nav
 	navQuest: el('navQuest'),
 	navSettings: el('navSettings'),
@@ -104,14 +112,14 @@ function setBusyFlags() {
 
 function setState(next, extra = {}) {
 	state = next;
-	// Trạng thái app hiển thị ngay trên profile Discord (dpBadge)
-	const label = next === 'running' && extra.username
-		? `Đang chạy · @${extra.username}`
-		: STATE_TEXT[next] || next;
-	if (ui.dpBadge.textContent !== label) ui.dpBadge.textContent = label;
-	ui.dpBadge.classList.toggle('live', next === 'running' || next === 'scanning');
-	ui.dpBadge.classList.toggle('err', next === 'error');
-
+	// Trạng thái app hiển thị trong sub-text của user panel
+	if (next === 'running' && extra.username) {
+		ui.upSub.textContent = `Đang chạy · @${extra.username}`;
+	} else if (ui.dprofile.dataset.state === 'guest') {
+		ui.upSub.textContent = 'Bấm để đăng nhập';
+	} else {
+		ui.upSub.textContent = STATE_TEXT[next] || next;
+	}
 	setBusyFlags();
 }
 
@@ -595,6 +603,17 @@ function handleEvent(evt) {
 			}
 			break;
 
+		case 'orbs:balance':
+			// Số ORB KHẢ DỤNG thật từ account: chỉ đếm quest đã hoàn thành + ĐÃ CLAIM thưởng.
+			// Data thật từ Discord API — không bịa số.
+			if (typeof d.balance === 'number') {
+				ui.orbBalance.textContent = String(d.balance);
+				ui.orbPending.textContent = d.pendingClaim > 0 ? `+${d.pendingClaim} Orbs chờ nhận` : '';
+				ui.statOrbs.textContent = `${d.balance} Orbs`;
+				appendLog(`[Hệ thống] Số Orb khả dụng (đã claim): ${d.balance}${d.pendingClaim > 0 ? ` · Còn ${d.pendingClaim} Orbs chờ claim` : ''}`, 'system');
+			}
+			break;
+
 		case 'cycle:wait': {
 			const rem = d.remainingSeconds || 0;
 			const m = Math.floor(rem / 60);
@@ -633,18 +652,36 @@ function intToHex(n) {
 }
 
 /**
- * Vẽ profile Discord: banner CDN (hoặc màu accent), avatar thật,
- * avatar decoration (hiệu ứng), clan badge + tag — y hệt web Discord.
+ * Vẽ profile Discord (vào khung pop của user panel):
+ * banner CDN (hoặc accent gradient), avatar thật, decoration đè lên avatar,
+ * clan badge + tag — y hệt web Discord.
  */
 function renderDiscordProfile(user) {
 	if (!user) return;
 	const { id, username, displayName, avatar, banner, accentColor, avatarDecoration, clan } = user;
 
-	// Tên hiển thị + @username
-	ui.dpDisplay.textContent = displayName || username || 'Discord User';
+	const display = displayName || username || 'Discord User';
+	ui.dpDisplay.textContent = display;
 	ui.dpUsername.textContent = username ? `@${username}` : '';
+	ui.upName.textContent = display;
+	ui.upSub.textContent = username ? `@${username}` : 'Đã đăng nhập';
 
-	// Banner: ưu tiên banner CDN → fallback màu accent → fallback gradient mặc định
+	// Avatar nhỏ trên panel + avatar lớn trong pop
+	ui.upAvatar.innerHTML = '';
+	ui.dpAvatar.innerHTML = '';
+	if (avatar && id) {
+		const ext = avatar.startsWith('a_') ? 'gif' : 'png';
+		const src = `${CDN}/avatars/${id}/${avatar}.${ext}?size=64`;
+		for (const holder of [ui.upAvatar, ui.dpAvatar]) {
+			const img = document.createElement('img');
+			img.src = src;
+			img.alt = '';
+			img.className = holder === ui.upAvatar ? 'up-avatar-img' : 'dp-avatar-img';
+			holder.appendChild(img);
+		}
+	}
+
+	// Banner: CDN → accent gradient → mặc định
 	ui.dpBanner.innerHTML = '';
 	ui.dpBanner.style.background = '';
 	if (banner && id) {
@@ -656,18 +693,7 @@ function renderDiscordProfile(user) {
 		ui.dpBanner.classList.add('default');
 	}
 
-	// Avatar thật từ CDN Discord (gif cho avatar động a_)
-	const av = ui.dpAvatar;
-	av.innerHTML = '';
-	if (avatar && id) {
-		const ext = avatar.startsWith('a_') ? 'gif' : 'png';
-		const img = document.createElement('img');
-		img.src = `${CDN}/avatars/${id}/${avatar}.${ext}?size=80`;
-		img.alt = '';
-		img.className = 'dp-avatar-img';
-		av.appendChild(img);
-	}
-	// Avatar decoration (hiệu ứng khung avt Discord)
+	// Avatar decoration đè lên avatar lớn (trang trí bảng tên Discord)
 	ui.dpDecoration.innerHTML = '';
 	if (avatarDecoration && id) {
 		const decoImg = document.createElement('img');
@@ -676,7 +702,7 @@ function renderDiscordProfile(user) {
 		ui.dpDecoration.appendChild(decoImg);
 	}
 
-	// Clan badge (tag cộng đồng Discord như "wuwwa" trên web)
+	// Clan badge + tag
 	if (clan && clan.badge) {
 		ui.dpClanBadge.src = `${CDN}/clan-badges/${clan.guildId || '0'}/${clan.badge}.png?size=32`;
 		ui.dpClanBadge.hidden = false;
@@ -687,10 +713,8 @@ function renderDiscordProfile(user) {
 		ui.dpClanTag.hidden = true;
 	}
 
-	// Trạng thái đăng nhập
 	ui.dprofile.dataset.state = 'logged-in';
-	ui.dpBadge.textContent = 'Online';
-	ui.dpBadge.classList.add('online');
+	ui.dpBadge.textContent = 'Đóng khung quản lý';
 }
 
 function linearGradientFromHex(hex) {
@@ -701,23 +725,29 @@ function linearGradientFromHex(hex) {
 function resetDiscordProfile() {
 	ui.dprofile.dataset.state = 'guest';
 	ui.dpDisplay.textContent = 'Chưa đăng nhập';
-	ui.dpUsername.textContent = 'Dán token để bắt đầu';
+	ui.dpUsername.textContent = 'Dán token ở Cài đặt';
+	ui.upName.textContent = 'Chưa đăng nhập';
+	ui.upSub.textContent = 'Bấm để đăng nhập';
 	ui.dpBanner.innerHTML = '';
 	ui.dpBanner.style.background = '';
 	ui.dpBanner.classList.add('default');
 	ui.dpAvatar.innerHTML = '';
+	ui.upAvatar.innerHTML = '';
 	ui.dpDecoration.innerHTML = '';
 	ui.dpClanBadge.hidden = true;
 	ui.dpClanTag.hidden = true;
 	ui.dpBadge.textContent = 'Đăng nhập';
-	ui.dpBadge.classList.remove('online', 'live', 'err');
+	// Về trạng thái guest: đóng pop
+	ui.upPop.hidden = true;
+	ui.upRow.setAttribute('aria-expanded', 'false');
 }
 
 /** Đăng nhập: xác thực token rồi vẽ profile chuẩn Discord. */
 async function loginChip() {
 	const token = ui.token.value.trim();
 	if (!token) {
-		toast('Dán token Discord trước đã (ở tab Cài đặt).', true);
+		toast('Dán token Discord ở trang Cài đặt trước đã.', true);
+		switchPage('settings');
 		ui.token.focus();
 		return;
 	}
@@ -734,10 +764,50 @@ async function loginChip() {
 	}
 }
 
-ui.dpBadge.addEventListener('click', loginChip);
-// Bấm avatar chữ khi guest cũng đăng nhập
-ui.dpAvatar.addEventListener('click', () => {
+// Bấm hàng user panel: guest → đăng nhập; logged-in → mở/đóng khung profile
+ui.upRow.addEventListener('click', (e) => {
+	if (e.target.closest('#btnLogout')) return; // nút đăng xuất xử lý riêng
+	if (ui.dprofile.dataset.state === 'guest') {
+		loginChip();
+		return;
+	}
+	const willShow = ui.upPop.hidden;
+	ui.upPop.hidden = !willShow;
+	ui.upRow.setAttribute('aria-expanded', String(willShow));
+});
+
+// Nút ĐĂNG XUẤT: xoá token khỏi app → về guest (không gọi Discord gì cả)
+async function logout() {
+	try {
+		await api.saveConfig({ token: '', remember: false, loopMode: ui.loopMode.checked, loopInterval: parseInt(ui.loopInterval.value, 10) || 30, autoScroll: ui.autoScroll.checked });
+	} catch { /* ignore */ }
+	ui.token.value = '';
+	resetDiscordProfile();
+	ui.orbBalance.textContent = '—';
+	ui.orbPending.textContent = '';
+	ui.statOrbs.textContent = '—';
+	toast('Đã đăng xuất khỏi app. Token đã xoá khỏi thiết bị.');
+	appendLog('[Hệ thống] Đã đăng xuất — token xoá khỏi người dùng cục bộ.', 'system');
+}
+ui.btnLogout.addEventListener('click', (e) => {
+	e.stopPropagation();
+	logout();
+});
+ui.btnLogout.addEventListener('keydown', (e) => {
+	if (e.key === 'Enter' || e.key === ' ') {
+		e.preventDefault();
+		e.stopPropagation();
+		logout();
+	}
+});
+
+// Nút trong khung profile: guest → login; logged-in → nhắc nơi đổi token
+ui.dpBadge.addEventListener('click', () => {
 	if (ui.dprofile.dataset.state === 'guest') loginChip();
+	else {
+		switchPage('settings');
+		toast('Đổi token trong trang Cài đặt rồi đăng nhập lại.');
+	}
 });
 
 /* ---------------- Page Navigation (Auto Quest / Cài đặt / Giới thiệu) ---------------- */

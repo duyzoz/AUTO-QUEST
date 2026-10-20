@@ -91,6 +91,24 @@ async function scanQuests() {
     (0, events_1.report)('quest:inventory', { quests: realInventory });
     const pending = realInventory.filter((q) => q.status !== 'done');
     console.log(`📋 Quét xong: ${realInventory.length} nhiệm vụ thật (${pending.length} chưa hoàn thành, ${realInventory.length - pending.length} đã xong).`);
+    // Số dư ORB THẬT từ account: chỉ đếm quest đã hoàn thành và ĐÃ CLAIM thưởng
+    // (claim mới => orb thật vào ví; quest done chưa claim thì báo riêng để UI gợi ý).
+    let orbBalance = 0;
+    let orbPendingClaim = 0;
+    for (const q of realInventory) {
+        if (q.status !== 'done')
+            continue;
+        const quest = questManager.list().find((raw) => questManager_1.QuestManager.getQuestId(raw) === q.id);
+        if (!quest)
+            continue;
+        if (quest.hasClaimedRewards())
+            orbBalance += q.orbs;
+        else
+            orbPendingClaim += q.orbs;
+    }
+    (0, events_1.report)('orbs:balance', { balance: orbBalance, pendingClaim: orbPendingClaim });
+    console.log(`🔮 Số dư Orb (đã claim từ nhiệm vụ): ${orbBalance}` +
+        (orbPendingClaim > 0 ? ` · chờ claim: ${orbPendingClaim} Orbs` : ''));
     return questManager;
 }
 /**
@@ -133,6 +151,19 @@ async function runSelectedQuests(questManager, quests) {
     const updatedOrbStats = questManager.getOrbsSummary();
     (0, events_1.report)('orb:summary', updatedOrbStats);
     console.log(`🎉 Hoàn thành đợt cày! Tổng Orb đã đạt: ${updatedOrbStats.completedOrbs} Orbs.`);
+    // Cập nhật lại số dư Orb khả dụng sau khi claim thưởng xong (số liệu THẬT, không bịa).
+    let freshBalance = 0;
+    let freshPending = 0;
+    for (const q of questManager.list()) {
+        const orbs = questManager_1.QuestManager.getQuestOrbs(q);
+        if (!q.isCompleted())
+            continue;
+        if (q.hasClaimedRewards())
+            freshBalance += orbs;
+        else
+            freshPending += orbs;
+    }
+    (0, events_1.report)('orbs:balance', { balance: freshBalance, pendingClaim: freshPending });
 }
 async function runQuestCycle() {
     if (isStopping)

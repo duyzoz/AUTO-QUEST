@@ -11,6 +11,7 @@ export type QuestEventType =
 	| 'quest:error'
 	| 'quest:redeem'
 	| 'orb:summary'
+	| 'orbs:balance'
 	| 'cycle:wait'
 	| 'finish'
 	| 'fatal';

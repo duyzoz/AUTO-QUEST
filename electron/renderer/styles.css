@@ -29,8 +29,8 @@
 
 body {
 	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-	background: var(--bg);
-	color: var(--text-primary);
+	background: #1e1f22;
+	color: #f2f3f5;
 	height: 100vh;
 	display: flex;
 	flex-direction: column;
@@ -39,111 +39,217 @@ body {
 }
 
 /* ============================================================
-   DISCORD PROFILE HEADER (bê nguyên từ web Discord)
+   SHELL: LEFT RAIL (giống web Discord) + MAIN
    ============================================================ */
-.dprofile {
-	position: relative;
-	z-index: 10;
-	user-select: none;
-}
-.dp-banner {
-	height: 132px;
-	background: #1e1f22;
-	background-size: cover;
-	background-position: center;
-	transition: background 0.3s ease;
-}
-.dp-banner.default {
-	background: linear-gradient(135deg, #5865f2 0%, #3c45a5 60%, #2a3157 100%);
-}
-.dp-body {
+.shell {
 	display: flex;
-	align-items: flex-end;
-	gap: 14px;
-	padding: 0 24px 12px 24px;
-	margin-top: -44px;
+	height: 100vh;
+	width: 100vw;
+	overflow: hidden;
 }
-.dp-avatar-wrap {
-	position: relative;
-	flex-shrink: 0;
-}
-.dp-avatar {
-	width: 96px;
-	height: 96px;
-	border-radius: 50%;
+
+/* ---------- RAIL trái ---------- */
+.rail {
+	width: 88px;
+	min-width: 88px;
 	background: #1e1f22;
-	border: 6px solid var(--card-bg);
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+	align-items: center;
+	padding: 12px 0;
+	border-right: 1px solid rgba(0,0,0,0.4);
+}
+.rail-icons {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	align-items: center;
+	width: 100%;
+}
+.rail-btn {
+	position: relative;
+	width: 48px;
+	height: 48px;
+	border-radius: 16px; /* bo góc chuẩn Discord — vuông khi idle */
+	background: #313338;
+	border: none;
+	color: #dbdee1;
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	color: #80848e;
-	overflow: hidden;
 	cursor: pointer;
+	transition: border-radius 0.18s ease, background 0.18s ease, color 0.18s ease;
+	font-family: inherit;
 }
-.dprofile[data-state="logged-in"] .dp-avatar {
-	box-shadow: 0 0 0 2px rgba(88, 101, 242, 0.45), 0 8px 24px rgba(0,0,0,0.5);
+.rail-btn:hover {
+	border-radius: 14px;
+	background: #5865f2;
+	color: #fff;
 }
-.dp-avatar-img {
-	width: 100%;
-	height: 100%;
-	object-fit: cover;
-	border-radius: 50%;
+.rail-btn.active {
+	border-radius: 14px;
+	background: #5865f2;
+	color: #fff;
 }
-.dp-status-dot {
+.rail-pill {
 	position: absolute;
-	right: 6px;
-	bottom: 6px;
-	width: 20px;
-	height: 20px;
-	border-radius: 50%;
-	background: #80848e;
-	border: 4px solid var(--card-bg);
-	transition: background 0.25s ease;
+	left: -20px;
+	top: 50%;
+	transform: translateY(-50%) scaleY(0);
+	width: 4px;
+	height: 26px;
+	border-radius: 0 4px 4px 0;
+	background: #fff;
+	transition: transform 0.18s ease;
 }
-.dprofile[data-state="logged-in"] .dp-status-dot { background: #23a55a; }
-.dp-decoration {
-	position: absolute;
-	top: 44px;
-	left: calc(24px - 12px);
-	width: 120px;
-	height: 120px;
-	pointer-events: none;
-	z-index: 3;
-}
-.dp-decoration img {
+.rail-btn.active .rail-pill { transform: translateY(-50%) scaleY(1); }
+.rail-ico { display: flex; }
+
+/* ---------- USER PANEL góc trái dưới ---------- */
+.userpanel {
+	position: relative;
 	width: 100%;
-	height: 100%;
-	object-fit: contain;
+	padding: 0 8px;
 }
-.dp-identity {
-	flex: 1;
-	min-width: 0;
-	display: flex;
-	flex-direction: column;
-	gap: 2px;
-	padding-bottom: 4px;
-}
-.dp-name-row {
+.up-row {
+	width: 100%;
 	display: flex;
 	align-items: center;
 	gap: 8px;
-	min-width: 0;
+	padding: 6px 6px;
+	background: #232428;
+	border: none;
+	border-radius: 10px;
+	cursor: pointer;
+	color: #f2f3f5;
+	font-family: inherit;
+	transition: background 0.15s ease;
+	text-align: left;
 }
-.dp-display {
-	font-size: 1.25rem;
-	font-weight: 800;
+.up-row:hover { background: #2b2d31; }
+.up-row:focus-visible { outline: 2px solid var(--accent-vesper); outline-offset: 1px; }
+.up-avatar {
+	width: 32px;
+	height: 32px;
+	border-radius: 50%;
+	background: #5865f2;
 	color: #fff;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	overflow: hidden;
+	flex-shrink: 0;
+	position: relative;
+}
+.up-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.userpanel[data-state="logged-in"] .up-avatar { box-shadow: 0 0 0 2px #23a55a; }
+.up-text { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.up-name {
+	font-size: 0.8rem;
+	font-weight: 700;
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
 }
-.dp-clan-badge {
-	width: 20px;
-	height: 20px;
-	flex-shrink: 0;
+.up-sub {
+	font-size: 0.66rem;
+	color: #949ba4;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
 }
+.up-logout {
+	width: 30px;
+	height: 30px;
+	border-radius: 8px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: #b5bac1;
+	flex-shrink: 0;
+	transition: background 0.15s ease, color 0.15s ease;
+	cursor: pointer;
+}
+.up-logout:hover { background: #f23f43; color: #fff; }
+.up-logout:focus-visible { outline: 2px solid var(--accent-vesper); }
+
+/* ---------- Khung profile mở lên (pop) ---------- */
+.up-pop {
+	position: absolute;
+	bottom: calc(100% + 10px);
+	left: 8px;
+	right: 8px;
+	background: #232428;
+	border-radius: 12px; /* bo góc chuẩn Discord popout */
+	overflow: hidden;
+	box-shadow: 0 8px 24px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.06);
+	z-index: 60;
+	animation: upPopIn 0.16s ease;
+}
+@keyframes upPopIn {
+	from { opacity: 0; transform: translateY(6px); }
+	to { opacity: 1; transform: translateY(0); }
+}
+.up-pop-banner {
+	height: 60px;
+	background: linear-gradient(135deg, #5865f2, #3c45a5);
+	background-size: cover;
+	background-position: center;
+}
+.up-pop-body {
+	padding: 0 12px 12px 12px;
+	display: flex;
+	flex-direction: column;
+}
+.up-pop-avatarwrap {
+	position: relative;
+	width: 72px;
+	margin-top: -26px;
+	margin-bottom: 8px;
+}
+.dp-avatar {
+	width: 72px;
+	height: 72px;
+	border-radius: 50%;
+	background: #1e1f22;
+	border: 5px solid #232428;
+	color: #80848e;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	overflow: hidden;
+	position: relative;
+}
+.dp-avatar-img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+/* Avatar decoration: đè LÊN avatar (trang trí bảng tên, đúng chuẩn Discord) */
+.dp-decoration {
+	position: absolute;
+	inset: -10px;
+	pointer-events: none;
+	z-index: 3;
+}
+.dp-decoration img { width: 100%; height: 100%; object-fit: contain; }
+.up-pop-name { display: flex; flex-direction: column; gap: 1px; }
+.dp-display {
+	font-size: 1rem;
+	font-weight: 800;
+	color: #f2f3f5;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+.dp-username { font-size: 0.75rem; color: #b5bac1; font-weight: 600; }
+.up-pop-clan {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	margin-top: 6px;
+	min-height: 20px;
+}
+.dp-clan-badge { width: 18px; height: 18px; }
 .dp-clan-tag {
-	font-size: 0.68rem;
+	font-size: 0.66rem;
 	font-weight: 700;
 	color: #dbdee1;
 	background: rgba(255,255,255,0.08);
@@ -152,102 +258,63 @@ body {
 	border-radius: 4px;
 	letter-spacing: 0.4px;
 }
-.dp-username {
-	font-size: 0.82rem;
-	color: #b5bac1;
-	font-weight: 600;
-}
-.dp-actions {
+/* Số ORB khả dụng — nền tối bo tròn, font/màu đúng web Discord */
+.up-pop-orbs {
 	display: flex;
 	align-items: center;
-	padding-bottom: 8px;
+	gap: 9px;
+	margin-top: 10px;
+	padding: 9px 11px;
+	background: #111214;
+	border-radius: 8px;
 }
-.dp-badge {
-	font-size: 0.72rem;
+.orb-ico { display: flex; flex-shrink: 0; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.5)); }
+.orb-data { display: flex; flex-direction: column; min-width: 0; }
+.orb-label {
+	font-size: 0.58rem;
 	font-weight: 800;
-	padding: 6px 14px;
+	letter-spacing: 0.8px;
+	color: #949ba4;
+}
+.orb-value {
+	font-size: 1.02rem;
+	font-weight: 800;
+	color: #ffb85c; /* màu orb vàng-cam đúng web Discord */
+	font-variant-numeric: tabular-nums;
+}
+.orb-sub { font-size: 0.62rem; color: #949ba4; }
+.up-pop-login {
+	margin-top: 10px;
+	padding: 8px 10px;
 	border-radius: 8px;
-	background: rgba(88, 101, 242, 0.16);
-	color: #a5adf5;
-	border: 1px solid rgba(88, 101, 242, 0.35);
-	cursor: pointer;
-	transition: all 0.2s ease;
-	font-family: inherit;
-	letter-spacing: 0.4px;
-	max-width: 260px;
-	white-space: nowrap;
-	overflow: hidden;
-	text-overflow: ellipsis;
-}
-.dp-badge:hover {
-	background: rgba(88, 101, 242, 0.3);
-	color: #fff;
-}
-.dp-badge:focus-visible {
-	outline: 2px solid var(--accent-vesper);
-	outline-offset: 1px;
-}
-.dp-badge.online {
-	background: rgba(35, 165, 90, 0.14);
-	color: #3ddc84;
-	border-color: rgba(35, 165, 90, 0.35);
-	cursor: default;
-}
-.dp-badge.live {
-	background: rgba(35, 165, 90, 0.2);
-	color: #3ddc84;
-	border-color: rgba(35, 165, 90, 0.45);
-	cursor: default;
-}
-.dp-badge.err {
-	background: rgba(247, 118, 142, 0.16);
-	color: #f7768e;
-	border-color: rgba(247, 118, 142, 0.4);
-}
-
-/* ============================================================
-   NAV MENU (Auto Quest / Cai dat / Gioi thieu) - icon khoi Discord
-   ============================================================ */
-.dnav {
-	display: flex;
-	gap: 4px;
-	padding: 6px 24px;
-	background: rgba(0,0,0,0.35);
-	border-bottom: 1px solid var(--card-border);
-	z-index: 9;
-}
-.dnav-btn {
-	display: inline-flex;
-	align-items: center;
-	gap: 8px;
-	padding: 9px 16px;
-	border-radius: 8px;
-	background: transparent;
 	border: none;
-	color: #b5bac1;
-	font-size: 0.86rem;
-	font-weight: 700;
-	cursor: pointer;
-	transition: background 0.15s ease, color 0.15s ease;
-	font-family: inherit;
-}
-.dnav-btn svg { flex-shrink: 0; }
-.dnav-btn:hover {
-	background: rgba(255,255,255,0.06);
+	background: #5865f2;
 	color: #fff;
+	font-weight: 700;
+	font-size: 0.82rem;
+	cursor: pointer;
+	font-family: inherit;
+	transition: background 0.15s ease;
 }
-.dnav-btn:focus-visible {
-	outline: 2px solid var(--accent-vesper);
-	outline-offset: 1px;
+.up-pop-login:hover { background: #4752c4; }
+.up-pop-login:focus-visible { outline: 2px solid var(--accent-vesper); }
+.userpanel[data-state="logged-in"] .up-pop-login {
+	background: #2b2d31;
+	color: #b5bac1;
 }
-.dnav-btn.active {
-	background: rgba(88, 101, 242, 0.18);
-	color: #c9cdfb;
-}
+.userpanel[data-state="logged-in"] .up-pop-login:hover { background: #35373c; }
 
 /* Pages */
 .page { display: block; }
 .page[hidden] { display: none; }
+.page.active { display: block; }
+
+/* Main content bên phải rail */
+.app-scroll {
+	flex: 1;
+	overflow-y: auto;
+	background: #313338;
+}
 
 /* About card */
 .about-card .security-banner {
@@ -264,6 +331,10 @@ body {
 	color: var(--text-secondary);
 	font-size: 0.86rem;
 	line-height: 1.5;
+}
+/* Nút hành động dưới quest list */
+.quest-actions {
+	padding: 0 0 4px 0;
 }
 
 /* Stats Row */
@@ -971,7 +1042,15 @@ body {
 	opacity: 0.7;
 }
 
-/* ---- Responsive: dưới 900px chuyển 1 cột ---- */
+/* ---- Responsive: dưới 900px thu gọn rail ---- */
+@media (max-width: 900px) {
+	.rail { width: 64px; min-width: 64px; }
+	.rail-btn { width: 42px; height: 42px; }
+	.up-text { display: none; }
+	.up-row { justify-content: center; }
+	.up-logout { display: none; }
+}
+@media (max-width: 900px) {
 @media (max-width: 900px) {
 	.layout {
 		grid-template-columns: 1fr;

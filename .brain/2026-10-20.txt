@@ -54,3 +54,27 @@
 - `styles.css`: khối `.dprofile/.dnav/.page` mới (~250 dòng) + responsive dp-* thay titlebar/chip cũ.
 - Kiểm thử: node --check ×3 pass; DOM-id scan 50 ids khớp HTML; tsc --noEmit pass.
 - Không build EXE, không push. Waves kế tiếp = 12.
+
+## ~23:30 · step-5-preview · WAVES 12 DONE — LEFT RAIL REBUILD (sửa bố cục theo kasumu, waves con của Waves II)
+- Chủ chê bố cục Waves 11 sai (profile trên đầu) → yêu cầu **y hệt Discord web/kasumu**: left rail icon dọc trái, user panel đáy-trái có icon ĐĂNG XUẤT, popout profile có SỐ DƯ ORB.
+- `index.html` viết lại khối layout:
+  - `<aside class="rail">` 3 nút icon (Auto Quest/Cài đặt/Giới thiệu) + `.userpanel#dprofile` đáy rail.
+  - `.up-pop#upPop` (hidden): banner `#dpBanner` + avatar-wrap (`#dpAvatar` + `#dpDecoration` lớp phủ) + clan (`#dpClanBadge`/`#dpClanTag`) + **khung `.up-pop-orbs`**: label "SỐ ORB KHẢ DỤNG" + `#orbBalance` + `#orbPending`, icon orb SVG radialGradient #ffe9c4→#ffb85c→#e0821a.
+  - `.up-row#upRow`: avatar nhỏ `#upAvatar` + tên `#upName`/`#upSub` + **`#btnLogout` icon đăng xuất** (thay mic/headset/settings).
+  - Actions (Quét/Auto ORBs/Dừng) dời xuống ngay dưới danh sách quest ở page Auto Quest.
+- `styles.css`: nền #1e1f22, rail-btn 48px bo góc 16→14px active + pill trắng 4px; up-pop absolute phía trên panel, bo 12px, animation; dp-avatar 72px, dp-decoration inset -10px; up-logout hover #f23f43; orb-value #ffb85c letter-spacing; responsive rail 64px mobile.
+- `renderer.js`:
+  - ui map mới: upRow/upPop/upAvatar/upName/upSub/btnLogout/orbBalance/orbPending (bỏ chip* cũ).
+  - `renderDiscordProfile` vẽ cả pop lẫn row; `resetDiscordProfile` guest; `setState` ghi trạng thái vào upSub.
+  - `logout()`: xoá token config + reset profile + xoá số dư về "—".
+  - init(): resetDiscordProfile() trước, config có token → authCheck → vẽ profile đầy đủ.
+  - **event mới `orbs:balance`** (case mới trong handleEvent): cập nhật orbBalance/orbPending/statOrbs + log.
+- `bot.ts` + `events.ts` (ORB THẬT, cấm bịa):
+  - events.ts thêm `'orbs:balance'` vào QuestEventType.
+  - scanQuests(): sau quest:inventory tính `orbBalance` = tổng orb quest `isCompleted()` **VÀ** `hasClaimedRewards()` (Discord `user_status.claimed_at`); quest done chưa claim → `pendingClaim`. `report('orbs:balance', {...})`.
+  - runSelectedQuests(): sau when-all-settled **refresh lại balance** (claim xong số dư tăng thật) → report orbs:balance lần 2.
+  - `orb_pending`/ước lượng KHÔNG hiển thị vào số khả dụng — chỉ qua nhánh pendingClaim.
+- Biên dịch: tsc -p tsconfig.build.json → electron/bot/bot.js có freshBalance + orbs:balance ×2.
+- Kiểm thử: node --check ×3 (renderer/main/preload) pass; DOM-id scan **58/58 khớp**; tsc --noEmit + compile pass; node --check bot.js pass.
+- README: badge Waves 12, roadmap thêm W12 "Left Rail Rebuild", sổ waves W12, feature thêm "SỐ ORB KHẢ DỤNG (THẬT)", log 3 bản ghi (12/11/10).
+- Không build EXE, không push. Waves kế tiếp = 13.

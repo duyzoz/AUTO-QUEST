@@ -3,7 +3,7 @@
 [![Release](https://img.shields.io/github/v/release/duyzoz/AUTO-QUEST?color=ff9e64&label=Version)](https://github.com/duyzoz/AUTO-QUEST/releases)
 [![Platform](https://img.shields.io/badge/Platforms-Windows%20%7C%20iOS%20TrollStore-10b981)](#)
 [![Theme](https://img.shields.io/badge/Theme-Dark%20Strong%20Vesper-e0af68)](#)
-[![Waves](https://img.shields.io/badge/Waves-11%20%C2%B7%20Active-e0af68)](#-quy-tr%C3%ACnh-waves)
+[![Waves](https://img.shields.io/badge/Waves-12%20%C2%B7%20Active-e0af68)](#-quy-tr%C3%ACnh-waves)
 
 > ## 🤖 LƯU Ý CHO AI AGENT (BẮT BUỘC ĐỌC TRƯỚC KHI VIẾT/SỬA CODE)
 > Trước khi viết/sửa code, agent **PHẢI đọc hết README này** (mục **Quy trình Waves** + **`---- Log AI Agent ----`** ở cuối). Không đọc = làm lệch kiến trúc.
@@ -159,7 +159,8 @@ flowchart LR
     W8 --> W9["Waves 9<br/>Cải thiện:<br/>fix escapeHtml · mở Discord · a11y"]
     W9 --> W10["Waves 10 · Smooth Progress<br/>20/10: throttle render,<br/>pref autoScroll, cảnh báo token"]
     W10 --> W11["Waves 11 · Discord Dress-Up<br/>20/10: profile Discord thật,<br/>nav 3 trang, xoá monetize"]
-    W11 --> B["⏸ Build EXE<br/>(chờ lệnh)"]
+    W11 --> W12["Waves 12 · Left Rail Rebuild<br/>20/10: bố cục rail Discord,<br/>user panel + logout, ORB thật"]
+    W12 --> B["⏸ Build EXE<br/>(chờ lệnh)"]
     B --> P["⏸ Push GitHub<br/>(chờ lệnh)"]
 ```
 
@@ -177,9 +178,10 @@ flowchart LR
 | **9** | Cải thiện/fix/feature bundle (escapeHtml, mở Discord, a11y, tổng Orbs) | ✅ Xong |
 | **10** | Smooth Progress — throttle render defer + pref autoScroll + cảnh báo token hết hạn | ✅ Xong |
 | **11** | Discord Dress-Up — đại cải tổ UI theo Discord web (profile banner/avatar/decoration/clan, nav 3 trang, xoá monetize) | ✅ Xong |
-| **12+** | Backlog Waves I-B (đề提议: unit test, checksum, empty-state...) | 🔜 Kế tiếp |
+| **12** | Left Rail Rebuild — bố cục rail server-icon chuẩn Discord: user panel dưới-trái (avatar + tên + icon Đăng xuất), popout profile (banner + decoration + clan + **SỐ ORB KHẢ DỤNG trích THẬT** từ claim trên account), nav từ rail | ✅ Xong |
+| **13+** | Backlog Waves I-B (đề xuất: unit test, checksum, empty-state...) | 🔜 Kế tiếp |
 
-> 👉 Phiên edit tiếp theo **bắt buộc** là **`Waves 12`**, sau đó `13`, `14`… **Waves 1–2 không tồn tại** trong dự án này → **cấm** dùng lại.
+> 👉 Phiên edit tiếp theo **bắt buộc** là **`Waves 13`**, sau đó `14`, `15`… **Waves 1–2 không tồn tại** trong dự án này → **cấm** dùng lại.
 
 ---
 
@@ -188,6 +190,8 @@ flowchart LR
 | Tính năng | Mô tả |
 |-----------|-------|
 | **Dark Strong Vesper** | Nền OLED `#000000`, bề mặt than/nâu `#100d14`, điểm nhấn hổ phách `#ff9e64`. |
+| **Bố cục Discord Left-Rail** | Rail icon trái (Auto Quest · Cài đặt · Giới thiệu) + user panel góc dưới-trái: avatar + tên + icon **Đăng xuất**; bấm mở popout profile Discord (banner · avatar decoration · clan badge). |
+| **SỐ ORB KHẢ DỤNG (THẬT)** | Trích trực tiếp từ account: chỉ đếm quest đã hoàn thành **và đã claim thưởng** qua Discord API (`user_status.claimed_at`) — không bịa, không ước lượng; orb chưa claim hiển thị riêng "chờ nhận". |
 | **Account Chip Login** | Dán token → tự xác thực `discord.com/api` → hiện `@username` + avatar thật từ Discord CDN. |
 | **Quét trước — Chạy sau** | **Quét nhiệm vụ** lấy danh sách thật → tab "⏳ Chưa làm" (viền đỏ, checkbox từng nhiệm vụ + **Chọn tất cả**) → **Auto ORBs (N)** chạy đúng nhiệm vụ đã chọn. |
 | **Không tự nhận nhiệm vụ** | App tuyệt đối không auto-enroll. Nhiệm vụ "Chưa nhận" hiển thị đúng trạng thái Discord, checkbox khoá cho tới khi bạn nhận trong app Discord. |
@@ -310,6 +314,7 @@ Dự án phục vụ mục đích học tập và tối ưu trải nghiệm cá 
 
 > **Luật:** chỉ giữ **đúng 3 log gần nhất** (mới nhất trên cùng). Log cũ hơn xoá khỏi README. Muốn hiểu thật kĩ mọi thay đổi → đọc **`.brain/`**. Mỗi dòng ghi **đúng model của phiên đó**.
 
+- **[2026-10-20 ~23:30 · step-5-preview · Waves 12 — Left Rail Rebuild (sửa bố cục theo kasumu)]** Bro chê bố cục Waves 11 sai → dựng lại **y hệt Discord web**: **left rail 88px** icon vuông bo góc (16px idle → 14px active, pill trắng chỉ-vị-trí), **user panel đáy-trái** — hàng avatar + tên + **icon ĐĂNG XUẤT** (thay mic/headset/settings cũ, hover đỏ), bấm mở **popout profile**: banner CDN → accent gradient, avatar + decoration lớp phủ, clan badge + tag, **khung "SỐ ORB KHẢ DỤNG" màu hổ phách `#ffb85c` + icon orb SVG gradient**. **ORB THẬT không bịa**: `bot.ts` quét xong tính `orbBalance` = tổng orb quest `isCompleted()` **và** `hasClaimedRewards()` (`user_status.claimed_at` từ Discord API); quest done chưa claim gộp vào `pendingClaim` hiển thị "+N chờ nhận"; event mới `orbs:balance` → renderer cập nhật panel + stat card; **claim xong đợt cày tự refresh số dư**. Logout xoá token (DPAPI) → về guest. Pass: node --check ×3, DOM-id scan 58/58, tsc pass, compile bot.js. Không build EXE, không push.
 - **[2026-10-20 ~22:05 · step-5-preview · Waves 11 — Discord Dress-Up (đại cải tổ UI)]** Theo mẫu kasumu.cloud bro gửi (chỉ lấy ý tưởng, xoá toàn bộ link kiếm tiền). **Profile Discord thật trên đầu**: banner trỏ thẳng `cdn.discordapp.com/banners/{id}/{banner}` (fallback accent-color → gradient blurple), avatar CDN (gif cho `a_`), **avatar decoration** (`avatar-decoration-presets`, lớp phủ hiệu ứng), **clan badge + tag** (`primary_guild` — kiểu tag "wuwwa"), status dot xanh; `main.js` `auth:check` trả thêm `banner/accentColor/avatarDecoration/clan`. **Nav 3 trang icon khối**: Auto Quest (chỉ stats + quest + console) · Cài đặt (token + hướng dẫn + treo AFK + nút Quét/Auto ORBs/Dừng) · Giới thiệu (bảo mật, không link kiếm tiền); bấm Quét/Chạy tự nhảy về Auto Quest. **Xoá**: security banner giữa app (chuyển vào Giới thiệu). CSP thêm `img-src https://cdn.discordapp.com`. CSS viết khối `.dprofile/.dnav` mới + responsive. Pass: node --check ×3, DOM-id scan 50 ids, tsc --noEmit. Không build EXE, không push.
 - **[2026-10-20 ~21:45 · step-5-preview · Waves 10 — Smooth Progress]** Luật mới: **Waves I/I-B/II/III là mục chính**, waves con tự vibe sáng tạo + **cấm trùng tên đề mục chính** (đã ghi vào README + `.brain/2026-10-20.txt`). Code: **throttle render** — `quest:progress` gộp render qua `requestAnimationFrame` (`upsertQuest(..., {defer:true})`, `scheduleRender()`) → không re-render hàng chục lần/giây khi chạy nhiều quest; dọn rác `ui.remember` (id không tồn tại); **pref `autoScroll`** lưu/đọc qua config (main + renderer); **cảnh báo token hết hạn** ngay khi mở app. Kiểm thử: `node --check` 3 file JS pass · DOM-id scan pass · `tsc --noEmit` pass. Không build EXE, không push.
 - **[2026-10-19 ~21:30 · step-5-preview · Waves 9 — Cải thiện/fix/feature bundle]** Bro duyệt Waves I-B → làm luôn. `renderer.js`: **fix `escapeHtml`** (trước là no-op → chống HTML-injection qua tên quest); nút **"↗ Discord"** mở `discord.com/quests` qua IPC `openUrl` (main chỉ cho `discord.com`); `selectedOrbs` tổng Orbs đã chọn. Console `role="log" aria-live`. Không build EXE, không push.
