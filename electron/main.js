@@ -343,8 +343,20 @@ ipcMain.handle('auth:check', async (_e, token) => {
 				id: user.id,
 				username: user.username,
 				globalName: user.global_name || user.username,
-				avatar: user.avatar,
+				displayName: user.global_name || user.username,
 				discriminator: user.discriminator,
+				avatar: user.avatar,
+				// Lấy thẳng từ Discord giống web profile: banner + màu nền + hiệu ứng avt + clan badge
+				banner: user.banner || null,
+				accentColor: typeof user.accent_color === 'number' ? user.accent_color : null,
+				avatarDecoration: user.avatar_decoration_data?.asset || null,
+				clan: user.primary_guild?.identity_enabled
+					? {
+							tag: user.primary_guild.tag || '',
+							badge: user.primary_guild.badge || null,
+							guildId: user.primary_guild.identity_guild_id || null,
+						}
+					: null,
 			},
 		};
 	} catch (err) {

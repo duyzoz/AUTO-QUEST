@@ -36,3 +36,21 @@
 - Kiểm thử (Waves III): node --check 3 file JS, DOM-id scan (42 el() ids khớp HTML), tsc --noEmit — tất cả pass.
 - README: badge Waves 10, roadmap + sổ waves thêm W10 "Smooth Progress", log 3 bản ghi mới nhất (9 → 8 → 10 mới nhất trên cùng... đúng thứ tự: 10, 9, 8).
 - Không build EXE, không push.
+
+## ~22:05 · step-5-preview · WAVES 11 DONE — DISCORD DRESS-UP (đại cải tổ UI, waves con của Waves II)
+- Chủ gửi mẫu kasumu.cloud: profile Discord thật (banner CDN + avatar + decoration + clan badge), yêu cầu bê nguyên "profile Discord" vào app, menu tách Auto Quest / Cài đặt, XOÁ sạch phần kiếm tiền. Chỉ lấy ý tưởng, không copy link monetize.
+- `main.js` auth:check trả thêm: banner, accent_color, avatar_decoration_data.asset, primary_guild (clan tag/badge/guildId) — đúng payload Discord `/users/@me`.
+- `index.html` viết lại:
+  - `.dprofile` đầu trang: banner (CDN → accent gradient → blurple default), avatar 96px CDN (gif cho a_), decoration lớp phủ, clan badge + tag, status dot, dp-badge login.
+  - CSP thêm `img-src https://cdn.discordapp.com`.
+  - Nav 3 trang icon khối (SVG): Auto Quest (stats + quests + console) / Cài đặt (token + guide + AFK loop + actions) / Giới thiệu (security banner + list + disclaimer).
+  - Xoá security-banner giữa app + brand header cũ (chuyển security vào Giới thiệu).
+- `renderer.js`:
+  - `renderDiscordProfile(user)` — vẽ banner/avatar/decoration/clan thật từ CDN; `resetDiscordProfile()` guest mode.
+  - setState hiển thị status ngay trên dp-badge (live/err/online).
+  - `switchPage(quest|settings|about)` — nav, bấm Quét/Chạy tự về trang Auto Quest.
+  - loginChip → dp-badge; event login → vẽ profile nếu chưa có.
+  - Bỏ sạch accountChip/chipName/chipAvatar/statusText cũ.
+- `styles.css`: khối `.dprofile/.dnav/.page` mới (~250 dòng) + responsive dp-* thay titlebar/chip cũ.
+- Kiểm thử: node --check ×3 pass; DOM-id scan 50 ids khớp HTML; tsc --noEmit pass.
+- Không build EXE, không push. Waves kế tiếp = 12.

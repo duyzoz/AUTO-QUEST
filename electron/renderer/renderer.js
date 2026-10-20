@@ -25,12 +25,23 @@ const ui = {
 	selectTools: el('selectTools'),
 	selectedCount: el('selectedCount'),
 	selectedOrbs: el('selectedOrbs'),
-	accountChip: el('accountChip'),
-	chipName: el('chipName'),
-	chipBadge: el('chipBadge'),
-	chipAvatar: el('chipAvatar'),
-	status: el('status'),
-	statusText: el('statusText'),
+	// Discord profile (đại cải tổ Waves 11)
+	dprofile: el('dprofile'),
+	dpBanner: el('dpBanner'),
+	dpAvatar: el('dpAvatar'),
+	dpDecoration: el('dpDecoration'),
+	dpDisplay: el('dpDisplay'),
+	dpUsername: el('dpUsername'),
+	dpClanBadge: el('dpClanBadge'),
+	dpClanTag: el('dpClanTag'),
+	dpBadge: el('dpBadge'),
+	// Nav
+	navQuest: el('navQuest'),
+	navSettings: el('navSettings'),
+	navAbout: el('navAbout'),
+	pageQuest: el('pageQuest'),
+	pageSettings: el('pageSettings'),
+	pageAbout: el('pageAbout'),
 	statOrbs: el('statOrbs'),
 	statOrbsBonus: el('statOrbsBonus'),
 	statQuests: el('statQuests'),
@@ -61,7 +72,6 @@ let state = 'idle';
 let currentTab = 'active';
 let logText = '';
 let sessionOrbsBonus = 0;
-let accountUserId = null;
 
 /* Quest store: khóa theo quest id ổn định (từ Discord API). */
 const quests = new Map(); // id -> quest object
@@ -94,20 +104,15 @@ function setBusyFlags() {
 
 function setState(next, extra = {}) {
 	state = next;
-	ui.status.dataset.state = next;
-
-	if (next === 'running' && extra.username) {
-		ui.statusText.textContent = `Đang chạy · @${extra.username}`;
-	} else {
-		ui.statusText.textContent = STATE_TEXT[next] || next;
-	}
+	// Trạng thái app hiển thị ngay trên profile Discord (dpBadge)
+	const label = next === 'running' && extra.username
+		? `Đang chạy · @${extra.username}`
+		: STATE_TEXT[next] || next;
+	if (ui.dpBadge.textContent !== label) ui.dpBadge.textContent = label;
+	ui.dpBadge.classList.toggle('live', next === 'running' || next === 'scanning');
+	ui.dpBadge.classList.toggle('err', next === 'error');
 
 	setBusyFlags();
-
-	if (next === 'idle') {
-		ui.statusText.textContent = STATE_TEXT.idle;
-		updateModeDisplay();
-	}
 }
 
 function updateModeDisplay() {
@@ -474,7 +479,15 @@ function handleEvent(evt) {
 	switch (evt.type) {
 		case 'login':
 			setState('running', { username: d.username });
-			setAccount(d.username, d.id, d.avatar);
+			// Bot login thành công → đồng bộ profile (nếu chưa vẽ từ authCheck)
+			if (ui.dprofile.dataset.state !== 'logged-in') {
+				renderDiscordProfile({
+					id: d.id,
+					username: d.username,
+					displayName: d.globalName || d.username,
+					avatar: d.avatar,
+				});
+			}
 			appendLog(`[Hệ thống] Đã đăng nhập Discord: @${d.username}`, 'ok');
 			break;
 
@@ -610,51 +623,150 @@ function handleEvent(evt) {
 	}
 }
 
-/* ---------------- Account chip (login) ---------------- */
+/* ---------------- Discord Profile (bê nguyên từ Discord web) ---------------- */
 
-function setAccount(username, userId, avatar) {
-	if (!username) return;
-	ui.chipName.textContent = `@${username}`;
-	ui.chipBadge.textContent = 'Online';
-	ui.chipBadge.classList.add('online');
-	ui.accountChip.classList.add('logged-in');
-	if (userId) accountUserId = userId;
-	// Avatar Discord CDN (hiệu ứng logo acc — tương lai mở rộng)
-	if (avatar && accountUserId) {
-		const ext = avatar.startsWith('a_') ? 'gif' : 'png';
-		const src = `https://cdn.discordapp.com/avatars/${accountUserId}/${avatar}.${ext}?size=64`;
-		const img = document.createElement('img');
-		img.src = src;
-		img.alt = '';
-		img.className = 'chip-avatar-img';
-		ui.chipAvatar.innerHTML = '';
-		ui.chipAvatar.appendChild(img);
-	}
+const CDN = 'https://cdn.discordapp.com';
+
+/** #rrggbb <- int accent_color của Discord API. */
+function intToHex(n) {
+	return `#${(n >>> 0).toString(16).padStart(6, '0')}`;
 }
 
+/**
+ * Vẽ profile Discord: banner CDN (hoặc màu accent), avatar thật,
+ * avatar decoration (hiệu ứng), clan badge + tag — y hệt web Discord.
+ */
+function renderDiscordProfile(user) {
+	if (!user) return;
+	const { id, username, displayName, avatar, banner, accentColor, avatarDecoration, clan } = user;
+
+	// Tên hiển thị + @username
+	ui.dpDisplay.textContent = displayName || username || 'Discord User';
+	ui.dpUsername.textContent = username ? `@${username}` : '';
+
+	// Banner: ưu tiên banner CDN → fallback màu accent → fallback gradient mặc định
+	ui.dpBanner.innerHTML = '';
+	ui.dpBanner.style.background = '';
+	if (banner && id) {
+		const ext = banner.startsWith('a_') ? 'gif' : 'png';
+		ui.dpBanner.style.background = `center / cover no-repeat url('${CDN}/banners/${id}/${banner}.${ext}?size=600')`;
+	} else if (accentColor) {
+		ui.dpBanner.style.background = linearGradientFromHex(intToHex(accentColor));
+	} else {
+		ui.dpBanner.classList.add('default');
+	}
+
+	// Avatar thật từ CDN Discord (gif cho avatar động a_)
+	const av = ui.dpAvatar;
+	av.innerHTML = '';
+	if (avatar && id) {
+		const ext = avatar.startsWith('a_') ? 'gif' : 'png';
+		const img = document.createElement('img');
+		img.src = `${CDN}/avatars/${id}/${avatar}.${ext}?size=80`;
+		img.alt = '';
+		img.className = 'dp-avatar-img';
+		av.appendChild(img);
+	}
+	// Avatar decoration (hiệu ứng khung avt Discord)
+	ui.dpDecoration.innerHTML = '';
+	if (avatarDecoration && id) {
+		const decoImg = document.createElement('img');
+		decoImg.src = `${CDN}/avatar-decoration-presets/${avatarDecoration}.png?size=96&passthrough=true`;
+		decoImg.alt = '';
+		ui.dpDecoration.appendChild(decoImg);
+	}
+
+	// Clan badge (tag cộng đồng Discord như "wuwwa" trên web)
+	if (clan && clan.badge) {
+		ui.dpClanBadge.src = `${CDN}/clan-badges/${clan.guildId || '0'}/${clan.badge}.png?size=32`;
+		ui.dpClanBadge.hidden = false;
+		ui.dpClanTag.textContent = clan.tag || '';
+		ui.dpClanTag.hidden = !clan.tag;
+	} else {
+		ui.dpClanBadge.hidden = true;
+		ui.dpClanTag.hidden = true;
+	}
+
+	// Trạng thái đăng nhập
+	ui.dprofile.dataset.state = 'logged-in';
+	ui.dpBadge.textContent = 'Online';
+	ui.dpBadge.classList.add('online');
+}
+
+function linearGradientFromHex(hex) {
+	// Gradient dọc từ màu accent → đậm dần (giống Discord khi user không có banner)
+	return `linear-gradient(180deg, ${hex} 0%, #1e1f22 130%)`;
+}
+
+function resetDiscordProfile() {
+	ui.dprofile.dataset.state = 'guest';
+	ui.dpDisplay.textContent = 'Chưa đăng nhập';
+	ui.dpUsername.textContent = 'Dán token để bắt đầu';
+	ui.dpBanner.innerHTML = '';
+	ui.dpBanner.style.background = '';
+	ui.dpBanner.classList.add('default');
+	ui.dpAvatar.innerHTML = '';
+	ui.dpDecoration.innerHTML = '';
+	ui.dpClanBadge.hidden = true;
+	ui.dpClanTag.hidden = true;
+	ui.dpBadge.textContent = 'Đăng nhập';
+	ui.dpBadge.classList.remove('online', 'live', 'err');
+}
+
+/** Đăng nhập: xác thực token rồi vẽ profile chuẩn Discord. */
 async function loginChip() {
 	const token = ui.token.value.trim();
 	if (!token) {
-		toast('Dán token Discord trước đã, rồi bấm đăng nhập.', true);
+		toast('Dán token Discord trước đã (ở tab Cài đặt).', true);
 		ui.token.focus();
 		return;
 	}
-	ui.chipBadge.textContent = 'Đang kiểm tra…';
-	ui.chipBadge.classList.remove('online');
+	ui.dpBadge.textContent = 'Đang kiểm tra…';
 	const result = await api.authCheck(token);
 	if (result.ok) {
-		setAccount(result.user.username, result.user.id, result.user.avatar);
+		renderDiscordProfile(result.user);
 		toast(`✅ Đăng nhập OK: @${result.user.username}`);
 		appendLog(`[Hệ thống] Xác thực token thành công: @${result.user.username}`, 'ok');
 	} else {
-		ui.chipBadge.textContent = 'Đăng nhập';
-		ui.accountChip.classList.remove('logged-in');
+		resetDiscordProfile();
 		toast(result.message || 'Token không hợp lệ.', true);
 		appendLog(`[LỖI] Xác thực token thất bại: ${result.message}`, 'stderr');
 	}
 }
 
-ui.accountChip.addEventListener('click', loginChip);
+ui.dpBadge.addEventListener('click', loginChip);
+// Bấm avatar chữ khi guest cũng đăng nhập
+ui.dpAvatar.addEventListener('click', () => {
+	if (ui.dprofile.dataset.state === 'guest') loginChip();
+});
+
+/* ---------------- Page Navigation (Auto Quest / Cài đặt / Giới thiệu) ---------------- */
+
+const pages = {
+	quest: { btn: ui.navQuest, page: ui.pageQuest },
+	settings: { btn: ui.navSettings, page: ui.pageSettings },
+	about: { btn: ui.navAbout, page: ui.pageAbout },
+};
+
+function switchPage(name) {
+	for (const [key, { btn, page }] of Object.entries(pages)) {
+		const on = key === name;
+		btn.classList.toggle('active', on);
+		btn.setAttribute('aria-selected', String(on));
+		page.hidden = !on;
+		page.classList.toggle('active', on);
+	}
+	// Thanh công cụ chọn chỉ thuộc trang Auto Quest
+	if (name !== 'quest') {
+		ui.selectTools.style.display = 'none';
+	} else {
+		renderQuests(); // vẽ lại để tính lại select-tools hiển thị
+	}
+}
+
+ui.navQuest.addEventListener('click', () => switchPage('quest'));
+ui.navSettings.addEventListener('click', () => switchPage('settings'));
+ui.navAbout.addEventListener('click', () => switchPage('about'));
 
 /* ---------------- User Actions ---------------- */
 
@@ -729,6 +841,7 @@ ui.btnScan.addEventListener('click', async () => {
 		setState('idle');
 	} else {
 		setState('scanning');
+		switchPage('quest'); // về trang Auto Quest xem kết quả quét
 		toast('🔍 Đang quét nhiệm vụ…');
 	}
 });
@@ -750,6 +863,7 @@ async function startRun(mode, extra = {}) {
 		setState('idle');
 	} else {
 		setState('starting');
+		switchPage('quest'); // chạy thì hiện ngay trang Auto Quest để theo dõi console
 		toast(`▶ Chạy ${extra.selectedQuests?.length || 0} nhiệm vụ đã chọn...`);
 	}
 }
@@ -848,18 +962,20 @@ api.onState((payload) => setState(payload.state, payload));
 
 (async function init() {
 	try {
+		// Khởi tạo profile guest trước (nền gradient mặc định)
+		resetDiscordProfile();
+
 		const cfg = await api.getConfig();
 		if (cfg.token) {
 			ui.token.value = cfg.token;
-			// Tự kiểm tra token đã lưu khi mở app → hiện account chip luôn
+			// Tự xác thực token đã lưu khi mở app → vẽ profile Discord đầy đủ
 			const auth = await api.authCheck(cfg.token);
 			if (auth.ok) {
-				setAccount(auth.user.username, auth.user.id, auth.user.avatar);
+				renderDiscordProfile(auth.user);
 			} else {
-				ui.chipBadge.textContent = 'Đăng nhập';
 				// Token đã lưu nhưng hết hạn/hỏng → cảnh báo rõ ràng ngay khi mở app
 				appendLog(
-					`[Cảnh báo] Token đã lưu không còn hợp lệ: ${auth.message || 'không xác định'}. Hãy dán token mới.`,
+					`[Cảnh báo] Token đã lưu không còn hợp lệ: ${auth.message || 'không xác định'}. Hãy dán token mới (tab Cài đặt).`,
 					'warn',
 				);
 				toast('⚠️ Token đã lưu hết hạn — dán token mới để tiếp tục.', true);
@@ -876,7 +992,7 @@ api.onState((payload) => setState(payload.state, payload));
 		ui.loopIntervalRow.style.display = ui.loopMode.checked ? 'flex' : 'none';
 		updateModeDisplay();
 		setState(cfg.state || 'idle');
-		appendLog('[Hệ thống] Ứng dụng sẵn sàng. Dán token → Quét nhiệm vụ → chọn → Auto ORBs.', 'system');
+		appendLog('[Hệ thống] Ứng dụng sẵn sàng. Vào Cài đặt dán token → Quét nhiệm vụ → Auto Quest chọn → Auto ORBs.', 'system');
 	} catch {
 		/* ignore */
 	}
