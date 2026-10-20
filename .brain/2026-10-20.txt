@@ -78,3 +78,29 @@
 - Kiểm thử: node --check ×3 (renderer/main/preload) pass; DOM-id scan **58/58 khớp**; tsc --noEmit + compile pass; node --check bot.js pass.
 - README: badge Waves 12, roadmap thêm W12 "Left Rail Rebuild", sổ waves W12, feature thêm "SỐ ORB KHẢ DỤNG (THẬT)", log 3 bản ghi (12/11/10).
 - Không build EXE, không push. Waves kế tiếp = 13.
+
+## ~23:20 · step-5-preview · WAVES 13 DONE — KASUMU RESKIN (bê UI kasumu-ui + diệt 100% emoji, waves con của Waves II)
+- Bro ra lệnh: bản cũ coi như vứt, vào `kasumu-ui/` (bên ngoài repo, trích xuất UI thật của kasumu.cloud) bê NGUYÊN UI/UX qua source. CẤM đổi bản chất Auto Quest (không phải app vượt link). CẤM TUYỆT ĐỐI icon emoji mặc định (xấu) — phải design log/theme chuẩn.
+- Đọc kasumu-ui: index/settings/earn/withdraw + 2 file CSS. Trích design tokens:
+  - Màu: ink-950 #05060b (bg chính), ink-900 #090b13 (sidebar/card), ink-850 #0b0e18 (pop), ink-800 #10141f (hover), fg #f3f5fa, fg-muted #aab3c8, fg-subtle #838da4, line #ffffff14, line-strong #ffffff29, brand #8b5cf6 violet, brand-bright #a78bfa, emerald #00d294, cyan #00d2ef, well rgba(5,6,11,.65).
+  - Font: Inter variable (100-900) + JetBrains Mono (400-700) — copy 13 woff2 vào electron/renderer/assets/fonts/, sinh fonts.css 31 @font-face từ CSS gốc (giữ unicode-range, đổi path). CSP font-src 'self' có sẵn.
+  - Hiệu ứng: kasumi-rise .42s cubic-bezier(.22,1,.36,1) + stagger 60/120/180/240ms; text-gradient (trắng→#d7dbe8→brand-bright); skeleton shimmer.
+- index.html viết lại (B layout kasumu):
+  - .bg-layers 3 lớp: #07090e + 2 radial glow (đỏ 20%/top, xanh 85%) + overlay ink-950/50.
+  - Sidebar 256px fixed: brand AUTO QUEST, userpanel (pop profile + ORB giữ nguyên từ W12, pop giờ MỞ XUỐNG dưới), nav "Menu" 3 item (nav-item: thanh trắng 3px .nav-ind, icon 18px, active bg-white/8).
+  - Main max-w-6xl: hero-card (tint violet, text-gradient title, CTA btn-discord #5865F2), stats-row 3 card (stat-ico 32px bo 8px tint emerald/violet/cyan + ring color-mix tint 30%), quests-card (tab + chip counter + select-tools hidden attr + actions), console-card.
+  - Toàn bộ icon = SVG stroke 2px kiểu lucide inline (dashboard, settings, info, coins, list-checks, timer, refresh, play, square, clipboard, eye, save, folder, copy, shield...). empty-ico là SVG inbox 34px.
+  - Mobile <1024px: topbar + btnDrawer + drawer-overlay; sidebar trượt translateX; switchPage tự closeDrawer.
+- styles.css viết lại hoàn toàn bằng token kasumu (không còn màu vesper/gold/copper cũ).
+- renderer.js:
+  - ui thêm btnToggleTokenText/btnDrawer/drawerOverlay/sidebar.
+  - switchTab/renderQuests/switchPage đổi style.display → hidden attr.
+  - btnStart label update giữ SVG (query .btn-ico, thay text node cuối) — không còn innerHTML ▶.
+  - btnToggleToken đổi span text (Hiện/Ẩn) thay vì emoji trong textContent.
+  - Thêm openDrawer/closeDrawer + js-hero-cta (guest→settings focus token; logged-in→quest).
+  - Toàn bộ toast/log bỏ emoji (✅ 🔮 🔍 ▶ 📋 🎉 ⚠️...). "Hoàn thành ✓" → "Hoàn thành".
+- bot.ts + src/questManager.ts: strip emoji prefix trong console.log (🔍📡📋🔮⚠️🎉🧭🎯✅⚡💤🎮🏆🎁). Tái biên dịch electron/bot/ — compiled output cũng 0 emoji.
+- main.js: backgroundColor #05060b, title "AUTO QUEST · Treo Orb Discord".
+- Kiểm thử: tsc -p tsconfig.build.json pass; node --check ×4 (bot/renderer/main/preload) pass; DOM-id scan 62/62; emoji scan regex 11 file source + 2 compiled = 0.
+- Lưu ý: btnToggleToken giờ là SVG + <span id="btnToggleTokenText">Hiện</span> — renderer đổi qua span, KHÔNG đè textContent cả nút (giữ icon).
+- Commit ca99883. Không build EXE, không push. Waves kế tiếp = 14.

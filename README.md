@@ -3,7 +3,7 @@
 [![Release](https://img.shields.io/github/v/release/duyzoz/AUTO-QUEST?color=ff9e64&label=Version)](https://github.com/duyzoz/AUTO-QUEST/releases)
 [![Platform](https://img.shields.io/badge/Platforms-Windows%20%7C%20iOS%20TrollStore-10b981)](#)
 [![Theme](https://img.shields.io/badge/Theme-Dark%20Strong%20Vesper-e0af68)](#)
-[![Waves](https://img.shields.io/badge/Waves-12%20%C2%B7%20Active-e0af68)](#-quy-tr%C3%ACnh-waves)
+[![Waves](https://img.shields.io/badge/Waves-13%20%C2%B7%20Active-e0af68)](#-quy-tr%C3%ACnh-waves)
 
 > ## 🤖 LƯU Ý CHO AI AGENT (BẮT BUỘC ĐỌC TRƯỚC KHI VIẾT/SỬA CODE)
 > Trước khi viết/sửa code, agent **PHẢI đọc hết README này** (mục **Quy trình Waves** + **`---- Log AI Agent ----`** ở cuối). Không đọc = làm lệch kiến trúc.
@@ -160,7 +160,8 @@ flowchart LR
     W9 --> W10["Waves 10 · Smooth Progress<br/>20/10: throttle render,<br/>pref autoScroll, cảnh báo token"]
     W10 --> W11["Waves 11 · Discord Dress-Up<br/>20/10: profile Discord thật,<br/>nav 3 trang, xoá monetize"]
     W11 --> W12["Waves 12 · Left Rail Rebuild<br/>20/10: bố cục rail Discord,<br/>user panel + logout, ORB thật"]
-    W12 --> B["⏸ Build EXE<br/>(chờ lệnh)"]
+    W12 --> W13["Waves 13 · Kasumu Reskin<br/>20/10: bê UI kasumu-ui,<br/>diệt 100% emoji, font Inter"]
+    W13 --> B["⏸ Build EXE<br/>(chờ lệnh)"]
     B --> P["⏸ Push GitHub<br/>(chờ lệnh)"]
 ```
 
@@ -179,9 +180,10 @@ flowchart LR
 | **10** | Smooth Progress — throttle render defer + pref autoScroll + cảnh báo token hết hạn | ✅ Xong |
 | **11** | Discord Dress-Up — đại cải tổ UI theo Discord web (profile banner/avatar/decoration/clan, nav 3 trang, xoá monetize) | ✅ Xong |
 | **12** | Left Rail Rebuild — bố cục rail server-icon chuẩn Discord: user panel dưới-trái (avatar + tên + icon Đăng xuất), popout profile (banner + decoration + clan + **SỐ ORB KHẢ DỤNG trích THẬT** từ claim trên account), nav từ rail | ✅ Xong |
-| **13+** | Backlog Waves I-B (đề xuất: unit test, checksum, empty-state...) | 🔜 Kế tiếp |
+| **13** | Kasumu Reskin — bê nguyên design system kasumu-ui (sidebar 256px, hero card, stat tint-ring, Inter + JetBrains Mono local) + **diệt 100% emoji** toàn app, thay bằng SVG stroke | ✅ Xong |
+| **14+** | Backlog Waves I-B (đề xuất: unit test, checksum, empty-state...) | 🔜 Kế tiếp |
 
-> 👉 Phiên edit tiếp theo **bắt buộc** là **`Waves 13`**, sau đó `14`, `15`… **Waves 1–2 không tồn tại** trong dự án này → **cấm** dùng lại.
+> 👉 Phiên edit tiếp theo **bắt buộc** là **`Waves 14`**, sau đó `15`, `16`… **Waves 1–2 không tồn tại** trong dự án này → **cấm** dùng lại.
 
 ---
 
@@ -314,7 +316,7 @@ Dự án phục vụ mục đích học tập và tối ưu trải nghiệm cá 
 
 > **Luật:** chỉ giữ **đúng 3 log gần nhất** (mới nhất trên cùng). Log cũ hơn xoá khỏi README. Muốn hiểu thật kĩ mọi thay đổi → đọc **`.brain/`**. Mỗi dòng ghi **đúng model của phiên đó**.
 
+- **[2026-10-20 ~23:20 · step-5-preview · Waves 13 — Kasumu Reskin (bê UI kasumu-ui + diệt emoji)]** Bro ra lệnh: bỏ bản cũ, vào `kasumu-ui/` bê NGUYÊN UI/UX qua source, cấm đổi bản chất Auto Quest, và **CẤM TUYỆT ĐỐI emoji icon mặc định** (xấu). Làm: **design tokens 1:1 từ kasumu** (ink-950 `#05060b` / ink-900 sidebar / ink-800 hover, fg `#f3f5fa`, line `#ffffff14`, brand violet `#8b5cf6`, radius-field 0.75rem/card 1.125rem, ease-out-quint) — copy 13 file woff2 **Inter + JetBrains Mono local** (fonts.css 31 @font-face unicode-range, không CDN). **Layout kasumu**: sidebar 256px fixed (brand + user panel Discord + nav "Menu" có thanh trắng 3px bên trái), main max-w-6xl: **hero card** gradient-text + CTA, **3 stat card** ring tint (--tint emerald/violet/cyan + icon góc phải), quest card tab + chip, console card. **Icon**: thay TOÀN BỘ emoji bằng SVG stroke kiểu lucide (nav, stat, nút, empty-state, ghost-btn) — scan 11 file = **0 emoji** (renderer.js, index.html, bot.ts, questManager.ts + compiled bot.js/questManager.js). Toggle token đổi sang SVG + span text. Mobile: topbar + drawer trượt có overlay. Window `#05060b`, title "AUTO QUEST". Logic scan/run/claim/orbs:balance KHÔNG đổi. Pass: tsc + compile, node --check ×4, DOM-id 62/62. Không build EXE, không push.
 - **[2026-10-20 ~23:30 · step-5-preview · Waves 12 — Left Rail Rebuild (sửa bố cục theo kasumu)]** Bro chê bố cục Waves 11 sai → dựng lại **y hệt Discord web**: **left rail 88px** icon vuông bo góc (16px idle → 14px active, pill trắng chỉ-vị-trí), **user panel đáy-trái** — hàng avatar + tên + **icon ĐĂNG XUẤT** (thay mic/headset/settings cũ, hover đỏ), bấm mở **popout profile**: banner CDN → accent gradient, avatar + decoration lớp phủ, clan badge + tag, **khung "SỐ ORB KHẢ DỤNG" màu hổ phách `#ffb85c` + icon orb SVG gradient**. **ORB THẬT không bịa**: `bot.ts` quét xong tính `orbBalance` = tổng orb quest `isCompleted()` **và** `hasClaimedRewards()` (`user_status.claimed_at` từ Discord API); quest done chưa claim gộp vào `pendingClaim` hiển thị "+N chờ nhận"; event mới `orbs:balance` → renderer cập nhật panel + stat card; **claim xong đợt cày tự refresh số dư**. Logout xoá token (DPAPI) → về guest. Pass: node --check ×3, DOM-id scan 58/58, tsc pass, compile bot.js. Không build EXE, không push.
 - **[2026-10-20 ~22:05 · step-5-preview · Waves 11 — Discord Dress-Up (đại cải tổ UI)]** Theo mẫu kasumu.cloud bro gửi (chỉ lấy ý tưởng, xoá toàn bộ link kiếm tiền). **Profile Discord thật trên đầu**: banner trỏ thẳng `cdn.discordapp.com/banners/{id}/{banner}` (fallback accent-color → gradient blurple), avatar CDN (gif cho `a_`), **avatar decoration** (`avatar-decoration-presets`, lớp phủ hiệu ứng), **clan badge + tag** (`primary_guild` — kiểu tag "wuwwa"), status dot xanh; `main.js` `auth:check` trả thêm `banner/accentColor/avatarDecoration/clan`. **Nav 3 trang icon khối**: Auto Quest (chỉ stats + quest + console) · Cài đặt (token + hướng dẫn + treo AFK + nút Quét/Auto ORBs/Dừng) · Giới thiệu (bảo mật, không link kiếm tiền); bấm Quét/Chạy tự nhảy về Auto Quest. **Xoá**: security banner giữa app (chuyển vào Giới thiệu). CSP thêm `img-src https://cdn.discordapp.com`. CSS viết khối `.dprofile/.dnav` mới + responsive. Pass: node --check ×3, DOM-id scan 50 ids, tsc --noEmit. Không build EXE, không push.
 - **[2026-10-20 ~21:45 · step-5-preview · Waves 10 — Smooth Progress]** Luật mới: **Waves I/I-B/II/III là mục chính**, waves con tự vibe sáng tạo + **cấm trùng tên đề mục chính** (đã ghi vào README + `.brain/2026-10-20.txt`). Code: **throttle render** — `quest:progress` gộp render qua `requestAnimationFrame` (`upsertQuest(..., {defer:true})`, `scheduleRender()`) → không re-render hàng chục lần/giây khi chạy nhiều quest; dọn rác `ui.remember` (id không tồn tại); **pref `autoScroll`** lưu/đọc qua config (main + renderer); **cảnh báo token hết hạn** ngay khi mở app. Kiểm thử: `node --check` 3 file JS pass · DOM-id scan pass · `tsc --noEmit` pass. Không build EXE, không push.
-- **[2026-10-19 ~21:30 · step-5-preview · Waves 9 — Cải thiện/fix/feature bundle]** Bro duyệt Waves I-B → làm luôn. `renderer.js`: **fix `escapeHtml`** (trước là no-op → chống HTML-injection qua tên quest); nút **"↗ Discord"** mở `discord.com/quests` qua IPC `openUrl` (main chỉ cho `discord.com`); `selectedOrbs` tổng Orbs đã chọn. Console `role="log" aria-live`. Không build EXE, không push.
