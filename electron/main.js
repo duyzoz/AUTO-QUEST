@@ -180,8 +180,8 @@ function startChild(config) {
 
 	logBuffer = '';
 	pushLog('system', '==================================================');
-	pushLog('system', '🛡️ KHỞI ĐỘNG AUTO-QUEST (BẢO MẬT 100% LOCAL)');
-	pushLog('system', '🛡️ Đã ngắt toàn bộ endpoint ngoài & webhook. An toàn tuyệt đối.');
+	pushLog('system', 'KHỞI ĐỘNG AUTO-QUEST (BẢO MẬT 100% LOCAL)');
+	pushLog('system', 'Đã ngắt toàn bộ endpoint ngoài & webhook. An toàn tuyệt đối.');
 	pushLog('system', '==================================================');
 	setState('starting');
 
@@ -220,7 +220,7 @@ function startChild(config) {
 	child.on('exit', (code, signal) => {
 		child = null;
 		if (childState === 'stopping') {
-			pushLog('system', '⏹️ Đã dừng tiến trình thủ công.');
+			pushLog('system', 'Đã dừng tiến trình thủ công.');
 			setState('idle');
 			return;
 		}
@@ -357,6 +357,8 @@ ipcMain.handle('auth:check', async (_e, token) => {
 							guildId: user.primary_guild.identity_guild_id || null,
 						}
 					: null,
+				// Waves 14: trả kèm token để renderer tự trích xuất số dư Orb sau login
+				token: clean,
 			},
 		};
 	} catch (err) {
@@ -364,8 +366,49 @@ ipcMain.handle('auth:check', async (_e, token) => {
 	}
 });
 
-ipcMain.handle('clipboard:read', () => clipboard.readText());
-ipcMain.handle('clipboard:write', (_e, text) => {
+// Trích xuất số ORB THẬT từ account: GET /quests/@me — quest đã hoàn thành (completed)
+// VÀ đã claim thưởng (user_status.claimed_at) mới cộng vào số khả dụng.
+// Quest done chưa claim gộp vào pendingClaim. Chỉ gọi tới discord.com.
+ipcMain.handle('orbs:fetch', async (_e, token) => {
+	const clean = String(token || '').trim();
+	if (!clean) return { ok: false, message: 'Chưa có token.' };
+	try {
+		const res = await fetch('https://discord.com/api/v10/quests/@me', {
+			headers: { Authorization: clean },
+			signal: AbortSignal.timeout(15000),
+		});
+		if (!res.ok) {
+			return {
+				ok: false,
+				message: res.status === 401 ? 'Token không hợp lệ.' : `Discord trả lỗi ${res.status}.`,
+			};
+		}
+		const data = await res.json();
+		const quests = Array.isArray(data?.quests) ? data.quests : [];
+		let balance = 0; // orb đã claim — tiền thật trong ví
+		let pendingClaim = 0; // quest xong chưa nhận thưởng
+		let activeOrbs = 0; // đang cày dở
+		for (const q of quests) {
+			if (!q || q.preview === true) continue;
+			const rewards = q.config?.rewards_config?.rewards;
+			if (!Array.isArray(rewards)) continue;
+			let orbs = 0;
+			for (const r of rewards) {
+				if (typeof r.orb_quantity === 'number') orbs += r.orb_quantity;
+			}
+			const completed = Boolean(q.user_status?.completed_at);
+			const claimed = Boolean(q.user_status?.claimed_at);
+			if (completed && claimed) balance += orbs;
+			else if (completed) pendingClaim += orbs;
+			else activeOrbs += orbs;
+		}
+		return { ok: true, balance, pendingClaim, activeOrbs, totalQuests: quests.length };
+	} catch (err) {
+		return { ok: false, message: `Không kết nối được Discord: ${err.message}` };
+	}
+});
+
+ipcMain.handle('clipboard:read', () => clipboard.readText());ipcMain.handle('clipboard:write', (_e, text) => {
 	clipboard.writeText(String(text || ''));
 	return { ok: true };
 });

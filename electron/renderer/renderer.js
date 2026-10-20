@@ -45,6 +45,18 @@ const ui = {
 	dpClanBadge: el('dpClanBadge'),
 	dpClanTag: el('dpClanTag'),
 	dpBadge: el('dpBadge'),
+	// Hero trung tâm: guest vs profile (Waves 14)
+	heroGuest: el('heroGuest'),
+	heroProfile: el('heroProfile'),
+	phBanner: el('phBanner'),
+	phAvatar: el('phAvatar'),
+	phDecoration: el('phDecoration'),
+	phDisplay: el('phDisplay'),
+	phUsername: el('phUsername'),
+	phClanBadge: el('phClanBadge'),
+	phClanTag: el('phClanTag'),
+	// Số dư ORB (khối đáy sidebar, Waves 14)
+	sideBalance: el('sideBalance'),
 	orbBalance: el('orbBalance'),
 	orbPending: el('orbPending'),
 	// Nav
@@ -613,10 +625,12 @@ function handleEvent(evt) {
 
 		case 'orbs:balance':
 			// Số ORB KHẢ DỤNG thật từ account: chỉ đếm quest đã hoàn thành + ĐÃ CLAIM thưởng.
-			// Data thật từ Discord API — không bịa số.
+			// Data thật từ Discord API — không bịa số. (bot push trong phiên chạy)
 			if (typeof d.balance === 'number') {
 				ui.orbBalance.textContent = String(d.balance);
-				ui.orbPending.textContent = d.pendingClaim > 0 ? `+${d.pendingClaim} Orbs chờ nhận` : '';
+				ui.orbPending.textContent =
+					d.pendingClaim > 0 ? `+${d.pendingClaim} Orbs hoàn thành, chờ nhận thưởng` : 'Tổng Orb từ nhiệm vụ đã hoàn thành và đã claim.';
+				ui.sideBalance.dataset.state = 'live';
 				ui.statOrbs.textContent = `${d.balance} Orbs`;
 				appendLog(`[Hệ thống] Số Orb khả dụng (đã claim): ${d.balance}${d.pendingClaim > 0 ? ` · Còn ${d.pendingClaim} Orbs chờ claim` : ''}`, 'system');
 			}
@@ -710,24 +724,112 @@ function renderDiscordProfile(user) {
 		ui.dpDecoration.appendChild(decoImg);
 	}
 
-	// Clan badge + tag
+	// Clan badge + tag — pop (sidebar) và hero giữa trang
 	if (clan && clan.badge) {
-		ui.dpClanBadge.src = `${CDN}/clan-badges/${clan.guildId || '0'}/${clan.badge}.png?size=32`;
+		const badgeSrc = `${CDN}/clan-badges/${clan.guildId || '0'}/${clan.badge}.png?size=32`;
+		ui.dpClanBadge.src = badgeSrc;
 		ui.dpClanBadge.hidden = false;
-		ui.dpClanTag.textContent = clan.tag || '';
-		ui.dpClanTag.hidden = !clan.tag;
+		ui.phClanBadge.src = badgeSrc;
+		ui.phClanBadge.hidden = false;
+		for (const tagEl of [ui.dpClanTag, ui.phClanTag]) {
+			tagEl.textContent = clan.tag || '';
+			tagEl.hidden = !clan.tag;
+		}
 	} else {
 		ui.dpClanBadge.hidden = true;
 		ui.dpClanTag.hidden = true;
+		ui.phClanBadge.hidden = true;
+		ui.phClanTag.hidden = true;
 	}
 
 	ui.dprofile.dataset.state = 'logged-in';
 	ui.dpBadge.textContent = 'Đóng khung quản lý';
+
+	// ---- Hero giữa trang (Waves 14): banner / avatar / decoration / tên ----
+	ui.heroGuest.hidden = true;
+	ui.heroProfile.hidden = false;
+	ui.phDisplay.textContent = display;
+	ui.phUsername.textContent = username ? `@${username}` : '';
+	ui.phAvatar.innerHTML = '';
+	if (avatar && id) {
+		const ext = avatar.startsWith('a_') ? 'gif' : 'png';
+		const img = document.createElement('img');
+		img.src = `${CDN}/avatars/${id}/${avatar}.${ext}?size=160`;
+		img.alt = '';
+		img.className = 'ph-avatar-img';
+		ui.phAvatar.appendChild(img);
+	}
+	ui.phBanner.classList.remove('default');
+	if (banner && id) {
+		const ext = banner.startsWith('a_') ? 'gif' : 'png';
+		ui.phBanner.style.background = `center / cover no-repeat url('${CDN}/banners/${id}/${banner}.${ext}?size=600')`;
+	} else if (accentColor) {
+		ui.phBanner.style.background = linearGradientFromHex(intToHex(accentColor));
+	} else {
+		ui.phBanner.style.background = '';
+		ui.phBanner.classList.add('default');
+	}
+	ui.phDecoration.innerHTML = '';
+	if (avatarDecoration && id) {
+		const decoImg = document.createElement('img');
+		decoImg.src = `${CDN}/avatar-decoration-presets/${avatarDecoration}.png?size=96&passthrough=true`;
+		decoImg.alt = '';
+		ui.phDecoration.appendChild(decoImg);
+	}
+
+	// ---- SỐ ORB KHẢ DỤNG: trích xuất thật ngay khi đăng nhập ----
+	fetchOrbBalance(tokenOf(user));
+}
+
+/** Token lưu trong user object (do authCheck trả về kèm token) hoặc ô token hiện tại. */
+function tokenOf(user) {
+	return user.token || ui.token.value.trim();
 }
 
 function linearGradientFromHex(hex) {
 	// Gradient dọc từ màu accent → đậm dần (giống Discord khi user không có banner)
 	return `linear-gradient(180deg, ${hex} 0%, #1e1f22 130%)`;
+}
+
+/**
+ * Trích xuất SỐ ORB KHẢ DỤNG thật ngay lúc đăng nhập (Waves 14):
+ * gọi GET /quests/@me qua main process — mission đã hoàn thành + đã claim mới tính vào số dư.
+ * Không cần chạy bot — dán token là thấy số dư chuẩn kasumu (mono xanh như tiền).
+ */
+async function fetchOrbBalance(token) {
+	try {
+		const res = await api.fetchOrbs(token);
+		if (res && res.ok && typeof res.balance === 'number') {
+			ui.orbBalance.textContent = String(res.balance);
+			ui.orbPending.textContent =
+				res.pendingClaim > 0
+					? `+${res.pendingClaim} Orbs hoàn thành, chờ nhận thưởng`
+					: 'Tổng Orb từ nhiệm vụ đã hoàn thành và đã claim.';
+			ui.sideBalance.dataset.state = 'live';
+			ui.statOrbs.textContent = `${res.balance} Orbs`;
+			appendLog(
+				`[Hệ thống] Số Orb khả dụng (đã claim): ${res.balance}${
+					res.pendingClaim > 0 ? ` · Còn ${res.pendingClaim} Orbs chờ claim` : ''
+				}`,
+				'system',
+			);
+		} else {
+			ui.orbBalance.textContent = '—';
+			ui.orbPending.textContent = res?.message || 'Không lấy được số dư Orb từ Discord.';
+			ui.sideBalance.dataset.state = 'guest';
+		}
+	} catch {
+		ui.orbBalance.textContent = '—';
+		ui.orbPending.textContent = 'Lỗi kết nối khi trích xuất Orb.';
+		ui.sideBalance.dataset.state = 'guest';
+	}
+}
+
+/** Về trạng thái guest cho khung số dư ORB đáy sidebar. */
+function resetSideBalance() {
+	ui.sideBalance.dataset.state = 'guest';
+	ui.orbBalance.textContent = '—';
+	ui.orbPending.textContent = 'Đăng nhập để trích xuất Orb từ account';
 }
 
 function resetDiscordProfile() {
@@ -748,6 +850,21 @@ function resetDiscordProfile() {
 	// Về trạng thái guest: đóng pop
 	ui.upPop.hidden = true;
 	ui.upRow.setAttribute('aria-expanded', 'false');
+	// Hero giữa trang → guest (Waves 14)
+	ui.heroProfile.hidden = true;
+	ui.heroGuest.hidden = false;
+	ui.phDisplay.textContent = 'Chưa đăng nhập';
+	ui.phUsername.textContent = 'Dán token ở Cài đặt để hiển thị profile Discord';
+	ui.phAvatar.innerHTML = '';
+	ui.phDecoration.innerHTML = '';
+	ui.phClanBadge.hidden = true;
+	ui.phClanTag.hidden = true;
+	ui.phBanner.innerHTML = '';
+	ui.phBanner.style.background = '';
+	ui.phBanner.classList.add('default');
+	// Số dư ORB đáy sidebar → guest
+	resetSideBalance();
+	ui.statOrbs.textContent = '—';
 }
 
 /** Đăng nhập: xác thực token rồi vẽ profile chuẩn Discord. */
@@ -791,9 +908,6 @@ async function logout() {
 	} catch { /* ignore */ }
 	ui.token.value = '';
 	resetDiscordProfile();
-	ui.orbBalance.textContent = '—';
-	ui.orbPending.textContent = '';
-	ui.statOrbs.textContent = '—';
 	toast('Đã đăng xuất khỏi app. Token đã xoá khỏi thiết bị.');
 	appendLog('[Hệ thống] Đã đăng xuất — token xoá khỏi người dùng cục bộ.', 'system');
 }

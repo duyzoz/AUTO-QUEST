@@ -333,7 +333,51 @@ body {
 .up-logout:hover { background: rgba(251, 44, 54, 0.9); color: #fff; }
 .up-logout:focus-visible { outline: 2px solid var(--brand-bright); }
 
-/* ---------- Khung profile mở xuống (pop) ---------- */
+/* ---------- SỐ DƯ ORB — khối đáy sidebar (kasumu money style) ---------- */
+.side-balance {
+	border: 1px solid var(--line);
+	border-radius: 1rem;
+	background: rgba(5, 6, 11, 0.5);
+	padding: 16px;
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+.side-balance[data-state="live"] {
+	border-color: rgba(0, 210, 148, 0.28);
+}
+.sb-top {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+}
+.sb-label {
+	font-size: 0.72rem;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.09em;
+	color: var(--fg-subtle);
+}
+.sb-ico { width: 28px; height: 28px; }
+.sb-ico svg { width: 14px; height: 14px; }
+.sb-value {
+	font-family: var(--font-mono);
+	font-variant-numeric: tabular-nums;
+	font-size: 1.7rem;
+	font-weight: 700;
+	letter-spacing: -0.02em;
+	color: var(--emerald);
+	line-height: 1.2;
+}
+.side-balance[data-state="guest"] .sb-value { color: var(--fg-subtle); }
+.sb-sub {
+	font-size: 0.72rem;
+	line-height: 1.45;
+	color: var(--fg-muted);
+}
+
+/* ---------- Popout profile (giờ không chứa balance) ---------- */
 .up-pop {
 	position: absolute;
 	top: calc(100% + 10px);
@@ -420,34 +464,13 @@ body {
 	border-radius: 4px;
 	letter-spacing: 0.4px;
 }
-/* Số ORB khả dụng — khung well kasumu */
-.up-pop-orbs {
-	display: flex;
-	align-items: center;
-	gap: 10px;
-	margin-top: 10px;
-	padding: 10px 12px;
-	background: var(--well);
-	border: 1px solid var(--line);
-	border-radius: var(--radius-field);
-}
-.orb-ico { display: flex; flex-shrink: 0; filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5)); }
-.orb-data { display: flex; flex-direction: column; min-width: 0; }
-.orb-label {
-	font-size: 0.58rem;
-	font-weight: 700;
-	letter-spacing: 0.09em;
-	text-transform: uppercase;
-	color: var(--fg-subtle);
-}
-.orb-value {
-	font-family: var(--font-mono);
-	font-size: 1.05rem;
-	font-weight: 700;
-	color: var(--emerald);
-	font-variant-numeric: tabular-nums;
-}
-.orb-sub { font-size: 0.62rem; color: var(--fg-subtle); }
+/* Xoá khung orbs cũ trong pop (balance chuyển ra sidebar) */
+.up-pop-orbs,
+.orb-ico,
+.orb-data,
+.orb-label,
+.orb-value,
+.orb-sub { all: unset; display: none !important; }
 .up-pop-login {
 	margin-top: 10px;
 	padding: 9px 12px;
@@ -527,6 +550,95 @@ body {
 	justify-content: center;
 	padding-top: 4px;
 }
+
+/* ---------- Profile hero (giữa trang, card Discord như kasumu) ---------- */
+.profile-hero {
+	padding: 0;
+	text-align: left;
+	gap: 0;
+	align-items: stretch;
+	overflow: hidden;
+	--tint: #8b5cf6;
+}
+.ph-banner {
+	height: 116px;
+	background: linear-gradient(120deg, var(--brand-strong), var(--brand) 55%, #4c1d95);
+	background-size: cover;
+	background-position: center;
+	position: relative;
+}
+.ph-banner.default {
+	background: linear-gradient(120deg, rgba(139, 92, 246, 0.55), rgba(0, 107, 180, 0.4));
+}
+.ph-body {
+	display: flex;
+	align-items: flex-end;
+	gap: 16px;
+	padding: 0 24px 20px;
+	margin-top: -36px;
+	position: relative;
+}
+.ph-avatarwrap {
+	position: relative;
+	flex-shrink: 0;
+	width: 92px;
+}
+.ph-avatar {
+	width: 92px;
+	height: 92px;
+	border-radius: 50%;
+	background: var(--ink-700);
+	border: 6px solid var(--card);
+	color: var(--fg-subtle);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	overflow: hidden;
+	position: relative;
+	box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45);
+}
+.ph-avatar svg { width: 44px; height: 44px; }
+.ph-avatar-img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+.ph-decoration {
+	position: absolute;
+	inset: -12px;
+	pointer-events: none;
+	z-index: 3;
+}
+.ph-decoration img { width: 100%; height: 100%; object-fit: contain; }
+.ph-id {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	min-width: 0;
+	flex: 1;
+	padding-bottom: 4px;
+}
+.ph-namerow {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	flex-wrap: wrap;
+}
+.ph-display {
+	font-size: 1.45rem;
+	font-weight: 800;
+	letter-spacing: -0.02em;
+	color: var(--fg);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	max-width: 100%;
+}
+.ph-username {
+	font-family: var(--font-mono);
+	font-size: 0.8rem;
+	color: var(--fg-muted);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.ph-clan-badge { width: 22px; height: 22px; }
 
 /* ---------- Stat cards (kasumu tint ring + icon góc) ---------- */
 .stats-row {

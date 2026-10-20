@@ -104,3 +104,25 @@
 - Kiểm thử: tsc -p tsconfig.build.json pass; node --check ×4 (bot/renderer/main/preload) pass; DOM-id scan 62/62; emoji scan regex 11 file source + 2 compiled = 0.
 - Lưu ý: btnToggleToken giờ là SVG + <span id="btnToggleTokenText">Hiện</span> — renderer đổi qua span, KHÔNG đè textContent cả nút (giữ icon).
 - Commit ca99883. Không build EXE, không push. Waves kế tiếp = 14.
+
+## ~23:55 · step-5-preview · WAVES 14 DONE — PROFILE HERO + SIDEBAR BALANCE (waves con của Waves II)
+- Bro duyệt layout "chuẩn rồi" nhưng 2 lỗi: (1) dán token xong chỉ có hero text giữa trang, KHÔNG có profile Discord; (2) SỐ ORB KHẢ DỤNG lại nằm trong pop profile mà không trích xuất được — phải chuyển ra ngoài đáy sidebar (sát đáy trái) + style GIỐNG kasumu "Số dư khả dụng" (font-mono, XANH emerald như tiền) + trích xuất THẬT khi đăng nhập, không cần chạy bot.
+- main.js:
+  - IPC mới `orbs:fetch` (GET /quests/@me với token người dùng): balance = quest completed + claimed_at; pendingClaim = completed chưa claim; activeOrbs = đang cày. Timeout 15s, chỉ gọi discord.com.
+  - `auth:check` trả kèm `user.token` để renderer gọi fetchOrbs ngay sau login.
+- preload.js: thêm `fetchOrbs(token)`.
+- renderer.js:
+  - ui refs thêm heroGuest/heroProfile/phBanner/phAvatar/phDecoration/phDisplay/phUsername/phClanBadge/phClanTag/sideBalance.
+  - `fetchOrbBalance(token)`: gọi orbs:fetch → sb-value (số mono emerald) + sb-sub (pending text) + sideBalance[data-state=live] + statOrbs + log. Lỗi → về guest.
+  - `resetSideBalance()`: guest state cho khối balance.
+  - `renderDiscordProfile`: giờ cũng vẽ hero giữa trang (banner CDN/accent/default, avatar 92px + decoration, display, username mono, clan badge+tag) + ẩn heroGuest + GỌI fetchOrbBalance.
+  - `resetDiscordProfile`: thêm guest cho hero + sideBalance.
+  - `orbs:balance` event từ bot: cũng set sideBalance[data-state=live] + sb-sub text chuẩn.
+  - logout() dọn đoạn orb trùng (resetDiscordProfile lo hết).
+- index.html:
+  - BỎ khung orbs cũ trong pop profile (up-pop-orbs → CSS all:unset+display:none kỹ thuật).
+  - Thêm `#sideBalance` đáy sidebar: sb-top (label "Số dư khả dụng" + stat-ico coins emerald) + sb-value #orbBalance mono emerald 1.7rem + sb-sub #orbPending.
+  - Thêm `#heroProfile` cạnh heroGuest (hidden mặc định): ph-banner 116px + ph-body (ph-avatarwrap > ph-avatar 92px + ph-decoration) + ph-id (namerow: ph-display 1.45rem + clan badge/tag) + ph-username mono.
+- styles.css: thêm block .side-balance (border, radius 1rem, data-state live → viền emerald) + .sb-* + block .profile-hero/.ph-* (padding 0, overflow hidden, banner gradient, body margin-top -36px avatar đè lên banner kiểu Discord).
+- Kiểm thử: node --check ×3 pass; DOM-id scan 72/72 khớp; emoji scan 5 file renderer/main = 0 (dọn thêm 2 emoji sót trong main.js log boot/stop: 🛡️⏹️).
+- Không build EXE, không push. Waves kế tiếp = 15.

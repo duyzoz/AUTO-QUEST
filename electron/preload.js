@@ -15,6 +15,7 @@ contextBridge.exposeInMainWorld('autoquest', {
 	stop: () => ipcRenderer.invoke('bot:stop'),
 	getState: () => ipcRenderer.invoke('bot:state'),
 	authCheck: (token) => ipcRenderer.invoke('auth:check', token),
+	fetchOrbs: (token) => ipcRenderer.invoke('orbs:fetch', token),
 	readClipboard: () => ipcRenderer.invoke('clipboard:read'),
 	writeClipboard: (text) => ipcRenderer.invoke('clipboard:write', text),
 	openDataFolder: () => ipcRenderer.invoke('shell:open-data-folder'),
