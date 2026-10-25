@@ -24,17 +24,64 @@
 	--danger-soft: #ff6568;
 	--card: #090b13;
 	--well: rgba(5, 6, 11, 0.65);
+	/* Waves 28b: TOKEN BỀ MẶT dùng chung — đổi theo theme, tránh hardcode rgba trắng/đen
+	   rải rác khiến chế độ Sáng bị "chìm màu". */
+	--tint-04: rgba(255, 255, 255, 0.04);
+	--tint-06: rgba(255, 255, 255, 0.06);
+	--tint-08: rgba(255, 255, 255, 0.08);
+	--tint-10: rgba(255, 255, 255, 0.1);
+	--tint-14: rgba(255, 255, 255, 0.14);
+	--tint-16: rgba(255, 255, 255, 0.16);
+	--hairline: rgba(255, 255, 255, 0.12);
+	--bg-base: #07090e;
+	--up-row-bg: rgba(5, 6, 11, 0.5);
+	/* Waves 46: bóng avatar + banner-c theo theme (tránh hardcode ở từng màn).
+	   Waves 49c: HẠ bóng avatar 0.45/28px → 0.30/16px. Bro báo "viền đen mờ mờ
+	   đèn lên avt": bóng đen 28px blur nằm ngay trên tác phẩm khung → thành
+	   quầng đen nhoè. Đây là bóng trang trí, không phải tín hiệu thị giác. */
+	--avatar-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+	/* Waves 49c: vòng bao avatar. Discord dùng bề mặt SÁNG HƠN nền để avatar
+	   trông như được khoét lỗ, không phải dán đè. `--card` (#090b13) tối hơn
+	   nền thẻ ⇒ thành viền đen. Đây là bề mặt nổi, tách khỏi artwork phía sau. */
+	--avatar-ring: #1b2030;
+	--orb-shadow: rgba(0, 0, 0, 0.55);
+	--orb-num: #e9d5ff;
+	--qdone-bg-a: #1b1c20;
+	--qdone-bg-b: #0c0d10;
+	--qdone-name: #c9ccd1;
+	--banner-c: #4c1d95;
+	--scroll-thumb: rgba(255, 255, 255, 0.14);
+	--scroll-thumb-hover: rgba(255, 255, 255, 0.28);
 	--radius-field: 0.75rem;
 	--radius-card: 1.125rem;
 	--ease-out-quint: cubic-bezier(0.22, 1, 0.36, 1);
 	--font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 	--font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+	/* Waves 44 — TÔNG ĐEN NÂU cho khối "Cấu hình tài khoản" (bro: "hoàn toàn
+	   màu đen nâu chỉnh một chút ở phần cấu hình tài khoản").
+	   Đặt thành token riêng để không đụng nền các thẻ khác. */
+	--brown-900: #120d0a;
+	--brown-850: #17110d;
+	--brown-800: #1e1712;
+	--brown-700: #2a2019;
+	--brown-line: rgba(198, 158, 116, 0.16);
+	--brown-line-strong: rgba(214, 176, 132, 0.28);
+	--brown-accent: #d9a441;
 }
 
 * {
 	box-sizing: border-box;
 	margin: 0;
 	padding: 0;
+}
+
+/* Waves 46 — [hidden] PHẢI luôn thắng. Nhiều component set `display:flex/grid`
+   trên chính element đó (vd .hero-card, .up-row), mà quy tắc class có độ ưu tiên
+   cao hơn thuộc tính `hidden` của UA → element "ẩn" vẫn chiếm chỗ VÀ vẫn vẽ nền
+   tối, đè lên bố cục phía dưới. Đây là gốc của việc "chìm màu" ở chế độ Sáng:
+   thẻ hero tối màu vẫn được vẽ dù đã hidden. Chốt bằng !important một lần. */
+[hidden] {
+	display: none !important;
 }
 
 body {
@@ -45,6 +92,13 @@ body {
 	overflow: hidden;
 	user-select: none;
 	-webkit-font-smoothing: antialiased;
+	/* Waves 21 đặt `display:flex` + center để "căn giữa shell khi màn > 1080p".
+	   Waves#95 — ĐÓ LÀ GỐC LỖI "thừa nửa bên phải khi thu nhỏ tab": `.shell` là
+	   flex item `flex:0 1 auto` nên CO VỀ ĐÚNG BỀ RỘNG NỘI DUNG (≈515px ở cửa sổ
+	   1064px) thay vì phủ kín cửa sổ ⇒ nửa phải trống. `.shell` đã tự có
+	   `max-width:1920px` + `max-height:1080px` nên KHÔNG cần body căn giữa nữa.
+	   Đo thật: display:block ⇒ shellW=1064, shellX=0, gapRight=0 (chuẩn). */
+	display: block;
 }
 
 .mono {
@@ -64,7 +118,7 @@ body {
 .bg-base {
 	position: absolute;
 	inset: 0;
-	background: #07090e;
+	background: var(--bg-base);
 }
 .bg-glow {
 	position: absolute;
@@ -77,7 +131,7 @@ body {
 .bg-overlay {
 	position: absolute;
 	inset: 0;
-	background: rgba(5, 6, 11, 0.5);
+	background: var(--up-row-bg);
 }
 
 /* ---------- Animation kasumi-rise ---------- */
@@ -109,12 +163,15 @@ body {
 	display: flex;
 	height: 100vh;
 	width: 100vw;
+	/* Waves 21: chốt trần Full HD — màn > 1080p vẫn giữ đúng 1920x1080, không lướt thêm */
+	max-height: 1080px;
+	max-width: 1920px;
 	overflow: hidden;
 }
 
 /* ---------- Sidebar ---------- */
 .sidebar {
-	position: fixed;
+	position: absolute;
 	left: 0;
 	top: 0;
 	bottom: 0;
@@ -136,18 +193,56 @@ body {
 }
 .side-brand {
 	display: flex;
+	flex-direction: row;
 	align-items: center;
-	justify-content: space-between;
-	gap: 8px;
+	gap: 10px;
 	padding: 4px 4px 0;
+	position: relative;
 }
+/* Wave#96 (bro lệnh): logo nằm NGAY CẠNH tên app — không còn `position:absolute;
+   right:-19px` (đẩy logo ra xa tít + lệch khỏi tên). Vòng bao quanh logo là
+   viền MẢNH trung tính `--line-strong`, KHÔNG dùng màu brand/xanh (bỏ hẳn
+   "khung bo tròn xanh xanh" bro phàn nàn ở Wave#87). */
+.brand-logo-wrap {
+	position: relative;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 34px;
+	height: 34px;
+	flex: 0 0 34px;
+	border-radius: 50%;
+	/* viền vòng mảnh, TRUNG TÍNH (không xanh) */
+	border: 1px solid var(--line-strong);
+	background: var(--ink-800);
+	overflow: hidden;
+}
+.brand-logo {
+	position: static;
+	width: 34px;
+	height: 34px;
+	border: none;
+	border-radius: 50%;
+	object-fit: cover;
+	object-position: center;
+	display: block;
+}
+/* Wave#87: LOGO ZoZ che chữ — tròn, bỏ viền brand, giữ đúng landscape. */
+/* Wave#96: rule cũ `.brand-logo{position:absolute;right:-19px}` đã XOÁ — nó đẩy
+   logo ra xa tít và làm mất vòng. Nay logo nằm trong `.brand-logo-wrap` (xem
+   khối `.side-brand` phía trên). */
+/* Wave#87: spacer đẩy profile xuống gần ĐÁY sidebar (3 mục nav được đẩy
+   lên trên nhờ đó). Dùng con `flex:1` trong `.side-inner` (column). */
+.side-spacer { flex: 1 1 auto; min-height: 8px; }
 .brand-name {
 	font-size: 1.1rem;
 	font-weight: 700;
 	letter-spacing: -0.02em;
 	color: var(--fg);
 }
-
+/* Waves 44 — khẩu hiệu nền tảng (bro yêu cầu thay "THỐNG KÊ THU NHẬP VƯỢT LINK"). */
+/* Wave#96: `.brand-tag` đã BỎ HẲN khỏi HTML (bro: chỉ giữ "ZoZ Development").
+   Giữ rule rỗng-minh hoá để nếu còn chỗ nào vô tình dùng thì không vỡ layout. */
 /* ---------- Điều hướng (kasumu nav-item) ---------- */
 .side-nav { flex: 1; }
 .nav-label {
@@ -158,6 +253,42 @@ body {
 	letter-spacing: 0.12em;
 	color: var(--fg-subtle);
 }
+
+/* ---------- Waves 43: 3 NÚT ĐIỀU KHIỂN nằm CẠNH hàng tab (khung "Đã làm") ----------
+   Bro yêu cầu: "gọi toàn độ 3 khung đấy nằm ở đây cơ mà ... cạnh khung đã làm
+   nhét 3 khung này vào thật gọn gàng xóa hẳn mục điều khiển đi". Nay 3 nút là
+   một DẢI NGANG gọn trong `.quest-head`, cạnh hàng tab — không tiêu đề mục. */
+.side-actions {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	gap: 6px;
+	padding: 0;
+	margin: 0 0 0 auto;
+	flex-shrink: 0;
+}
+.side-act {
+	width: auto;
+	justify-content: center;
+	gap: 6px;
+	padding: 6px 10px;
+	font-size: 0.74rem;
+	font-weight: 700;
+	white-space: nowrap;
+}
+.side-act .btn-ico { width: 14px; height: 14px; flex-shrink: 0; }
+.side-act-text { flex: 0 0 auto; text-align: center; }
+/* Nút đang chạy: viền xanh + nhãn (không chỉ dựa vào màu — kèm chữ) */
+.side-act.is-busy {
+	border-color: color-mix(in oklab, var(--emerald) 55%, var(--line-strong));
+	color: var(--emerald);
+}
+/* Màn hẹp: 3 nút xuống dưới hàng tab nhưng vẫn nằm trong khung quest. */
+@media (max-width: 1180px) {
+	.quest-head { flex-wrap: wrap; gap: 8px; }
+	.side-actions { margin-left: 0; width: 100%; }
+}
+
 .nav-list {
 	list-style: none;
 	display: flex;
@@ -183,11 +314,11 @@ body {
 	text-align: left;
 }
 .nav-item:hover {
-	background: rgba(255, 255, 255, 0.05);
+	background: var(--tint-06);
 	color: var(--fg);
 }
 .nav-item.active {
-	background: rgba(255, 255, 255, 0.08);
+	background: var(--tint-08);
 	color: var(--fg);
 }
 .nav-ind {
@@ -251,6 +382,18 @@ body {
 	letter-spacing: -0.02em;
 	color: var(--fg);
 }
+/* Waves 44: khẩu hiệu nền tảng trên thanh mobile — nhỏ, phụ, cùng dòng thương hiệu. */
+.topbar-tag {
+	font-size: 0.62rem;
+	font-weight: 600;
+	color: var(--fg-subtle);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+@media (max-width: 560px) {
+	.topbar-tag { display: none; } /* màn hẹp: chỉ giữ tên app, không tràn */
+}
 .drawer-overlay {
 	position: fixed;
 	inset: 0;
@@ -269,25 +412,77 @@ body {
 	width: 100%;
 }
 .up-row {
+	position: relative;
+	isolation: isolate;
 	width: 100%;
 	display: flex;
 	align-items: center;
 	gap: 10px;
 	padding: 8px;
-	border: 1px solid var(--line);
-	border-radius: 0.75rem;
-	background: rgba(5, 6, 11, 0.5);
+	/* Wave#87 (bro lệnh) — XOÁ "khung xanh": bỏ `1px solid var(--line)` để thanh
+	   profile không còn viền bo tròn nổi bật nữa. Giữ nền `--up-row-bg` rất mờ +
+	   bo góc để avatar/tên vẫn đọc được trên 2 theme (trắng chiếu đen / đen chiếu
+	   trắng), nhưng không còn đường viền đặc trưng. */
+	border: none;
+	background: var(--up-row-bg);
+	border-radius: 0.9rem;
 	cursor: pointer;
 	color: var(--fg);
 	font-family: inherit;
-	transition: background 0.15s ease, border-color 0.15s ease;
+	transition: background 0.15s ease, box-shadow 0.25s ease;
 	text-align: left;
+	/* Waves 21: cho lớp nameplate phủ RA NGOÀI viền khung (media vẫn bị cắt bởi .up-frame) */
+	overflow: visible;
 }
+/* Hover: chỉ đậm nền nhẹ, KHÔNG đổi border (đã xoá khung). */
 .up-row:hover {
-	background: rgba(255, 255, 255, 0.05);
-	border-color: var(--line-strong);
+	background: color-mix(in oklab, var(--tint-06) 60%, var(--up-row-bg));
 }
 .up-row:focus-visible { outline: 2px solid var(--brand-bright); outline-offset: 1px; }
+
+/* ---------- Waves 21: HIỆU ỨNG BẢNG TÊN PHỦ LÊN KHUNG BO TRÒN NGOÀI ---------- */
+.up-frame {
+	position: absolute;
+	inset: 0;
+	z-index: 0;
+	border-radius: inherit;
+	overflow: hidden;
+	pointer-events: none;
+	opacity: 0;
+	transition: opacity 0.35s ease;
+}
+.up-frame .np-media {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	display: block;
+}
+.up-row.has-np .up-frame { opacity: 0.85; }
+/* Waves 28b: có media nameplate → hiện NGAY, không để khung trễ nhịp (đo cũ: ~2.6s). */
+.up-row.has-media .up-frame { opacity: 0.85; }
+/* Wave#96 (bro lệnh): XOÁ HẲN "khung bo tròn xanh xanh" quanh profile.
+   Trước đây rule này vẽ viền + quầng sáng bằng `var(--np, var(--brand))` — khi
+   user KHÔNG có bảng tên thật thì fallback về **--brand (tím/xanh)**, đúng cái
+   "khung xanh" bro đã phàn nàn từ Wave#87 mà chưa hết. Luật dài hạn: CẤM
+   fallback màu brand cho khung nameplate. Chỉ giữ khung khi có palette THẬT
+   (`--np` được JS gán), còn lại KHÔNG viền, KHÔNG quầng. */
+.up-row.has-np[data-np-real='1'] .up-frame {
+	box-shadow:
+		inset 0 0 0 1px color-mix(in oklab, var(--np) 35%, transparent),
+		0 0 18px -8px color-mix(in oklab, var(--np) 72%, transparent);
+}
+
+/* ---------- Trang trí ảnh đại diện (avatar decoration) ---------- */
+.up-avatarwrap {
+	position: relative;
+	z-index: 1;
+	width: 34px;
+	height: 34px;
+	flex-shrink: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
 .up-avatar {
 	width: 34px;
 	height: 34px;
@@ -301,16 +496,75 @@ body {
 	flex-shrink: 0;
 	position: relative;
 }
+/* Waves 41: account KHÔNG có avatar → nền XÁM TRUNG TÍNH đúng kiểu Discord
+   (không còn nền tím thương hiệu làm chìm tên/khung). Ảnh mặc định của Discord
+   phủ kín khung nên chỉ cần nền dự phòng đúng tông. */
+.up-avatar.is-default {
+	background: #5865f2; /* đúng màu avatar mặc định của Discord */
+}
+.up-avatar.is-default .up-avatar-img { background: #5865f2; }
 .up-avatar img { width: 100%; height: 100%; object-fit: cover; }
 .userpanel[data-state="logged-in"] .up-avatar { box-shadow: 0 0 0 2px var(--emerald); }
-.up-text { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+/* Có decoration thì bỏ vòng xanh, nhường chỗ cho trang trí */
+.userpanel[data-state="logged-in"] .up-avatarwrap.has-deco .up-avatar { box-shadow: none; }
+.up-deco {
+	position: absolute;
+	left: 50%;
+	top: 50%;
+	width: 142%;
+	height: 142%;
+	transform: translate(-50%, -50%);
+	background: center / contain no-repeat;
+	pointer-events: none;
+	display: none;
+}
+.up-avatarwrap.has-deco .up-deco { display: block; }
+
+.up-text {
+	position: relative;
+	z-index: 1;
+	flex: 1;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+}
+.up-name-row {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	min-width: 0;
+}
 .up-name {
 	font-size: 0.8rem;
 	font-weight: 700;
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
+	min-width: 0;
 }
+/* Tag clan (WUWA) cạnh tên — kiểu pill Discord.
+   Waves 54: bỏ nền cyan + viền cyan (đó cũng là một "khung xanh xanh" nữa —
+   tag có CẢ HAI class `.dp-clan-tag` và `.up-tag` nên màu cyan ở đây từng
+   tranh chấp với màu đúng). Màu chữ theo nền thật như `.dp-clan-tag`. */
+.up-tag {
+	flex-shrink: 0;
+	font-size: 0.55rem;
+	font-weight: 700;
+	letter-spacing: 0.07em;
+	line-height: 1.35;
+	padding: 0 5px;
+	border-radius: 4px;
+	border: 0;
+	background: none;
+	/* Waves 54 — `.up-tag` nằm TRONG thanh user panel (sidebar), nền trắng ở
+	   theme Sáng / tối ở theme Tối — CÙNG nền với `.up-name`. Nếu lấy
+	   `--np-fg`/`--theme-fg` (màu dành cho tag nằm TRÊN artwork bảng tên tối)
+	   sẽ ra TRẮNG TRÊN TRẮNG ⇒ "WUWA chìm màu". Phải theo đúng màu chữ của
+	   hàng (var(--fg) = đen trên nền sáng, trắng trên nền tối). */
+	color: var(--fg);
+	white-space: nowrap;
+}
+.up-tag[hidden] { display: none; }
 .up-sub {
 	font-size: 0.66rem;
 	color: var(--fg-subtle);
@@ -319,6 +573,8 @@ body {
 	text-overflow: ellipsis;
 }
 .up-logout {
+	position: relative;
+	z-index: 1;
 	width: 30px;
 	height: 30px;
 	border-radius: 8px;
@@ -330,10 +586,75 @@ body {
 	transition: background 0.15s ease, color 0.15s ease;
 	cursor: pointer;
 }
-.up-logout:hover { background: rgba(251, 44, 54, 0.9); color: #fff; }
-.up-logout:focus-visible { outline: 2px solid var(--brand-bright); }
+/* Wave#90 (bro lệnh): icon ĐĂNG XUẤT BẮT BUỘC màu ĐỎ mọi trạng thái.
+   Wave#96 (bro lệnh): "khi chuyển sang chế độ sáng lẫn tối nút đăng xuất vẫn
+   hoàn toàn bị chìm màu ⇒ làm nó GIỐNG NÚT ĐỔI TÀI KHOẢN: NỀN TRẮNG khi
+   theme Sáng, NỀN ĐEN khi theme Tối". ⇒ CẤP NỀN THẬT + VIỀN cho nút.
+   Dùng --ink-600: Tối #1d2334 NỔI trên hàng panel rgba(5,6,11,.5);
+   Sáng #e2e8f2 NỔI trên hàng panel #ffffff (KHÔNG dùng #fff vì trùng nền).
+   Chữ/icon vẫn ĐỎ (--danger) theo Wave#90 nên không phá luật icon đỏ. */
+.up-logout,
+.up-logout-red {
+	color: var(--danger);
+	background: var(--ink-600);
+	border: 1px solid var(--line-strong);
+	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.18);
+}
+[data-theme="dark"] .up-logout,
+[data-theme="dark"] .up-logout-red,
+:root:not([data-theme="light"]) .up-logout,
+:root:not([data-theme="light"]) .up-logout-red {
+	background: var(--ink-600);
+	border-color: var(--line-strong);
+	box-shadow: none;
+}
+.up-logout:hover,
+.up-logout-red:hover { background: rgba(251, 44, 54, 0.9); color: #fff; border-color: var(--danger); }
+.up-logout:focus-visible,
+.up-logout-red:focus-visible { outline: 2px solid var(--danger); }
+/* Icon đăng xuất NÂNG z-index để nổi trên hiệu ứng bảng tên (sóng đổ) phủ
+   lên khung khi user có nameplate — đúng "icon đó bắt buộc màu đỏ". */
+.up-row .up-logout { z-index: 3; }
 
-/* ---------- SỐ DƯ ORB — khối đáy sidebar (kasumi money card: NỀN XANH như tiền) ---------- */
+/* Wave#88 (Multiaccount): nút "Đổi tài khoản" trong hàng user panel. */
+.up-switch {
+	position: relative;
+	z-index: 3;
+	width: 30px;
+	height: 30px;
+	border-radius: 8px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: var(--fg-subtle);
+	flex-shrink: 0;
+	cursor: pointer;
+	transition: background 0.15s ease, color 0.15s ease;
+}
+.up-switch:hover { background: var(--tint-08); color: var(--fg); }
+.up-switch:focus-visible { outline: 2px solid var(--brand-bright); }
+
+/* ==========================================================================
+   Waves 46 — HOÀN NGUYÊN: KHÁCH DÙNG LAYOUT HÀNG NGANG NHƯ CŨ.
+   Bro đã nói RÕ: "chỉnh ngay profiles ở giữa về NHƯ CŨ … ĐÉO AI BẮT MÀY ĐỂ
+   CHÍNH GIỮA". Wave 45 tôi hiểu nhầm một câu cũ mà đổi cả layout khách sang
+   cột dọc căn giữa → bro không muốn. Đã XOÁ toàn bộ khối căn giữa đó.
+   Khách giờ y như tài khoản đã đăng nhập: avatar trái, tên + phụ đề bên phải.
+   ========================================================================== */
+/* (không còn override nào cho .userpanel[data-state="guest"] / .profile-hero[data-state="guest"]
+   về căn giữa — layout mặc định hàng ngang được dùng cho MỌI trạng thái.) */
+
+/* Nút đăng xuất + đổi account: JS bật/tắt bằng thuộc tính [hidden]. Vì các
+   nút này `display:flex`, [hidden] của UA sẽ BỊ ghi đè bởi class ⇒ phải ép
+   `!important` để thực sự ẩn. (Wave#88/#90) */
+.up-logout[hidden],
+.up-switch[hidden],
+.up-pop-logout[hidden],
+.up-pop-switch[hidden] { display: none !important; }
+.userpanel[data-state="guest"] .up-logout,
+.userpanel[data-state="guest"] .up-switch { display: none; }
+
+/* ---------- SỐ DƯ ORB — thẻ đầu tiên trong hàng stats của mục Auto Orb ---------- */
 .side-balance {
 	position: relative;
 	border: 1px solid rgba(0, 210, 148, 0.3);
@@ -346,10 +667,12 @@ body {
 	box-shadow:
 		inset 0 1px 0 rgba(0, 210, 148, 0.14),
 		0 10px 30px -18px rgba(0, 210, 148, 0.35);
-	padding: 16px;
+	padding: 20px;
 	display: flex;
 	flex-direction: column;
-	gap: 6px;
+	justify-content: space-between;
+	gap: 10px;
+	min-height: 0;
 	overflow: hidden;
 }
 .side-balance::after {
@@ -408,29 +731,160 @@ body {
 	color: var(--fg-muted);
 }
 
-/* ---------- Popout profile (giờ không chứa balance) ---------- */
+/* ---------- Waves 21: hiệu ứng NẢY số + LƯỚT SÁNG 1 lượt khi số dư cập nhật ---------- */
+.sb-value {
+	display: block;
+	transform-origin: left center;
+}
+.side-balance.is-pop .sb-value {
+	animation: sbPop 0.62s var(--ease-out-quint);
+}
+@keyframes sbPop {
+	0% { transform: scale(1); }
+	30% { transform: scale(1.16); }
+	55% { transform: scale(0.965); }
+	75% { transform: scale(1.035); }
+	100% { transform: scale(1); }
+}
+.side-balance::before {
+	content: "";
+	position: absolute;
+	inset: 0;
+	background: linear-gradient(115deg, transparent 38%, rgba(255, 255, 255, 0.22) 50%, transparent 62%);
+	transform: translateX(-130%);
+	opacity: 0;
+	pointer-events: none;
+}
+.side-balance.is-sweep::before {
+	opacity: 1;
+	animation: sbSweep 1.05s ease-out;
+}
+@keyframes sbSweep {
+	0% { transform: translateX(-130%); }
+	100% { transform: translateX(130%); }
+}
+@media (prefers-reduced-motion: reduce) {
+	.side-balance.is-pop .sb-value,
+	.side-balance.is-sweep::before { animation: none; }
+}
+
+/* ---------- Popout profile (từ Wave#87) ----------
+   Wave#87: sidebar DI CHUYỂN profile xuống gần ĐÁY ⇒ popout phải
+   ngước LÊN (vì ở dưới, không thể mở xuống được nữa).  */
 .up-pop {
 	position: absolute;
-	top: calc(100% + 10px);
+	bottom: calc(100% + 10px);
 	left: 0;
 	right: 0;
 	background: var(--ink-850);
 	border: 1px solid var(--line-strong);
 	border-radius: 0.75rem;
-	overflow: hidden;
+	/* Waves 49d: KHÔNG `overflow:hidden` — khung hồ sơ (staple top/bottom) phải
+	   tràn ra ngoài thẻ đúng như Discord. Banner bên trong đã tự bo góc riêng. */
+	overflow: visible;
+	/* Waves 55 — BRO: *"pôput … thừa ra một khoảng trống"*.
+	   Đã ĐO: `scrollHeight` = 230 > `clientHeight` = 202, nhưng ĐÓ KHÔNG phải
+	   khoảng trống thật — `.up-pop` là `position:absolute` + `overflow:visible`
+	   nên **không phải scroll container** (không có thanh cuộn, không cuộn được).
+	   Tổ tiên cuộn được là `.side-inner` (`overflow:auto`) và ở đó
+	   `scrollHeight === clientHeight` = 761 ⇒ KHÔNG sinh vùng rỗng.
+	   Phần "tràn" 28px chính là CÁNH DƯỚI của khung hồ sơ (`pf-staple
+	   .pf-anchor-bottom`, top:170 → bot:231) — thứ Discord CỐ Ý vẽ thò ra ngoài
+	   thẻ. Nên KHÔNG cần cắt: cắt đi là mất cánh khung.
+	   Vấn đề thật của bro (khung lệch / trống) nằm ở hình học cánh — đã xử lý
+	   ở khối `.pf-frame` bên dưới (`--pf-fit:999`, `--pf-shift:0`). */
 	box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
 	z-index: 60;
 	animation: upPopIn 0.18s var(--ease-out-quint);
 }
+
+/* ============================================================
+   Waves 50 — MÀU DISCORD NITRO LÀM NỀN KHUNG (bro: "MÀU DISCORD NITRO
+   BRO GỌI ĐÂU ??? phải có màu ở chỗ 2 khung này là điều bắt buộc ko chèn
+   lên ảnh bìa chỉ chiếm phần khoảng trống dưới và đóng vai trò background
+   cho từng khung").
+
+   ⇒ Lớp gradient `theme_colors` phủ TOÀN THẺ nhưng BẮT ĐẦU TỪ MÉP DƯỚI
+   BANNER trở xuống (`top: var(--banner-h)`). Nhờ vậy:
+     - KHÔNG chèn lên ảnh bìa (phần banner giữ nguyên 100%).
+     - Chỉ chiếm khoảng trống phía dưới + đóng vai nền cho khung.
+   Nằm dưới nội dung (`z-index: -1` trong khi body là `relative`) nên chữ,
+   avatar, huy hiệu… vẫn nổi lên trên — không bị chìm ở cả 2 theme vì
+   gradient lấy trực tiếp 2 màu Nitro của chính user (luôn là màu đậm).
+   ============================================================ */
+.up-pop::after,
+.profile-hero::after {
+	content: '';
+	position: absolute;
+	left: 0;
+	right: 0;
+	/* Waves 53 — BRO CHỐT: *"CÁI MÀU TRẮNG Ở GIỮA KIA GIAO NHAU LÀ CÁI GÌ?????"*
+
+	   NGUYÊN NHÂN GỐC (đo được): lớp Nitro bắt đầu ĐÚNG mép dưới banner rồi
+	   `mask` tan dần về TRONG SUỐT. Chỗ trong suốt đó lộ ra **bề mặt thẻ**
+	   (`--ink-850` = TRẮNG ở chế độ Sáng) ⇒ DẢI TRẮNG nằm giữa ảnh bìa và màu
+	   Nitro. Đúng cảnh báo của skill UI/UX: "giá trị trắng-mờ trở nên vô hình
+	   trên nền trắng" + "scrim phải đo trên nền THẬT".
+
+	   ⇒ Vá tận gốc: **lớp Nitro ĐỤC HOÀN TOÀN, bắt đầu đúng mép dưới banner,
+	   KHÔNG mask.** Việc "tan dần" chuyển vào CHÍNH ẢNH BÌA (`.ph-banner::after`
+	   fade sang màu Nitro — xem dưới) ⇒ chỗ giao nhau là ẢNH ↔ MÀU, không bao
+	   giờ lộ bề mặt thẻ nên không thể có dải trắng.
+	   Vì gradient đổi sang DỌC (180deg) nên mép trên lớp Nitro là MỘT màu duy
+	   nhất (`--theme-b`) ⇒ khớp tuyệt đối với điểm cuối của dải fade ở banner,
+	   không sinh đường nối. */
+	top: var(--theme-banner-h, var(--ph-banner-h, 0px));
+	bottom: 0;
+	background: var(--theme-gradient, none);
+	opacity: var(--theme-active, 0);
+	transition: opacity 0.25s ease;
+	pointer-events: none;
+	z-index: 0;
+	border-radius: 0 0 0.75rem 0.75rem;
+}
+/* Lưới an toàn: nếu THẺ có ảnh bìa thật mà `--theme-banner-h` vì lý do nào đó
+   chưa được ghi (JS đo lúc panel còn `hidden`), lớp nền VẪN phải nằm dưới
+   banner — không bao giờ được phủ lên ảnh bìa. */
+.up-pop[data-banner-image='1']::after,
+.profile-hero[data-banner-image='1']::after {
+	top: var(--theme-banner-h, 100%);
+}
+/* Giữ banner + body bo đúng góc bo của popup dù popup không còn cắt tràn */
+.up-pop-banner { border-radius: 0.75rem 0.75rem 0 0; }
+.up-pop > .up-pop-body:last-child,
+.up-pop > .up-pop-name + .up-pop-badges + * { border-radius: 0 0 0.75rem 0.75rem; }
 @keyframes upPopIn {
-	from { opacity: 0; transform: translateY(-6px); }
-	to { opacity: 1; transform: translateY(0); }
+	from { opacity: 0; transform: translateY(10px) scale(0.98); }
+	to { opacity: 1; transform: translateY(0) scale(1); }
 }
 .up-pop-banner {
 	height: 60px;
 	background: linear-gradient(135deg, var(--brand), var(--brand-strong));
 	background-size: cover;
 	background-position: center;
+	position: relative;
+	/* Waves 54 — CẮT TRÀN: ảnh bìa + mọi lớp con phải nằm GỌN trong góc bo.
+	   Bro: *"có vài cạnh thô lòi ra cái già bo tròn kia nữa"*. Banner bo
+	   `12px 12px 0 0` nhưng `overflow: visible` ⇒ ảnh/lớp phủ góc VUÔNG lòi ra
+	   ngoài đường bo. `hidden` cắt đúng theo bán kính. */
+	overflow: hidden;
+}
+/* Waves 54 — BRO CHỐT: *"ảnh bìa … bị màu NITRO đè lên gây rất xấu"*.
+   Bản 49 phủ `--theme-gradient` 32% lên ảnh bìa popup. Đó chính là "Nitro đè
+   lên ảnh bìa". Nitro chỉ được ở DƯỚI banner. ⇒ Khi CÓ ảnh: tắt hẳn.
+   Khi KHÔNG có ảnh: gradient Nitro vẫn là nền thay thế (đúng Discord). */
+.up-pop-banner::before {
+	content: '';
+	position: absolute;
+	inset: 0;
+	background: var(--theme-gradient, none);
+	opacity: var(--theme-active, 0);
+	transition: opacity 0.25s ease;
+	pointer-events: none;
+	z-index: 0;
+}
+.up-pop-banner[data-banner-image='1']::before {
+	opacity: 0;
 }
 .up-pop-banner.default {
 	background: linear-gradient(120deg, rgba(139, 92, 246, 0.5), rgba(0, 107, 180, 0.35));
@@ -439,7 +893,11 @@ body {
 	padding: 0 12px 12px;
 	display: flex;
 	flex-direction: column;
+	/* Waves 49d: nội dung nằm TRÊN khung hồ sơ (khung z-index 4). */
+	position: relative;
+	z-index: 5;
 }
+.up-pop-banner { z-index: 1; }
 .up-pop-avatarwrap {
 	position: relative;
 	width: 72px;
@@ -459,6 +917,7 @@ body {
 	overflow: hidden;
 	position: relative;
 }
+.dp-avatar.is-default { background: #5865f2; }
 .dp-avatar-img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
 .dp-decoration {
 	position: absolute;
@@ -467,33 +926,337 @@ body {
 	z-index: 3;
 }
 .dp-decoration img { width: 100%; height: 100%; object-fit: contain; }
+
+/* Waves 49c: PROFILE EFFECT — xem khối định nghĩa đầy đủ ở dưới (mô hình
+   canvas 450×880 neo theo toạ độ layer, giống hệt Discord).
+   Ở đây chỉ giữ phần "ảnh hỏng thì KHÔNG vẽ gì".
+
+   Bro báo "lỗi viền đen mờ mờ đèn lên avt và tên": khi effect/frame trỏ vào URL
+   tải lỗi, Chromium vẫn vẽ ICON ẢNH VỠ + nền xám/mép tối ở đúng kích thước phần
+   tử → thành quầng đen nhoè quanh avatar và tên. `hidden` do JS đặt không đủ nếu
+   src còn sót. Chặn triệt để ở CSS. */
+.ph-effect[hidden],
+.up-pop-effect[hidden] {
+	display: none !important;
+}
+/* Layer effect đứng yên khi bật "giảm chuyển động" */
+@media (prefers-reduced-motion: reduce) {
+	.pe-layer { animation: none !important; }
+}
+
+/* ============================================================
+   WAVES 49d — PROFILE FRAME: CHÉP NGUYÊN CSS DISCORD (đã tải được bản thật)
+   ------------------------------------------------------------
+   Nguồn: `.tmp/framecss/315513.…css` + `621820.…css` + `306695.…css`
+   (tải từ chính Discord bằng token bro — KHÔNG còn đoán).
+
+   Mô hình THẬT:
+     .profileFrameContainer  { container-type:size; position:absolute; inset:0;
+                               width:100%; height:100% }
+     .profileFrame           { height:100%; top:0;
+                               width: calc(100% + scaledOverflowH*2);
+                               inset-inline-start: calc(scaledOverflowH * -1) }
+     .profileFrameLayer      { position:absolute; inset-inline:0; width:100% }
+       .staple.top           { top:    calc(scaledOverflowTop * -1) }
+       .staple.bottom        { bottom: calc(scaledOverflowBottom * -1) }
+       .rail                 { height:100%; background-size:100% auto;
+                               background-repeat:no-repeat;
+                               background-position: 50% | top | bottom }
+       .rail.responsive      { @container (min-aspect-ratio:300/480) -> display:none }
+       .border               { height:100%; overflow:hidden }
+       .border > img         { display:block; width:100%; height:auto }
+       .front { z-index: var(--custom-user-profile-frame-z-index,4) }  .back { z-index:-1 }
+
+     --custom-profile-frame-layer-scale = 300 / container-width
+                                        (= 304 / container-width khi có theme)
+     và 3 biến scaled-overflow* = overflow * layer-scale.
+
+   ⇒ FRAME ÔM TRỌN THẺ HỒ SƠ (không phải ô avatar), layer render ở
+     300/1200 = 25% kích thước gốc.
+   ============================================================ */
+
+/* Khung #dpFrame/#phFrame = .profileFrameContainer */
+.dp-frame.custom-profile-frame,
+.ph-frame.custom-profile-frame {
+	position: absolute;
+	inset-inline-start: 0;
+	top: 0;
+	width: 100%;
+	height: 100%;
+	pointer-events: none;
+	z-index: 4;
+	container-type: size;
+	/* Mức "tràn cho phép" của khung tính theo CHIỀU CAO thẻ.
+	   Tổng cao tác phẩm = hostH + (overflowTop+overflowBottom)*scale.
+	   Đặt = 1 ⇒ tổng cao đúng bằng thẻ (không tràn). Lớn hơn ⇒ khung to
+	   hơn, tràn ra hai phía. JS đọc biến này, KHÔNG hardcode trong JS. */
+	--pf-fit: 1.6;
+}
+
+/* Waves 54 — BRO CHỐT: *"POPOUT VẪN LỆNH CẢ 2 KHUNG TRÊN DƯỚI THỪA KHOẢNG
+   TRỐNG RÕ"*.
+
+   NGUYÊN NHÂN GỐC (đo bằng diff ảnh chụp, không đoán): khung là hình chữ nhật
+   nhưng **thanh trên nằm thụt 27px VÀO TRONG thẻ**, thanh dưới sát đáy ⇒ lệch
+   hẳn về một phía, chừa khoảng trống trên đầu thẻ. Hai thủ phạm cộng dồn:
+     1. `--pf-fit: 1.35` KẸP phần tràn dọc (overflowFit 0.83) ⇒ cánh bị kéo
+        vào trong thay vì bung ra ngoài thẻ.
+     2. `shift-y` CÂN TÂM BAO: `overflowTop` (288) ≠ `overflowBottom` (145),
+        cân tâm thì cánh to bị đẩy tụt xuống, cánh nhỏ bị đẩy thò ra.
+   Discord KHÔNG có hai phép này: mỗi cánh neo ĐỘC LẬP vào mép thẻ của nó
+   (`top: -sot` / `bottom: -sob`). Đó là thứ làm khung "ôm" thẻ.
+   ⇒ `--pf-fit` = rất lớn (KHÔNG kẹp) + `--pf-shift: 0` (KHÔNG cân tâm).
+   Hai cánh bám đúng mép trên và mép dưới của thẻ.
+   (Waves#85 — BRO: xoá Khung popout hoàn toàn, renderProfileFrame đã
+   nhận `null` ở renderer.js; khối này giờ chỉ còn hiệu lực với HERO
+   — nơi không khung. Trạng thái gốc before #84 đã restore lại bên dưới.
+   Giữ nguyên để không làm nhiễu các selector `.pf-frame-*` liên quan.) */
+.up-pop .dp-frame.custom-profile-frame,
+.up-pop .ph-frame.custom-profile-frame {
+	--pf-fit: 999;
+	--pf-fit-x: 1;
+	--pf-shift: 0;
+}
+/* Waves 54 — back staple (`.pf-order-back`) của khung bro là ảnh FULL-BLEED
+   (alpha trải khắp 716px cao, không chỉ viền cánh). Ở z-index:-1 nó phủ kín cả
+   thân thẻ phía sau, làm cánh TRÊN trông như DẢI DÀY thay vì cánh mỏng ôm góc bo.
+   Chỉ giữ front (hoa văn mỏng) + bottom staple để khung đọc đúng "ôm góc". */
+.up-pop .pf-frame-layer.pf-anchor-top.pf-order-back { display: none; }
+
+/* Hộp chứa layer = .profileFrame
+
+   KHÁC Discord một chỗ CÓ CHỦ Ý: Discord để `width: calc(100% + soh*2)` và
+   `inset-inline-start: -soh`. Ở đó thẻ ~300×424..716 (tỉ lệ khớp tác phẩm) nên
+   bề rộng tác phẩm ≈ bề rộng thẻ là đúng.
+
+   Thẻ hero của mình NẰM NGANG 1102×272 (4:1). Giữ `100%` thì tác phẩm luôn
+   rộng bằng thẻ ⇒ cánh staple (cao ≈53% bề rộng) render 1172×625 ⇒ tràn xuống
+   dưới đáy thẻ 174px. Nên bề rộng do JS tính (`--custom-profile-frame-width`)
+   theo CHIỀU CAO thẻ, và khung được CANH GIỮA NGANG thẻ (trước đây neo mép
+   trái → lệch 35px sang trái). `soh` chỉ còn là phần nới thêm hai bên. */
+.dp-frame.custom-profile-frame .pf-frame-inner,
+.ph-frame.custom-profile-frame .pf-frame-inner {
+	position: absolute;
+	top: 0;
+	height: 100%;
+	left: 50%;
+	width: calc(var(--custom-profile-frame-width, 100%) + var(--custom-profile-frame-scaled-overflow-horizontal, 0) * 2);
+	transform: translate(
+		calc(-50% + var(--custom-profile-frame-shift-x, 0px)),
+		var(--custom-profile-frame-shift-y, 0px)
+	);
+	pointer-events: none;
+}
+
+/* Layer cơ bản */
+.pf-frame-layer {
+	position: absolute;
+	inset-inline: 0;
+	width: 100%;
+	pointer-events: none;
+	-webkit-user-drag: none;
+	user-select: none;
+}
+
+/* ============================================================
+   Waves 51 — BRO CHỐT: KHUNG PHẢI ÔM GÓC BO CỦA THẺ.
+
+   Bro: *"phần khung góc bên trái profiles vẫn lệch, thậm chí nằm TRONG
+   profiles luôn rồi ?? tôi cần bro ôm góc bo của khung ai bảo xếp nó bên
+   trong?? nó đã gọi là khung cơ mà"*.
+
+   Đo được (probe `_w51geo.js` + bản đồ ASCII pixel):
+     thẻ `.up-pop`      x:16..239  y:137.9..331.9  radius 12px  border 1px
+     `#dpFrame`         x:17..238  y:138.9..330.9  radius 0px  (inset:0 trong viền)
+   Bản đồ độ sáng góc trên-trái cho thấy vùng `(16,136)..(17,139)` TRỐNG HOÀN
+   TOÀN: tác phẩm khung bắt đầu từ x=18, y=138.
+
+   Nguyên nhân: `.dp-frame` đặt `inset-inline-start:0; top:0; width/height:100%`
+   ⇒ nó bám MÉP TRONG của viền thẻ, chừa ra 1px viền + 12px góc bo ⇒ tác phẩm
+   nằm LỌT THÒI trong lòng thẻ, không "ôm" lấy đường bo.
+
+   Vá: kéo khung ra ĐÚNG MÉP NGOÀI thẻ (bù lại 1px viền) và cấp cho khung CHÍNH
+   bán kính bo bằng thẻ ⇒ đường cong của khung trùng khít đường cong của thẻ.
+   ============================================================ */
+.dp-frame.custom-profile-frame,
+.ph-frame.custom-profile-frame {
+	--pf-radius: 0.75rem;
+	/* Bù 1px viền: mép khung trùng mép NGOÀI thẻ. */
+	inset-inline-start: -1px;
+	top: -1px;
+	width: calc(100% + 2px);
+	height: calc(100% + 2px);
+	border-radius: var(--pf-radius);
+}
+/* Ảnh staple + rail cũng bo theo đúng đường cong đó. */
+.pf-frame-layer.pf-staple > img,
+.pf-frame-layer.pf-rail {
+	border-radius: var(--pf-radius, 0.75rem);
+}
+
+/* --- STAPLE: div đệm + img (đúng Discord: <div/><img/>) --- */
+.pf-frame-layer.pf-staple.pf-anchor-top { top: calc(var(--custom-profile-frame-scaled-overflow-top, 0) * -1); }
+.pf-frame-layer.pf-staple.pf-anchor-bottom { bottom: calc(var(--custom-profile-frame-scaled-overflow-bottom, 0) * -1); }
+.pf-frame-layer.pf-staple.pf-anchor-center { top: 50%; transform: translateY(-50%); }
+.pf-frame-layer.pf-staple > img {
+	display: block;
+	width: 100%;
+	height: auto;
+	background: none;
+	border: 0;
+}
+
+/* --- RAIL: div nền, cao 100%, ảnh canh theo anchor --- */
+.pf-frame-layer.pf-rail {
+	height: 100%;
+	overflow: hidden;
+	background-repeat: no-repeat;
+	background-size: 100% auto;
+}
+.pf-frame-layer.pf-rail.pf-anchor-center { background-position: 50%; }
+.pf-frame-layer.pf-rail.pf-anchor-top { background-position: top; }
+.pf-frame-layer.pf-rail.pf-anchor-bottom { background-position: bottom; }
+
+/* `.rail.responsive` ẨN khi hộp có tỉ lệ ≥ 300/480 (đúng Discord) */
+@container (min-aspect-ratio: 300 / 480) {
+	.pf-frame-layer.pf-rail.pf-responsive { display: none; }
+}
+
+/* --- BORDER: khối lặp ảnh --- */
+.pf-frame-layer.pf-border { height: 100%; overflow: hidden; }
+.pf-frame-layer.pf-border > img {
+	display: block;
+	width: 100%;
+	height: auto;
+	background: none;
+	border: 0;
+}
+
+/* --- THỨ TỰ CHỒNG LỚP --- */
+.pf-frame-layer.pf-order-front { z-index: var(--custom-user-profile-frame-z-index, 4); }
+.pf-frame-layer.pf-order-back { z-index: -1; }
+
+/* Waves 49b: ảnh tải LỖI → không vẽ icon ảnh vỡ / viền xám */
+.pf-frame-layer img:not([src]),
+.pf-frame-layer img[src=''] { display: none !important; }
+
 .up-pop-name { display: flex; flex-direction: column; gap: 1px; }
+
+/* ============================================================
+   Waves 51 — BRO CHỐT: BỎ HẾT LỚP NỀN XẾP SAU CHỮ / HUY HIỆU.
+
+   Bro: *"TÔI ĐÂU CÓ BẢO BRO ĐỂ MỘT LỚP LAYER ĐEN TRẮN PHỦ BO TRÒN VÀO MẤY
+   KHUNG HAY TEXT USER ĐÂU ??? … LOẠI BỎ NGAY TẤT CẢ CÁC LAYER ĐANG XẾP LÀM
+   NỀN PHÍA SAU MỖI PHẦN TỬ PHẢI CHO NÓ THẢ LUÔN … KỂ CẢ CÁC ICON HUY HIỆU"*.
+
+   ⇒ KHÔNG chip, KHÔNG tấm nền, KHÔNG bo tròn sau chữ/huy hiệu/icon. Mọi thứ
+   "thả" xuống nằm trực tiếp trên artwork khung + gradient Nitro.
+
+   Đổi lại, chữ vẫn phải đọc được ⇒ giữ QUẦNG SÁNG (text-shadow) — đúng cách
+   Discord làm cho chữ nằm trên banner: quầng bám theo NÉT CHỮ, không phải
+   một hình chữ nhật đặc phía sau.
+   ============================================================ */
+.up-pop-name,
+.up-pop-badges,
+.profile-hero .ph-namerow,
+.profile-hero .ph-badges {
+	background: none;
+	backdrop-filter: none;
+	-webkit-backdrop-filter: none;
+	padding: 0;
+	border-radius: 0;
+	width: auto;
+	max-width: 100%;
+}
+
+/* Waves 54 — BRO CHỐT: **KHÔNG QUẦNG, KHÔNG HÀO QUANG, Ở CẢ 2 THEME.**
+   *"TÊN KHI CHUYỂN SANG THEMES TRẮNG NÓ ĐANG CÓ AURA TRẮNG RẤT XẤU … KO CÓ AURA
+   HOÀN QUANG CỦA CẢ THEMES ĐEN LẪN TRẮNG"*.
+   Bản 51/52 đắp 3 lớp `drop-shadow` (2 tối + 1 trắng) lên tên và lên cả khung
+   bảng tên. Hệ quả: ở theme Sáng thành quầng trắng nhoè quanh chữ; ở theme Tối
+   thành quầng đen dày. Cả hai đều là "aura" — bỏ HẲN.
+   Độ đọc do CHÍNH NỀN THẬT bảo đảm: tên nằm trên artwork bảng tên / Nitro, đều
+   là nền tối, nên chữ sáng là đủ. Không cần quầng nào. */
+
+/* ============================================================
+   Waves 53 — `@username` + DÒNG ID: ĐỌC ĐƯỢC MÀ KHÔNG "THÔ".
+
+   Bro: *"phần @username và uid nó hiện rất thô"*. Bản 52 dùng
+   `-webkit-text-stroke` ⇒ viền trắng dày bao quanh từng con chữ, trông như chữ
+   bị bôi viền — THÔ đúng như bro nói. Đó cũng là cách sai: viền cứng không
+   thích ứng được với mọi màu Nitro.
+
+   ⇒ BỎ text-stroke. Dùng **màu chữ TÍNH TỪ CHÍNH MÀU NITRO của user**
+   (`--theme-fg` / `--theme-fg-soft`, JS tính theo độ sáng tương đối).
+   Bóng chữ do JS bật/tắt theo `--theme-text-shadow`: tương phản ≥ 7:1 thì
+   `none` (thêm quầng chỉ làm nhoè nét), mỏng hơn thì mới bật.
+   Không viền, không tấm nền, không "thô".
+   Không có theme_colors ⇒ rơi về token theme như cũ.
+   ============================================================ */
+.profile-hero .ph-username,
+.profile-hero .ph-userid {
+	-webkit-text-stroke: 0;
+	paint-order: normal;
+	color: var(--theme-fg, var(--fg-muted));
+	text-shadow: var(--theme-text-shadow, 0 1px 2px rgba(0, 0, 0, 0.38));
+}
+.profile-hero .ph-userid {
+	color: var(--theme-fg-soft, var(--fg-subtle));
+}
+.profile-hero .ph-userid svg {
+	color: var(--theme-fg-soft, var(--fg-subtle));
+}
+
+/* Các con TRỰC TIẾP của .up-pop phải NỔI LÊN TRÊN lớp nền Nitro
+   (`.up-pop::after` z-index 0) — nếu không chữ/tên/huy hiệu sẽ bị che. */
+.up-pop > .up-pop-name,
+.up-pop > .up-pop-badges,
+.up-pop > .up-pop-login {
+	position: relative;
+	z-index: 1;
+}
 .dp-display {
 	font-size: 1rem;
 	font-weight: 800;
-	color: var(--fg);
+	/* Waves 54 — chữ phải theo NỀN THẬT bên dưới, không theo theme trang.
+	   Bản cũ `var(--fg)` ⇒ theme Sáng ra CHỮ ĐEN, mà tên lại nằm trên
+	   artwork bảng tên (tối) hoặc trên dải màu Nitro (tối) ⇒ chìm hẳn.
+	   Fallback đúng thứ tự lớp: bảng tên → Nitro → token theme. */
+	color: var(--np-fg, var(--theme-fg, var(--fg)));
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
 }
-.dp-username { font-size: 0.75rem; color: var(--fg-muted); font-weight: 600; }
-.up-pop-clan {
-	display: flex;
-	align-items: center;
-	gap: 6px;
-	margin-top: 6px;
-	min-height: 20px;
+.dp-username {
+	font-size: 0.75rem;
+	font-weight: 600;
+	/* Waves 54 — dòng `@username` trong popout nằm TRÊN dải Nitro (không nằm
+	   trong bảng tên) nên KHÔNG dùng `--np-fg`; chỉ theo `--theme-fg-soft`. */
+	color: var(--theme-fg-soft, var(--fg-muted));
+	text-shadow: var(--theme-text-shadow, 0 1px 2px rgba(0, 0, 0, 0.38));
 }
-.dp-clan-badge { width: 18px; height: 18px; }
+/* Clan badge/tag giờ nằm TRONG nameplate pill (Waves 18) — .up-pop-clan cũ đã bỏ */
+.dp-clan-badge { width: 18px; height: 18px; flex-shrink: 0; }
+.ph-clan-badge { width: 20px; height: 20px; flex-shrink: 0; }
 .dp-clan-tag {
 	font-size: 0.66rem;
 	font-weight: 700;
-	color: var(--fg);
-	background: rgba(255, 255, 255, 0.08);
-	border: 1px solid var(--line-strong);
-	padding: 1px 7px;
-	border-radius: 4px;
+	/* Waves 54 — BRO CHỐT: *"SANG TRẮNG LOGO VÍ DỤ WUWA CỦA TÔI BỊ CHÌM MÀU"*.
+	   Bản cũ `color: var(--fg)` ⇒ ở theme Sáng `--fg` là CHỮ ĐEN, nhưng tag nằm
+	   TRÊN artwork bảng tên / màu Nitro (đều TỐI) ⇒ đen trên nền tối = chìm.
+	   Màu chữ phải theo **NỀN THẬT**, không theo theme trang:
+	     • có artwork bảng tên → `--np-fg` (JS gán trắng, artwork luôn tối)
+	     • có màu Nitro        → `--theme-fg` (JS tính từ chính màu đó)
+	     • không có gì         → `--fg` của theme (tag nằm trên mặt thẻ)
+	   Thứ tự fallback này bám đúng thứ tự lớp thật bên dưới chữ. */
+	color: var(--np-fg, var(--theme-fg, var(--fg)));
+	background: none;
+	border: 0;
+	/* Waves 52 — bro: *"cái biểu ngữ ví dụ wuwa kia và logo kia có thể bo tròn"* */
+	padding: 1px 8px;
+	border-radius: 999px;
 	letter-spacing: 0.4px;
+	white-space: nowrap;
 }
 /* Xoá khung orbs cũ trong pop (balance chuyển ra sidebar) */
 .up-pop-orbs,
@@ -502,11 +1265,16 @@ body {
 .orb-label,
 .orb-value,
 .orb-sub { all: unset; display: none !important; }
+/* Waves 17: nút ĐĂNG NHẬP kiểu kasumu — logo Discord + nền #5865F2 + shadow kasumu */
 .up-pop-login {
 	margin-top: 10px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
 	padding: 9px 12px;
 	border-radius: var(--radius-field);
-	border: 1px solid rgba(255, 255, 255, 0.12);
+	border: 1px solid var(--hairline);
 	background: #5865f2;
 	color: #fff;
 	font-weight: 600;
@@ -516,17 +1284,22 @@ body {
 	box-shadow: 0 8px 24px -12px #5865f2;
 	transition: background 0.15s ease, transform 0.1s ease;
 }
+.up-pop-login-ico {
+	width: 17px;
+	height: 13px;
+	flex-shrink: 0;
+}
 .up-pop-login:hover { background: #4752c4; }
 .up-pop-login:active { transform: scale(0.98); }
 .up-pop-login:focus-visible { outline: 2px solid var(--brand-bright); }
 .userpanel[data-state="logged-in"] .up-pop-login {
-	background: rgba(255, 255, 255, 0.06);
+	background: var(--tint-06);
 	color: var(--fg-muted);
 	border-color: var(--line);
 	box-shadow: none;
 }
 .userpanel[data-state="logged-in"] .up-pop-login:hover {
-	background: rgba(255, 255, 255, 0.1);
+	background: var(--tint-10);
 	color: var(--fg);
 }
 
@@ -536,7 +1309,7 @@ body {
 .main-wrap {
 	flex: 1;
 	margin-left: 256px;
-	height: 100vh;
+	height: 100%;
 	overflow-y: auto;
 	position: relative;
 	z-index: 10;
@@ -584,51 +1357,383 @@ body {
 
 /* ---------- Profile hero (giữa trang, card Discord như kasumu) ---------- */
 .profile-hero {
+	position: relative; /* Waves 27b: BẮT BUỘC — để ::before (viền cầu vồng) bám
+	                       ĐÚNG khung card, không bị định vị theo ancestor xa hơn */
 	padding: 0;
 	text-align: left;
 	gap: 0;
 	align-items: stretch;
-	overflow: hidden;
+	/* Waves 49d: KHÔNG `overflow:hidden` — khung hồ sơ phải tràn ra ngoài thẻ.
+	   Banner + đáy thẻ tự bo góc riêng bên dưới. */
+	overflow: visible;
+	border-radius: 1rem;
 	--tint: #8b5cf6;
 }
+/* Bo góc phần nội dung thẻ thay cho việc cắt tràn của thẻ */
+.profile-hero .ph-banner { border-radius: 1rem 1rem 0 0; }
+.profile-hero .ph-body { border-radius: 0 0 1rem 1rem; }
+
+/* Waves 28: VIỀN KHUNG PROFILE chính giữa lấy MÀU THEO BẢNG TÊN của user.
+   Đúng yêu cầu bro: bảng tên đỏ → viền đỏ, xanh → viền xanh… KHÔNG rainbow.
+   Không có nameplate → viền mặc định xanh thương hiệu (--np fallback). */
+@keyframes profileAura {
+	0% { background-position: 0% 50%; }
+	50% { background-position: 100% 50%; }
+	100% { background-position: 0% 50%; }
+}
+.profile-hero::before {
+	content: '';
+	position: absolute;
+	inset: 0;
+	border-radius: inherit;
+	padding: 1.5px;
+	/* Mặc định: xanh thương hiệu. Có nameplate → renderer set --np theo palette. */
+	background: linear-gradient(135deg,
+		color-mix(in oklab, var(--np, #5865f2) 92%, #fff 8%),
+		var(--np, #5865f2) 45%,
+		color-mix(in oklab, var(--np, #5865f2) 70%, #000 30%));
+	background-size: 200% 200%;
+	animation: profileAura 5s ease-in-out infinite;
+	-webkit-mask:
+		linear-gradient(#000 0 0) content-box,
+		linear-gradient(#000 0 0);
+	-webkit-mask-composite: xor;
+	mask:
+		linear-gradient(#000 0 0) content-box,
+		linear-gradient(#000 0 0);
+	mask-composite: exclude;
+	pointer-events: none;
+	z-index: 4;
+}
+/* Quầng sáng nhẹ cùng màu bảng tên — có nameplate mới bật */
+.profile-hero.has-aura {
+	box-shadow:
+		0 0 0 1px color-mix(in oklab, var(--np) 30%, transparent),
+		0 0 26px -10px color-mix(in oklab, var(--np) 75%, transparent);
+}
+
+/* ============================================================
+   Waves 49c: PROFILE EFFECT — mô hình THẬT của Discord
+   (js-web, hàm render từng layer):
+     mỗi layer = <img> position:absolute
+       top  = (layer.position.y ?? 0) - bannerAdjustment
+       left = (layer.position.x ?? 0)
+     canvas gốc 450×880.
+
+   QUAN TRỌNG: hộp #phEffect/#dpEffect PHẢI là <div>, KHÔNG được là <img>.
+   <img> là replaced element → con của nó nằm trong DOM nhưng KHÔNG BAO GIỜ
+   được layout (computed display:inline, offsetParent null) ⇒ mọi layer
+   tàng hình dù DOM/asset đúng 100%.
+
+   Hệ số --pe-s do JS gán = avatarSize / 120 (neo theo avatar, vì thẻ hero
+   nằm ngang — scale theo bề rộng thẻ sẽ cho effect cao gấp 5 lần thẻ).
+   Toạ độ gốc trong canvas được nhân với --pe-s.
+   ============================================================ */
+.ph-effect,
+.up-pop-effect {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	pointer-events: none;
+	overflow: visible;
+	/* --pe-s do JS gán = avatarSize / 120. Mặc định 1 cho an toàn. */
+	--pe-s: 1;
+}
+.ph-effect { z-index: 2; }
+.up-pop-effect { z-index: 2; }
+
+/* Effect là hiệu ứng TRANG TRÍ quanh hồ sơ → phải nằm gọn TRONG thẻ.
+   Thẻ phải để `overflow: visible` (khung frame cần tràn ra ngoài), nên
+   không thể clip bằng overflow. Dùng clip-path bo góc khớp thẻ:
+   nhờ vậy effect không bao giờ đè lên UI khác hay tràn khỏi hộp. */
+.ph-effect {
+	clip-path: inset(0 round 1rem);
+}
+.up-pop-effect {
+	clip-path: inset(0 round 0.75rem);
+}
+/* Waves 55 — BRO: *"pôput … thừa ra một khoảng trống"*.
+   ĐO ĐƯỢC: `.pe-layer` là canvas 450×880 neo TÂM AVATAR nên trong popout
+   nhỏ (223×204) nó tràn `top:-112 → bottom:312` ⇒ `scrollHeight` của `#upPop`
+   = **311** trong khi thân thẻ chỉ **204**. `clip-path` KHÔNG cắt phần layout,
+   nên phần tràn 107px vẫn thành VÙNG CUỘN RỖNG dưới thẻ (đúng "khoảng trống").
+   `contain: paint` khoá cả overflow layout LẪN paint ⇒ scrollHeight về đúng
+   chiều cao thẻ, vẫn giữ hiệu ứng vẽ quanh avatar. */
+.up-pop-effect {
+	contain: paint;
+}
+
+/* Một layer của effect = ảnh canvas 450×880 đặt tại toạ độ gốc.
+
+   VỊ TRÍ — neo vào AVATAR, không phải giữa thẻ.
+   Discord vẽ effect quanh ô avatar (avatar là chủ thể của hồ sơ). Nếu canh
+   giữa THẺ thì trên thẻ hero nằm ngang, avatar ở x=557..677 (tâm 617) còn
+   tâm thẻ ở x=1088 → effect bị vẽ lệch Phải 471px, rơi vào vùng banner
+   trống ⇒ "không thấy hiệu ứng gì" dù asset đã nạp đủ.
+   JS ghi `--pe-cx` = khoảng cách từ mép trái hộp effect tới TÂM AVATAR. */
+.ph-effect > .pe-layer,
+.up-pop-effect > .pe-layer {
+	position: absolute;
+	width: calc(450px * var(--pe-s));
+	height: calc(880px * var(--pe-s));
+	left: calc(var(--pe-cx, 50%) + var(--pe-x, 0px) * var(--pe-s) - 225px * var(--pe-s));
+	/* Tâm canvas (450×880) là 440px dọc → đặt tâm đó lên TÂM AVATAR. */
+	top: calc(var(--pe-ty, 50%) + var(--pe-y, 0px) * var(--pe-s) - 440px * var(--pe-s));
+	z-index: var(--pe-z, 0);
+	object-fit: contain;
+	pointer-events: none;
+	-webkit-user-drag: none;
+	user-select: none;
+	/* Chống "quầng đen mờ" khi ảnh chưa nạp hoặc nạp lỗi. */
+	background: none;
+	border: 0;
+}
+
+/* Ảnh chưa có src / nạp lỗi → KHÔNG vẽ gì (nếu không sẽ ra khối đen vỡ). */
+.ph-effect > .pe-layer:not([src]),
+.ph-effect > .pe-layer[src=''],
+.up-pop-effect > .pe-layer:not([src]),
+.up-pop-effect > .pe-layer[src=''] { display: none !important; }
+
+/* ============================================================
+   CHẾ ĐỘ LÁT Ô — dùng cho CẢ HAI thẻ khi tỉ lệ thẻ lệch tỉ lệ canvas.
+
+   Canvas effect gốc 450×880 (DỌC 0.51). Thẻ hero NẰM NGANG 4:1, thẻ popout
+   gần VUÔNG (1.08) — cả hai đều khác xa 0.51 ⇒ vẽ MỘT lần chỉ phủ được một
+   lát cắt, phần còn lại TRỐNG. Lát `cols × rows` ô lấp kín thẻ.
+   Số ô do JS suy từ rect THẬT của từng user/cỡ cửa sổ (không hardcode).
+   ============================================================ */
+
+/* --- HERO (giữa): hộp bám ĐÚNG khung BANNER, không trùm dải tên/id ---
+   Bro: "ướm vào đó từng phần cho nó vừa khít khung chữ nhật". */
+.ph-effect.pe-tiled {
+	top: 0;
+	left: 0;
+	height: var(--pe-box-h, 168px);
+	overflow: hidden;
+}
+
+/* --- POPOUT (trái): phủ TOÀN THẺ ---
+   Bro: "tôi cần nó bao trùm hết cái khung, ví dụ hiệu ứng lá rơi thì phải từ
+   đầu khung đến cuối khung". Hộp đã `inset: 0` sẵn nên phủ kín cả thẻ. */
+.up-pop-effect.pe-tiled {
+	overflow: hidden;
+}
+
+/* Mỗi layer GỐC: cỡ theo Ô, không còn công thức neo cũ. */
+.ph-effect.pe-tiled > .pe-layer,
+.up-pop-effect.pe-tiled > .pe-layer {
+	width: var(--pe-tile-w, 450px);
+	height: var(--pe-tile-h, 880px);
+	left: 0;
+	top: 0;
+	object-fit: cover;
+}
+/* Mỗi Ô NHÂN BẢN = khung chứa, dịch đúng (cột × rộng, hàng × cao). */
+.ph-effect > .pe-tile-slot,
+.up-pop-effect > .pe-tile-slot {
+	position: absolute;
+	left: calc(var(--pe-tile-c, 0) * var(--pe-tile-w, 450px));
+	top: calc(var(--pe-tile-r, 0) * var(--pe-tile-h, 880px));
+	width: var(--pe-tile-w, 450px);
+	height: var(--pe-tile-h, 880px);
+	pointer-events: none;
+}
+.ph-effect > .pe-tile-slot > .pe-layer,
+.up-pop-effect > .pe-tile-slot > .pe-layer {
+	position: absolute;
+	left: 0;
+	top: 0;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	pointer-events: none;
+	-webkit-user-drag: none;
+	user-select: none;
+	background: none;
+	border: 0;
+}
+.ph-effect > .pe-tile-slot > .pe-layer:not([src]),
+.ph-effect > .pe-tile-slot > .pe-layer[src=''],
+.up-pop-effect > .pe-tile-slot > .pe-layer:not([src]),
+.up-pop-effect > .pe-tile-slot > .pe-layer[src=''] { display: none !important; }
+
+/* Giảm chuyển động → đứng yên. */
+.pe-static > .pe-layer,
+.pe-static > .pe-tile-slot > .pe-layer { animation: none !important; }
+
+/* Waves 49c: PROFILE FRAME trong hero — mô hình 1200 ảo scale về thẻ hồ sơ.
+   Cùng thuật toán .dp-frame nhưng hệ số scale lấy từ bề rộng thẻ (672/1200). */
+.ph-frame.custom-profile-frame {
+	z-index: 5;
+}
+
 .ph-banner {
-	height: 116px;
-	background: linear-gradient(120deg, var(--brand-strong), var(--brand) 55%, #4c1d95);
+	height: 168px;
+	/* Waves 42/46: KHÔNG hardcode tím đậm (#4c1d95) — ở chế độ Sáng nó giữ nguyên
+	   nền tối khiến tên/id bị chìm. Dùng token gradient theo theme; token
+	   --banner-c đổi theo theme ở khối [data-theme="light"]. */
+	background: linear-gradient(
+		120deg,
+		var(--banner-a, var(--brand-strong)),
+		var(--banner-b, var(--brand)) 55%,
+		var(--banner-c, var(--brand-strong))
+	);
 	background-size: cover;
 	background-position: center;
 	position: relative;
+	/* Waves 54 — cắt tràn để ảnh bìa ôm đúng góc bo (xem `.up-pop-banner`). */
+	overflow: hidden;
+}
+/* Waves 54 — BRO CHỐT: *"phần ảnh bìa tôi thấy nó vẫn bị màu NITRO đè lên gây
+   rất xấu"*. ⇒ ẢNH BÌA KHÔNG ĐƯỢC PHỦ MÀU NITRO NỮA.
+
+   Bản 49 phủ `--theme-gradient` lên banner: 100% khi không có ảnh, và **30%
+   khi CÓ ảnh** (`.ph-banner[data-banner-image='1']::before`). Chính lớp 30% đó
+   là "màu Nitro đè lên ảnh bìa". Nitro chỉ được tồn tại Ở DƯỚI banner (lớp
+   `::after` của thẻ) — đúng câu bro chốt từ Waves 50.
+   ⇒ Khi CÓ ảnh: tắt hẳn lớp phủ. Khi KHÔNG có ảnh: gradient Nitro vẫn là nền
+   thay thế (đúng Discord — không có ảnh thì lấy màu làm nền). */
+.ph-banner::before {
+	content: '';
+	position: absolute;
+	inset: 0;
+	background: var(--theme-gradient, none);
+	opacity: var(--theme-active, 0);
+	transition: opacity 0.25s ease;
+	pointer-events: none;
+	z-index: 1;
+}
+.ph-banner[data-banner-image='1']::before {
+	opacity: 0;
+}
+/* Waves 55 — DẢI GIAO NHAU "MỜ MỜ" GIỮA ẢNH BÌA ↔ MÀU NITRO.
+   Bro (2 lần, CẢ popout + hero): *"giữa màu nitro và khung ảnh bìa phía sau
+   chưa có sự hiệu ứng giao nhau là mờ mờ"* và *"CẢ PHẦN GIAO NHAU GIỮA MÀU
+   NITRO VÀ ẢNH BÌA NỮA LÀ SIÊU ỔN RỒI"*.
+
+   Lịch sử 2 lần sai (đều đã bị bro bác):
+     • Waves 42–49: phủ `--theme-gradient` lên banner (100% / 30%) ⇒ "màu Nitro
+       đè lên ảnh bìa gây rất xấu" — một DẢI MÀU chắn ngang ảnh.
+     • Waves 54: bỏ hẳn ⇒ mép ảnh ↔ Nitro là ĐƯỜNG CẮT THẲNG, không tan.
+
+   ĐÚNG: một dải tan NGẮN ở ĐÁY ẢNH BÌA, đi từ **trong suốt → ĐÚNG màu Nitro
+   trên cùng (`--theme-b`)**. Vì:
+     - Điểm cuối = `--theme-b` = màu bắt đầu của lớp Nitro `::after` ngay dưới
+       ⇒ KHÔNG có đường nối (seam) nào.
+     - Điểm đầu = trong suốt ⇒ THẤY ảnh bìa, không phải một dải đặc chắn ngang.
+     - Dải KHÔNG BAO GIỜ trong suốt ở phía dưới (nơi nền là BỀ MẶT THẺ) ⇒ không
+       thể sinh dải trắng ở chế độ Sáng (bẫy của Waves 53).
+
+   Chiều cao NHỎ (26px) để chỉ là "tan mờ", không phải dải màu. */
+.ph-banner::after,
+.up-pop-banner::after {
+	content: '';
+	position: absolute;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	height: var(--banner-fade-h, 26px);
+	background: linear-gradient(
+		180deg,
+		transparent 0%,
+		color-mix(in sRGB, var(--banner-fade-to, var(--theme-b, transparent)) 62%, transparent) 55%,
+		var(--banner-fade-to, var(--theme-b, transparent)) 100%
+	);
+	opacity: var(--theme-active, 0);
+	transition: opacity 0.25s ease;
+	pointer-events: none;
+	z-index: 2;
 }
 .ph-banner.default {
 	background: linear-gradient(120deg, rgba(139, 92, 246, 0.55), rgba(0, 107, 180, 0.4));
 }
+
+/* ============================================================================
+   Waves 46b — LOGO ORB TO Ở CHÍNH GIỮA (bản sửa).
+   Vòng 46 đặt orb thành lớp phủ `.ph-orbbig` absolute giữa thẻ → nó nhô lên
+   giữa banner, bro gọi đúng là "tự nhiên lòi logo orb phía trên". Sai chỗ.
+   Nay: orb LỚN nằm ĐÚNG TRONG LUỒNG BỐ CỤC, là ảnh của chính ô avatar ở tâm
+   thẻ hero. Không còn lớp phủ lơ lửng, không còn `padding-top` giả để né.
+   Ảnh `orb-logo-big.png` phải là RGBA nền trong suốt THẬT (xem
+   tools/cutout-orb-alpha.py — bản gốc còn nguyên một màn đen alpha=128).
+   ========================================================================== */
+.ph-avatar-orb {
+	width: 100%;
+	height: 100%;
+	object-fit: contain;
+	display: block;
+	pointer-events: none;
+	-webkit-user-drag: none;
+	user-select: none;
+	/* Bóng theo token → chế độ Sáng không bị viền đen nặng. */
+	filter: drop-shadow(0 6px 16px var(--orb-shadow, rgba(0, 0, 0, 0.5)));
+}
+/* Khi có ảnh orb thật thì ẩn hình người mặc định; nếu ảnh lỗi/không có thì
+   JS gỡ class `.has-orb` để hình người quay lại (không bao giờ ô trống). */
+.ph-avatar.has-orb .ph-avatar-fallback { display: none; }
+.ph-avatar.has-orb {
+	background: transparent;
+	border-color: var(--card);
+	box-shadow: none;
+}
+/* Avatar có avatar Discord thật → ảnh orb nhường chỗ hoàn toàn. */
+.ph-avatar.has-photo .ph-avatar-orb { display: none; }
 .ph-body {
 	display: flex;
 	align-items: flex-end;
 	gap: 16px;
 	padding: 0 24px 20px;
-	margin-top: -36px;
+	margin-top: -34px;
 	position: relative;
+	/* Waves 49d: nội dung thẻ nằm TRÊN khung hồ sơ (khung z-index 4) — đúng
+	   thứ tự lớp Discord: base 0 < middle 2 < top 3 < FRAME 4 < above-frame 5.
+	   Avatar/tên là "above-frame" nên phải cao hơn khung. */
+	z-index: 5;
 }
+.ph-banner { z-index: 1; }
 .ph-avatarwrap {
 	position: relative;
 	flex-shrink: 0;
-	width: 92px;
+	/* Waves 46c — LOGO ORB TO HƠN (bro: "cho cái logo orb to ra tí nữa vẫn bé quá").
+     92px → 116px. Ô avatar là thứ chặn kích thước orb (orb là ảnh CỦA ô này),
+     nên muốn orb to thì phải nới chính ô. 116px vẫn nằm gọn trong bề rộng thẻ
+     (~640px) và không lấn sang khối chữ bên phải (xem `.ph-meta`). */
+	width: 116px;
+}
+/* Halo mờ sau avatar — chỗ giáp avt/banner mềm như kasumu */
+.ph-avatarwrap::before {
+	content: '';
+	position: absolute;
+	inset: -14px;
+	border-radius: 50%;
+	background: radial-gradient(circle, color-mix(in oklab, var(--card) 80%, transparent) 40%, transparent 72%);
+	filter: blur(6px);
+	z-index: 0;
+	pointer-events: none;
 }
 .ph-avatar {
-	width: 92px;
-	height: 92px;
+	width: 116px;
+	height: 116px;
 	border-radius: 50%;
 	background: var(--ink-700);
-	border: 6px solid var(--card);
+	/* Waves 49c: vòng avatar dùng token riêng --avatar-ring.
+	   Trước đây là `6px solid var(--card)` = #090b13 gần đen → khi khung
+	   artwork nằm ngay sau, vòng này đọc thành ĐƯỜNG VIỀN ĐEN quanh avatar.
+	   Dùng bề mặt sáng hơn (--surface-high) để thành "lỗ khoét" đúng nghĩa. */
+	border: 6px solid var(--avatar-ring, var(--card));
 	color: var(--fg-subtle);
 	display: flex;
 	align-items: center;
 	justify-content: center;
 	overflow: hidden;
 	position: relative;
-	box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45);
+	/* Waves 46/49c: bóng đổ trang trí, đã hạ độ đậm — xem --avatar-shadow. */
+	box-shadow: var(--avatar-shadow, 0 6px 16px rgba(0, 0, 0, 0.3));
 }
-.ph-avatar svg { width: 44px; height: 44px; }
+.ph-avatar.is-default { background: #5865f2; }
+.ph-avatar svg { width: 52px; height: 52px; }
 .ph-avatar-img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
 .ph-decoration {
 	position: absolute;
@@ -655,16 +1760,570 @@ body {
 	font-size: 1.45rem;
 	font-weight: 800;
 	letter-spacing: -0.02em;
-	color: var(--fg);
+	/* Waves 54 — cùng lý do với `.dp-display`: màu chữ theo NỀN THẬT.
+	   Waves 55 — `--np-fg` chỉ khi CÓ plate thật (xem khối `[data-theme="light"]`
+	   phía dưới); ở đây để `--theme-fg`/`--fg` lo phần còn lại. */
+	color: var(--theme-fg, var(--np-fg, var(--fg)));
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
 	max-width: 100%;
 }
+
+/* ============================================================
+   WAVES 48 — KIỂU TÊN HIỂN THỊ (Discord Display Name Styles)
+   ------------------------------------------------------------
+   Toàn bộ quy tắc dưới đây CHÉP từ CSS thật của Discord
+   (`/assets/163466.f72dfe4baba00e7d.css`), chỉ đổi tên class hash
+   sang thuộc tính `data-dns-effect` để không phụ thuộc bản build.
+
+   Font + các biến `--custom-display-name-styles-*` do JS đặt inline
+   (JS dùng đúng công thức `$0` / `lZ` của Discord để chống chìm màu).
+   ============================================================ */
+
+.ph-display.dns-active {
+	display: inline-flex;
+	max-width: 100%;
+	min-width: 0;
+	opacity: var(--custom-display-name-styles-font-opacity, 1);
+	perspective: 1px;
+	position: relative;
+	text-indent: 0;
+	z-index: 0;
+	white-space: var(--custom-display-name-styles-wrap, nowrap);
+	background-repeat: repeat;
+	/* Hiệu ứng Pop/Toon vẽ bóng bằng ::before lệch xuống dưới → không được cắt */
+	overflow: visible;
+	text-overflow: clip;
+	/* Bóng mặc định của nameplate làm bẩn gradient → tắt, dùng quầng riêng */
+	text-shadow: none;
+}
+
+/* ---------- SOLID ---------- */
+.ph-display[data-dns-effect='solid'] {
+	color: var(--custom-display-name-styles-main-color);
+}
+
+/* ---------- GRADIENT ---------- */
+.ph-display[data-dns-effect='gradient'] {
+	background: linear-gradient(to bottom right, var(--custom-display-name-styles-gradient-stops));
+	background-clip: text;
+	-webkit-background-clip: text;
+	background-size: 100% auto;
+	color: transparent;
+	-webkit-text-fill-color: transparent;
+}
+
+/* ---------- PRISM (dải màu chạy ngang) ---------- */
+.ph-display[data-dns-effect='prism'] {
+	background-image: linear-gradient(90deg, var(--custom-display-name-styles-prism-stops));
+	background-clip: text;
+	-webkit-background-clip: text;
+	background-position-x: 0;
+	background-repeat: repeat;
+	background-size: var(--custom-display-name-styles-prism-cycle) auto;
+	color: transparent;
+	-webkit-text-fill-color: transparent;
+	animation: dns-prism-scroll 2s linear infinite;
+}
+
+/* ---------- NEON ---------- */
+.ph-display[data-dns-effect='neon'] {
+	--custom-neon-shadow-radius: calc(4px + 0.12em);
+	paint-order: stroke fill;
+	-webkit-text-stroke-width: calc(1px + 0.04em);
+	-webkit-text-stroke-color: var(--custom-display-name-styles-neon-stroke-color);
+	color: #fff;
+	margin: calc(var(--custom-neon-shadow-radius) * -1);
+	padding: var(--custom-neon-shadow-radius);
+	position: relative;
+	text-shadow: 0 0 var(--custom-neon-shadow-radius) var(--custom-display-name-styles-main-color);
+	animation: dns-neon-flicker 4s cubic-bezier(0.24, 0.31, 0.36, 0.93) infinite;
+}
+
+/* ---------- TOON ---------- */
+.ph-display[data-dns-effect='toon'] {
+	--custom-toon-stroke-width: calc(1.6px + 0.04em);
+	--custom-toon-margin: calc(var(--custom-toon-stroke-width) * -1);
+	paint-order: stroke fill;
+	position: relative;
+	-webkit-text-stroke-width: var(--custom-toon-stroke-width);
+	-webkit-text-stroke-color: var(--custom-display-name-styles-toon-stroke-color);
+	color: var(--custom-display-name-styles-toon-stroke-color);
+	margin-inline: var(--custom-toon-margin);
+	margin-bottom: var(--custom-toon-margin);
+	padding-bottom: var(--custom-toon-stroke-width);
+	padding-inline: var(--custom-toon-stroke-width);
+}
+.ph-display[data-dns-effect='toon']::before {
+	background: linear-gradient(
+		180deg,
+		#fff 0,
+		var(--custom-display-name-styles-light-2-color) 8%,
+		var(--custom-display-name-styles-light-1-color) 15%,
+		var(--custom-display-name-styles-main-color) 25%,
+		var(--custom-display-name-styles-light-2-color) 45%,
+		var(--custom-display-name-styles-main-color) 55%,
+		#fff 75%,
+		var(--custom-display-name-styles-light-2-color) 83%,
+		var(--custom-display-name-styles-light-1-color) 90%,
+		var(--custom-display-name-styles-main-color) 100%
+	);
+	background-clip: text;
+	-webkit-background-clip: text;
+	background-size: 100% 400%;
+	content: attr(data-username-with-effects);
+	inset: 0;
+	padding-inline: var(--custom-toon-stroke-width);
+	padding-bottom: var(--custom-toon-margin);
+	position: absolute;
+	-webkit-text-fill-color: transparent;
+	-webkit-text-stroke-width: 0;
+	-webkit-text-stroke-color: transparent;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: var(--custom-display-name-styles-wrap, nowrap);
+	animation: dns-toon 4s cubic-bezier(0.44, 0.29, 0.48, 1) infinite;
+}
+
+/* ---------- POP ---------- */
+.ph-display[data-dns-effect='pop'] {
+	--custom-pop-stroke-width: calc(1.2px + 0.04em);
+	--custom-pop-bottom-translate_3d: 0.08em;
+	color: #fff;
+	display: inline-block;
+	paint-order: stroke fill;
+	position: relative;
+	vertical-align: top;
+	-webkit-text-stroke-width: var(--custom-pop-stroke-width);
+	-webkit-text-stroke-color: var(--custom-display-name-styles-dark-2-color);
+	margin-bottom: calc(var(--custom-pop-stroke-width) * -1 - var(--custom-pop-bottom-translate_3d));
+	margin-inline-start: calc(var(--custom-pop-stroke-width) * -1);
+	padding-bottom: calc(var(--custom-pop-stroke-width) + var(--custom-pop-bottom-translate_3d));
+	padding-inline-start: var(--custom-pop-stroke-width);
+	animation: dns-pop-main 4s cubic-bezier(0.44, 0.29, 0.48, 1) infinite;
+}
+.ph-display[data-dns-effect='pop']::before {
+	bottom: calc(var(--custom-pop-bottom-translate_3d) * -1 - var(--custom-pop-stroke-width));
+	color: var(--custom-display-name-styles-main-color);
+	content: attr(data-username-with-effects);
+	inset-inline-start: var(--custom-pop-stroke-width);
+	margin-inline-start: calc(var(--custom-pop-stroke-width) * -1);
+	padding-inline-start: var(--custom-pop-stroke-width);
+	position: absolute;
+	top: 0;
+	width: calc(100% - var(--custom-pop-stroke-width));
+	z-index: -1;
+	-webkit-text-stroke-width: var(--custom-pop-stroke-width);
+	-webkit-text-stroke-color: transparent;
+	background: linear-gradient(
+		to bottom left,
+		var(--custom-display-name-styles-light-1-color) 0,
+		var(--custom-display-name-styles-light-1-color) 6%,
+		var(--custom-display-name-styles-main-color) 20%,
+		var(--custom-display-name-styles-main-color) 50%,
+		var(--custom-display-name-styles-light-1-color) 56%,
+		var(--custom-display-name-styles-main-color) 70%,
+		var(--custom-display-name-styles-main-color) 100%
+	);
+	background-clip: text;
+	-webkit-background-clip: text;
+	background-position: 100% 0;
+	background-size: 200% 200%;
+	transform: translate3d(0, var(--custom-pop-bottom-translate_3d), 0);
+	-webkit-text-fill-color: transparent;
+	overflow: hidden;
+	text-decoration: none;
+	text-overflow: ellipsis;
+	white-space: var(--custom-display-name-styles-wrap, nowrap);
+	animation: dns-pop-shadow 4s cubic-bezier(0.44, 0.29, 0.48, 1) infinite;
+}
+
+/* ---------- GUMMY (từng ký tự nhún) ---------- */
+.ph-display[data-dns-effect='gummy'] {
+	--custom-gummy-squish-headroom: 0.12em;
+	font-kerning: none;
+	font-variant-ligatures: none;
+	margin-block: calc(var(--custom-gummy-squish-headroom) * -1);
+	padding-block: var(--custom-gummy-squish-headroom);
+}
+.ph-display[data-dns-effect='gummy'] .dns-gummy-letter {
+	display: inline-block;
+	white-space: pre;
+	animation: dns-gummy-squish 4s cubic-bezier(0.44, 0.29, 0.48, 1) infinite;
+	animation-delay: calc(var(--dns-letter-index, 0) * 50ms);
+}
+
+/* ---------- Quầng tương phản dự phòng ----------
+   JS đã tự nâng sáng màu theo đúng hàm `lZ` của Discord. Quầng này chỉ bật khi
+   sau khi nâng vẫn chưa đạt 3:1 (nền quá xấu) — không đổi màu gốc. */
+.ph-display[data-dns-lift='1'] {
+	filter: drop-shadow(0 0 1px rgba(6, 9, 16, 0.92)) drop-shadow(0 0 1px rgba(6, 9, 16, 0.92))
+		drop-shadow(0 1px 2px rgba(6, 9, 16, 0.7));
+}
+:root[data-theme='dark'] .ph-display[data-dns-lift='1'] {
+	filter: drop-shadow(0 0 1px rgba(255, 255, 255, 0.9)) drop-shadow(0 0 1px rgba(255, 255, 255, 0.9))
+		drop-shadow(0 1px 2px rgba(0, 0, 0, 0.85));
+}
+
+/* ---------- @keyframes chép nguyên từ Discord ---------- */
+@keyframes dns-prism-scroll {
+	0% {
+		background-position-x: 0;
+	}
+	100% {
+		background-position-x: calc(var(--custom-display-name-styles-prism-cycle) * -1);
+	}
+}
+@keyframes dns-neon-flicker {
+	0%,
+	15%,
+	18%,
+	20%,
+	23%,
+	25%,
+	50% {
+		color: #fff;
+	}
+	16%,
+	22%,
+	28% {
+		color: hsl(from var(--custom-display-name-styles-main-color) h calc(min(1, s) * ((s * 1.1) + 10)) 85);
+	}
+	51%,
+	100% {
+		color: #fff;
+	}
+}
+@keyframes dns-toon {
+	0%,
+	5% {
+		background-position: 50% 0;
+	}
+	55%,
+	100% {
+		background-position: 50% 100%;
+	}
+}
+@keyframes dns-pop-main {
+	0% {
+		transform: translateZ(0);
+	}
+	18% {
+		perspective: 1px;
+		transform: translate3d(0, -0.05em, 0);
+	}
+	35% {
+		perspective: 1px;
+		transform: translate3d(0, 0.08em, 0);
+	}
+	50%,
+	100% {
+		perspective: 1px;
+		transform: translateZ(0);
+	}
+}
+@keyframes dns-pop-shadow {
+	0% {
+		background-position: 100% 0;
+		perspective: 1px;
+		transform: translate3d(0, 0.08em, 0);
+	}
+	18% {
+		perspective: 1px;
+		transform: translate3d(0, 0.13em, 0);
+	}
+	35% {
+		perspective: 1px;
+		transform: translateZ(0);
+	}
+	50%,
+	100% {
+		background-position: 0 100%;
+		perspective: 1px;
+		transform: translate3d(0, 0.08em, 0);
+	}
+}
+@keyframes dns-gummy-squish {
+	0%,
+	35%,
+	100% {
+		transform: scaleX(1) scaleY(1);
+	}
+	7% {
+		transform: scaleX(1.28) scaleY(0.72);
+	}
+	14% {
+		transform: scaleX(0.82) scaleY(1.18);
+	}
+	21% {
+		transform: scaleX(1.1) scaleY(0.9);
+	}
+	28% {
+		transform: scaleX(0.96) scaleY(1.04);
+	}
+}
+
+/* Nền Sáng: bỏ bóng trắng của nameplate — nó làm nhoè gradient */
+:root[data-theme='light'] .ph-nameplate .ph-display.dns-active {
+	text-shadow: none;
+}
+
+/* ============================================================
+   WAVES 49b — ĐỒNG BỘ KIỂU TÊN Ở MỌI KHUNG
+   ------------------------------------------------------------
+   Bro: "khung profiles TRÁI vẫn giữ nguyên FONT chữ vẫn chưa hề đồng bộ
+   với profiles CHÍNH". Nguyên nhân: khối WAVES 48 ở trên scoped CỨNG vào
+   `.ph-display` nên JS áp class lên `#dpDisplay` / `#upName` cũng không có
+   tác dụng gì.
+   Nay: mở rộng đúng những quy tắc đó cho MỌI phần tử mang `data-dns-effect`.
+   Giữ y nguyên giá trị/vars — chỉ đổi selector.
+   ============================================================ */
+.dp-display.dns-active,
+.up-name.dns-active {
+	display: inline-flex;
+	max-width: 100%;
+	min-width: 0;
+	opacity: var(--custom-display-name-styles-font-opacity, 1);
+	position: relative;
+	z-index: 0;
+	white-space: var(--custom-display-name-styles-wrap, nowrap);
+	background-repeat: repeat;
+	overflow: visible;
+	text-overflow: clip;
+	text-shadow: none;
+	/* Khung trái hẹp hơn hero → hạ nhẹ cỡ chữ hiệu ứng cho khỏi vỡ dòng */
+}
+
+.dp-display[data-dns-effect='solid'],
+.up-name[data-dns-effect='solid'] {
+	color: var(--custom-display-name-styles-main-color);
+}
+
+.dp-display[data-dns-effect='gradient'],
+.up-name[data-dns-effect='gradient'] {
+	background: linear-gradient(to bottom right, var(--custom-display-name-styles-gradient-stops));
+	background-clip: text;
+	-webkit-background-clip: text;
+	background-size: 100% auto;
+	color: transparent;
+	-webkit-text-fill-color: transparent;
+}
+
+.dp-display[data-dns-effect='prism'],
+.up-name[data-dns-effect='prism'] {
+	background-image: linear-gradient(90deg, var(--custom-display-name-styles-prism-stops));
+	background-clip: text;
+	-webkit-background-clip: text;
+	background-position-x: 0;
+	background-repeat: repeat;
+	background-size: var(--custom-display-name-styles-prism-cycle) auto;
+	color: transparent;
+	-webkit-text-fill-color: transparent;
+	animation: dns-prism-scroll 2s linear infinite;
+}
+
+.dp-display[data-dns-effect='neon'],
+.up-name[data-dns-effect='neon'] {
+	--custom-neon-shadow-radius: calc(3px + 0.1em);
+	paint-order: stroke fill;
+	-webkit-text-stroke-width: calc(1px + 0.03em);
+	-webkit-text-stroke-color: var(--custom-display-name-styles-neon-stroke-color);
+	color: #fff;
+	margin: calc(var(--custom-neon-shadow-radius) * -1);
+	padding: var(--custom-neon-shadow-radius);
+	position: relative;
+	text-shadow: 0 0 var(--custom-neon-shadow-radius) var(--custom-display-name-styles-main-color);
+	animation: dns-neon-flicker 4s cubic-bezier(0.24, 0.31, 0.36, 0.93) infinite;
+}
+
+.dp-display[data-dns-effect='toon'],
+.up-name[data-dns-effect='toon'] {
+	--custom-toon-stroke-width: calc(1.2px + 0.03em);
+	--custom-toon-margin: calc(var(--custom-toon-stroke-width) * -1);
+	paint-order: stroke fill;
+	position: relative;
+	-webkit-text-stroke-width: var(--custom-toon-stroke-width);
+	-webkit-text-stroke-color: var(--custom-display-name-styles-toon-stroke-color);
+	color: var(--custom-display-name-styles-toon-stroke-color);
+	margin-inline: var(--custom-toon-margin);
+	margin-bottom: var(--custom-toon-margin);
+	padding-bottom: var(--custom-toon-stroke-width);
+	padding-inline: var(--custom-toon-stroke-width);
+}
+.dp-display[data-dns-effect='toon']::before,
+.up-name[data-dns-effect='toon']::before {
+	background: linear-gradient(
+		180deg,
+		#fff 0,
+		var(--custom-display-name-styles-light-2-color) 8%,
+		var(--custom-display-name-styles-light-1-color) 15%,
+		var(--custom-display-name-styles-main-color) 25%,
+		var(--custom-display-name-styles-light-2-color) 45%,
+		var(--custom-display-name-styles-main-color) 55%,
+		#fff 75%,
+		var(--custom-display-name-styles-light-2-color) 83%,
+		var(--custom-display-name-styles-light-1-color) 90%,
+		var(--custom-display-name-styles-main-color) 100%
+	);
+	background-clip: text;
+	-webkit-background-clip: text;
+	background-size: 100% 400%;
+	content: attr(data-username-with-effects);
+	inset: 0;
+	padding-inline: var(--custom-toon-stroke-width);
+	padding-bottom: var(--custom-toon-margin);
+	position: absolute;
+	-webkit-text-fill-color: transparent;
+	-webkit-text-stroke-width: 0;
+	-webkit-text-stroke-color: transparent;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: var(--custom-display-name-styles-wrap, nowrap);
+	animation: dns-toon 4s cubic-bezier(0.44, 0.29, 0.48, 1) infinite;
+}
+
+.dp-display[data-dns-effect='pop'],
+.up-name[data-dns-effect='pop'] {
+	--custom-pop-stroke-width: calc(1px + 0.03em);
+	--custom-pop-bottom-translate_3d: 0.07em;
+	color: #fff;
+	display: inline-block;
+	paint-order: stroke fill;
+	position: relative;
+	vertical-align: top;
+	-webkit-text-stroke-width: var(--custom-pop-stroke-width);
+	-webkit-text-stroke-color: var(--custom-display-name-styles-dark-2-color);
+	margin-bottom: calc(var(--custom-pop-stroke-width) * -1 - var(--custom-pop-bottom-translate_3d));
+	margin-inline-start: calc(var(--custom-pop-stroke-width) * -1);
+	padding-bottom: calc(var(--custom-pop-stroke-width) + var(--custom-pop-bottom-translate_3d));
+	padding-inline-start: var(--custom-pop-stroke-width);
+	animation: dns-pop-main 4s cubic-bezier(0.44, 0.29, 0.48, 1) infinite;
+}
+.dp-display[data-dns-effect='pop']::before,
+.up-name[data-dns-effect='pop']::before {
+	bottom: calc(var(--custom-pop-bottom-translate_3d) * -1 - var(--custom-pop-stroke-width));
+	color: var(--custom-display-name-styles-main-color);
+	content: attr(data-username-with-effects);
+	inset-inline-start: var(--custom-pop-stroke-width);
+	margin-inline-start: calc(var(--custom-pop-stroke-width) * -1);
+	padding-inline-start: var(--custom-pop-stroke-width);
+	position: absolute;
+	top: 0;
+	width: calc(100% - var(--custom-pop-stroke-width));
+	z-index: -1;
+	-webkit-text-stroke-width: var(--custom-pop-stroke-width);
+	-webkit-text-stroke-color: transparent;
+	background: linear-gradient(
+		to bottom left,
+		var(--custom-display-name-styles-light-1-color) 0,
+		var(--custom-display-name-styles-light-1-color) 6%,
+		var(--custom-display-name-styles-main-color) 20%,
+		var(--custom-display-name-styles-main-color) 50%,
+		var(--custom-display-name-styles-light-1-color) 56%,
+		var(--custom-display-name-styles-main-color) 70%,
+		var(--custom-display-name-styles-main-color) 100%
+	);
+	background-clip: text;
+	-webkit-background-clip: text;
+	background-position: 100% 0;
+	background-size: 200% 200%;
+	transform: translate3d(0, var(--custom-pop-bottom-translate_3d), 0);
+	-webkit-text-fill-color: transparent;
+	overflow: hidden;
+	text-decoration: none;
+	text-overflow: ellipsis;
+	white-space: var(--custom-display-name-styles-wrap, nowrap);
+	animation: dns-pop-shadow 4s cubic-bezier(0.44, 0.29, 0.48, 1) infinite;
+}
+
+.dp-display[data-dns-effect='gummy'],
+.up-name[data-dns-effect='gummy'] {
+	--custom-gummy-squish-headroom: 0.12em;
+	font-kerning: none;
+	font-variant-ligatures: none;
+	margin-block: calc(var(--custom-gummy-squish-headroom) * -1);
+	padding-block: var(--custom-gummy-squish-headroom);
+}
+.dp-display[data-dns-effect='gummy'] .dns-gummy-letter,
+.up-name[data-dns-effect='gummy'] .dns-gummy-letter {
+	display: inline-block;
+	white-space: pre;
+	animation: dns-gummy-squish 4s cubic-bezier(0.44, 0.29, 0.48, 1) infinite;
+	animation-delay: calc(var(--dns-letter-index, 0) * 50ms);
+}
+
+/* Quầng tương phản dự phòng cho khung trái / chip sidebar */
+.dp-display[data-dns-lift='1'],
+.up-name[data-dns-lift='1'] {
+	filter: drop-shadow(0 0 1px rgba(6, 9, 16, 0.92)) drop-shadow(0 1px 2px rgba(6, 9, 16, 0.7));
+}
+:root[data-theme='dark'] .dp-display[data-dns-lift='1'],
+:root[data-theme='dark'] .up-name[data-dns-lift='1'] {
+	filter: drop-shadow(0 0 1px rgba(255, 255, 255, 0.9)) drop-shadow(0 1px 2px rgba(0, 0, 0, 0.85));
+}
+
+/* Tôn trọng giảm chuyển động: giữ nguyên màu/gradient, chỉ dừng animation */
+@media (prefers-reduced-motion: reduce) {
+	.ph-display.dns-active,
+	.ph-display.dns-active::before,
+	.ph-display.dns-active .dns-gummy-letter,
+	.dp-display.dns-active,
+	.dp-display.dns-active::before,
+	.dp-display.dns-active .dns-gummy-letter,
+	.up-name.dns-active,
+	.up-name.dns-active::before,
+	.up-name.dns-active .dns-gummy-letter {
+		animation: none !important;
+	}
+}
 .ph-username {
 	font-family: var(--font-mono);
 	font-size: 0.8rem;
 	color: var(--fg-muted);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	/* Waves 52 — BRO CHỐT: *"cấm lớp layer phía sau … phần @user … và cả id
+	   user nữa nó đang có một lớp layer phía sau đấy xóa hẳn"*.
+	   ⇒ BỎ HẲN chip nền (`color-mix(--card 88%)`) + `backdrop-filter` + viền +
+	   đệm. Chữ "thả" trực tiếp trên artwork; đọc được nhờ quầng bám nét chữ
+	   (nhóm drop-shadow ở khối Waves 51). */
+	width: fit-content;
+	max-width: 100%;
+	padding: 0;
+	border-radius: 0;
+	background: none;
+	border: none;
+	backdrop-filter: none;
+	-webkit-backdrop-filter: none;
+}
+/* Waves 17: dòng ID Discord — chip mono kasumu kiểu well */
+.ph-userid {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	width: fit-content;
+	margin-top: 2px;
+	/* Waves 52 — bỏ hẳn lớp nền phía sau dòng ID (bro: "xóa hẳn"). */
+	padding: 0;
+	border-radius: 0;
+	border: none;
+	background: none;
+	backdrop-filter: none;
+	-webkit-backdrop-filter: none;
+	font-family: var(--font-mono);
+	font-size: 0.72rem;
+	color: var(--fg-subtle);
+	letter-spacing: 0.02em;
+}
+.ph-userid svg {
+	width: 12px;
+	height: 12px;
+	flex-shrink: 0;
+	color: var(--fg-subtle);
+}
+.ph-userid span {
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
@@ -725,6 +2384,58 @@ body {
 	line-height: 1.55;
 	color: var(--fg-muted);
 }
+/* Waves 17: thẻ tài khoản sắp đăng xuất — well kasumu (avatar + tên + ID mono) */
+.modal-account {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	width: 100%;
+	margin-top: 12px;
+	padding: 10px 12px;
+	border: 1px solid var(--line);
+	border-radius: var(--radius-field);
+	background: var(--well);
+	text-align: left;
+}
+.modal-account-avatar {
+	width: 34px;
+	height: 34px;
+	flex-shrink: 0;
+	border-radius: 50%;
+	background: var(--ink-700);
+	color: var(--fg-subtle);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	overflow: hidden;
+}
+.modal-account-avatar img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	border-radius: 50%;
+}
+.modal-account-meta {
+	display: flex;
+	flex-direction: column;
+	gap: 1px;
+	min-width: 0;
+}
+.modal-account-name {
+	font-size: 0.86rem;
+	font-weight: 700;
+	color: var(--fg);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+.modal-account-id {
+	font-size: 0.68rem;
+	color: var(--fg-subtle);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
 .modal-actions {
 	display: flex;
 	gap: 10px;
@@ -738,84 +2449,175 @@ body {
 .btn-danger {
 	background: #fb2c36;
 	color: #fff;
-	border: 1px solid rgba(255, 255, 255, 0.14);
+	border: 1px solid var(--tint-14);
 	box-shadow: 0 8px 24px -12px #fb2c36;
 }
 .btn-danger:hover { background: #e11d48; }
 .btn-ghost {
-	background: rgba(255, 255, 255, 0.06);
+	background: var(--well);
 	color: var(--fg-muted);
 	border: 1px solid var(--line);
+	border-radius: var(--radius-field);
 }
-.btn-ghost:hover { background: rgba(255, 255, 255, 0.1); color: var(--fg); }
+.btn-ghost:hover { background: var(--tint-10); color: var(--fg); }
 .ph-clan-badge { width: 22px; height: 22px; }
 
-/* ---------- Nameplate (Waves 15): khung hiệu ứng BỌC QUANH TÊN ----------
-   Mỗi user có hiệu ứng riêng — màu lấy từ accentColor của user (CSS var --np),
-   nền gradient theo màu đó, viền bo tròn chạy quanh tên như nameplate collectible. */
+/* ---------- Nameplate (Waves 17): KIỂU KASUMU CHIP — khung tên collectible ----------
+   Pill bo tròn viền line, nền ink-950 mờ + tint màu palette Discord, asset nameplate
+   phủ sau tên. Chuẩn kasumu .chip/.well: border line + nền ink-950 alpha. */
 .ph-nameplate {
 	position: relative;
 	display: inline-flex;
 	align-items: center;
-	padding: 5px 14px;
-	border-radius: 12px;
-	background:
-		linear-gradient(120deg, color-mix(in oklab, var(--np, #8b5cf6) 26%, transparent), color-mix(in oklab, var(--np, #8b5cf6) 8%, transparent) 60%, transparent),
-		rgba(5, 6, 11, 0.55);
+	gap: 8px;
+	/* Waves 54 — BRO CHỐT: *"XÓA NGAY KHUNG XANH XANH NÀY TRONG PROFLIES TRÁI"*.
+	   Viền pill do CHÍNH ARTWORK BẢNG TÊN vẽ (Discord xuất ra ảnh đã có khung bo).
+	   Ta đắp thêm 1 viền CSS nữa ⇒ **hai khung lồng nhau**. Tệ hơn: `--np` chỉ được
+	   set khi user CÓ bảng tên; không có thì rơi về `#8b5cf6` (TÍM) ⇒ đúng "khung
+	   xanh xanh" bro thấy. ⇒ BỎ HẲN viền + quầng CSS. Hình pill chỉ còn do
+	   artwork lo; không có artwork thì chữ thả trần (đúng ý bro từ Waves 51). */
+	padding: 6px 15px;
+	border-radius: 999px;
+	/* Waves 55 — KHÔI PHỤC KHUNG BO TRÒN QUANH TÊN + LOGO.
+	   Bro: *"mày đã cắt mất luôn khung bo tròn hiệu ứng ở tên và logo rồi"*.
+
+	   Bẫy của Waves 54 (giải được, KHÔNG lặp lại): viền lấy `var(--np, #8b5cf6)`
+	   ⇒ user KHÔNG có bảng tên rơi về TÍM cứng ⇒ "khung xanh xanh" vô cớ.
+
+	   Nay thứ tự ưu tiên màu viền HOÀN TOÀN ĐỘNG:
+	     `--np-ring` (JS set theo palette bảng tên thật, nếu có)
+	     → `--theme-b` (màu Nitro TRÊN CÙNG của chính user — luôn có khi có
+        theme_colors, và khớp đúng dải giao nhau ngay trên đầu tên)
+	     → KHÔNG có viền (`transparent`) khi user không có cả hai ⇒ không bao
+        giờ có viền màu bịa.
+	   Viền vẽ bằng `box-shadow`/`border` mảnh, KHÔNG nền đục ⇒ không vi phạm
+	   luật "cấm tấm nền đặc sau chữ". */
+	border: 1.5px solid
+		var(--np-ring, color-mix(in sRGB, var(--theme-b, transparent) 78%, transparent));
+	background: none;
 	box-shadow:
-		0 0 0 1px color-mix(in oklab, var(--np, #8b5cf6) 45%, transparent),
-		0 0 0 4px color-mix(in oklab, var(--np, #8b5cf6) 10%, transparent),
-		inset 0 1px 0 rgba(255, 255, 255, 0.08),
-		0 8px 22px -12px color-mix(in oklab, var(--np, #8b5cf6) 55%, transparent);
+		0 0 0 1px color-mix(in sRGB, var(--np-ring, var(--theme-b, transparent)) 22%, transparent),
+		0 2px 10px -4px color-mix(in sRGB, var(--np-ring, var(--theme-b, transparent)) 55%, transparent);
 	overflow: hidden;
+	isolation: isolate;
 	max-width: 100%;
+	backdrop-filter: none;
+	-webkit-backdrop-filter: none;
 }
-.ph-nameplate::before {
-	/* vệt sáng chạy dọc viền bo tròn (hiệu ứng nameplate Discord) */
-	content: "";
+/* Ảnh/video nameplate phủ TRỌN khung phía sau chữ (như Discord: nền trước, chữ sau) */
+.ph-nameplate .np-media {
 	position: absolute;
 	inset: 0;
-	border-radius: inherit;
-	padding: 1px;
-	background: linear-gradient(160deg, color-mix(in oklab, var(--np, #8b5cf6) 75%, transparent), transparent 40%, color-mix(in oklab, var(--np, #8b5cf6) 35%, transparent));
-	-webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-	-webkit-mask-composite: xor;
-	mask-composite: exclude;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	opacity: 0.85;
+	z-index: -1;
 	pointer-events: none;
-}
-.ph-nameplate::after {
-	/* light sweep CAO CẤP: dải sáng quét ngang định kỳ */
-	content: "";
-	position: absolute;
-	top: 0;
-	bottom: 0;
-	left: -60%;
-	width: 45%;
-	background: linear-gradient(100deg, transparent, color-mix(in oklab, var(--np, #8b5cf6) 18%, transparent), transparent);
-	transform: skewX(-18deg);
-	animation: npSweep 5.5s ease-in-out infinite;
-	pointer-events: none;
-}
-@keyframes npSweep {
-	0%, 55% { left: -60%; }
-	85%, 100% { left: 130%; }
 }
 .ph-nameplate .ph-display {
-	font-size: 1.32rem;
-	text-shadow: 0 1px 8px color-mix(in oklab, var(--np, #8b5cf6) 45%, transparent);
+	text-shadow: 0 1px 6px rgba(0, 0, 0, 0.6);
 }
-/* Tông wuwa (clan tag) — viền cùng màu nameplate, bo tròn */
+/* Clan badge + tag nằm TRONG khung bo tròn nameplate (bao trùm cả tên lẫn tag) */
+.ph-np-clan {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	flex-shrink: 0;
+}
+/* ---------- Huy hiệu (badges) trích từ token — xếp cạnh chữ (Discord style) ---------- */
+.ph-badges,
+.up-pop-badges {
+	display: inline-flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 5px;
+}
+.up-pop-badges {
+	margin-top: 8px;
+}
+.user-badge {
+	width: 22px;
+	height: 22px;
+	flex-shrink: 0;
+	object-fit: contain;
+	transition: transform 0.15s ease;
+}
+.user-badge:hover {
+	transform: scale(1.15);
+}
+/* Avatar ring hiệu ứng — conic xoay theo màu palette nameplate (bật khi user có hiệu ứng) */
+.ph-avatarwrap.has-effect::after {
+	content: '';
+	position: absolute;
+	inset: -5px;
+	border-radius: 50%;
+	background: conic-gradient(
+		from 0deg,
+		transparent 0%,
+		color-mix(in oklab, var(--np-ring, var(--theme-b, transparent)) 90%, transparent) 25%,
+		transparent 50%,
+		color-mix(in oklab, var(--np-ring, var(--theme-b, transparent)) 90%, transparent) 75%,
+		transparent 100%
+	);
+	filter: blur(3px);
+	opacity: 0.95;
+	z-index: -1;
+	animation: npRingSpin 4s linear infinite;
+	pointer-events: none;
+}
+@keyframes npRingSpin {
+	to { transform: rotate(360deg); }
+}
+/* Tông wuwa (clan tag) — Waves 54: KHÔNG tấm nền, KHÔNG viền.
+   Bro đã chốt nhiều lần: nội dung phải "thả" trên artwork, cấm layer phía sau.
+   Bản cũ đắp `--well` (nền đục) + `--line-strong` + inset ring ⇒ thành một cái
+   hộp nhỏ nằm trong pill, thừa lớp. Bỏ hết, chỉ giữ bo góc + đệm của `.dp-clan-tag`. */
 .up-tag, .ph-tag {
-	border-color: color-mix(in oklab, var(--np, #8b5cf6) 40%, transparent);
-	background: color-mix(in oklab, var(--np, #8b5cf6) 14%, rgba(255, 255, 255, 0.05));
-	box-shadow: 0 0 0 1px color-mix(in oklab, var(--np, #8b5cf6) 18%, transparent);
+	background: none;
+	border: 0;
+	box-shadow: none;
 }
 .up-nameplate {
-	padding: 3px 10px;
-	border-radius: 9px;
+	position: relative;
+	display: inline-flex;
+	align-items: center;
+	gap: 9px;
+	max-width: 100%;
+	/* Waves 54 — cùng lý do với `.ph-nameplate`: BỎ viền + quầng CSS.
+	   Popout KHÔNG gắn artwork bảng tên (`applyNameplate(null, dpNameplate)` từ
+	   Waves 22) nên `--np` luôn rỗng ⇒ viền luôn ra TÍM `#8b5cf6` bất kể user là
+	   ai. Đó chính là "khung xanh xanh" bro chỉ. Chữ thả trần trên nền Nitro. */
+	padding: 4px 12px;
+	border-radius: 999px;
+	/* Waves 55 — cùng cơ chế với `.ph-nameplate`: viền động theo palette bảng
+	   tên thật, dự phòng màu Nitro trên cùng của user, dự phòng cuối = không viền. */
+	border: 1.5px solid
+		var(--np-ring, color-mix(in sRGB, var(--theme-b, transparent) 78%, transparent));
+	background: none;
+	box-shadow:
+		0 0 0 1px color-mix(in sRGB, var(--np-ring, var(--theme-b, transparent)) 22%, transparent),
+		0 2px 10px -4px color-mix(in sRGB, var(--np-ring, var(--theme-b, transparent)) 55%, transparent);
+	backdrop-filter: none;
+	-webkit-backdrop-filter: none;
+	overflow: hidden;
+	isolation: isolate;
 }
+/* Video/ảnh bảng tên phủ TRỌN khung phía sau chữ (nền trước, chữ sau). */
+.up-nameplate .np-media {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	opacity: 0.85;
+	z-index: -1;
+	pointer-events: none;
+}
+.up-nameplate .dp-display { text-shadow: 0 1px 6px rgba(0, 0, 0, 0.5); }
 .up-nameplate .dp-display {
 	font-size: 0.92rem;
+	white-space: nowrap;
 }
 
 /* ---------- Stat cards (kasumu tint ring + icon góc) ---------- */
@@ -998,6 +2800,29 @@ body {
 	75% { transform: translateX(4px); }
 }
 
+/* Waves 48 — JS gắn class `invalid` lên CHÍNH ô input, không phải wrapper,
+   nên `.input-wrap.invalid` ở trên không bao giờ khớp. Bổ sung đúng đích. */
+.input-wrap:has(#token.invalid) {
+	border-color: var(--danger);
+	box-shadow: 0 0 0 2px rgba(251, 44, 54, 0.2);
+}
+#token.invalid { color: var(--danger); }
+
+/* Waves 48 — dòng trạng thái đăng nhập dưới ô token.
+   Dùng token màu để đọc được ở CẢ hai theme (bro dặn cấm chìm màu). */
+.token-status {
+	margin: 8px 2px 0;
+	font-size: 0.82rem;
+	font-weight: 600;
+	line-height: 1.45;
+	color: var(--fg-muted);
+	word-break: break-word;
+}
+.token-status[data-kind='ok'] { color: var(--emerald); }
+.token-status[data-kind='err'] { color: var(--danger); }
+.token-status[data-kind='pending'] { color: var(--fg-muted); }
+.token-status[hidden] { display: none; }
+
 /* ---------- Guide box ---------- */
 .guide-box {
 	background: rgba(139, 92, 246, 0.06);
@@ -1006,15 +2831,190 @@ body {
 	padding: 14px;
 	margin-bottom: 14px;
 }
+/* Waves 44: tiêu đề hướng dẫn = NÚT bấm có MŨI TÊN xổ xuống (bro yêu cầu).
+   Nút chiếm cả dòng, mũi tên quay 180° khi mở; không dùng màu làm chỉ báo
+   duy nhất (aria-expanded + chuyển động mũi tên). */
 .guide-header {
 	display: flex;
 	align-items: center;
 	gap: 8px;
+	width: 100%;
 	font-size: 0.82rem;
 	color: var(--brand-bright);
-	margin-bottom: 10px;
+	margin: 0;
+	padding: 0;
+	background: transparent;
+	border: 0;
+	font-family: inherit;
+	text-align: left;
+	cursor: pointer;
 }
-.guide-icon { display: flex; flex-shrink: 0; }
+.guide-header:hover { color: #fff; }
+.guide-header:focus-visible { outline: 2px solid var(--brand-bright); outline-offset: 3px; border-radius: 6px; }
+.guide-header > strong { flex: 1 1 auto; }
+.guide-chev {
+	display: inline-flex;
+	flex-shrink: 0;
+	transition: transform 0.22s ease;
+}
+.guide-chev.sm { width: 16px; }
+.guide-header[aria-expanded="true"] .guide-chev { transform: rotate(180deg); }
+.guide-sub-toggle[aria-expanded="true"] .guide-chev { transform: rotate(180deg); }
+.guide-body { margin-top: 10px; }
+.guide-body[hidden] { display: none; }
+/* Hai tab cách lấy token (Console / Bot). */
+.guide-tabs {
+	display: flex;
+	gap: 6px;
+	margin-bottom: 10px;
+	flex-wrap: wrap;
+}
+.guide-tab {
+	padding: 6px 10px;
+	border-radius: 999px;
+	border: 1px solid rgba(139, 92, 246, 0.3);
+	background: transparent;
+	color: var(--fg-muted);
+	font-family: inherit;
+	font-size: 0.72rem;
+	font-weight: 700;
+	cursor: pointer;
+	transition: background 0.18s ease, color 0.18s ease;
+}
+.guide-tab:hover { color: var(--fg); background: rgba(139, 92, 246, 0.12); }
+.guide-tab.active {
+	background: rgba(139, 92, 246, 0.2);
+	color: var(--brand-bright);
+	border-color: rgba(139, 92, 246, 0.55);
+}
+.guide-tab:focus-visible { outline: 2px solid var(--brand-bright); outline-offset: 2px; }
+.guide-note {
+	font-size: 0.74rem;
+	line-height: 1.5;
+	color: var(--fg-muted);
+	margin: 0 0 4px;
+}
+.guide-note.warn { color: #ffce4d; }
+.bot-field {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	margin-bottom: 4px;
+}
+.bot-label {
+	font-size: 0.7rem;
+	font-weight: 700;
+	color: var(--fg-muted);
+}
+.bot-field input {
+	width: 100%;
+	padding: 8px 10px;
+	border-radius: var(--radius-field);
+	border: 1px solid var(--line-strong);
+	background: var(--well);
+	color: var(--fg);
+	font-family: var(--font-mono);
+	font-size: 0.74rem;
+}
+.bot-field input:focus-visible { outline: 2px solid var(--brand-bright); outline-offset: 1px; }
+/* Nút phụ "hướng dẫn tạo bot" — mũi tên nhỏ sổ ra lần 2. */
+.guide-sub-toggle {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	width: 100%;
+	margin-top: 6px;
+	padding: 8px 10px;
+	border-radius: var(--radius-field);
+	border: 1px dashed rgba(139, 92, 246, 0.35);
+	background: transparent;
+	color: var(--brand-bright);
+	font-family: inherit;
+	font-size: 0.72rem;
+	font-weight: 700;
+	text-align: left;
+	cursor: pointer;
+}
+.guide-sub-toggle:hover { background: rgba(139, 92, 246, 0.1); }
+.guide-sub-toggle:focus-visible { outline: 2px solid var(--brand-bright); outline-offset: 2px; }
+.bot-guide { margin-top: 8px; }
+
+/* Waves 46: khối OAuth2 "Đăng nhập bằng Discord" + khối token ứng dụng ĐÃ XOÁ
+   cùng chức năng Mời bot vào server. Chỉ còn pane Console đăng nhập tài khoản thật. */
+.bot-field {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	margin-bottom: 4px;
+}
+.bot-label {
+	font-size: 0.7rem;
+	font-weight: 700;
+	color: var(--fg-muted);
+}
+.bot-field input {
+	width: 100%;
+	padding: 8px 10px;
+	border-radius: var(--radius-field);
+	border: 1px solid var(--line-strong);
+	background: var(--well);
+	color: var(--fg);
+	font-family: var(--font-mono);
+	font-size: 0.74rem;
+}
+.bot-field input:focus-visible { outline: 2px solid var(--brand-bright); outline-offset: 1px; }
+/* Nút phụ "hướng dẫn tạo bot" — mũi tên nhỏ sổ ra lần 2. */
+.guide-sub-toggle {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	width: 100%;
+	margin-top: 6px;
+	padding: 8px 10px;
+	border-radius: var(--radius-field);
+	border: 1px dashed rgba(139, 92, 246, 0.35);
+	background: transparent;
+	color: var(--brand-bright);
+	font-family: inherit;
+	font-size: 0.72rem;
+	font-weight: 700;
+	text-align: left;
+	cursor: pointer;
+}
+.guide-sub-toggle:hover { background: rgba(139, 92, 246, 0.1); }
+.guide-sub-toggle:focus-visible { outline: 2px solid var(--brand-bright); outline-offset: 2px; }
+.bot-guide { margin-top: 8px; }
+
+/* Waves 46: khối OAuth2 "Đăng nhập bằng Discord" + khối token ứng dụng ĐÃ XOÁ
+   cùng chức năng "Mời bot vào server" theo yêu cầu. Chỉ còn pane Console. */
+.bot-field { display: flex; flex-direction: column; gap: 5px; margin-bottom: 11px; }
+.bot-req {
+	font-size: 0.58rem;
+	font-weight: 700;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	color: var(--ux-err);
+	margin-left: 4px;
+}
+.bot-opt { font-size: 0.6rem; font-weight: 500; color: var(--fg-subtle); margin-left: 3px; }
+.bot-hint {
+	font-size: 0.66rem;
+	line-height: 1.5;
+	color: var(--fg-subtle);
+}
+.bot-hint code {
+	font-size: 0.64rem;
+	padding: 1px 4px;
+	border-radius: 4px;
+	background: var(--tint-06);
+}
+.bot-hint strong { color: var(--fg-muted); }
+
+/* Chip chọn quyền — giống hệt trang OAuth2 URL Generator của Discord. */
+/* ---- Chế độ SÁNG: nền kem, chữ nâu đậm, giữ nguyên cấu trúc ---- */
+[data-theme="light"] .bot-hint { color: #5a4a38; }
+[data-theme="light"] .bot-hint strong { color: #3d2f21; }
+[data-theme="light"] .bot-hint code { background: rgba(160, 120, 78, 0.14); color: #5a3b12; }
 .guide-steps {
 	display: flex;
 	flex-direction: column;
@@ -1023,6 +3023,7 @@ body {
 	color: var(--fg-muted);
 	margin-bottom: 12px;
 }
+.guide-steps[hidden] { display: none; }
 .step-item {
 	display: flex;
 	align-items: center;
@@ -1043,7 +3044,7 @@ body {
 	flex-shrink: 0;
 }
 .step-item code {
-	background: rgba(255, 255, 255, 0.08);
+	background: var(--tint-08);
 	color: var(--brand-bright);
 	padding: 2px 6px;
 	border-radius: 4px;
@@ -1073,6 +3074,127 @@ body {
 	color: #fff;
 }
 .btn-copy-script:focus-visible { outline: 2px solid var(--brand-bright); }
+
+/* ---------- Waves 44: KHỐI "CẤU HÌNH TÀI KHOẢN" — TÔNG ĐEN NÂU ----------
+   Bro: "hoàn toàn màu đen nâu, chỉnh một chút ở phần cấu hình tài khoản".
+   Áp tông nâu ấm cho riêng 2 thẻ trong trang Cài đặt (không đụng thẻ khác).
+   Chữ vẫn giữ --fg/--fg-muted nên tương phản ≥ 4.5:1 như cũ. */
+#pageSettings .config-card {
+	background: linear-gradient(180deg, var(--brown-850) 0%, var(--brown-900) 100%);
+	border-color: var(--brown-line);
+}
+#pageSettings .config-card .card-title { color: #f2e7da; }
+#pageSettings .config-card .card-ico { background: rgba(217, 164, 65, 0.14); color: var(--brown-accent); }
+#pageSettings .config-card .field label { color: #e6d8c6; }
+#pageSettings .config-card .hint { color: #b9a891; }
+/* Ô nhập token + ô bot: nền nâu đậm, viền nâu ấm. */
+#pageSettings .config-card .input-wrap,
+#pageSettings .config-card .bot-field input {
+	background: var(--brown-800);
+	border-color: var(--brown-line-strong);
+}
+#pageSettings .config-card input::placeholder { color: #8d7d6a; }
+#pageSettings .config-card .input-wrap:focus-within {
+	border-color: var(--brown-accent);
+	box-shadow: 0 0 0 3px rgba(217, 164, 65, 0.14);
+}
+/* Nút phụ trong khối (Dán / Hiện / Lưu / mở thư mục). */
+#pageSettings .config-card .ghost-btn {
+	border-color: var(--brown-line-strong);
+	color: #e6d8c6;
+}
+#pageSettings .config-card .ghost-btn:hover { background: rgba(217, 164, 65, 0.12); color: #fff; }
+#pageSettings .config-card .save-btn {
+	background: rgba(217, 164, 65, 0.16);
+	border-color: rgba(217, 164, 65, 0.45);
+	color: var(--brown-accent);
+}
+#pageSettings .config-card .save-btn:hover { background: rgba(217, 164, 65, 0.28); color: #fff; }
+/* Hộp hướng dẫn + hộp loop + nút copy: chuyển từ tím sang nâu ấm cho đồng bộ. */
+#pageSettings .config-card .guide-box {
+	background: rgba(217, 164, 65, 0.06);
+	border-color: rgba(217, 164, 65, 0.22);
+}
+#pageSettings .config-card .guide-header { color: var(--brown-accent); }
+#pageSettings .config-card .guide-icon { color: var(--brown-accent); }
+#pageSettings .config-card .guide-tab {
+	border-color: rgba(217, 164, 65, 0.3);
+	color: #c8b69f;
+}
+#pageSettings .config-card .guide-tab:hover { background: rgba(217, 164, 65, 0.12); color: #f2e7da; }
+#pageSettings .config-card .guide-tab.active {
+	background: rgba(217, 164, 65, 0.2);
+	border-color: rgba(217, 164, 65, 0.55);
+	color: var(--brown-accent);
+}
+#pageSettings .config-card .step-num { background: rgba(217, 164, 65, 0.18); color: var(--brown-accent); }
+#pageSettings .config-card .step-item code { background: rgba(217, 164, 65, 0.14); color: var(--brown-accent); }
+#pageSettings .config-card .guide-sub-toggle {
+	border-color: rgba(217, 164, 65, 0.35);
+	color: var(--brown-accent);
+}
+#pageSettings .config-card .guide-sub-toggle:hover { background: rgba(217, 164, 65, 0.1); }
+#pageSettings .config-card .btn-copy-script {
+	background: rgba(217, 164, 65, 0.14);
+	border-color: rgba(217, 164, 65, 0.35);
+	color: var(--brown-accent);
+}
+#pageSettings .config-card .btn-copy-script:hover { background: rgba(217, 164, 65, 0.26); color: #fff; }
+#pageSettings .config-card .loop-box {
+	background: var(--brown-800);
+	border-color: var(--brown-line);
+}
+#pageSettings .config-card .loop-title { color: #e6d8c6; }
+#pageSettings .config-card .loop-interval-row { color: #c8b69f; }
+/* Chế độ SÁNG: vẫn giữ tông nâu nhưng nền phải SÁNG để không chìm chữ. */
+[data-theme="light"] #pageSettings .config-card {
+	background: linear-gradient(180deg, #fdf7ef 0%, #f6ece0 100%);
+	border-color: rgba(150, 112, 72, 0.28);
+}
+[data-theme="light"] #pageSettings .config-card .card-title { color: #2a1f15; }
+[data-theme="light"] #pageSettings .config-card .field label { color: #3d2f21; }
+[data-theme="light"] #pageSettings .config-card .hint { color: #6b5a46; }
+/* Waves 44: hộp loop + các nền con phải SÁNG ở chế độ Sáng — nếu giữ nâu đậm
+   thì .hint (chữ nâu đậm) sẽ chìm trên nền nâu đậm (đo được 2.68:1). */
+[data-theme="light"] #pageSettings .config-card .loop-box {
+	background: #ffffff;
+	border-color: rgba(150, 112, 72, 0.28);
+}
+[data-theme="light"] #pageSettings .config-card .loop-title { color: #3d2f21; }
+[data-theme="light"] #pageSettings .config-card .loop-interval-row { color: #5a4a38; }
+[data-theme="light"] #pageSettings .config-card .guide-box {
+	background: rgba(150, 112, 72, 0.07);
+	border-color: rgba(150, 112, 72, 0.22);
+}
+[data-theme="light"] #pageSettings .config-card .guide-note { color: #5a4a38; }
+[data-theme="light"] #pageSettings .config-card .guide-steps { color: #5a4a38; }
+[data-theme="light"] #pageSettings .config-card .step-item { color: #5a4a38; }
+[data-theme="light"] #pageSettings .config-card .guide-tab {
+	background: #ffffff;
+	border-color: rgba(150, 112, 72, 0.3);
+}
+[data-theme="light"] #pageSettings .config-card .bot-field .bot-label { color: #3d2f21; }
+[data-theme="light"] #pageSettings .config-card .input-wrap,
+[data-theme="light"] #pageSettings .config-card .bot-field input {
+	background: #ffffff;
+	border-color: rgba(150, 112, 72, 0.3);
+	color: #2a1f15;
+}
+[data-theme="light"] #pageSettings .config-card input::placeholder { color: #8a7a66; }
+[data-theme="light"] #pageSettings .config-card .ghost-btn {
+	border-color: rgba(150, 112, 72, 0.3);
+	color: #3d2f21;
+}
+[data-theme="light"] #pageSettings .config-card .ghost-btn:hover { background: rgba(150, 112, 72, 0.1); color: #1c1409; }
+[data-theme="light"] #pageSettings .config-card .guide-header,
+[data-theme="light"] #pageSettings .config-card .guide-icon { color: #8a5a10; }
+[data-theme="light"] #pageSettings .config-card .guide-tab { color: #5a4a38; }
+[data-theme="light"] #pageSettings .config-card .guide-tab.active { color: #8a5a10; }
+[data-theme="light"] #pageSettings .config-card .step-num { color: #8a5a10; background: rgba(150, 112, 72, 0.16); }
+[data-theme="light"] #pageSettings .config-card .step-item code { color: #8a5a10; background: rgba(150, 112, 72, 0.12); }
+[data-theme="light"] #pageSettings .config-card .btn-copy-script { color: #8a5a10; }
+[data-theme="light"] #pageSettings .config-card .guide-sub-toggle { color: #8a5a10; }
+[data-theme="light"] #pageSettings .config-card .guide-note.warn { color: #8a4a06; }
 
 /* ---------- Loop box ---------- */
 .loop-box {
@@ -1149,9 +3271,18 @@ body {
 }
 .btn:active:not(:disabled) { transform: scale(0.98); }
 .btn:disabled {
-	opacity: 0.4;
+	/* Waves 46e — KHÔNG dùng `opacity: 0.4` nữa. Đo bằng PIXEL THẬT: nút
+	   "Auto ORBs" bị vô hiệu hoá ở chế độ Sáng ra chữ trắng trên nền tím nhạt
+	   #bdacef = 2.04:1 (chìm hẳn). Opacity làm mờ CẢ chữ lẫn nền nên không thể
+	   kiểm soát tương phản. Nay đổi sang bề mặt + màu chữ riêng: vẫn thấy ngay
+	   là "không bấm được" mà chữ vẫn đọc rõ ở cả hai theme. */
+	opacity: 1;
 	cursor: not-allowed;
 	transform: none !important;
+	background: var(--tint-08);
+	color: var(--fg-subtle);
+	border-color: var(--line);
+	box-shadow: none;
 }
 .btn-ico { width: 15px; height: 15px; flex-shrink: 0; }
 .btn-primary {
@@ -1166,7 +3297,7 @@ body {
 	border-color: var(--line-strong);
 }
 .btn-outline:hover:not(:disabled) {
-	background: rgba(255, 255, 255, 0.06);
+	background: var(--tint-06);
 	color: var(--fg);
 }
 .btn-danger {
@@ -1178,7 +3309,7 @@ body {
 .btn-discord {
 	background: #5865f2;
 	color: #fff;
-	border-color: rgba(255, 255, 255, 0.12);
+	border-color: var(--hairline);
 	box-shadow: 0 8px 24px -12px #5865f2;
 	height: 44px;
 	padding: 0 24px;
@@ -1197,7 +3328,7 @@ body {
 	display: inline-flex;
 	align-items: center;
 	gap: 6px;
-	background: rgba(255, 255, 255, 0.04);
+	background: var(--tint-04);
 	border: 1px solid var(--line);
 	color: var(--fg-muted);
 	padding: 6px 10px;
@@ -1209,7 +3340,7 @@ body {
 	font-family: inherit;
 }
 .ghost-btn:hover {
-	background: rgba(255, 255, 255, 0.08);
+	background: var(--tint-08);
 	color: var(--fg);
 }
 .ghost-ico { width: 13px; height: 13px; flex-shrink: 0; }
@@ -1256,14 +3387,14 @@ body {
 }
 .tab-btn:hover { color: var(--fg-muted); }
 .tab-btn.active {
-	background: rgba(255, 255, 255, 0.08);
+	background: var(--tint-08);
 	color: var(--fg);
 }
 .tab-count {
 	font-size: 0.68rem;
 	padding: 1px 7px;
 	border-radius: 9999px;
-	background: rgba(255, 255, 255, 0.08);
+	background: var(--tint-08);
 	color: var(--fg-muted);
 }
 .tab-btn.active .tab-count {
@@ -1272,198 +3403,759 @@ body {
 }
 
 /* ---------- Quest list ---------- */
+/* ================= Waves 22: LƯỚI THẺ NHIỆM VỤ KIỂU DISCORD =================
+   3 thẻ / dòng, mỗi thẻ là hình chữ nhật nhỏ bo tròn đúng 1 khối nội dung.
+   Không dùng thanh tiến độ ngang nữa — tiến độ là VÒNG TRÒN quanh ảnh thưởng,
+   chạy theo chiều kim đồng hồ, hiện % khi rê chuột (giống Discord). */
 .quest-list {
-	display: flex;
-	flex-direction: column;
-	gap: 10px;
-	max-height: 300px;
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 12px;
+	align-content: start;
 	overflow-y: auto;
-	padding-right: 4px;
+	overflow-x: hidden;
+	padding: 2px 4px 6px 2px;
+	min-height: 0;
+	/* Waves 46b — HÀNG CAO THEO NỘI DUNG, không chia theo khoảng trống còn lại.
+	   Cùng gốc lỗi với `.qgrid-done` (xem chú thích ở đó): lưới nằm trong flex
+	   card co giãn nên hàng auto bị bóp nhỏ hơn nội dung → thẻ đè lên nhau.
+	   `max-content` giữ đúng `gap` khai báo ở mọi kích thước cửa sổ. */
+	grid-auto-rows: max-content;
 }
 .quest-list[hidden] { display: none; }
-.empty {
+/* ---------- Trạng thái tải / rỗng (phủ cả hàng lưới) ---------- */
+.qstate {
+	grid-column: 1 / -1;
 	display: flex;
 	flex-direction: column;
 	align-items: center;
 	justify-content: center;
-	padding: 40px 10px;
+	gap: 10px;
+	padding: 34px 12px;
 	color: var(--fg-subtle);
 	text-align: center;
-	gap: 4px;
 }
-.empty-ico {
-	display: flex;
-	margin-bottom: 6px;
-	opacity: 0.45;
+.qstate[hidden] { display: none; }
+/* Waves 46 — CHỐNG XẾP CHỒNG: ô "rỗng" nằm TRONG lưới nên nếu còn hiện lúc
+   lưới đã có thẻ, nó chiếm trọn hàng đầu (grid-column: 1/-1) và đẩy mọi thẻ
+   xuống. Khi lưới có thẻ thật thì ô rỗng KHÔNG được chiếm chỗ, dù JS có sót. */
+.quest-list:has(> .qcard) > .qstate,
+.quest-list:has(> .qdone) > .qstate {
+	display: none;
 }
-.empty p {
-	font-size: 0.86rem;
+.qstate-text {
+	font-size: 0.8rem;
 	color: var(--fg-muted);
+	max-width: 34ch;
+	line-height: 1.5;
 }
-.empty span {
-	font-size: 0.74rem;
+.qstate.is-empty .qstate-text strong {
+	color: var(--fg-muted);
+	font-weight: 600;
 }
+.qstate.is-empty { padding: 26px 12px; color: var(--fg-subtle); }
 
-.quest {
-	background: var(--well);
-	border: 1px solid var(--line);
-	border-radius: var(--radius-field);
-	padding: 12px;
+/* ---------- THẺ NHIỆM VỤ ---------- */
+/* Waves 27: thẻ "trôi vào + mờ dần lên" khi nạp xong (1 lượt, có stagger) */
+@keyframes questIn {
+	from { opacity: 0; transform: translateY(10px) scale(0.98); }
+	to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.qcard.qin,
+.qdone.qin {
+	animation: questIn 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.qcard {
+	position: relative;
 	display: flex;
 	flex-direction: column;
-	gap: 8px;
-	transition: border-color 0.2s ease, background 0.2s ease;
-}
-.quest[data-status="done"] {
-	border-color: rgba(0, 210, 148, 0.28);
-	background: rgba(0, 210, 148, 0.04);
-}
-.quest[data-status="running"] {
-	border-color: rgba(139, 92, 246, 0.4);
-}
-.quest[data-status="new"] {
-	border-color: rgba(251, 44, 54, 0.4);
-	background: rgba(251, 44, 54, 0.04);
-}
-.quest[data-status="enrolled"] {
-	border-color: rgba(139, 92, 246, 0.25);
-}
-.quest[data-status="skip"] {
-	opacity: 0.65;
-}
-.quest-top {
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	gap: 10px;
-}
-.quest-name {
-	font-size: 0.84rem;
-	font-weight: 600;
-	color: var(--fg);
+	height: 126px;
+	min-width: 0;
+	background: var(--well);
+	border: 1px solid var(--line);
+	border-radius: 12px;
 	overflow: hidden;
-	text-overflow: ellipsis;
+	transition: border-color 0.15s ease, box-shadow 0.2s ease, transform 0.15s ease;
+}
+.qcard:hover { border-color: var(--line-strong); }
+.qcard[data-selected="1"] {
+	border-color: color-mix(in oklab, var(--brand) 62%, var(--line));
+	box-shadow: 0 0 0 1px color-mix(in oklab, var(--brand) 35%, transparent);
+}
+.qcard[data-status="running"] {
+	border-color: rgba(35, 165, 90, 0.55);
+	box-shadow: 0 0 16px -8px rgba(35, 165, 90, 0.8);
+}
+/* Waves 42: nhiệm vụ ĐÃ DỪNG — viền ĐỎ, thấy ngay nó không còn chạy.
+   Không chỉ dựa vào màu: nhãn chữ "Dừng" đổi theo (xem .qcard-state bên dưới). */
+.qcard[data-status="stop"] {
+	border-color: rgba(251, 44, 54, 0.6);
+	box-shadow: 0 0 16px -8px rgba(251, 44, 54, 0.85);
+}
+.qcard[data-status="done"] { opacity: 0.8; }
+/* Trong lúc quét: thẻ cũ mờ nhẹ để thấy đang làm mới dữ liệu */
+.qcard.is-loading,
+.qdone.is-loading { opacity: 0.45; }
+
+/* Banner thật của quest (config.assets.hero) */
+.qcard-banner {
+	position: relative;
+	height: 54px;
+	flex: 0 0 auto;
+	overflow: hidden;
+	background: linear-gradient(135deg, #2b2d31 0%, #1a1b1f 100%);
+}
+.qcard-banner img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	display: block;
+}
+.qcard-logo {
+	position: absolute;
+	left: 10px;
+	bottom: 8px;
+	max-height: 17px;
+	max-width: 58%;
+	object-fit: contain;
+	filter: drop-shadow(0 1px 5px rgba(0, 0, 0, 0.85));
+	pointer-events: none;
+}
+
+/* Ô tích chọn nhiệm vụ để chạy — nằm ngay trên banner */
+.qcard-check {
+	position: absolute;
+	top: 7px;
+	left: 7px;
+	z-index: 3;
+	width: 21px;
+	height: 21px;
+	border-radius: 6px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: rgba(0, 0, 0, 0.55);
+	border: 1px solid rgba(255, 255, 255, 0.28);
+	backdrop-filter: blur(4px);
+	cursor: pointer;
+	transition: background 0.15s ease, border-color 0.15s ease;
+}
+.qcard-check:hover { background: rgba(0, 0, 0, 0.72); border-color: rgba(255, 255, 255, 0.5); }
+.qcard-check input {
+	appearance: none;
+	-webkit-appearance: none;
+	width: 12px;
+	height: 12px;
+	margin: 0;
+	border-radius: 3px;
+	border: 1.5px solid rgba(255, 255, 255, 0.75);
+	cursor: pointer;
+	transition: background 0.12s ease, border-color 0.12s ease;
+}
+.qcard-check input:checked {
+	background: var(--brand);
+	border-color: var(--brand);
+	box-shadow: inset 0 0 0 2px #12131a;
+}
+.qcard-check input:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* Nhãn trạng thái nhỏ ở góc phải banner */
+.qcard-state {
+	position: absolute;
+	top: 7px;
+	right: 7px;
+	z-index: 3;
+	font-size: 0.55rem;
+	font-weight: 800;
+	letter-spacing: 0.05em;
+	text-transform: uppercase;
+	padding: 2px 7px;
+	border-radius: 999px;
+	background: rgba(0, 0, 0, 0.62);
+	border: 1px solid var(--tint-14);
+	color: #e3e5e8;
+	backdrop-filter: blur(4px);
 	white-space: nowrap;
 }
-.quest-badges {
+.qcard[data-status="new"] .qcard-state { color: #f0b232; border-color: rgba(240, 178, 50, 0.45); }
+.qcard[data-status="running"] .qcard-state { color: #2dc770; border-color: rgba(45, 199, 112, 0.5); }
+/* Waves 42: "Dừng" = ĐỎ rõ ràng (nền đỏ mờ để nổi trên mọi banner) */
+.qcard[data-status="stop"] .qcard-state {
+	color: #ff6b6b;
+	border-color: rgba(251, 44, 54, 0.6);
+	background: rgba(80, 10, 16, 0.72);
+}
+.qcard[data-status="done"] .qcard-state { color: #b5bac1; }
+/* Nút hành động ở trạng thái Dừng cũng đỏ */
+.qcard[data-status="stop"] .qcard-act { color: var(--danger-soft); border-color: rgba(251, 44, 54, 0.45); }
+
+/* Waves 27: thẻ nhiệm vụ avatar decoration — dấu hiệu nhẹ (thanh màu bên trái +
+   nhãn ✨), KHÔNG viền cầu vồng nữa (viền cầu vồng đã chuyển sang khung Profile). */
+.qcard[data-reward-kind="item"] {
+	box-shadow: inset 3px 0 0 0 #b45bff;
+}
+.qcard[data-reward-kind="item"] .qcard-state::before {
+	content: '✨ ';
+}
+
+/* Thân thẻ */
+.qcard-body {
 	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	padding: 6px 9px 8px;
+	min-width: 0;
+	flex: 1 1 auto;
+	min-height: 0;
+	overflow: hidden;
+}
+.qcard-pub {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+	font-size: 0.6rem;
+	color: var(--fg-subtle);
+	min-width: 0;
+}
+.qcard-pub-l {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	min-width: 0;
+}
+.qcard-pub-l b {
+	color: var(--fg-muted);
+	font-weight: 600;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+.qcard-verified { width: 11px; height: 11px; flex: 0 0 auto; color: #23a55a; }
+.qcard-end { flex: 0 0 auto; white-space: nowrap; }
+
+.qcard-main {
+	display: flex;
+	gap: 9px;
+	align-items: flex-start;
+	min-width: 0;
+}
+
+/* Ảnh phần thưởng + vòng tiến độ tròn */
+.qcard-reward {
+	position: relative;
+	flex: 0 0 auto;
+	width: 40px;
+	height: 40px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+.qcard-reward-art {
+	width: 34px;
+	height: 34px;
+	border-radius: 50%;
+	overflow: hidden;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	/* Waves 27: nền tối mờ, KHÔNG khung vuông thô. Orb nằm gọn trong đĩa tròn. */
+	background: radial-gradient(120% 120% at 30% 20%, rgba(59, 43, 122, 0.55) 0%, rgba(20, 21, 34, 0.75) 72%);
+	border: 1px solid var(--tint-08);
+}
+.qcard-reward-art img { width: 100%; height: 100%; object-fit: cover; }
+.qcard-reward-art svg { width: 24px; height: 24px; }
+/* Orb: bỏ hết nền/khung, chỉ để chính logo orb sáng đẹp.
+   Waves 30: .orb-glyph giờ là <img> (ảnh orb-logo.png đã tách nền) → dùng
+   object-fit:contain + drop-shadow để phát sáng, KHÔNG còn color/currentColor. */
+.qcard-reward-art .orb-glyph {
+	filter: drop-shadow(0 0 5px rgba(150, 120, 255, 0.55));
+}
+
+.qring {
+	position: absolute;
+	inset: -3px;
+	width: 46px;
+	height: 46px;
+	transform: rotate(-90deg);
+	pointer-events: none;
+}
+.qring circle { fill: none; stroke-width: 3; }
+.qring .qring-bg { stroke: var(--tint-10); }
+.qring .qring-fg {
+	stroke: #23a55a;
+	stroke-linecap: round;
+	stroke-dasharray: 125.66;
+	stroke-dashoffset: 125.66;
+	transition: stroke-dashoffset 0.45s ease;
+}
+.qcard[data-status="running"] .qring .qring-fg { filter: drop-shadow(0 0 3px rgba(35, 165, 90, 0.9)); }
+
+/* Waves 27: % hiện khi rê chuột — đĩa TRÒN nhỏ gọn đè lên orb (trước đây là ô
+   vuông bo 12px trông thô). */
+.qcard-pct {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%) scale(0.85);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 40px;
+	height: 40px;
+	border-radius: 50%;
+	background: rgba(8, 9, 12, 0.82);
+	box-shadow: 0 0 0 1.5px var(--tint-14), 0 4px 12px -2px rgba(0, 0, 0, 0.6);
+	font-family: var(--font-mono);
+	font-size: 0.64rem;
+	font-weight: 700;
+	color: #fff;
+	opacity: 0;
+	transition: opacity 0.16s ease, transform 0.16s ease;
+	pointer-events: none;
+}
+.qcard-reward:hover .qcard-pct {
+	opacity: 1;
+	transform: translate(-50%, -50%) scale(1);
+}
+
+.qcard-info {
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 1px;
+	min-height: 0;
+	overflow: hidden;
+}
+.qcard-kicker {
+	font-size: 0.56rem;
+	font-weight: 800;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: #8ea1ff;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+.qcard-title {
+	font-size: 0.76rem;
+	font-weight: 700;
+	color: var(--fg);
+	line-height: 1.25;
+	display: -webkit-box;
+	-webkit-line-clamp: 2;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+}
+.qcard-desc {
+	font-size: 0.62rem;
+	color: var(--fg-subtle);
+	line-height: 1.35;
+	display: -webkit-box;
+	-webkit-line-clamp: 1;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+}
+
+/* ---------- TAB "ĐÃ LÀM": ô vuông THU GỌN, 6 khung / dòng ----------
+   Waves 42: "thu hẹp lại thành hình vuông, 6 khung complete quest / dòng".
+   Waves 44: đúng ý bro — LOGO ORB Ở TRÊN, LOGO NHIỆM VỤ Ở DƯỚI; rê chuột thì
+   Orb tự MỜ đi và chữ (nhiệm vụ · bao nhiêu Orb · khi nào) TRÔI VÀO NGAY TRONG
+   chính khung vuông đó. Không còn panel nổi bên ngoài. */
+.qgrid-done {
+	grid-template-columns: repeat(6, minmax(0, 1fr));
+	gap: 8px;
+	/* Waves 46b — SỬA LỖI XẾP CHỒNG HÀNG (bro: "phần đa làm vẫn chưa fix
+	   chồng hết nhiệm vụ lên nhau").
+	   Gốc lỗi: `.qgrid-done` chỉ khai báo CỘT, không khai báo HÀNG. Ô `.qdone`
+	   có `aspect-ratio: 1/1` nên cao ~168px, nhưng hàng auto lại được chia theo
+	   chiều cao CÒN LẠI của container (grid nằm trong flex card, `flex: 1 1 auto`
+	   + `overflow-y: auto`). Chromium chia hàng auto = phần không gian trống →
+	   track chỉ ~108px, trong khi ô vẫn 168px → mỗi ô tràn xuống 60px và ĐÈ LÊN
+	   hàng dưới. Đo thật trước khi sửa: row gap = -60 / -59 / -60 px.
+	   Sửa: `grid-auto-rows: max-content` buộc hàng cao đúng bằng nội dung
+	   (ô vuông), nên gap trở lại đúng 8px như khai báo. Sau khi sửa: 9/8/8 px. */
+	grid-auto-rows: max-content;
+}
+.qdone {
+	position: relative;
+	aspect-ratio: 1 / 1;
+	min-height: 0;
+	border-radius: 10px;
+	/* Waves 46: token hoá nền ô "Đã làm" — trước đây hardcode #1b1c20/#0c0d10 nên
+	   ở chế độ Sáng vẫn là mảng đen. Dùng token --qdone-bg-a/b theo theme. */
+	background: linear-gradient(
+		180deg,
+		var(--qdone-bg-a, #1b1c20) 0%,
+		var(--qdone-bg-b, #0c0d10) 100%
+	);
+	border: 1px solid var(--line);
+	display: block;
+	padding: 0;
+	overflow: hidden; /* chữ trôi vào phải bị cắt trong ô, không tràn ra ngoài */
+	transition: border-color 0.15s ease;
+}
+.qdone:hover,
+.qdone:focus-visible,
+.qdone--hover {
+	border-color: color-mix(in oklab, var(--brand) 55%, var(--line));
+	z-index: 5;
+}
+/* --- MẶT TRƯỚC: Orb ở TRÊN, logo nhiệm vụ + TÊN GAME ở DƯỚI --- */
+.qdone-face {
+	position: absolute;
+	inset: 0;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	/* Waves 46c — giãn cách nhỏ hơn (4px → 3px) và siết padding, vì nay cột có
+	   4 phần tử (logo Orb / số Orb / logo game / tên game) trong ô vuông ~168px. */
+	justify-content: center;
+	gap: 3px;
+	padding: 6px 6px 7px;
+	transition: opacity 0.22s ease, filter 0.22s ease, transform 0.22s ease;
+}
+/* Tầng trên: badge Orb (logo Orb + số Orb). */
+.qdone-orbs {
+	flex: 0 0 auto;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 2px;
+	padding: 0;
+	border-radius: 0;
+	background: none;
+	border: 0;
+	max-width: 100%;
+}
+.qdone-orbs[hidden] { display: none; }
+.qdone-orb {
+	/* Waves 46c — ORB TO ĐÚNG TỈ LỆ DISCORD.
+     Ảnh chụp tile Discord: ô ~190px, logo Orb chiếm ~95px ⇒ ~50% bề rộng ô.
+     Trước đây 44px (26%) → bro kêu "vẫn bé quá". Nay ~50%, có trần để không
+     phình quá trên màn lớn. Đo thật sau khi sửa: 84px trong ô 169px. */
+	width: clamp(64px, 50%, 96px);
+	height: auto;
+	aspect-ratio: 1 / 1;
+	flex: 0 0 auto;
+	object-fit: contain;
+	display: block;
+	/* Waves 46: bóng theo token, không hardcode đen cho mọi theme */
+	filter: drop-shadow(0 6px 12px var(--orb-shadow, rgba(0, 0, 0, 0.5)));
+	-webkit-user-drag: none;
+	user-select: none;
+}
+.qdone-orb-num {
+	font-size: 0.68rem;
+	font-weight: 800;
+	letter-spacing: -0.01em;
+	color: var(--orb-num, #e9d5ff);
+	line-height: 1;
+	font-variant-numeric: tabular-nums;
+}
+/* Tầng dưới: logo nhiệm vụ/game — Waves 46c nới trần 30px → 46px và cho phép
+   co giãn, vì nay logo phải sống CHUNG với chữ tên game trong cùng một ô. */
+.qdone-logo {
+	/* Waves 46c — logotype là "chữ quest" của Discord: rộng gần hết ô, cao vừa
+	   (~1/5 chiều cao ô) để không lấn át logo Orb ở trên. */
+	flex: 0 1 auto;
+	width: 100%;
+	max-height: 38px;
+	min-height: 0;
+	object-fit: contain;
+	object-position: center;
+	display: block;
+	padding: 0 2px;
+}
+.qdone .qmedia {
+	flex: 1 1 auto;
+	width: 100%;
+	min-height: 0;
+	object-fit: contain;
+}
+.qdone-logo[hidden] { display: none; }
+/* Waves 46c — CHỮ TÊN GAME LUÔN HIỆN, SỐNG CHUNG VỚI LOGO.
+   Trước đây `.qdone-name` chỉ là "dự phòng khi không có logo": JS đặt
+   `name.hidden = true` ngay khi ảnh logo nạp xong, nên bro chỉ thấy hoặc logo
+   hoặc chữ. Discord hiện CẢ HAI trên từng nhiệm vụ — bro đòi đúng vậy.
+   Nay chữ có suất riêng trong cột flex, logo không đè được nó. */
+.qdone-name {
+	/* Waves 46c — `flex: 0 0 auto` từng khiến khối chữ dài (clamp 2 dòng) đòi
+	   đúng chiều cao nội dung, vượt trần ô → đo được tràn ở ô không có logo
+	   (probe bắt: "tràn ở 1 ô: 6"). `0 1 auto` cho phép co lại trong ô vuông. */
+	flex: 0 1 auto;
+	display: -webkit-box;
+	-webkit-box-orient: vertical;
+	-webkit-line-clamp: 2;
+	align-items: center;
+	justify-content: center;
+	width: 100%;
+	min-height: 0;
+	max-height: 100%;
+	font-size: 0.6rem;
+	font-weight: 700;
+	text-align: center;
+	line-height: 1.2;
+	color: var(--qdone-name, #c9ccd1);
+	overflow: hidden;
+	word-break: break-word;
+	hyphens: auto;
+	/* Mờ dần cùng nhịp với mặt trước khi rê chuột (xem khối :hover bên dưới). */
+	transition: opacity 0.22s ease;
+}
+.qdone-name[hidden] { display: none; }
+/* Waves 46c: KHÔNG dùng @container ở đây.
+   Đã thử container-type: inline-size trên .qdone để ẩn chữ khi ô quá hẹp, nhưng
+   nó tạo containment context khiến bước dò nền (đi ngược cây để tìm background
+   đục) trong tools/theme-audit.js đọc sai → 13 mục báo "chìm màu" giả, trong khi
+   tools/contrast-audit.js (đo theo vùng thật) vẫn đạt 47/47 mẫu ≥ 4.5:1.
+   Giữ chữ bằng cách để nó co lại trong ô (xem `.qdone-name { flex: 0 1 auto }`).
+   Ô nhỏ nhất trong thực tế là ~140px (6 cột ở 1280px), vẫn đủ cho 2 dòng chữ. */
+/* Khi rê chuột: Orb logo phía sau MỜ đi (dim + blur) rồi nhường chỗ cho chữ.
+   `.qdone--hover` là bản sao của :hover để HARNESS đo được trạng thái hover
+   trong môi trường headless (Chromium không bắn :hover từ script). Giữ 2 khối
+   này ĐỒNG BỘ — xem tools/probe-done-tile.js. */
+.qdone:hover .qdone-face,
+.qdone:focus-visible .qdone-face,
+.qdone--hover .qdone-face {
+	opacity: 0.16;
+	filter: blur(2px) saturate(0.5);
+	transform: scale(1.06);
+}
+/* Discord THAY HẲN nội dung ô khi rê chuột. Ta giữ mặt trước mờ đi làm nền cho
+   có chiều sâu, nhưng CHỮ TÊN GAME và LOGOTYPE của mặt trước phải ẩn HẲN: nếu
+   để nguyên, chúng thành những bóng chữ mờ nằm ngay dưới tooltip — nhìn như lỗi
+   vẽ (đã thấy thật trong ảnh 6: dòng "Genshin Impact" mờ nhoè dưới đáy ô) và
+   trùng lặp thông tin với logotype ở trên. Chỉ còn logo Orb mờ làm quầng nền. */
+.qdone:hover .qdone-name,
+.qdone:hover .qdone-logo,
+.qdone:focus-visible .qdone-name,
+.qdone:focus-visible .qdone-logo,
+.qdone--hover .qdone-name,
+.qdone--hover .qdone-logo {
+	opacity: 0;
+}
+/* --- MẶT SAU: chữ hiện NGAY TRONG ô, trôi vào từ dưới lên --- */
+.qdone-info {
+	position: absolute;
+	inset: 0;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 2px;
+	padding: 5px 5px;
+	text-align: center;
+	opacity: 0;
+	transform: translateY(7px);
+	transition: opacity 0.22s ease 0.05s, transform 0.22s ease 0.05s;
+	pointer-events: none;
+	overflow: hidden;
+}
+.qdone:hover .qdone-info,
+.qdone:focus-visible .qdone-info,
+.qdone--hover .qdone-info {
+	opacity: 1;
+	transform: translateY(0);
+}
+/* Waves 46c — TOOLTIP DỰNG LẠI THEO ĐÚNG ẢNH CHỤP DISCORD (bro yêu cầu
+   "hiện thật chuẩn như này, cấm bịa đặt"). Thứ tự trong ảnh, từ trên xuống:
+     1. quầng orb MỜ
+     2. logotype game (wordmark)
+     3. "Nhiệm Vụ <tên nhiệm vụ>"
+     4. "<N> Orbs đã được nhận vào"
+     5. "<dd>/<mm>"
+   Ô "Đã làm" chỉ ~169px nên phải siết cỡ chữ; vẫn giữ đúng thứ tự & nội dung. */
+
+/* (1) Quầng orb mờ phía trên — dùng chính ảnh orb lớn, phóng to + blur. */
+.qdone-info-glow {
+	position: absolute;
+	top: -16%;
+	left: 50%;
+	width: 90%;
+	aspect-ratio: 1 / 1;
+	transform: translateX(-50%);
+	background: center / contain no-repeat url('assets/orb-logo-big.png');
+	filter: blur(8px) saturate(1.3);
+	opacity: 0.6;
+	pointer-events: none;
+	z-index: 0;
+}
+
+/* (2) Logotype THẬT của game — phần tử nhìn thấy chính của tooltip. */
+.qdone-info-logo {
+	position: relative;
+	z-index: 1;
+	width: 88%;
+	max-height: 30px;
+	object-fit: contain;
+	object-position: center;
+	display: block;
+	flex: 0 0 auto;
+	-webkit-user-drag: none;
+	user-select: none;
+}
+
+/* (2b) Dự phòng khi logotype 404 → hiện tên game bằng chữ. */
+.qdone-info-game {
+	position: relative;
+	z-index: 1;
+	font-size: 0.54rem;
+	font-weight: 800;
+	line-height: 1.15;
+	color: #eef1f7;
+	display: -webkit-box;
+	-webkit-line-clamp: 2;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+	word-break: break-word;
+}
+.qdone-info-game[hidden] { display: none; }
+
+/* (3) "Nhiệm Vụ <tên>" — chữ trắng đậm, tối đa 2 dòng. */
+.qdone-info-title {
+	position: relative;
+	z-index: 1;
+	font-size: 0.56rem;
+	font-weight: 800;
+	line-height: 1.2;
+	color: #f3f5fa;
+	display: -webkit-box;
+	-webkit-line-clamp: 2;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+	word-break: break-word;
+}
+
+/* (4) "<N> Orbs đã được nhận vào" — chữ xám, không còn dạng "+N". */
+.qdone-info-reward {
+	position: relative;
+	z-index: 1;
+	font-size: 0.5rem;
+	font-weight: 600;
+	line-height: 1.2;
+	color: #9aa4b8;
+	display: -webkit-box;
+	-webkit-line-clamp: 2;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+	word-break: break-word;
+}
+
+/* (5) "<dd>/<mm>" — xám, số đều. */
+.qdone-info-when {
+	position: relative;
+	z-index: 1;
+	font-size: 0.5rem;
+	color: #8a93a6;
+	font-variant-numeric: tabular-nums;
+}
+/* reduced-motion: bỏ trôi/mờ dần, đổi trạng thái NGAY (không giấu thông tin). */
+@media (prefers-reduced-motion: reduce) {
+	.qdone-face,
+	.qdone-name,
+	.qdone-info { transition: none; }
+	.qdone-info { transform: none; }
+}
+/* Waves 30: logo Orb mới = ảnh orb-logo.png (256px, đã tách nền, có padding sẵn).
+   Dùng object-fit:contain để KHÔNG bao giờ tràn viền / bóp méo ở mọi kích thước. */
+.orb-glyph {
+	display: block;
+	object-fit: contain;
+	object-position: center;
+	-webkit-user-drag: none;
+	user-select: none;
+}
+.qcard-reward-art .orb-glyph { width: 100%; height: 100%; }
+.qmedia {
+	width: 100%;
+	height: 100%;
+	object-fit: contain;
+	border-radius: 8px;
+	display: block;
+}
+
+/* ---------- Hàng thẻ đầu trang: Số dư + Nhật ký ---------- */
+.stats-row {
+	display: grid;
+	grid-template-columns: minmax(210px, 0.8fr) 1.55fr;
+	gap: 14px;
+	align-items: stretch;
+}
+.console-card {
+	flex: none;
+	min-height: 0;
+	padding: 10px 13px 12px;
+	display: flex;
+	flex-direction: column;
+	gap: 7px;
+}
+/* Waves 24: khung nhật ký bo tròn kiểu cửa sổ terminal, 3 nút macOS bên trái */
+.log-head {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	min-width: 0;
+}
+.log-dots {
+	display: inline-flex;
 	align-items: center;
 	gap: 6px;
 	flex-shrink: 0;
 }
-.orb-pill {
-	font-size: 0.68rem;
-	font-weight: 600;
-	background: rgba(0, 210, 148, 0.12);
-	color: var(--emerald);
-	border: 1px solid rgba(0, 210, 148, 0.25);
-	padding: 1px 8px;
-	border-radius: 9999px;
-	font-family: var(--font-mono);
-}
-.quest-badge {
-	font-size: 0.68rem;
-	font-weight: 600;
-	padding: 2px 8px;
-	border-radius: 9999px;
-	border: 1px solid transparent;
-}
-.quest[data-status="running"] .quest-badge {
-	background: rgba(139, 92, 246, 0.15);
-	color: var(--brand-bright);
-	border-color: rgba(139, 92, 246, 0.3);
-}
-.quest[data-status="done"] .quest-badge {
-	background: rgba(0, 210, 148, 0.14);
-	color: var(--emerald);
-	border-color: rgba(0, 210, 148, 0.25);
-}
-.quest[data-status="skip"] .quest-badge {
-	background: rgba(255, 255, 255, 0.06);
-	color: var(--fg-subtle);
-	border-color: var(--line);
-}
-.quest[data-status="error"] .quest-badge {
-	background: rgba(251, 44, 54, 0.14);
-	color: var(--danger-soft);
-	border-color: rgba(251, 44, 54, 0.3);
-}
-.quest[data-status="new"] .quest-badge {
-	background: rgba(251, 44, 54, 0.12);
-	color: var(--danger-soft);
-	border-color: rgba(251, 44, 54, 0.25);
-}
-.quest[data-status="enrolled"] .quest-badge {
-	background: rgba(0, 210, 239, 0.1);
-	color: var(--cyan);
-	border-color: rgba(0, 210, 239, 0.25);
-}
-
-.bar {
-	height: 6px;
-	background: rgba(255, 255, 255, 0.06);
-	border-radius: 9999px;
-	overflow: hidden;
-}
-.bar i {
+.log-dot {
+	width: 9px;
+	height: 9px;
+	border-radius: 50%;
 	display: block;
-	height: 100%;
-	background: linear-gradient(90deg, var(--brand), var(--brand-bright));
-	border-radius: 9999px;
-	transition: width 0.3s ease;
+	box-shadow: inset 0 0 0 0.5px rgba(0, 0, 0, 0.35);
 }
-.quest[data-status="done"] .bar i {
-	background: linear-gradient(90deg, var(--emerald), #5ee9b5);
-}
-
-.quest-meta {
-	display: flex;
-	justify-content: space-between;
-	font-size: 0.72rem;
+.log-dot.d-red { background: #ff5f57; }
+.log-dot.d-amber { background: #febc2e; }
+.log-dot.d-green { background: #28c840; }
+.log-title {
+	font-size: 0.66rem;
+	font-weight: 700;
+	letter-spacing: 0.07em;
+	text-transform: uppercase;
 	color: var(--fg-subtle);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
 }
-.q-task { color: var(--fg-muted); }
-
-/* ---------- Nút mở Discord trên quest ---------- */
-.quest-open {
+.log-live {
 	margin-left: auto;
-	background: rgba(88, 101, 242, 0.14);
-	color: #a5adf5;
-	border: 1px solid rgba(88, 101, 242, 0.35);
-	border-radius: 6px;
-	font-size: 0.68rem;
-	font-weight: 600;
-	padding: 3px 8px;
-	cursor: pointer;
-	transition: background 0.15s ease, color 0.15s ease;
-	flex-shrink: 0;
-	font-family: inherit;
-}
-.quest-open:hover {
-	background: rgba(88, 101, 242, 0.28);
-	color: #fff;
-}
-.quest-open:focus-visible { outline: 2px solid var(--brand-bright); }
-
-/* ---------- Quest checkbox ---------- */
-.quest-check {
-	display: inline-flex;
+	display: flex;
 	align-items: center;
-	flex-shrink: 0;
-	cursor: pointer;
+	gap: 6px;
 }
-.quest-check input {
-	width: 16px;
-	height: 16px;
-	accent-color: var(--brand);
-	cursor: pointer;
+.log-count {
+	font-size: 0.68rem;
+	color: var(--fg-muted);
+	font-variant-numeric: tabular-nums;
 }
-.quest[data-status="new"] .quest-check input:disabled {
-	cursor: not-allowed;
-	opacity: 0.45;
+.log-count.is-bump { animation: logBump 0.34s var(--ease-out-quint); }
+@keyframes logBump {
+	0% { transform: scale(1); color: var(--fg-muted); }
+	35% { transform: scale(1.22); color: #2dc770; }
+	100% { transform: scale(1); color: var(--fg-muted); }
+}
+.log-clear {
+	font-size: 0.64rem;
+	padding: 2px 8px;
+	line-height: 1.5;
+}
+.console-card .console {
+	flex: 1 1 auto;
+	min-height: 56px;
+	max-height: 88px;
+	padding: 6px 9px;
+	font-size: 0.68rem;
+	line-height: 1.45;
+	border-radius: 10px;
 }
 
-/* ---------- Select tools ---------- */
 .select-tools {
 	display: flex;
 	align-items: center;
@@ -1494,42 +4186,24 @@ body {
 	font-weight: 600;
 }
 
-/* ---------- Console ---------- */
+/* ---------- Console (Waves 22: nằm trong hàng thẻ, gọn tối đa) ---------- */
 .console-card {
-	flex: 1;
-	min-height: 200px;
+	flex: none;
+	min-height: 0;
 	display: flex;
 	flex-direction: column;
 }
-.log-tools {
-	display: flex;
-	align-items: center;
-	gap: 8px;
-	flex-wrap: wrap;
-}
-.console {
-	flex: 1;
-	background: var(--well);
-	border: 1px solid var(--line);
-	border-radius: var(--radius-field);
-	padding: 12px;
-	font-size: 0.76rem;
-	line-height: 1.55;
-	overflow-y: auto;
-	max-height: 260px;
-	color: var(--fg-muted);
-}
-.log-line {
-	margin-bottom: 2px;
-	word-break: break-all;
-}
-.log-line.system { color: var(--fg-muted); }
-.log-line.ok { color: var(--emerald); font-weight: 600; }
-.log-line.warn { color: #ffd236; }
-.log-line.stderr { color: var(--danger-soft); }
-.log-line.orb { color: var(--brand-bright); font-weight: 600; }
+/* Waves 41: `.console`/`.log-line` cũ đã bỏ — khung nhật ký nay là terminal .u229.
+   (Các class cũ không còn trong DOM nên không cần định nghĩa.) */
 
-/* ---------- About ---------- */
+/* ---------- Console (Waves 22: nằm trong hàng thẻ, gọn tối đa) ---------- */
+.console-card {
+	flex: none;
+	min-height: 0;
+	display: flex;
+	flex-direction: column;
+}
+
 .about-card .security-banner {
 	display: flex;
 	align-items: center;
@@ -1617,20 +4291,28 @@ body {
 	border-color: rgba(251, 44, 54, 0.5);
 }
 
-/* ---------- Scrollbar ---------- */
+/* ---------- Scrollbar (Waves 27: mảnh, trong suốt, chỉ hiện khi cần) ---------- */
 ::-webkit-scrollbar {
-	width: 5px;
-	height: 5px;
+	width: 6px;
+	height: 6px;
 }
 ::-webkit-scrollbar-track {
 	background: transparent;
+	margin: 4px 0;
 }
 ::-webkit-scrollbar-thumb {
-	background: rgba(255, 255, 255, 0.1);
+	background: var(--scroll-thumb);
 	border-radius: 9999px;
+	border: 1px solid transparent;
+	background-clip: padding-box;
+	transition: background 0.2s ease;
 }
 ::-webkit-scrollbar-thumb:hover {
-	background: rgba(255, 255, 255, 0.2);
+	background: var(--scroll-thumb-hover);
+	background-clip: padding-box;
+}
+::-webkit-scrollbar-corner {
+	background: transparent;
 }
 
 /* ---------- Skeleton shimmer (dự phòng cho vùng chờ) ---------- */
@@ -1642,7 +4324,7 @@ body {
 }
 .skeleton::after {
 	content: "";
-	background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.07), transparent);
+	background: linear-gradient(90deg, transparent, var(--tint-08), transparent);
 	animation: 1.6s infinite shimmer;
 	position: absolute;
 	inset: 0;
@@ -1674,13 +4356,1433 @@ body {
 	.topbar { display: none !important; }
 }
 
-/* ---------- Accessibility: giảm chuyển động ---------- */
+/* ---------- Accessibility: giảm chuyển động ----------
+   Waves 25: TRƯỚC ĐÂY rule `*` giết SẠCH animation (duration .01ms) → máy nào bật
+   "giảm chuyển động" của Windows là thanh nạp + vòng xoay ĐỨNG YÊN hoàn toàn
+   (đúng lỗi bro báo: 0% rồi nhảy thẳng 100%). Nay chỉ tắt hiệu ứng TRANG TRÍ,
+   còn tín hiệu TIẾN TRÌNH (loader, vòng xoay) thì giữ — chỉ chạy chậm lại. */
+/* ============================================================
+   WAVES 41 — TERMINAL #229 (Lucian self-typing terminal)
+   Nguồn: Element "Self-typing terminal demo (#229)".
+   - Namespace .u229 (không đụng class cũ) — bám đúng luật skill 01-ui-ux-pro-max:
+     token bề mặt, tương phản cả 2 theme, reduced-motion hiển thị ĐÚNG trạng thái.
+   - Mọi màu map từ token của app; KHÔNG hardcode hex rời rạc.
+   - Đây là nơi DUY NHẤT chạy nhật ký + tiến trình quét (không còn loader riêng).
+   ============================================================ */
+/* Waves 43 — MÀU MẶC ĐỊNH cho nhật ký (bro yêu cầu):
+   "tại sao làm cho chữ phải có màu ... cứu để màu mặc định".
+   → NỘI DUNG dòng luôn dùng MỘT màu mặc định duy nhất (sáng ở chế độ Tối,
+     đen ở chế độ Sáng). Màu ngữ nghĩa CHỈ nằm ở nhãn `[ ok ]` đầu dòng —
+     chữ không bị tô màu loè loẹt, và không bao giờ chìm vì luôn ≥ 4.5:1. */
+.u229 {
+	--ux-bg: var(--well);
+	--ux-panel: var(--tint-04);
+	--ux-line: var(--line);
+	--ux-line-strong: var(--line-strong);
+	--ux-fg: var(--fg);
+	/* Màu chữ mặc định: chế độ Tối = trắng gần tuyệt đối (bro: "chữ luôn trắng") */
+	--ux-dim: #f2f5fa;
+	--ux-faint: #cbd3e1;
+	/* Waves 46e — hai vai trò màu chữ (bro: "chữ chính đỏ, text thường xanh"):
+	   --ux-text = chữ THƯỜNG của cả dòng (trung tính, hơi ngả xanh, dịu mắt)
+	   --ux-key  = CHỮ CHÍNH (số / tên nhiệm vụ / @tài khoản) → đỏ san hô */
+	--ux-text: #b9c7dd;
+	--ux-key: #ff9d9d;
+	/* Nhãn trạng thái — nơi DUY NHẤT mang màu ngữ nghĩa */
+	--ux-accent: var(--emerald);
+	--ux-warn: #ffce4d;
+	--ux-err: #ff6b6b;
+	--ux-orb: var(--brand-bright);
+	--ux-caret: var(--emerald);
+	/* Waves 42: fallback mono hệ thống phòng khi font app (subset latin) thiếu ký tự. */
+	--ux-font: var(--font-mono), Consolas, "Cascadia Mono", "Courier New", monospace;
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	gap: 0;
+	background: var(--ux-bg);
+	border: 1px solid var(--ux-line);
+	border-radius: 10px;
+	padding: 7px 10px 8px;
+	font-family: var(--ux-font);
+	font-size: 0.68rem;
+	line-height: 1.5;
+	color: var(--ux-dim);
+	overflow-y: auto;
+	overflow-x: hidden;
+	min-height: 56px;
+	max-height: 104px;
+	scrollbar-width: thin;
+}
+/* Thanh tiêu đề kiểu cửa sổ terminal (3 chấm) đã dùng .log-head ở ngoài;
+   trong khung này chỉ có dòng log thuần. */
+.u229-line {
+	position: relative;
+	padding-left: 0;
+	margin: 0;
+	white-space: pre-wrap;
+	word-break: break-word;
+	color: var(--ux-dim);
+	/* Waves 45 — DẤU TÍCH ở đầu dòng: hàng flex, icon đứng trước, chữ theo sau.
+	   Icon nằm trong luồng (không absolute) nên không bao giờ đè lên chữ. */
+	display: flex;
+	align-items: flex-start;
+	gap: 6px;
+}
+/* Waves 45 — ICON TRẠNG THÁI (dấu tích / X / cảnh báo / orb / mũi nhọn).
+   SVG thật, không phụ thuộc font → không bao giờ bị ô "??".
+   Waves 46e — đổi thành LOGO HUY HIỆU (lục giác + dấu hiệu riêng) và DỜI sang
+   NGAY SAU nhãn `[ … ]` (bro: "mỗi phần [] phải có logo chạy luôn sau text").
+   Nằm trong luồng flex nên không bao giờ đè lên chữ, không chen vào giữa câu. */
+.u229-ico {
+	flex: 0 0 auto;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 15px;
+	height: 1.5em;
+	color: var(--ux-faint);
+	user-select: none;
+}
+.u229-ico svg { display: block; }
+/* Nhãn chữ trạng thái — Waves 45 chuyển sang chữ tiếng Việt đầy đủ, vẫn giữ
+   vai trò "chỉ báo thứ hai" để người mù màu đọc được (màu không bao giờ là
+   chỉ báo duy nhất). */
+.u229-tag {
+	flex: 0 0 auto;
+	color: var(--ux-faint);
+	white-space: nowrap;
+	opacity: 0.85;
+}
+.u229-body {
+	flex: 1 1 auto;
+	min-width: 0;
+	/* Waves 46e — TỐI ĐA 2 DÒNG. Bro: "1 dòng text nếu quá dài thì chỉ nên gói
+	   gọn lại trong 2 dòng". Dòng log dài (thông báo lỗi, tên nhiệm vụ dài) không
+	   được phép đẩy khung nhật ký cao lên hay tràn ra ngoài.
+	   Dùng -webkit-line-clamp (Chromium hỗ trợ đầy đủ) — phần dư bị cắt, không
+	   bao giờ làm vỡ bố cục. */
+	display: -webkit-box;
+	-webkit-box-orient: vertical;
+	-webkit-line-clamp: 2;
+	overflow: hidden;
+}
+/* Waves 46e — "CHỮ CHÍNH" tô màu nổi, phần còn lại để màu trung tính.
+   Bro: "cái chữ chính đổi màu đỏ … còn text thường để xanh hay gì tuỳ", "màu
+   không quá sặc sỡ". Token được coi là CHÍNH: tên trong ngoặc kép, @tài-khoản,
+   con số (kèm đơn vị). Mỗi dòng thường chỉ 1–3 token → không loè loẹt. */
+.u229-key {
+	color: var(--ux-key);
+	font-weight: 700;
+}
+/* Con trỏ nhấp nháy ở dòng đang gõ — tín hiệu "đang chạy", màu + hình dạng
+   (không dùng màu làm chỉ báo DUY NHẤT: luôn kèm nhịp nháy).
+   Waves 42: dùng `_` (ASCII) thay `▋` — font subset của app KHÔNG có khối vẽ
+   nên `▋` bị vẽ thành ô "??" (đúng lỗi bro báo). ASCII an toàn mọi máy. */
+.u229-line.is-typing::after {
+	content: '_';
+	display: inline-block;
+	margin-left: 1px;
+	color: var(--ux-caret);
+	animation: u229Blink 1.05s steps(1, end) infinite;
+	font-weight: 700;
+}
+.u229-line.is-done::after { content: none; }
+/* Waves 45 — MÀU THEO TRẠNG THÁI.
+   Waves 46e — ĐỔI CÁCH TÔ (bro: chữ chính một màu, chữ thường một màu khác):
+   • CHỮ CỦA DÒNG nay dùng MỘT màu trung tính dịu (--ux-text) cho MỌI nhóm —
+     trước đây cả dòng bị tô kín theo trạng thái nên đọc rất "loè".
+   • Màu NGỮ NGHĨA chỉ còn ở NHÃN `[ … ]` + LOGO huy hiệu của nhóm.
+   • Chữ CHÍNH (số / tên trong ngoặc kép / @user) tô --ux-key (đỏ san hô).
+   Tương phản đo bằng pixel thật: tools/probe-log-contrast.js */
+.u229-line.t-ok,
+.u229-line.t-warn,
+.u229-line.t-err,
+.u229-line.t-orb,
+.u229-line.t-sys { color: var(--ux-text); }
+.u229-line.t-ok .u229-ico { color: #34d399; }
+.u229-line.t-warn .u229-ico { color: #fbbf24; }
+.u229-line.t-err .u229-ico { color: #f87171; }
+.u229-line.t-orb .u229-ico { color: #a78bfa; }
+.u229-line.t-sys .u229-ico { color: var(--ux-faint); }
+.u229-line.t-ok .u229-tag { color: #34d399; }
+.u229-line.t-warn .u229-tag { color: #fbbf24; }
+.u229-line.t-err .u229-tag { color: #f87171; }
+.u229-line.t-orb .u229-tag { color: #a78bfa; }
+.u229-prompt { color: var(--ux-accent); user-select: none; }
+
+/* ============ Waves 46e — NHẬN ORBS THÀNH CÔNG: CHỮ CẦU VỒNG ============
+   Bro: "lúc nhận thành công ORBS text log phải đổi màu theo kiểu rainbow, không
+   phải 7 màu cầu vồng ngẫu nhiên chạy quanh text, không phải chỉ phụ thuộc vào
+   7 màu cầu vồng".
+   Cách làm: gradient có 13 điểm dừng, hue tăng ĐỀU 30° (0→360) nên là QUANG PHỔ
+   LIÊN TỤC chứ không phải 7 vạch màu rời. Gradient được lặp 2 lần (--rb ×2) và
+   `background-size: 200%` → dịch nền đúng 1 quãng phổ là khép vòng HOÀN HẢO,
+   không giật ở mối nối. Màu chạy vòng quanh chữ (background-position).
+   Mỗi điểm dừng đều được kiểm tương phản trên nền khung (xem probe). */
+.u229 {
+	--rb:
+		hsl(0 92% 72%), hsl(30 92% 70%), hsl(60 88% 66%), hsl(90 70% 62%), hsl(120 62% 60%), hsl(160 62% 60%),
+		hsl(190 72% 64%), hsl(215 82% 70%), hsl(245 82% 74%), hsl(275 82% 74%), hsl(305 82% 72%), hsl(335 88% 72%),
+		hsl(360 92% 72%);
+}
+.u229-line.is-orbwin .u229-body {
+	background-image: linear-gradient(90deg, var(--rb), var(--rb));
+	background-size: 200% 100%;
+	background-position: 0% 50%;
+	-webkit-background-clip: text;
+	background-clip: text;
+	color: transparent;
+	-webkit-text-fill-color: transparent;
+	font-weight: 700;
+	animation: u229Rainbow 5s linear infinite;
+}
+/* Chữ chính trong dòng cầu vồng cũng phải ăn gradient (nếu giữ màu đỏ thì nó
+   chặn mất phần nền đã cắt theo chữ). */
+.u229-line.is-orbwin .u229-key {
+	color: inherit;
+	-webkit-text-fill-color: transparent;
+}
+@keyframes u229Rainbow {
+	from { background-position: 0% 50%; }
+	to { background-position: 100% 50%; }
+}
+/* reduced-motion: GIỮ gradient (đó là thông tin "thành công") nhưng ĐỨNG YÊN. */
 @media (prefers-reduced-motion: reduce) {
-	*,
-	*::before,
-	*::after {
-		animation-duration: 0.01ms !important;
-		animation-iteration-count: 1 !important;
-		transition-duration: 0.01ms !important;
+	.u229-line.is-orbwin .u229-body { animation: none; }
+}
+
+/* Dòng TIẾN TRÌNH QUÉT: một dòng duy nhất, tự cập nhật % + N/M + thanh khối
+   ASCII. Không sổ ra, không tràn viền, không loader nổi. */
+.u229-prog {
+	padding-left: 0;
+	color: var(--ux-dim);
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	flex-wrap: nowrap;
+	white-space: nowrap;
+	overflow: hidden;
+}
+/* Waves 45 — dòng tiến trình cũng có DẤU TÍCH riêng, đổi sang tick khi xong. */
+.u229-prog .u229-ico { height: auto; color: var(--ux-accent); }
+.u229-prog.is-done .u229-ico { color: #34d399; }
+.u229-prog.is-done .u229-prog-label { color: #8df3bd; }
+.u229-prog-bar {
+	flex: 1 1 auto;
+	min-width: 40px;
+	letter-spacing: -1px;
+	overflow: hidden;
+	color: var(--ux-accent);
+	opacity: 0.85;
+}
+.u229-prog-pct {
+	flex: 0 0 auto;
+	font-weight: 700;
+	color: var(--ux-accent);
+	font-variant-numeric: tabular-nums;
+}
+.u229-prog-count {
+	flex: 0 0 auto;
+	color: var(--ux-faint);
+	font-variant-numeric: tabular-nums;
+}
+/* Nhịp thở nhẹ cho dòng tiến trình để thấy nó "sống" ngay cả khi 0% */
+.u229-prog.is-live .u229-prog-bar { animation: u229Breath 1.6s ease-in-out infinite; }
+
+@keyframes u229Blink {
+	0%, 49% { opacity: 1; }
+	50%, 100% { opacity: 0; }
+}
+@keyframes u229Breath {
+	0%, 100% { opacity: 0.55; }
+	50% { opacity: 1; }
+}
+
+/* Waves 43 — Nhật ký ở chế độ SÁNG: nền TRẮNG, chữ ĐEN mặc định.
+   Màu ngữ nghĩa bản ĐẬM chỉ dùng cho NHÃN [ ok ] / [ !! ] — chữ không bị
+   tô màu, tuyệt đối không sáng-trên-sáng (bro đã báo chìm nhiều lần). */
+[data-theme="light"] .u229 {
+	--ux-warn: #8a4a06;
+	--ux-err: #b3141f;
+	--ux-orb: #5a2fd6;
+	--ux-accent: #05663c;
+	--ux-caret: #05663c;
+	--ux-dim: #10151f;
+	--ux-faint: #46506a;
+	/* Waves 46e — nền Sáng: chữ thường = xanh than đậm, chữ chính = đỏ đậm.
+	   Cả hai đều ≥ 6:1 trên nền trắng (đo bằng pixel thật ở probe-log-contrast). */
+	--ux-text: #333d4f;
+	--ux-key: #b3141f;
+	/* Quang phổ bản SÁNG: giữ đủ 13 sắc độ nhưng hạ sáng/tăng bão hoà để MỌI
+	   điểm dừng vẫn ≥ 4.5:1 trên nền trắng. Vàng và vàng-lục phải tối hơn hẳn
+	   các màu khác — đây là hai sắc dễ "chìm" nhất trên nền sáng; các sắc
+	   đỏ/tím/xanh vẫn được đẩy sáng hơn để nhìn RA CẦU VỒNG chứ không phải một
+	   dòng chữ đen. */
+	--rb:
+		#b3121a, #a35400, #6f6f00, #557a00, #107a2c, #06705a, #04687d, #1b53b8, #3b34c4, #7426c4, #a01a99, #b2145f,
+		#b3121a;
+	background: #ffffff;
+	border-color: var(--line-strong);
+}
+[data-theme="light"] .u229-line { color: var(--ux-text); }
+/* Waves 46e: chữ của dòng KHÔNG còn tô kín theo trạng thái (chỉ nhãn + logo
+   mang màu ngữ nghĩa). Ở nền Sáng vẫn phải ghi đè để không ăn lại tông sáng. */
+[data-theme="light"] .u229-line.t-ok,
+[data-theme="light"] .u229-line.t-warn,
+[data-theme="light"] .u229-line.t-err,
+[data-theme="light"] .u229-line.t-orb,
+[data-theme="light"] .u229-line.t-sys { color: var(--ux-text); }
+[data-theme="light"] .u229-line.t-ok .u229-ico,
+[data-theme="light"] .u229-line.t-ok .u229-tag { color: #04724a; }
+[data-theme="light"] .u229-line.t-warn .u229-ico,
+[data-theme="light"] .u229-line.t-warn .u229-tag { color: #8a4a06; }
+[data-theme="light"] .u229-line.t-err .u229-ico,
+[data-theme="light"] .u229-line.t-err .u229-tag { color: #b3141f; }
+[data-theme="light"] .u229-line.t-orb .u229-ico,
+[data-theme="light"] .u229-line.t-orb .u229-tag { color: #5a2fd6; }
+[data-theme="light"] .u229-line.t-sys .u229-ico { color: #46506a; }
+[data-theme="light"] .u229-prog .u229-ico { color: #05663c; }
+[data-theme="light"] .u229-prog.is-done .u229-ico { color: #04724a; }
+[data-theme="light"] .u229-prog.is-done .u229-prog-label { color: #04663c; }
+[data-theme="light"] .u229-prog-count { color: #46506a; }
+[data-theme="light"] .u229-prog-label { color: #10151f; }
+
+/* reduced-motion: TẮT nhấp nháy nhưng GIỮ con trỏ + thanh tiến trình hiển thị
+   đúng trạng thái (luật skill: không giết tín hiệu tiến trình). */
+@media (prefers-reduced-motion: reduce) {
+	.u229-line.is-typing::after { animation: none; opacity: 1; }
+	.u229-prog.is-live .u229-prog-bar { animation: none; opacity: 0.85; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.animate-rise,
+	.side-balance.is-pop .sb-value,
+	.side-balance.is-sweep::before,
+	.log-count.is-bump,
+	.qdone {
+		animation: none !important;
+		transition-duration: 0.05ms !important;
 	}
+	/* Tín hiệu tiến trình: KHÔNG tắt, chỉ làm chậm cho dễ chịu */
+	.snake-spin { animation-duration: 1.6s !important; }
+	.profile-hero::before { animation-duration: 10s !important; }
+	/* Thẻ trôi vào: giữ nhưng nhanh gọn */
+	.qcard.qin, .qdone.qin { animation-duration: 0.24s !important; }
+}
+
+/* ============================================================
+   WAVES 21 — LAYOUT FULL HD: từ 1080p KHÔNG phải cuộn
+   - Màn cao >= 980px (thực tế ~1040px khi 1080p full màn): nén toàn bộ
+     trang Auto Orb vừa đúng 1 màn, danh sách nhiệm vụ tự cuộn bên trong.
+   - Màn thấp hơn: giữ nguyên cơ chế cuộn của .main-wrap.
+   ============================================================ */
+@media (min-height: 900px) and (min-width: 1024px) {
+	.main-wrap { overflow: hidden; }
+
+	.content {
+		height: 100%;
+		padding: 20px 24px;
+		gap: 14px;
+		min-height: 0;
+	}
+
+	.page.active {
+		flex: 1;
+		min-height: 0;
+		gap: 14px;
+	}
+
+	/* Waves 23 + 27: hero giữ ảnh bìa ĐẦY ĐỦ (không cắt) — banner cao 168px như
+	   mặc định, avatar to, chừa chỗ cho hiệu ứng bảng tên.
+	   Waves 46c — bro chạy 1080p nên ĐÂY mới là kích thước orb thật bro nhìn thấy;
+	   khối này từng siết avatar về 86px (nhỏ hơn cả mặc định 92px) nên orb vẫn bé
+	   dù đã nới ở trên. Nâng lên 120px — orb to rõ mà hero vẫn cao y cũ
+	   (banner 168px + thân thẻ co giãn, không làm tràn màn). */
+	.profile-hero { flex: 0 0 auto; }
+	.profile-hero .ph-banner { height: 168px; }
+	.profile-hero .ph-body { margin-top: -34px; padding: 0 20px 16px; gap: 14px; }
+	.profile-hero .ph-avatarwrap { width: 120px; }
+	.profile-hero .ph-avatar { width: 120px; height: 120px; border-width: 6px; }
+	.stats-row { flex: 0 0 auto; }
+
+	/* Danh sách nhiệm vụ chiếm toàn bộ khoảng trống còn lại */
+	.quests-card {
+		flex: 1 1 auto;
+		min-height: 0;
+		display: flex;
+		flex-direction: column;
+	}
+	.quests-card .quest-list {
+		flex: 1 1 auto;
+		min-height: 0;
+		max-height: none;
+	}
+	.quests-card .quest-actions { flex: 0 0 auto; }
+
+	/* Waves 22: nhật ký đã nằm trong hàng thẻ với Số dư → không chiếm thêm chiều cao */
+	.console-card {
+		flex: none;
+		min-height: 0;
+	}
+	.console-card .console {
+		flex: 1 1 auto;
+		height: auto;
+		max-height: 96px;
+	}
+}
+
+/* Màn rất thấp: ưu tiên nội dung, nhật ký co lại hơn nữa */
+@media (max-height: 820px) {
+	.console {
+		max-height: 140px;
+	}
+	.console-card { min-height: 0; }
+}
+
+/* ============================================================
+   WAVES 28b — CHẾ ĐỘ SÁNG / TỐI (thiết kế lại toàn diện)
+   Nguyên tắc (theo UI/UX Pro Max — contrast 4.5:1, không gray-on-gray):
+   - KHÔNG dùng nền tối cho bất kỳ khối nào ở chế độ Sáng (kể cả nhật ký).
+   - Mọi bề mặt driven bởi token bề mặt (tint, hairline, bg-base, up-row-bg, well).
+   - Chữ luôn đậm trên nền sáng; màu nhấn (brand) đậm hơn để đủ tương phản.
+   - Màu ngữ nghĩa (ok/warn/error/orb) chuyển sang bản ĐẬM cho nền sáng.
+   ============================================================ */
+/* PHẢI là `:root[data-theme="light"]`, KHÔNG được để trần `[data-theme="light"]`.
+   Nút chọn theme trong Cài đặt mang sẵn `data-theme="light"` (để JS đọc), nên
+   selector trần khớp LUÔN chính cái nút đó và ghi đè token NGAY TRÊN NÚT →
+   ở chế độ Tối, nhãn "Sáng" lấy --fg-muted của chế độ Sáng (#414b5e) và thành
+   chữ xám đậm trên nền đen (2.17:1 — bro thấy "chìm màu"). */
+:root[data-theme="light"] {
+	--ink-950: #eef1f7;
+	--ink-900: #ffffff;
+	--ink-850: #f6f8fc;
+	--ink-800: #ffffff;
+	--ink-700: #eef2f8;
+	--ink-600: #e2e8f2;
+	--fg: #131722;
+	--fg-muted: #414b5e;
+	/* Waves 46e: #606b7e chỉ đạt 4.23:1 trên bề mặt modal (sáng hơn #fff một
+	   chút do tint) → nâng lên #5a6478 = 4.67:1, vẫn nhạt hơn --fg-muted nên
+	   giữ nguyên thứ bậc thị giác. */
+	--fg-subtle: #5a6478;
+	--line: rgba(15, 23, 42, 0.10);
+	--line-strong: rgba(15, 23, 42, 0.20);
+	--brand: #6d3ff0;
+	--brand-strong: #5a2fd6;
+	--brand-bright: #6a3de8;
+	/* Waves 54 — #059669 chỉ 3.43:1 trên thẻ kem `#fbf3ea` (dòng trạng thái token).
+	   Hạ độ sáng GIỮ HUE ⇒ #047854 = 5.0:1, vẫn đọc là "xanh lá thành công". */
+	--emerald: #047854;
+	--cyan: #0e7490;
+	--danger: #dc2626;
+	--danger-soft: #b91c1c;
+	--card: #ffffff;
+	--well: rgba(15, 23, 42, 0.045);
+	/* Token bề mặt: nền sáng dùng TINT ĐEN mờ, không phải trắng mờ */
+	--tint-04: rgba(15, 23, 42, 0.035);
+	--tint-06: rgba(15, 23, 42, 0.05);
+	--tint-08: rgba(15, 23, 42, 0.07);
+	--tint-10: rgba(15, 23, 42, 0.09);
+	--tint-14: rgba(15, 23, 42, 0.13);
+	--tint-16: rgba(15, 23, 42, 0.16);
+	--hairline: rgba(15, 23, 42, 0.14);
+	--bg-base: #eaeef6;
+	--up-row-bg: #ffffff;
+	/* Waves 46: chế độ Sáng dùng bóng NHẸ, ám nâu-xám thay vì đen đặc 45%. */
+	--avatar-shadow: 0 8px 22px rgba(15, 23, 42, 0.16);
+	/* Waves 49c: vòng avatar chế độ Sáng = trắng (khớp bề mặt thẻ). */
+	--avatar-ring: #ffffff;
+	--orb-shadow: rgba(15, 23, 42, 0.22);
+	--orb-num: #5b21b6;
+	--qdone-bg-a: #ffffff;
+	--qdone-bg-b: #f1f3f9;
+	--qdone-name: #3d4761;
+	--banner-c: #7c3aed;
+	--scroll-thumb: rgba(15, 23, 42, 0.22);
+	--scroll-thumb-hover: rgba(15, 23, 42, 0.4);
+	/* Waves 54 — `--brown-accent` là token DÙNG CHUNG 2 theme (#d9a441, hổ phách).
+	   Ở theme Sáng nó nằm trên tint kem `rgba(217,164,65,.14)` ⇒ 2.02:1 (icon cấu
+	   hình gần như biến mất). Hạ độ sáng GIỮ NGUYÊN HUE ⇒ #966408 = 4.58:1, đủ
+	   cho cả chữ (guide-header/step-item code) lẫn icon SVG. */
+	--brown-accent: #966408;
+}
+
+/* --- Nền app: sáng, glow nhẹ, KHÔNG còn mảng đen nào --- */
+[data-theme="light"] body { background: var(--ink-950); color: var(--fg); }
+[data-theme="light"] .bg-layers { opacity: 1; }
+[data-theme="light"] .bg-base { background: var(--bg-base); }
+[data-theme="light"] .bg-glow {
+	background:
+		radial-gradient(ellipse 70% 55% at 20% 0%, rgba(109, 63, 240, 0.10), transparent 60%),
+		radial-gradient(ellipse 60% 50% at 85% 25%, rgba(14, 116, 144, 0.08), transparent 65%),
+		radial-gradient(ellipse 80% 60% at 50% 100%, rgba(15, 23, 42, 0.06), transparent 70%);
+}
+[data-theme="light"] .bg-overlay { background: rgba(238, 241, 247, 0.35); }
+
+/* --- Sidebar / topbar --- */
+[data-theme="light"] .sidebar {
+	background: var(--ink-900);
+	border-right-color: var(--line);
+	box-shadow: 1px 0 0 rgba(15, 23, 42, 0.05);
+}
+[data-theme="light"] .topbar { background: var(--ink-900); border-bottom-color: var(--line); }
+[data-theme="light"] .drawer-overlay { background: rgba(15, 23, 42, 0.35); }
+
+/* --- Điều hướng: hover/active phải THẤY được (trước dùng trắng mờ → vô hình) --- */
+[data-theme="light"] .nav-item { color: var(--fg-muted); }
+[data-theme="light"] .nav-item:hover { background: var(--tint-08); color: var(--fg); }
+[data-theme="light"] .nav-item.active { background: var(--tint-10); color: var(--fg); }
+[data-theme="light"] .nav-ico { color: var(--fg-subtle); }
+[data-theme="light"] .nav-item.active .nav-ico { color: var(--brand-strong); }
+[data-theme="light"] .nav-ind { background: var(--brand-strong); }
+[data-theme="light"] .topbar-btn { border-color: var(--line-strong); color: var(--fg-muted); }
+
+/* --- Khung chip tài khoản sidebar --- */
+[data-theme="light"] .up-row { background: var(--up-row-bg); border-color: var(--line-strong); }
+[data-theme="light"] .up-row:hover { border-color: var(--line-strong); }
+/* Wave#96: vòng logo ở theme Sáng — nền trắng, viền xám đậm vừa đủ thấy. */
+[data-theme="light"] .brand-logo-wrap {
+	background: #ffffff;
+	border-color: rgba(15, 23, 42, 0.22);
+}
+[data-theme="light"] .up-sub { color: var(--fg-subtle); }
+
+/* --- Card / panel --- */
+[data-theme="light"] .card,
+[data-theme="light"] .hero-card,
+[data-theme="light"] .console-card,
+[data-theme="light"] .side-balance,
+[data-theme="light"] .up-pop {
+	background: var(--card);
+	border-color: var(--line);
+	box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05), 0 10px 28px -20px rgba(15, 23, 42, 0.3);
+}
+[data-theme="light"] .side-balance { color: var(--fg); }
+[data-theme="light"] .sb-label,
+[data-theme="light"] .sb-sub { color: var(--fg-subtle); }
+
+/* --- Ô nhập --- */
+[data-theme="light"] input,
+[data-theme="light"] select,
+[data-theme="light"] textarea,
+[data-theme="light"] .custom-select,
+[data-theme="light"] .input-wrap input {
+	background: #ffffff;
+	color: var(--fg);
+	border-color: var(--line-strong);
+}
+[data-theme="light"] input::placeholder,
+[data-theme="light"] textarea::placeholder { color: #8490a3; }
+[data-theme="light"] .input-wrap { background: #ffffff; border-color: var(--line-strong); }
+
+/* --- Thẻ nhiệm vụ --- */
+[data-theme="light"] .qcard { background: #ffffff; border-color: var(--line-strong); }
+[data-theme="light"] .qcard:hover { border-color: color-mix(in oklab, var(--brand) 45%, var(--line-strong)); }
+[data-theme="light"] .qcard-title { color: var(--fg); }
+[data-theme="light"] .qcard-desc { color: var(--fg-muted); }
+[data-theme="light"] .qdone { background: #f2f5fb; border-color: var(--line); }
+[data-theme="light"] .qcard-pct { background: #ffffff; color: var(--fg); border-color: var(--line-strong); }
+[data-theme="light"] .qcard-reward-art { color: var(--brand); }
+
+/* --- Nhật ký: terminal .u229 đã tự khai báo token cho cả 2 theme (khối WAVES 41) --- */
+[data-theme="light"] .log-title { color: var(--fg); }
+[data-theme="light"] .log-count { color: var(--fg-subtle); }
+
+/* --- Tab / chip / nút phụ --- */
+[data-theme="light"] .tab { color: var(--fg-muted); }
+[data-theme="light"] .tab.is-active { color: var(--fg); }
+[data-theme="light"] .tab-bar { background: var(--tint-06); }
+[data-theme="light"] .tab-ind { background: var(--brand); }
+[data-theme="light"] .chip { background: var(--tint-06); color: var(--fg-muted); }
+[data-theme="light"] .ghost-btn { border-color: var(--line-strong); color: var(--fg); background: var(--tint-04); }
+[data-theme="light"] .ghost-btn:hover { background: var(--tint-10); }
+[data-theme="light"] .btn-ghost { background: var(--tint-04); }
+[data-theme="light"] .btn-ghost:hover { background: var(--tint-10); color: var(--fg); }
+[data-theme="light"] .btn-outline { color: var(--fg-muted); border-color: var(--line-strong); }
+[data-theme="light"] .btn-outline:hover:not(:disabled) { background: var(--tint-08); color: var(--fg); }
+[data-theme="light"] .btn-danger { background: rgba(220, 38, 38, 0.10); color: var(--danger-soft); border-color: rgba(220, 38, 38, 0.28); }
+[data-theme="light"] .btn-danger:hover:not(:disabled) { background: rgba(220, 38, 38, 0.18); }
+[data-theme="light"] .btn-secondary { background: var(--tint-06); color: var(--fg); }
+
+/* --- Hồ sơ / banner --- */
+/* Waves 42: banner hồ sơ ở chế độ Sáng dùng tông SÁNG hơn (không còn #4c1d95
+   tím đen) — nhờ vậy tên/id/nhãn trên đó không bị chìm. */
+[data-theme="light"] .ph-banner {
+	--banner-a: #8b5cf6;
+	--banner-b: #a78bfa;
+	--banner-c: #7c3aed;
+}
+[data-theme="light"] .ph-banner.default { background: linear-gradient(120deg, var(--brand), var(--brand-strong)); }
+/* Waves 54 — theme Sáng KHÔNG còn viền/quầng riêng cho bảng tên.
+   Bản 52 phải "giữ viền ở chế độ Sáng" vì lúc đó viền CSS LÀ khung pill. Nay
+   khung pill do artwork vẽ, viền CSS đã bỏ hẳn (xem `.ph-nameplate`) ⇒ không
+   còn gì để override. Chỉ giữ `background: none` cho chắc. */
+[data-theme="light"] .ph-nameplate {
+	background: none;
+}
+/* Waves 54 — BRO CHỐT: *"KO CÓ AURA HOÀN QUANG CỦA CẢ THEMES ĐEN LẪN TRẮNG"*.
+   Bản 51 đắp `drop-shadow(0 0 2px rgba(255,255,255,.95))` cho tên ở theme Sáng
+   ⇒ đúng cái "AURA TRẮNG RẤT XẤU" bro chỉ. BỎ. */
+[data-theme="light"] .ph-display { color: var(--np-fg, var(--theme-fg, #10131c)); }
+/* Waves 55 — BRO #83: *"khi tao đổi account bot mặc định và chuyển sang chế độ
+   trắng có rất nhiều font vẫn đang ở trong chế độ trắng để rồi chìm màu"*.
+
+   ĐO ĐƯỢC (tài khoản KHÔNG Nitro + KHÔNG bảng tên, theme Sáng):
+     `#phDisplay` = rgb(255,255,255)  → trắng trên nền sáng = CHÌM.
+     `#phClanTag` = rgb(255,255,255)  → chìm.
+
+   NGUYÊN NHÂN GỐC: `applyNameplate` gán `--np-fg: #ffffff` lên **holder**
+   (`.ph-nameplate` / `.up-nameplate`) khi user có artwork bảng tên. Custom
+   property KẾ THỪA xuống con ⇒ `.ph-display` luôn nhận `#ffffff`. Nhưng
+   `--np-fg` chỉ ĐÚNG khi chữ nằm TRÊN ARTWORK TỐI; không có plate (hoặc plate
+   chưa vẽ) thì trắng trôi ra nền sáng ⇒ chìm.
+
+   ⇒ `--np-fg` CHỈ phát huy khi holder THỰC SỰ có plate hiển thị (`.has-plate`,
+   do chính JS gán). Không có ⇒ rơi về `--theme-fg` (chữ tính từ Nitro) rồi
+   `--fg` của theme ⇒ hết trắng trôi ở MỌI tài khoản. */
+[data-theme="light"] .ph-display,
+[data-theme="light"] .dp-clan-tag,
+[data-theme="light"] .up-tag,
+[data-theme="light"] .ph-tag {
+	color: var(--theme-fg, var(--fg, #10131c));
+}
+[data-theme="light"] .ph-nameplate.has-plate .ph-display,
+[data-theme="light"] .up-nameplate.has-plate .dp-display,
+[data-theme="light"] .up-nameplate.has-plate .up-name {
+	color: var(--np-fg, #ffffff);
+}
+/* Waves 53 — ở chế độ Sáng vẫn phải ưu tiên màu chữ TÍNH TỪ MÀU NITRO
+   (`--theme-fg*`) khi user có theme_colors; không có thì mới dùng token theme. */
+[data-theme="light"] .ph-username { color: var(--theme-fg, var(--fg-muted)); }
+[data-theme="light"] .ph-userid,
+[data-theme="light"] .ph-userid span { color: var(--theme-fg-soft, var(--fg-subtle)); }
+[data-theme="light"] .ph-sub { color: var(--fg-subtle); }
+/* Waves 54 — tag clan ở theme Sáng: KHÔNG ép `--fg` (đen) nữa, vì tag nằm trên
+   artwork bảng tên tối / Nitro tối ⇒ đen trên tối = chìm (đúng lỗi "WUWA chìm
+   màu"). Theo nền thật như `.dp-clan-tag`. */
+[data-theme="light"] .ph-np-clan { background: none; }
+/* Ghi đè bởi khối Waves 55 ở trên (đã gộp `.dp-clan-tag` vào nhóm màu động).
+   Giữ rule này để bảo đảm KHÔNG nền cho tag; màu do khối Waves 55 quyết định. */
+[data-theme="light"] .dp-clan-tag {
+	background: none;
+}
+[data-theme="light"] .user-badge { filter: none; }
+
+/* Waves 42: nav-item ở chế độ Sáng — chữ PHẢI đổi màu (trước giữ màu tối của
+   theme tối nên gần như vô hình trên nền trắng: "Auto Quest" 1.09:1). */
+[data-theme="light"] .nav-text { color: var(--fg); }
+[data-theme="light"] .nav-item { color: var(--fg-muted); }
+[data-theme="light"] .nav-item:hover .nav-text,
+[data-theme="light"] .nav-item.active .nav-text { color: var(--fg); }
+
+/* Waves 42: nhật ký — tiêu đề + số đếm + tab đếm + chip đổi theo theme. */
+[data-theme="light"] .log-title { color: var(--fg); }
+[data-theme="light"] .log-count { color: var(--fg-subtle); }
+[data-theme="light"] .tab-count { background: var(--tint-08); color: var(--fg-muted); }
+[data-theme="light"] .tab-btn.active .tab-count { background: rgba(109, 63, 240, 0.16); color: var(--brand-strong); }
+[data-theme="light"] .chip { background: var(--tint-06); color: var(--fg-muted); }
+[data-theme="light"] .select-tools,
+[data-theme="light"] .select-all-wrap { color: var(--fg-muted); }
+[data-theme="light"] .selected-info { color: var(--fg-muted); }
+[data-theme="light"] .selected-info strong { color: var(--fg); }
+[data-theme="light"] .qstate-text { color: var(--fg-muted); }
+
+/* Waves 42: nút Primary (Auto ORBs) — nền tím đậm, chữ trắng: cần 4.5:1.
+   Đo được 4.23:1 ở cả 2 theme → làm đậm nền một chút cho đủ chuẩn. */
+.btn-primary { background: var(--brand-strong); }
+.btn-primary:hover:not(:disabled) { background: var(--brand); }
+[data-theme="light"] .btn-primary { background: #5a2fd6; color: #ffffff; }
+[data-theme="light"] .btn-primary:hover:not(:disabled) { background: #4c26b8; }
+
+/* Waves 42: tab Đã làm — thẻ vuông nền sáng khi ở chế độ Sáng, không còn mảng đen */
+[data-theme="light"] .qdone {
+	background: linear-gradient(180deg, #f4f7fc 0%, #e6ecf6 100%);
+	border-color: var(--line);
+}
+[data-theme="light"] .qdone-name { color: var(--fg-muted); }
+/* Waves 44: badge Orb + chữ hiện trong ô ở chế độ Sáng — nền sáng, chữ đen, không chìm. */
+[data-theme="light"] .qdone-orbs {
+	background: rgba(237, 233, 254, 0.95);
+	border-color: rgba(90, 47, 214, 0.4);
+}
+[data-theme="light"] .qdone-orb-num { color: #4c1d95; }
+/* Waves 46c — tooltip mới (quầng orb + logotype + "Nhiệm Vụ …") ở chế độ Sáng.
+   Nền ô sáng nên chữ phải đậm; quầng orb giảm mạnh để không thành mảng bẩn. */
+[data-theme="light"] .qdone-info-glow { opacity: 0.22; filter: blur(9px) saturate(1.1); }
+[data-theme="light"] .qdone-info-title { color: #131722; }
+[data-theme="light"] .qdone-info-game { color: #131722; }
+[data-theme="light"] .qdone-info-reward { color: #414b5e; }
+[data-theme="light"] .qdone-info-when { color: #4a5468; }
+
+/* Waves 46c — LOGOTYPE TRÊN NỀN SÁNG.
+   Asset `logotype` của Discord là WORDMARK TRẮNG (bản dùng cho nền tối). Trên
+   nền Sáng, chữ trắng biến mất hoàn toàn — ảnh chụp thật cho thấy 8/18 ô trắng
+   trơn, không nhìn thấy logo game nào.
+   KHÔNG thể "đảo màu" bằng CSS: logotype còn có bản nhiều màu, invert sẽ phá
+   màu thương hiệu. Cũng KHÔNG dùng tấm nền đặc: nó thành một thanh đen chắn
+   ngang ô, nặng hơn hẳn thiết kế Discord.
+   Cách gọn nhất: VIỀN TỐI quanh nét chữ (drop-shadow nhiều lớp). Nền vẫn sáng,
+   không thêm khối trang trí nào, màu logo giữ nguyên, chữ trắng vẫn đọc được. */
+[data-theme="light"] .qdone-logo,
+[data-theme="light"] .qdone-info-logo {
+	filter: drop-shadow(0 0 1px rgba(8, 11, 18, 0.95)) drop-shadow(0 0 1px rgba(8, 11, 18, 0.95))
+		drop-shadow(0 1px 2px rgba(8, 11, 18, 0.7));
+}
+[data-theme="light"] .qcard-banner { background: linear-gradient(135deg, #dfe4ee 0%, #cdd5e4 100%); }
+[data-theme="light"] .qcard-state { color: var(--fg); background: rgba(255, 255, 255, 0.82); border-color: var(--line-strong); }
+[data-theme="light"] .qcard-kicker { color: var(--brand-strong); }
+
+/* Waves 42 — trạng thái DỪNG phải ĐỎ ở CẢ HAI chế độ. Khối light-theme phía
+   trên ghi đè border-color thẻ, nên phải khai báo lại với độ ưu tiên cao hơn
+   (theme + attribute) để viền đỏ không bị "chìm" thành xám. */
+[data-theme="light"] .qcard[data-status="stop"] {
+	border-color: rgba(220, 38, 38, 0.75);
+	box-shadow: 0 0 16px -8px rgba(220, 38, 38, 0.7);
+}
+[data-theme="light"] .qcard[data-status="stop"] .qcard-state {
+	color: #b3141f;
+	background: rgba(255, 241, 242, 0.94);
+	border-color: rgba(220, 38, 38, 0.55);
+}
+
+/* --- Trạng thái / bước / phân vùng --- */
+[data-theme="light"] .step-item code { background: var(--tint-08); color: var(--brand-strong); }
+[data-theme="light"] .qstate { color: var(--fg-subtle); }
+[data-theme="light"] .section-title,
+[data-theme="light"] .setting-label { color: var(--fg); }
+[data-theme="light"] .hint { color: var(--fg-subtle); }
+[data-theme="light"] .qring .qring-bg { stroke: var(--tint-14); }
+
+/* Waves 41: GUIDE BOX + nút copy ở chế độ Sáng — trước hardcode rgba tím mờ
+   nên chữ bị "chìm". Nay token hoá, chữ đậm đủ tương phản trên nền sáng. */
+[data-theme="light"] .guide-box {
+	background: color-mix(in oklab, var(--brand) 7%, #ffffff);
+	border-color: color-mix(in oklab, var(--brand) 26%, var(--line-strong));
+}
+[data-theme="light"] .guide-header { color: var(--brand-strong); }
+[data-theme="light"] .guide-steps { color: var(--fg-muted); }
+[data-theme="light"] .step-num {
+	background: color-mix(in oklab, var(--brand) 16%, #ffffff);
+	color: var(--brand-strong);
+}
+[data-theme="light"] .btn-copy-script {
+	background: color-mix(in oklab, var(--brand) 11%, #ffffff);
+	border-color: color-mix(in oklab, var(--brand) 38%, var(--line-strong));
+	color: var(--brand-strong);
+}
+[data-theme="light"] .btn-copy-script:hover { background: color-mix(in oklab, var(--brand) 18%, #ffffff); }
+
+/* --- Nút chọn chế độ Sáng/Tối --- */
+[data-theme="light"] .theme-opt { background: #fff; }
+[data-theme="light"] .theme-opt[aria-checked="true"] {
+	background: color-mix(in oklab, var(--brand) 12%, #fff);
+}
+
+/* --- Scrollbar --- */
+[data-theme="light"] ::-webkit-scrollbar-thumb { background: var(--scroll-thumb); }
+[data-theme="light"] ::-webkit-scrollbar-thumb:hover { background: var(--scroll-thumb-hover); }
+
+/* ---------- Waves 28: nút chọn chế độ Sáng/Tối ---------- */
+.theme-toggle-row {
+	display: flex;
+	gap: 10px;
+	margin-top: 4px;
+}
+.theme-opt {
+	flex: 1;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	padding: 12px 14px;
+	border-radius: 0.75rem;
+	border: 1px solid var(--line-strong);
+	background: var(--well);
+	color: var(--fg-muted);
+	font-family: var(--font-sans);
+	font-size: 0.82rem;
+	font-weight: 600;
+	cursor: pointer;
+	transition: border-color 0.18s ease, background 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
+}
+.theme-opt svg { width: 17px; height: 17px; }
+.theme-opt:hover { border-color: color-mix(in oklab, var(--brand) 45%, var(--line-strong)); color: var(--fg); }
+.theme-opt[aria-checked="true"] {
+	color: var(--fg);
+	border-color: color-mix(in oklab, var(--brand) 70%, var(--line-strong));
+	background: color-mix(in oklab, var(--brand) 14%, var(--well));
+	box-shadow: 0 0 0 1px color-mix(in oklab, var(--brand) 35%, transparent);
+}
+
+/* ============================================================
+   Waves 31 — NÚT TRẠNG THÁI NHIỆM VỤ + MODAL XÁC MINH hCAPTCHA
+   Không gian làm việc: card quest chừa sẵn 1 hàng nút dưới cùng.
+   ============================================================ */
+
+/* --- Hàng nút trạng thái dưới thân thẻ (Chưa làm / Nhận / Đã nhận) --- */
+.qcard-foot {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 0 9px 9px;
+	flex: 0 0 auto;
+}
+.qcard-act {
+	flex: 1 1 auto;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 6px;
+	height: 26px;
+	padding: 0 12px;
+	border-radius: 8px;
+	border: 1px solid var(--line-strong);
+	background: var(--tint-04);
+	color: var(--fg-subtle);
+	font-size: 0.72rem;
+	font-weight: 700;
+	letter-spacing: 0.01em;
+	cursor: default;
+	transition: background 0.16s ease, border-color 0.16s ease, color 0.16s ease, transform 0.12s ease, box-shadow 0.18s ease;
+	white-space: nowrap;
+}
+.qcard-act svg { width: 13px; height: 13px; flex: 0 0 auto; }
+
+/* Trạng thái: CHƯA LÀM — khoá, không bấm được */
+.qcard-act[data-act="todo"] {
+	opacity: 0.55;
+	border-style: dashed;
+	cursor: not-allowed;
+	border-color: var(--line);
+	color: var(--fg-subtle);
+}
+
+/* Trạng thái: CHỜ NHẬN — nút thật, bấm để nhận */
+.qcard-act[data-act="claim"],
+.qcard-act[data-act="retry"] {
+	cursor: pointer;
+	border-color: color-mix(in oklab, var(--brand) 68%, var(--line-strong));
+	background: color-mix(in oklab, var(--brand) 20%, transparent);
+	color: var(--fg);
+	box-shadow: 0 0 0 1px color-mix(in oklab, var(--brand) 30%, transparent), 0 6px 18px -10px var(--brand);
+}
+.qcard-act[data-act="claim"]:hover,
+.qcard-act[data-act="retry"]:hover {
+	background: color-mix(in oklab, var(--brand) 34%, transparent);
+	border-color: var(--brand-bright);
+	transform: translateY(-1px);
+}
+.qcard-act[data-act="claim"]:active,
+.qcard-act[data-act="retry"]:active { transform: translateY(0); }
+
+/* Trạng thái: ĐANG XÁC MINH / ĐANG NHẬN — chờ */
+.qcard-act[data-act="busy"] {
+	opacity: 0.85;
+	cursor: progress;
+	border-color: color-mix(in oklab, var(--cyan) 55%, var(--line-strong));
+	color: var(--cyan);
+}
+.qcard-act[data-act="busy"] svg { animation: actSpin 0.9s linear infinite; }
+@keyframes actSpin { to { transform: rotate(360deg); } }
+
+/* Trạng thái: ĐÃ NHẬN — tick xanh */
+.qcard-act[data-act="claimed"] {
+	cursor: default;
+	border-color: color-mix(in oklab, var(--emerald) 52%, var(--line-strong));
+	background: color-mix(in oklab, var(--emerald) 16%, transparent);
+	color: var(--emerald);
+}
+
+/* Trạng thái: LỖI — nút thử lại */
+.qcard-act[data-act="error"] {
+	cursor: pointer;
+	border-color: color-mix(in oklab, var(--danger) 55%, var(--line-strong));
+	background: color-mix(in oklab, var(--danger) 14%, transparent);
+	color: var(--danger-soft);
+}
+.qcard-act[data-act="error"]:hover { background: color-mix(in oklab, var(--danger) 24%, transparent); }
+
+/* Nút phụ (bỏ qua) bên phải nút chính */
+.qcard-act-2 {
+	flex: 0 0 auto;
+	width: 26px;
+	height: 26px;
+	padding: 0;
+	border-radius: 8px;
+	border: 1px solid var(--line);
+	background: transparent;
+	color: var(--fg-subtle);
+	cursor: pointer;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	transition: background 0.15s ease, color 0.15s ease;
+}
+.qcard-act-2:hover { background: var(--tint-06); color: var(--fg); }
+.qcard-act-2 svg { width: 13px; height: 13px; }
+
+/* Thẻ có nút → cao hơn chút cho thoáng */
+.qcard.has-foot { height: 158px; }
+
+/* --- Modal hCaptcha --- */
+.capture-veil { z-index: 260; }
+.capture-card {
+	width: min(440px, 100%);
+	text-align: left;
+	align-items: stretch;
+	gap: 14px;
+	padding: 22px 22px 18px;
+	/* Waves 36: hCaptcha có thể mở bảng thử thách CAO HƠN khung → cho modal
+	   phình theo, đồng thời giới hạn chiều cao + cuộn để không tràn màn hình. */
+	max-height: min(88vh, 760px);
+	overflow-y: auto;
+	overflow-x: hidden;
+}
+.captcha-head {
+	display: flex;
+	align-items: flex-start;
+	gap: 12px;
+}
+.captcha-shield {
+	width: 42px;
+	height: 42px;
+	flex: 0 0 auto;
+	border-radius: 12px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: color-mix(in oklab, var(--brand) 16%, transparent);
+	border: 1px solid color-mix(in oklab, var(--brand) 38%, transparent);
+	color: var(--brand-bright);
+}
+.captcha-head-text { min-width: 0; }
+.captcha-head-text .modal-title { font-size: 1rem; }
+.captcha-head-text .modal-desc { margin-top: 3px; }
+
+.captcha-target {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 9px 12px;
+	border: 1px solid var(--line);
+	border-radius: var(--radius-field);
+	background: var(--well);
+}
+.captcha-target-art { display: inline-flex; width: 22px; height: 22px; }
+.captcha-target-art .orb-glyph { width: 22px; height: 22px; }
+.captcha-target-name {
+	font-size: 0.82rem;
+	font-weight: 600;
+	color: var(--fg);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.captcha-slot {
+	position: relative;
+	min-height: 78px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 10px;
+	border-radius: var(--radius-field);
+	border: 1px solid var(--line);
+	background: rgba(255, 255, 255, 0.97);
+	/* Waves 36: KHÔNG được `overflow: hidden` ở đây.
+	   hCaptcha mở BẢNG THỬ THÁCH (chọn ảnh) NGAY NGOÀI ô checkbox 76px — bảng đó
+	   nở ra trên/dưới ô. Nếu khung bị cắt, bro chỉ thấy ô tick mà KHÔNG bao giờ
+	   thấy bảng xác minh (đúng triệu chứng "không sổ ra hình thức xác minh nào").
+	   Để `visible` cho bảng hiện ra; widget tự canh vị trí. */
+	overflow: visible;
+	/* Chừa chỗ để bảng challenge không bị đè lên nút bên dưới. */
+	margin-bottom: 4px;
+}
+/* hCaptcha tự chèn iframe; cho phép iframe vượt khung khi mở bảng thử thách. */
+.captcha-slot #hcaptchaWidget { display: flex; justify-content: center; width: 100%; }
+.captcha-slot iframe { max-width: 100%; border-radius: 6px; }
+/* Khung modal captcha phải cho nội dung tràn ra khi hCaptcha mở bảng chọn ảnh. */
+.capture-card .modal-actions { position: relative; z-index: 3; }
+.captcha-loading {
+	position: absolute;
+	inset: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 9px;
+	/* Waves 46e: TRƯỚC ĐÂY hardcode nền TRẮNG + chữ #5b6272. Ở chế độ Tối nền
+	   trắng không được vẽ (bị bề mặt tối của thẻ đè) nên còn lại chữ xám #5b6272
+	   trên nền #363840 = 1.92:1 — bro thấy "chìm màu" đúng chỗ này. Dùng token
+	   để cả 2 theme đều ≥ 4.5:1. */
+	color: var(--fg-muted);
+	font-size: 0.8rem;
+	font-weight: 600;
+	background: var(--ink-850);
+}
+.captcha-loading[hidden] { display: none; }
+.captcha-spinner {
+	width: 16px;
+	height: 16px;
+	border-radius: 50%;
+	border: 2px solid var(--line-strong);
+	border-top-color: var(--brand);
+	animation: actSpin 0.8s linear infinite;
+}
+
+.captcha-hint {
+	font-size: 0.74rem;
+	line-height: 1.5;
+	color: var(--fg-subtle);
+	margin-top: -4px;
+}
+.captcha-err {
+	font-size: 0.76rem;
+	line-height: 1.5;
+	color: var(--danger-soft);
+	background: color-mix(in oklab, var(--danger) 12%, transparent);
+	border: 1px solid color-mix(in oklab, var(--danger) 32%, transparent);
+	border-radius: 0.6rem;
+	padding: 8px 10px;
+	margin-top: -4px;
+}
+.captcha-err[hidden] { display: none; }
+
+.capture-card .modal-actions {
+	display: flex;
+	gap: 10px;
+	justify-content: flex-end;
+	margin-top: 2px;
+}
+.btn-orb {
+	background: color-mix(in oklab, var(--brand) 30%, transparent);
+	border-color: color-mix(in oklab, var(--brand) 62%, var(--line-strong));
+	color: var(--fg);
+}
+.btn-orb:hover:not(:disabled) {
+	background: color-mix(in oklab, var(--brand) 46%, transparent);
+	border-color: var(--brand-bright);
+}
+
+/* Theme Sáng: khung captcha vẫn phải nền sáng (hCaptcha render nền trắng) */
+[data-theme="light"] .captcha-slot { background: #ffffff; border-color: rgba(0, 0, 0, 0.12); }
+/* (Waves 46e) `.captcha-loading` đã dùng token nên không cần ghi đè riêng nữa. */
+
+/* Waves 32: dòng phụ trong thẻ nhiệm vụ đang xác minh */
+.captcha-target-meta { display: flex; flex-direction: column; min-width: 0; gap: 1px; }
+.captcha-target-sub {
+	font-size: 0.72rem;
+	color: var(--fg-subtle);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.captcha-target-sub[hidden] { display: none; }
+
+/* ============================================================
+   Waves#87/#88/#89/#90 — REDESIGN Zoz (Khung xanh, Multiaccount,
+   Cài đặt chỉ-có-display, guest "Đăng nhập Discord", logout đỏ).
+   Appended as one block; dùng các token theme có sẵn.
+   ============================================================ */
+
+/* ---------- Popout: nút "Đổi tài khoản" + "Đăng xuất" (giữa popout) ---------- */
+.up-pop-switch,
+.up-pop-logout {
+	width: 100%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	padding: 9px 12px;
+	margin-top: 10px;
+	border: 1px solid var(--line-strong);
+	border-radius: 0.6rem;
+	/* Wave#96 (bro lệnh): nút phải có NỀN ĐẶC, không được "chìm màu" ở cả 2
+	   theme. Bro: "làm nó giống nút Đổi tài khoản, nền trắng khi theme sáng,
+	   nền đen khi theme tối".
+	   Dùng --ink-600 (Tối #1d2334 RÕ hơn nền popout #0b0e18 · Sáng #e2e8f2
+	   ĐẬM hơn nền popout #f6f8fc) ⇒ nút NỔI khỏi popout ở CẢ 2 theme.
+	   KHÔNG dùng --ink-800 vì = #10141f ≈ nền popout #0b0e18 ⇒ vô hình ở Tối. */
+	background: var(--ink-600);
+	color: var(--fg);
+	font-size: 0.82rem;
+	font-weight: 600;
+	font-family: inherit;
+	cursor: pointer;
+	transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+.up-pop-switch:hover { background: var(--tint-10); border-color: var(--brand); }
+/* Wave#96 (bro lệnh): nút "Đăng xuất" trong popout cùng NỀN ĐẶC như nút
+   "Đổi tài khoản" ⇒ không còn chìm vào nền popout ở cả 2 theme. */
+.up-pop-logout {
+	color: var(--danger);
+	background: var(--ink-600);
+	border: 1px solid rgba(15, 23, 42, 0.16);
+}
+[data-theme="dark"] .up-pop-logout,
+:root:not([data-theme="light"]) .up-pop-logout {
+	background: var(--ink-600);
+	border-color: var(--line-strong);
+}
+.up-pop-logout:hover { background: var(--danger); color: #fff; border-color: var(--danger); }
+.up-pop-logout-ico { flex-shrink: 0; }
+
+/* ---------- GUEST: avatar Discord (xanh) thay cho ORB khi chưa đăng nhập ---------- */
+.profile-hero.is-discord-guest .ph-avatar { background: #5865f2; }
+.profile-hero.is-discord-guest .ph-avatar::before {
+	content: "";
+	position: absolute;
+	inset: 0;
+	background:
+		radial-gradient(120% 120% at 30% 20%, rgba(255,255,255,0.30), transparent 55%),
+		#5865f2;
+	border-radius: 50%;
+}
+/* Chữ "Đăng nhập tài khoản Discord" dưới avatar (nút bấm thật, không phải ORB) */
+.ph-login-hint {
+	margin-top: 10px;
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	padding: 8px 14px;
+	border-radius: 999px;
+	background: #5865f2;
+	color: #fff;
+	font-size: 0.82rem;
+	font-weight: 700;
+	letter-spacing: 0.01em;
+	box-shadow: 0 8px 24px -10px rgba(88,101,242,0.7);
+}
+.ph-login-hint svg { width: 20px; height: 20px; }
+.ph-login-hint .mono { font-weight: 600; }
+
+/* ---------- Wave#88: MODAL "ĐỔI TÀI KHOẢN" (bo tròn lớn, 2 mục) ---------- */
+.acc-switch-card {
+	width: min(520px, 100%);
+	max-height: min(78vh, 680px);
+	overflow-y: auto;
+	border-radius: 1.6rem;
+	text-align: left;
+	padding: 24px 22px 20px;
+	gap: 14px;
+}
+.acc-switch-card .modal-title { text-align: center; font-size: 1.15rem; }
+.acc-switch-card .modal-actions { justify-content: flex-end; }
+.accsw-section {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	padding: 14px;
+	border: 1px solid var(--line);
+	border-radius: 1rem;
+	background: var(--tint-04);
+}
+.accsw-h4 {
+	margin: 0;
+	font-size: 0.8rem;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.08em;
+	color: var(--fg-muted);
+}
+.accsw-sub { margin: 0; font-size: 0.74rem; color: var(--fg-subtle); }
+.accsw-input { width: 100%; }
+.accsw-input input { flex: 1; min-width: 0; }
+.accsw-list {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	/* Wave#96 (bro lệnh): BỎ khung lướt (scrollbar) dưới danh sách tài khoản.
+	   Bro: "nó lại có một khung lướt ở dưới khá khó chịu" ⇒ danh sách nở tự
+	   nhiên theo nội dung, KHÔNG kẹp chiều cao, KHÔNG overflow. */
+	max-height: none;
+	overflow: visible;
+}
+.accsw-item {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	width: 100%;
+	padding: 10px 12px;
+	border: 1px solid var(--line);
+	border-radius: 0.8rem;
+	background: var(--ink-800);
+	color: var(--fg);
+	font-family: inherit;
+	text-align: left;
+	cursor: pointer;
+	/* Wave#96 (bro lệnh): BỎ `transform:translateX(2px)` khi hover — bro:
+	   "di chuột tới nó ko nảy nhẹ mà nảy chéo sang khiến viền bên phải bị
+	   cắt". Hover giờ chỉ đổi MÀU VIỀN + NỀN (không dịch chuyển hình học). */
+	transition: border-color 0.15s ease, background 0.15s ease;
+}
+.accsw-item:hover { border-color: var(--brand); background: color-mix(in oklab, var(--brand) 10%, var(--ink-800)); }
+.accsw-item.is-active {
+	border-color: color-mix(in oklab, var(--emerald) 60%, var(--line-strong));
+	background: color-mix(in oklab, var(--emerald) 10%, var(--ink-800));
+}
+.accsw-av {
+	position: relative;
+	width: 40px;
+	height: 40px;
+	flex-shrink: 0;
+	border-radius: 50%;
+	overflow: hidden;
+	background: #5865f2;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: #fff;
+}
+.accsw-av img { width: 100%; height: 100%; object-fit: cover; }
+.accsw-meta { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.accsw-name {
+	font-size: 0.9rem;
+	font-weight: 700;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+.accsw-user { font-size: 0.74rem; color: var(--fg-subtle); font-family: var(--font-mono, mono); }
+.accsw-badge {
+	font-size: 0.64rem;
+	font-weight: 700;
+	padding: 2px 8px;
+	border-radius: 999px;
+	background: color-mix(in oklab, var(--emerald) 18%, transparent);
+	color: var(--emerald);
+	white-space: nowrap;
+}
+.accsw-remove {
+	width: 30px;
+	height: 30px;
+	flex-shrink: 0;
+	border: none;
+	border-radius: 8px;
+	background: transparent;
+	color: var(--fg-subtle);
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+.accsw-remove:hover { background: color-mix(in oklab, var(--danger) 18%, transparent); color: var(--danger); }
+.accsw-empty { text-align: center; color: var(--fg-subtle); font-size: 0.8rem; padding: 10px 0; }
+.accsw-empty[hidden] { display: none; }
+
+/* ---------- Wave#89: CÀI ĐẶT "Thông tin tài khoản" (chỉ display) ---------- */
+.acc-cfg { display: flex; flex-direction: column; gap: 14px; }
+.acc-cfg-top {
+	display: flex;
+	align-items: center;
+	gap: 14px;
+}
+.acc-cfg-avwrap {
+	position: relative;
+	width: 56px;
+	height: 56px;
+	flex-shrink: 0;
+}
+.acc-cfg-avwrap[hidden] { display: none; }
+.acc-cfg-avatar {
+	position: relative;
+	width: 56px;
+	height: 56px;
+	border-radius: 50%;
+	overflow: hidden;
+	background: #5865f2;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: #fff;
+	box-shadow: 0 0 0 3px var(--ink-850), 0 0 0 4px var(--line-strong);
+}
+.acc-cfg-avatar img { width: 100%; height: 100%; object-fit: cover; }
+/* "cái bọc quanh avt" = vòng gradient conic (nameplate ring) */
+.acc-cfg-ring {
+	position: absolute;
+	inset: -6px;
+	border-radius: 50%;
+	background: conic-gradient(from 0deg, var(--brand), var(--cyan), var(--emerald), var(--brand));
+	z-index: 0;
+	opacity: 0.9;
+}
+.acc-cfg-avwrap.has-ring .acc-cfg-avatar { z-index: 1; }
+.acc-cfg-avwrap-placeholder {
+	align-items: center;
+	justify-content: center;
+	color: var(--fg-subtle);
+}
+.acc-cfg-avwrap-placeholder .acc-cfg-ring { opacity: 0.3; }
+.acc-cfg-meta {
+	flex: 1;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+}
+.acc-cfg-user { font-size: 0.9rem; font-weight: 700; color: var(--fg); }
+.acc-cfg-name {
+	font-size: 0.82rem;
+	color: var(--fg-muted);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+.acc-cfg-uid { font-size: 0.74rem; color: var(--fg-subtle); }
+.acc-cfg-uid[hidden] { display: none; }
+/* Token drawer (dùng class guide-header/guide-body có sẵn + trợ lý) */
+.acc-cfg-tokenbox { width: 100%; }
+.acc-cfg-tokenbox .guide-header {
+	width: 100%;
+	display: flex;
+	align-items: center;
+	gap: 10px;
+}
+.acc-cfg-token-hint {
+	margin-left: auto;
+	max-width: 40%;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	color: var(--fg-subtle);
+	font-size: 0.72rem;
+}
+.acc-cfg-tokenrow {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 10px 12px;
+	border: 1px solid var(--line);
+	border-radius: 0.7rem;
+	background: var(--well);
+}
+.acc-cfg-tokentext {
+	flex: 1;
+	min-width: 0;
+	font-family: var(--font-mono, monospace);
+	font-size: 0.74rem;
+	word-break: break-all;
+	color: var(--fg);
+	background: transparent;
+	border: none;
+	padding: 0;
+}
+.acc-cfg-tokentext.is-masked { letter-spacing: 0.1em; color: var(--fg-subtle); }
+.acc-cfg-legacy { display: none; }
+
+/* ---------- Wave#89: CÀI ĐẶT — dropdown token box dùng chung ---------- */
+.acc-cfg .guide-body { padding: 12px; }
+.acc-cfg .guide-body[hidden] { display: none; }
+
+/* ---------- Wave#90: logout icon ĐỎ trong avatar-ring / chip ---------- */
+/* icon ĐỎ luôn, kể cả ở hàng user panel (đã set .up-logout-red config trên) */
+.up-logout-red svg,
+.up-pop-logout svg { color: var(--danger); }
+
+	/* ---------- Theme Sáng (Wave#87/#88/#89/#90) ---------- */
+[data-theme="light"] .acc-switch-card { background: #f7f8fb; }
+[data-theme="light"] .accsw-section { background: #ffffff; border-color: rgba(15,23,42,0.12); }
+[data-theme="light"] .accsw-item { background: #ffffff; border-color: rgba(15,23,42,0.14); }
+[data-theme="light"] .accsw-item:hover { border-color: var(--brand); background: color-mix(in oklab, var(--brand) 8%, #ffffff); }
+[data-theme="light"] .acc-cfg-ring { opacity: 0.55; }
+[data-theme="light"] .acc-cfg-tokenrow { background: #ffffff; border-color: rgba(15,23,42,0.14); }
+[data-theme="light"] .up-pop-switch { background: var(--ink-600); border-color: rgba(15,23,42,0.2); }
+[data-theme="light"] .ph-login-hint { background: #5865f2; }
+
+/* ==========================================================================
+   Wave#96 (bro lệnh) — MÀN "ĐANG ĐĂNG NHẬP" (login veil) khi CHUYỂN ACCOUNT.
+   Bro chốt: "NGAY LẬP TỨC client CHỈ CÒN MỖI CHỮ ĐANG ĐĂNG NHẬP Ở CHÍNH GIỮA
+   VÀ THANH XOAY LOADING XOAY TỪ TỪ PHÍA DƯỚI, CẤM THÊM SỰ VẬT NÀO ĐẰNG SAU,
+   CHỈ 2 SỰ VẬT ĐẤY THÔI."
+   ⇒ Veil phủ ĐẶC (opaque ~98%) + blur ⇒ che SẠCH phiên cũ (nhiệm vụ đã/chưa
+     nhận của account trước KHÔNG còn lộ ra đè lên account mới).
+   ⇒ Bên trong CHỈ có .login-veil-text (chữ) + .login-veil-spin (vòng xoay).
+   ⇒ `display:grid` căn giữa tuyệt đối, KHÔNG phụ thuộc layout app.
+   LƯU Ý HIỆU NĂNG: chỉ `transform`/`opacity` được animate (không layout/reflow)
+   ⇒ đạt 60fps cả trên máy YẾU; máy MẠNH vẫn mượt vì có `will-change` + GPU.
+   Tôn trọng `prefers-reduced-motion` cho máy yếu / người dùng giảm chuyển động.
+   ========================================================================== */
+.login-veil {
+	position: fixed;
+	inset: 0;
+	z-index: 9000;
+	display: grid;
+	place-items: center;
+	/* ĐỤC gần tuyệt đối: nền theme + alpha 0.98 để hở HE hé không đáng kể.
+	   Không dùng màu cứng để tự khớp cả theme Sáng lẫn Tối. */
+	background: color-mix(in srgb, var(--ink-950) 98%, transparent);
+	-webkit-backdrop-filter: blur(10px) saturate(0.7);
+	backdrop-filter: blur(10px) saturate(0.7);
+	/* Chặn MỌI tương tác/click xuyên qua veil khi đang đăng nhập. */
+	pointer-events: all;
+	cursor: default;
+	user-select: none;
+	animation: loginVeilIn 0.22s ease-out both;
+}
+.login-veil[hidden] { display: none !important; }
+.login-veil-inner {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 18px;
+	/* KHÔNG khung, KHÔNG tấm nền, KHÔNG viền — đúng luật "nội dung thả trên nền". */
+}
+.login-veil-text {
+	font-family: var(--font-sans);
+	font-size: 1.05rem;
+	font-weight: 600;
+	letter-spacing: 0.02em;
+	color: var(--fg);
+	text-align: center;
+	animation: loginTextPulse 1.9s ease-in-out infinite;
+}
+[data-theme="light"] .login-veil-text { color: #0f172a; }
+
+/* Vòng xoay: 8 điểm xếp TIA (radial) xoay TỪ TỪ — nhẹ CPU, chỉ `rotate`. */
+.login-veil-spin {
+	position: relative;
+	width: 34px;
+	height: 34px;
+	animation: loginSpin 1.15s linear infinite;
+	/* Đẩy lên GPU layer một lần để máy yếu khỏi re-raster mỗi frame. */
+	will-change: transform;
+}
+.login-veil-spin .login-veil-dot {
+	position: absolute;
+	top: 0;
+	left: 50%;
+	width: 5px;
+	height: 5px;
+	margin-left: -2.5px;
+	border-radius: 50%;
+	background: var(--fg);
+	transform-origin: 50% 17px; /* bán kính 17px ⇒ 8 điểm tạo thành vòng */
+	animation: loginDotFade 1.15s linear infinite;
+}
+[data-theme="light"] .login-veil-spin .login-veil-dot { background: #0f172a; }
+.login-veil-spin .login-veil-dot:nth-child(1) { transform: rotate(0deg)   translateY(0); animation-delay: -1.150s; }
+.login-veil-spin .login-veil-dot:nth-child(2) { transform: rotate(45deg)  translateY(0); animation-delay: -1.006s; }
+.login-veil-spin .login-veil-dot:nth-child(3) { transform: rotate(90deg)  translateY(0); animation-delay: -0.862s; }
+.login-veil-spin .login-veil-dot:nth-child(4) { transform: rotate(135deg) translateY(0); animation-delay: -0.719s; }
+.login-veil-spin .login-veil-dot:nth-child(5) { transform: rotate(180deg) translateY(0); animation-delay: -0.575s; }
+.login-veil-spin .login-veil-dot:nth-child(6) { transform: rotate(225deg) translateY(0); animation-delay: -0.431s; }
+.login-veil-spin .login-veil-dot:nth-child(7) { transform: rotate(270deg) translateY(0); animation-delay: -0.288s; }
+.login-veil-spin .login-veil-dot:nth-child(8) { transform: rotate(315deg) translateY(0); animation-delay: -0.144s; }
+
+@keyframes loginVeilIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes loginSpin { to { transform: rotate(360deg); } }
+@keyframes loginDotFade { 0% { opacity: 1; } 100% { opacity: 0.15; } }
+@keyframes loginTextPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.55; } }
+
+/* Máy yếu / người dùng giảm chuyển động: giữ tĩnh nhưng VẪN có vòng xoay
+   chậm hơn để biết app đang chạy (không tắt hẳn animation xoay). */
+@media (prefers-reduced-motion: reduce) {
+	.login-veil { animation: none; }
+	.login-veil-text { animation: none; }
+	.login-veil-spin { animation-duration: 2.4s; }
+	.login-veil-spin .login-veil-dot { animation-duration: 2.4s; }
 }

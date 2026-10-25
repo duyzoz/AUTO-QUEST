@@ -1,18 +1,22 @@
 {
 	"name": "autoquest-pro",
-	"productName": "AUTO-QUEST",
+	"productName": "Auto Quest",
 	"version": "1.0.0",
-	"description": "Auto Quest Discord Treo Orb - Ung dung desktop 100% Local khong co endpoint ben ngoai",
+	"description": "Auto Quest - Nen tang ALL IN ONE DISCORD by NgDuy. Treo Orb Discord, 100% Local khong co endpoint ben ngoai",
 	"main": "electron/main.js",
-	"author": "AUTO-QUEST",
+	"author": "NgDuy (ZoZ Community)",
 	"license": "MIT",
 	"type": "commonjs",
 	"scripts": {
 		"build:bot": "tsc -p tsconfig.build.json",
-		"dev": "npm run build:bot && electron .",
+		"dev": "npm run build:bot && node tools/dev.js",
 		"start": "electron .",
 		"build:check": "node tools/build.js --check",
-		"build": "node tools/build.js"
+		"build": "node tools/build.js --all",
+		"build:setup": "node tools/build.js --setup",
+		"build:portable": "node tools/build.js --portable",
+		"build:linux": "node tools/build.js --linux",
+		"build:mac": "node tools/build.js --mac"
 	},
 	"devDependencies": {
 		"@types/node": "^24.10.1",
@@ -29,8 +33,8 @@
 	},
 	"build": {
 		"appId": "com.autoquest.pro",
-		"productName": "AUTO-QUEST",
-		"copyright": "AUTO-QUEST — dự án học tập, không liên kết chính thức với Discord Inc.",
+		"productName": "Auto Quest",
+		"copyright": "Auto Quest by NgDuy (ZoZ Community) — dự án học tập, không liên kết chính thức với Discord Inc.",
 		"asar": true,
 		"npmRebuild": false,
 		"compression": "maximum",
@@ -41,12 +45,20 @@
 		},
 		"files": [
 			"electron/**/*",
+			"!electron/renderer/__probe*.html",
+			"!electron/renderer/__*.js",
+			"!electron/renderer/harness-*.js",
+			"!electron/renderer/*.tmp.js",
 			"package.json"
 		],
 		"extraResources": [
 			{
 				"from": "resources/icon.ico",
 				"to": "icon.ico"
+			},
+			{
+				"from": "resources/icon.png",
+				"to": "icon.png"
 			}
 		],
 		"win": {
@@ -56,17 +68,132 @@
 					"arch": [
 						"x64"
 					]
+				},
+				{
+					"target": "nsis",
+					"arch": [
+						"x64"
+					]
 				}
 			],
-			"executableName": "AUTO-QUEST",
+			"executableName": "Auto Quest",
 			"requestedExecutionLevel": "asInvoker",
 			"icon": "resources/icon.ico",
-			"artifactName": "AUTO-QUEST-${version}-portable.${ext}"
+			"artifactName": "Auto Quest ${version} portable.${ext}"
 		},
 		"portable": {
 			"unicode": true,
 			"requestExecutionLevel": "user",
-			"artifactName": "AUTO-QUEST-${version}-portable.${ext}"
+			"artifactName": "Auto Quest ${version} portable.${ext}"
+		},
+		"nsis": {
+			"oneClick": false,
+			"perMachine": false,
+			"allowElevation": true,
+			"allowToChangeInstallationDirectory": true,
+			"createDesktopShortcut": true,
+			"createStartMenuShortcut": true,
+			"shortcutName": "Auto Quest",
+			"menuCategory": false,
+			"runAfterFinish": true,
+			"deleteAppDataOnUninstall": false,
+			"installerIcon": "resources/icon.ico",
+			"uninstallerIcon": "resources/icon.ico",
+			"installerHeaderIcon": "resources/icon.ico",
+			"license": "LICENSE.txt",
+			"artifactName": "Auto Quest Setup ${version}.${ext}",
+			"unicode": true,
+			"differentialPackage": false,
+			"include": "resources/installer.nsh",
+			"warningsAsErrors": false
+		},
+		"linux": {
+			"target": [
+				{
+					"target": "AppImage",
+					"arch": [
+						"x64"
+					]
+				},
+				{
+					"target": "deb",
+					"arch": [
+						"x64"
+					]
+				}
+			],
+			"icon": "resources/icon-512.png",
+			"category": "Utility",
+			"synopsis": "Auto Quest — treo Orb Discord, 100% local",
+			"description": "Auto Quest (ZoZ Development) — công cụ tự động nhận Orb Discord, chạy hoàn toàn cục bộ, không gửi dữ liệu ra endpoint bên ngoài.",
+			"executableName": "auto-quest",
+			"maintainer": "NgDuy (ZoZ Community) <duyzoz@users.noreply.github.com>",
+			"artifactName": "Auto Quest ${version}.${ext}",
+			"desktop": {
+				"entry": {
+					"Name": "Auto Quest",
+					"Comment": "Treo Orb Discord — ZoZ Development",
+					"Categories": "Utility;Network;"
+				}
+			}
+		},
+		"deb": {
+			"depends": [
+				"libgtk-3-0",
+				"libnotify4",
+				"libnss3",
+				"libxss1",
+				"libxtst6",
+				"xdg-utils",
+				"libatspi2.0-0",
+				"libappindicator3-1",
+				"libsecret-1-0"
+			],
+			"artifactName": "Auto Quest ${version}.${ext}"
+		},
+		"mac": {
+			"target": [
+				{
+					"target": "dmg",
+					"arch": [
+						"x64",
+						"arm64"
+					]
+				},
+				{
+					"target": "zip",
+					"arch": [
+						"x64",
+						"arm64"
+					]
+				}
+			],
+			"icon": "resources/icon.icns",
+			"category": "public.app-category.utilities",
+			"darkModeSupport": true,
+			"hardenedRuntime": false,
+			"gatekeeperAssess": false,
+			"identity": null,
+			"artifactName": "Auto Quest ${version} ${arch}.${ext}"
+		},
+		"dmg": {
+			"title": "Auto Quest ${version}",
+			"icon": "resources/icon.icns",
+			"backgroundColor": "#0b0e18",
+			"iconSize": 128,
+			"contents": [
+				{
+					"x": 140,
+					"y": 220,
+					"type": "file"
+				},
+				{
+					"x": 400,
+					"y": 220,
+					"type": "link",
+					"path": "/Applications"
+				}
+			]
 		}
 	}
 }

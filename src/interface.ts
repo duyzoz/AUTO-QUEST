@@ -84,8 +84,10 @@ export interface QuestConfig {
 	messages: QuestMessages;
 	/**
 	 * The task configuration for the quest
+	 * Waves 20: format CŨ (v1) — một số quest chỉ trả field này, không có task_config_v2.
+	 * Thiếu fallback này = bỏ sót quest.
 	 */
-	// task_config: QuestTaskConfig;
+	task_config?: QuestTaskConfig;
 	/**
 	 * Specifies rewards for the quest (e.g. collectibles)
 	 */
@@ -99,7 +101,7 @@ export interface QuestConfig {
 	 */
 	cosponsor_metadata?: QuestCosponsorMetadata;
 	// ?
-	task_config_v2: {
+	task_config_v2?: {
 		tasks: /*{
 			WATCH_VIDEO?: {
 				type: QuestTaskConfigType.WATCH_VIDEO;
@@ -232,6 +234,11 @@ export interface QuestApplication {
 	 * The link to the game's page
 	 */
 	link: string;
+	/**
+	 * Waves 42: hash ảnh icon của application (game). LUÔN có cho mọi quest —
+	 * dùng làm logo dự phòng khi `assets.logotype` là "PLACEHOLDER".
+	 */
+	icon?: string | null;
 }
 
 /**
@@ -262,6 +269,14 @@ export interface QuestAssets {
 	 * The game's logo
 	 */
 	logotype: string;
+	/**
+	 * Waves 23: Discord trả thêm biến thể sáng/tối cho icon + logo game.
+	 * Giá trị là đường dẫn tương đối `quests/<id>/<file>.<ext>` hoặc "PLACEHOLDER".
+	 */
+	game_tile_light?: string;
+	game_tile_dark?: string;
+	logotype_light?: string;
+	logotype_dark?: string;
 }
 
 /**
@@ -299,9 +314,19 @@ export enum QuestTaskConfigType {
 	PLAY_ON_DESKTOP_V2 = 'PLAY_ON_DESKTOP_V2',
 	PLAY_ON_XBOX = 'PLAY_ON_XBOX',
 	PLAY_ON_PLAYSTATION = 'PLAY_ON_PLAYSTATION',
+	PLAY_ON_NINTENDO = 'PLAY_ON_NINTENDO',
+	PLAY_ON_MOBILE = 'PLAY_ON_MOBILE',
+	PLAY_SOCIAL_GAME = 'PLAY_SOCIAL_GAME',
 	WATCH_VIDEO = 'WATCH_VIDEO',
 	WATCH_VIDEO_ON_MOBILE = 'WATCH_VIDEO_ON_MOBILE',
+	WATCH_STREAM = 'WATCH_STREAM',
 	PLAY_ACTIVITY = 'PLAY_ACTIVITY',
+	FOLLOW_SOCIAL = 'FOLLOW_SOCIAL',
+	SHARE_CONTENT = 'SHARE_CONTENT',
+	JOIN_COMMUNITY = 'JOIN_COMMUNITY',
+	COMPLETE_SURVEY = 'COMPLETE_SURVEY',
+	REDEEM_CODE = 'REDEEM_CODE',
+	MAKE_PURCHASE = 'MAKE_PURCHASE',
 	ACHIEVEMENT_IN_GAME = 'ACHIEVEMENT_IN_GAME',
 	ACHIEVEMENT_IN_ACTIVITY = 'ACHIEVEMENT_IN_ACTIVITY',
 }

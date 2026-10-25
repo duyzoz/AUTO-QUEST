@@ -1,27 +1,474 @@
 {
   "version": "1.0",
   "project": "AUTO-QUEST-main",
-  "currentWave": 2,
-  "maxEstimatedWaves": 4,
-  "status": "IN_PROGRESS",
-  "lastModel": "gemini-3.8-flash:free",
-  "updatedAt": "2026-10-18T14:13:03.146Z",
-  "objective": "Đọc cấu trúc hiện tại, tiếp tục viết code và hoàn thiện tính năng.",
-  "stage": "Wave 2: Triển khai logic & Xử lý dữ liệu",
-  "completedTasks": [],
+  "currentWave": "47",
+  "maxEstimatedWaves": 34,
+  "status": "WAVE 47 — KIỂU TÊN HIỂN THỊ (Discord Display Name Styles). Bro gửi F12 thật của Discord + modal \"Thay Đổi Kiểu Tên Hiển Thị\", yêu cầu trích 100% từ server, font không mặc định, hiệu ứng chạy được, và soi kỹ chìm màu ở cả 2 theme.\n\nQUYẾT ĐỊNH: KHÔNG dùng bảng ánh xạ font/effect tự chế — dữ liệu trang fan là SAI (7 font tên chung chung + 5 effect, trong khi modal thật có 12 font + 7 effect). Nguồn chân lý là client Discord đang chạy: electron/displayNameStyle.js chạy JS qua lớp CDP sẵn có, chép NGUYÊN getComputedStyle + NGUYÊN khối @keyframes (tra document.styleSheets) + URL file font trong @font-face. Không có bảng nào để lệch.\n\nDOM THẬT: div.container_<hash>.dnsFont_<hash>.<font>_<hash>.displayName__Effect_<hash>.<effect>_<hash> bọc span.innerContainer_<hash>[data-username-with-effects]. Hash đổi mỗi bản build → selector dùng [data-username-with-effects] + [class*=\"dnsFont_\"], CẤM hardcode.\n\nFONT: tải .woff2 từ URL trong @font-face của Discord → cache base64 trong userData/display-name-style/. Lần đầu cần mạng, sau đó offline vẫn đúng font. Discord đóng → dns:read trả bản cache.\n\nTƯƠNG PHẢN: ngưỡng đúng của .ph-display là 3:1 (1.45rem/800 ≈ 23px = chữ LỚN ĐẬM), không phải 4.5:1. \"Designer lại\" = chỉnh ĐỘ SÁNG HSL giữ nguyên hue + giữ cấu trúc gradient (chỉ thay cụm rgb()). Đích nâng sáng đặt 3.4 vì nền nameplate có lớp phủ brand 16% — đo thật phát hiện ca tím than: tính với --card ra 3.0:1 (tưởng đạt) nhưng pixel thật chỉ 2.73:1.\n\nBẪY ĐÃ VẤP: getComputedStyle KHÔNG liệt kê biến --* (vòng lặp theo chỉ số trả rỗng) → phải đọc style inline + computedStyleMap(). Headless Chromium báo prefers-reduced-motion: reduce nên CSS tắt animation → probe phải ép no-preference rồi mới đo nhánh chuyển động.\n\nKIỂM CHỨNG: validate-ui 369/369 (+15 marker) · probe-dns-extract 17/0 (dựng lại đúng DOM F12: newRocker + gradient + loop_df989 + @font-face) · probe-dns-theme 15/0 (8 tổ hợp 2 theme × 2 nền banner × 2 kiểu tên, TẤT CẢ ≥ 3:1, font nạp thật, animation chạy, reduced-motion vẫn giữ gradient) · probe-log-color PASS · probe-contrast-pixels PASS · probe-done-46c 14/0 · probe-done-tile PASS · probe-orb-big 17/0 · probe-all-grids 0 fail · probe-quest-stack 12/0 · theme-audit 0 chìm · contrast-audit 47 mẫu · cdp-selftest 13/0 · template guard 38 file sạch.\n\nẢNH: build-release/wave47/ (1-name-dark, 2-hero-dark, 3-name-light, 4-hero-light). Font New Rocker thật để chụp: tools/fixtures/new-rocker.woff2 (OFL) — lúc chạy app vẫn tải từ Discord. DOC: docs/WAVES-47-KIEU-TEN-HIEN-THI.md.",
+  "lastModel": "Wave 46c/46d — tooltip hover + light-theme logotype",
+  "updatedAt": "2026-10-24T10:59:23.848Z",
+  "objective": "Claim nhiệm vụ THẬT + dựng hCaptcha ngay trong client (không bypass), số Orb nhảy thật.",
+  "stage": "wave46c-complete",
+  "completedTasks": [
+    "Backend: ipcMain quests:claim (main.js) + claimQuest (preload.js) + postClaim/handleClaimError/claimWithCaptcha (questManager.ts) + event 'quest:captcha'",
+    "CSP index.html: cho phép js.hcaptcha.com / *.hcaptcha.com / newassets.hcaptcha.com (script/style/frame/connect/img/font)",
+    "Modal hCaptcha in-app: .capture-veil + #hcaptchaWidget, render widget THẬT bằng sitekey Discord cấp",
+    "2A: callback onCaptchaSolved -> tự gọi lại claim kèm captcha_key; nút 'Tôi đã giải xong' đọc hcaptcha.getResponse()",
+    "Redesign thẻ quest: hàng .qcard-foot + nút .qcard-act (todo/claim/busy/claimed/error), thẻ 126px -> 158px",
+    "runClaim(): OK -> 'Đã nhận' + fetchOrbBalance() đọc lại ví thật; captcha -> modal; lỗi -> nguyên văn message server",
+    "Harden tokenOf() chống crash khi chưa đăng nhập",
+    "Harness kiểm chứng: widget hCaptcha THẬT render trong app (iframe newassets.hcaptcha.com), auto-retry OK",
+    "Test 2 quest liên tiếp: calls ['qA','qA+cap','qB','qB+cap'], modal reuse sạch, 1 iframe",
+    "Đo layout: card 158px, nút 26px dư -10px, iframe 302x76 lọt khung modal 440x374",
+    "CSP verify: script tải OK, hcaptcha.render có mặt, 0 vi phạm",
+    "tsc --noEmit exit 0 · node --check 3 file OK · validate-ui 100/100 (thêm 11 marker)",
+    "Wave 33: enqueueClaim() hàng đợi nối tiếp + CLAIM_MIN_GAP_MS=1200 + claimBlockedUntil (429 khoá cả hàng đợi)",
+    "Wave 33: postClaimOnce() tự chờ retry_after + thử lại 1 lần (kẹp trần 10s)",
+    "Wave 33: nhánh 404 -> {notFound:true}; renderer flag 'gone', ẩn thẻ + dọn node, quét lại không hồi sinh",
+    "Wave 33: nhánh 403/260004 -> {wrongPlatform:true}; renderer báo đúng 'không hỗ trợ nền tảng này'",
+    "Wave 33: dò enum platform THẬT -> 0..4 hợp lệ, >=5 ENUM_TYPE_COERCE, platform:0 là đúng cho quest Orbs",
+    "Wave 33: KIỂM CHỨNG end-to-end thật: runClaim -> Discord 400 captcha -> modal hCaptcha mở trong app (iframe 302x76)",
+    "Wave 33: validate-ui 111/111 marker",
+    "Wave 34: phát hiện gốc rễ — renderer chạy file:// nên Chromium KHÔNG lưu cookie, hCaptcha sinh token vô giá trị",
+    "Wave 34: thử app:// custom scheme → cookie vẫn không ghi được → loại",
+    "Wave 34: dựng HTTP server loopback (chỉ 127.0.0.1, cổng OS cấp) + loadURL → origin web thật",
+    "Wave 34: chặn path traversal + đóng server khi quit + nới CSP cho hCaptcha",
+    "Wave 34: đo được cookieWritable false->true, cảnh báo cookie hCaptcha 0 lần, console sạch",
+    "Wave 34: validate-ui 116/116",
+    "Wave 35: truyền rqdata + rqtoken vào hcaptcha.render() (Discord BẮT BUỘC, thiếu -> invalid-response)",
+    "Wave 35: sandbox:true -> false (hsw.js worker crash làm widget không mở ô thử thách)",
+    "Wave 35: CSP thêm worker-src hcaptcha.com + child-src blob:",
+    "Wave 35: snapshot renderer thêm slotVisible/widgetId/rqdataLen để chẩn đoán",
+    "Wave 35: đo được hsw crash 0 lần, rqdataLen=128, widgetId có, iframe 302x76",
+    "Wave 35: validate-ui 122/122",
+    "Wave 38: size invisible -> normal (nguyên nhân hộp trắng: widget 0x0, không có gì bấm)",
+    "Wave 38: startCaptchaAutoSubmit() poll getResponse 800ms -> tự gửi token, KHÔNG cần người dùng bấm",
+    "Wave 38: onCaptchaSolved chống đua (cờ submitted, gửi 1 lần, clear timer)",
+    "Wave 38: captchaTrace -> main ipcMain.on(debug:captcha-trace) in AQ_CAPTCHA_TRACE",
+    "Wave 38: AQ_VERBOSE=1 xuất mọi cấp log renderer (trước bị lọc level>=2)",
+    "Wave 38: KIỂM CHỨNG: widget HIỆN (372x76 slot, 302x76 iframe), app tự chạy + tự gửi token P1_ 3531 ký tự KHÔNG có cú click nào, hsw.js crash = 0",
+    "Wave 38: validate-ui 135/135",
+    "W42: nhật ký ASCII thuần [#/-/_] — fix tofu ?? do JetBrains Mono subset thiếu U+2588/2593/2591/258B",
+    "W42: theme-audit.js do TOÀN BỘ text node 2 chế độ -> dark 0 / light 0 mục chìm (trước đó light 20)",
+    "W42: token hoá nền + override light cho terminal/nav/qcard/qdone; :has() cho hồ sơ guest vs đăng nhập",
+    "W42: logo THẬT logotype->game_tile->application.icon (app-icons/{appId}/{icon}.{png|gif}) cho cả thẻ lẫn ô Đã làm",
+    "W42: tab Đã làm = grid repeat(6) ô vuông aspect-ratio 1/1; probe cũ đếm sai cột do split(\" \") trên repeat()",
+    "W42: quest:captcha KHÔNG mở modal nữa — chuyển sang Chưa nhận, giữ pendingCaptcha, mở khi user bấm Nhận",
+    "W42: xoá hẳn <p class=\"nav-label\">Điều khiển</p>, 3 nút nằm gọn .side-actions",
+    "W42: SỬA LỖI THẬT — nút Dừng bị disabled vì setBusyFlags chỉ theo state tiến trình; giờ theo countRunningQuests()",
+    "W42: .qcard[data-status=stop] đỏ ở CẢ 2 chế độ (light cần khai lại vì bị override border-color) — chọn 5.44:1 / 6.3:1",
+    "W42: đối chiếu discord_api.rs -> endpoint + fallback stream_progress_seconds + luật completed_at/claimed_at đều khớp",
+    "W42: quest-classify-test.js 10/10 (bắt lỗi test tự viết dùng q.isClaimed thay vì hasClaimedRewards())",
+    "W42: validate-ui 230/230 · tsc exit 0 · probe-wave42 PASS · probe-wave42-visual PASS · contrast 42/42",
+    "W43: giải mã pixel 7 ảnh bro gửi bằng Python (tự viết PNG reader) — model không đọc được ảnh, không đoán",
+    "W43: phát hiện .side-actions nằm ĐÁY sidebar (y=730), bro đúng — đã DỜI vào .quest-head cạnh tab Đã làm",
+    "W43: xoá <p class=\"nav-label\">Menu</p> — navLabels nay rỗng",
+    "W43: khôi phục badge logo Orb + SỐ Orb trong ô Đã làm (Wave 42 xoá nhầm)",
+    "W43: LỖI THẬT số Orb chìm — đo 1.56:1 tối / 1.47:1 sáng; sửa nền tím đậm + chữ gần trắng -> 9.99:1 / 9.23:1",
+    "W43: tooltip ô Đã làm: tên nhiệm vụ + số Orb + THỜI GIAN nhận (claimedAt thật từ Discord)",
+    "W43: bot getQuestCardData trả thêm orbs + claimedAt; renderer nhận claimedAt qua quest:inventory",
+    "W43: updateDoneTile cập nhật tại chỗ; escapeHtml chống phá DOM; aria-label đọc được",
+    "W43: NHẬT KÝ về MÀU MẶC ĐỊNH — bỏ tô màu cả dòng, màu ngữ nghĩa chỉ ở nhãn [ ok ]/[ !! ]",
+    "W43: đo lại log — allBodiesDefault true, tương phản 13.44:1 tối / 8.03:1 sáng, hết tofu ??",
+    "W43: validate-ui 258/258 (+28 marker mới, sửa 3 marker lỗi thời) · tsc exit 0",
+    "W43: probe-done-tile (mới) PASS · probe-log-color (mới) PASS · theme-audit 0 chìm · contrast 41/41",
+    "W44: TÌM GỐC RỄ '??' — fonts.css face cuối chỉ phủ U+2191/U+2193, KHÔNG có U+2192 '→' (renderer.js dùng 1 chỗ runtime) → tofu",
+    "W44: asciifyLog() chặn ở CỬA VÀO appendLog — map mũi tên/khối vẽ/emoji sang ASCII + lọc variation selector & astral",
+    "W44: sửa chuỗi runtime còn '→' (hCaptcha passive) thành dấu phẩy",
+    "W44: nhật ký ĐỔI MÀU thật theo trạng thái: ok #7cf0b4 · warn #ffd76a · err #ff8f8f · orb #c9b3ff (nền tối) + bản ĐẬM cho nền sáng",
+    "W44: probe-log-color chứng minh distinctColours=4, tương phản 7.73–14.63:1, glyph độc hại bị chặn (→ thành '->')",
+    "W44: buildDoneTile viết lại 2 tầng — .qdone-face (badge Orb TRÊN, logo quest DƯỚI) + .qdone-info (chữ trong ô)",
+    "W44: xoá hẳn .qdone-tip (panel nổi) — bro: 'đéo phải sổ lên ... mà sổ NGAY TRONG khung vuông ấy'",
+    "W44: hover làm MỜ Orb (opacity .16 + blur 2px) rồi chữ trôi vào (translateY 7px→0) — đo được 169x169 vẫn VUÔNG",
+    "W44: thêm class .qdone--hover song song :hover để harness đo được trạng thái hover headless",
+    "W44: thương hiệu — title/topbar/sidebar = 'Auto Quest'; khẩu hiệu 'Nền tảng ALL IN ONE DISCORD by NgDuy' (sidebar + topbar tag)",
+    "W44: guest state = 'ZoZ Community' + defaultAvatarSvg() + banner .default; hero HIỆN thay vì ẩn",
+    "W44: hướng dẫn token có NÚT mũi tên (#btnGuideToggle) sổ ra, mặc định ĐÓNG, aria-expanded + xoay 180°",
+    "W44: 2 tab Cách 1 Console / Cách 2 Đăng nhập bằng Bot (botToken + botUserId + GET /users/{id} header 'Bot <token>')",
+    "W44: mũi tên phụ sổ HƯỚNG DẪN TẠO BOT 5 bước (developers/applications, SERVER MEMBERS INTENT, OAuth2 scope bot)",
+    "W44: khối Cấu hình tài khoản tông ĐEN NÂU (#120d0a/#17110d/#1e1712 + accent #d9a441), có bản SÁNG #fdf7ef",
+    "W44: LỖI THẬT lộ ra khi hero guest hiện — #phBanner/#dpBanner thiếu class .default trong HTML → :has() cho chữ TRẮNG trên nền TRẮNG (1.06:1)",
+    "W44: sửa bằng cách đặt sẵn class 'default' trong index.html cho cả 2 banner",
+    "W44: LỖI THẬT thứ hai — .loop-box trong config-card vẫn nền nâu ĐẬM ở chế độ Sáng → .hint chìm 2.68:1; thêm override SÁNG",
+    "W44: contrast-audit tự dọn harness-api.js/harness-data.js (trước để rác trong electron/renderer/)",
+    "W44: validate-ui 297/297 · tsc exit 0 · probe-wave44.js MỚI (PASS) · toàn bộ 8 harness xanh",
+    "W44 (bổ sung): PHÁT HIỆN RỦI RO DỮ LIỆU — đổi productName làm Electron đổi thư mục userData (%APPDATA%\\Auto Quest) → token DPAPI đã lưu sẽ 'biến mất'",
+    "W44 (bổ sung): GHIM userData về %APPDATA%\\AUTO-QUEST bằng app.setPath('userData') TRƯỚC requestSingleInstanceLock() — smoke test PIN OK",
+    "W44 (bổ sung): package.json — executableName + artifactName đổi sang 'Auto Quest'; tools/build.js đọc ARTIFACT_NAME từ artifactName (bỏ hard-code 2 chỗ)",
+    "W44 (bổ sung): BUILD LẠI THÀNH CÔNG — build-release/exe/latest/'Auto Quest 1.0.0 portable.exe' 83.55 MB sha256:29e990ecaacbed6f",
+    "Wave 46c: logo ô \"Đã làm\" nạp EAGER — gốc rễ của \"chưa hiện được logo riêng từng nhiệm vụ\" (lazy trong vùng cuộn không bao giờ nạp; đo 1/6 → 6/6 request)",
+    "Wave 46c: orb trong ô clamp(64px,50%,96px) = 78px/169px (trước 44px); orb hero 116px, full-HD 120px (trước 86px)",
+    "Wave 46c: badge Orb hiện trên MỌI ô \"Đã làm\" (bỏ dòng ẩn khi orbs <= 0) — bro: \"nhiều cái ko hiện logo orbs\"",
+    "Wave 46c: tooltip hover dựng lại theo ảnh Discord: quầng orb + logotype + \"Nhiệm Vụ …\" + \"N Orbs đã được nhận vào\" + dd/mm",
+    "Wave 46c: fmtClaimDay() dd/mm + setDoneInfoHtml() dùng chung cho cả dựng mới và cập nhật tại chỗ",
+    "Wave 46c: logoIsWordmark() — chỉ wordmark (rộng/cao >= 1.4) thay chữ; icon vuông vẫn giữ tên game",
+    "Wave 46c: hover ẩn hẳn .qdone-name/.qdone-logo của mặt trước (bóng chữ mờ dưới tooltip trông như lỗi vẽ)",
+    "Wave 46c: nền Sáng — wordmark trắng vô hình (8/18 ô trắng trơn) → vá bằng drop-shadow viền tối, không dùng tấm nền đặc",
+    "Wave 46c: tools/check-template-literals.js — guard chặn backtick lạc trong template literal (Electron chết im lặng, node --check vẫn PASS)",
+    "Wave 46c: tools/shot-wave46c.js — 7 ảnh, HTTP server nội bộ phục vụ ảnh thật, chụp 2 lần chống surface cũ",
+    "Wave 46c: validate-ui 340/340 (thêm marker wordmark / hover-ghost / light-logo)",
+    "Wave 46e: họ huy hiệu lục giác (U229_HEX + U229_MARK) đặt NGAY SAU nhãn, thứ tự tag→ico→body",
+    "Wave 46e: hai vai trò màu --ux-text (thường) / --ux-key (chữ chính), màu ngữ nghĩa chỉ ở nhãn + huy hiệu",
+    "Wave 46e: fitLogBody() kẹp 2 dòng + \"…\" (phải unset line-clamp khi đo vì clamp kẹp cả scrollHeight)",
+    "Wave 46e: cầu vồng 13 điểm dừng liên tục cho dòng nhận Orb, bản Sáng tối hoá để ≥ 5.04:1",
+    "Wave 46e: sửa lỗi token [data-theme=\"light\"] trần khớp vào nút #themeLight → :root[data-theme=\"light\"]",
+    "Wave 46e: hồ sơ hết chìm — xoá luật :has ép chữ trắng, thay bằng chip --card cho từng dòng",
+    "Wave 46e: .captcha-loading dùng token thay vì nền trắng hardcode; --fg-subtle Sáng #606b7e → #5a6478",
+    "Wave 46e: probe-contrast-pixels.js — quét pixel thật 6 màn × 2 theme (158 phần tử), 0 lỗi",
+    "Wave 46e: validate-ui 354/354 (14 marker cũ viết lại + 14 marker mới)",
+    "Wave 47: electron/displayNameStyle.js — trích style thật từ Discord qua CDP (computed style + @keyframes + URL font)",
+    "Wave 47: IPC dns:read / dns:font + preload dnsRead / dnsFont",
+    "Wave 47: renderer applyDisplayNameStyle + dnsLiftCss (nâng sáng HSL giữ hue) + dnsRegisterFont + dnsInjectKeyframes",
+    "Wave 47: CSS .ph-display.dns-active + halo [data-dns-lift] + nhánh reduced-motion giữ gradient",
+    "Wave 47: probe-dns-extract 17/0 — dựng lại đúng DOM F12 của bro",
+    "Wave 47: probe-dns-theme 15/0 — 8 tổ hợp 2 theme, tất cả ≥ 3:1",
+    "Wave 47: shot-wave47.js + build-release/wave47/ (4 ảnh)",
+    "Wave 47: validate-ui 369/369 (+15 marker)"
+  ],
   "pendingTasks": [
-    "Kiểm tra lỗi runtime và syntax",
-    "Tối ưu trải nghiệm"
+    "Bro tự giải captcha bằng tay để Discord cấp Orb thật (bản chất xác minh người thật)",
+    "Khởi động lại máy để xóa vỏ lồng rác build-release/exe",
+    "Build lại portable EXE nếu cần artifact mới"
   ],
-  "modifiedFiles": [],
+  "modifiedFiles": [
+    "electron/renderer/index.html (CSP + modal captcha + markup)",
+    "electron/renderer/renderer.js (runClaim, ensureHcaptcha, openCaptchaModal, onCaptchaSolved, updateQuestFoot, quest:captcha event, tokenOf fix)",
+    "electron/renderer/styles.css (.qcard-foot/.qcard-act + modal hCaptcha)",
+    "electron/main.js (quests:claim handler)",
+    "electron/preload.js (claimQuest)",
+    "src/questManager.ts (postClaim/handleClaimError/claimWithCaptcha)",
+    "src/events.ts (quest:captcha)",
+    "tools/validate-ui.js (11 marker Wave 31)",
+    "tools/claim-shot.js, tools/claim-measure.js, tools/claim-seq-test.js, tools/csp-verify.js (harness mới)",
+    ".brain/2026-10-22.md, .brain/handoff.json",
+    "electron/renderer/renderer.js",
+    "electron/renderer/styles.css",
+    "tools/probe-log-color.js",
+    "tools/probe-contrast-pixels.js",
+    "tools/shot-wave46e.js",
+    "tools/validate-ui.js",
+    "docs/WAVES-46E-KET-QUA.md",
+    "electron/displayNameStyle.js",
+    "electron/main.js",
+    "electron/preload.js",
+    "tools/probe-dns-extract.js",
+    "tools/probe-dns-theme.js",
+    "tools/shot-wave47.js",
+    "tools/fixtures/new-rocker.woff2",
+    "docs/WAVES-47-KIEU-TEN-HIEN-THI.md"
+  ],
   "keyDecisions": [
-    "Giữ mã nguồn gọn nhẹ, không thêm dependencies không cần thiết",
-    "Lưu cấu hình state cục bộ an toàn"
+    "KHÔNG bypass/bẻ khoá captcha — chỉ dựng lại trình xác thực hCaptcha THẬT của Discord trong app (như client thứ 2 hợp lệ)",
+    "Số Orb CHỈ nhảy khi Discord trả claim OK thật; nguồn duy nhất là fetchOrbs (ví Discord), không cộng dồn client",
+    "Lỗi server hiển thị NGUYÊN VĂN (message + HTTP status), tuyệt đối không bịa kết quả",
+    "Claim đi qua main process (native fetch tới discord.com/api/v10) chứ không qua bot con (bot stdin là 'ignore')",
+    "Modal captcha reuse được nhiều lần: hcaptcha.reset() + clear container trước mỗi lần render",
+    "Thẻ quest cao 158px để chừa hàng nút trạng thái, nút 26px — đã đo không tràn",
+    "ELECTRON_RUN_AS_NODE=1 rò từ phiên trước làm electron chạy như node -> phải env -u khi chạy app/harness"
   ],
-  "nextWave": {
-    "wave": 3,
-    "stage": "Wave 3: Tối ưu UI/UX & Kiểm thử lỗi",
-    "recommendedPrompt": "Tiếp tục Wave 3: Kiểm thử toàn bộ dự án, chạy lệnh test hoặc build và vá lỗi nếu có.",
-    "focusFiles": []
+  "nextWave": "Chờ bro chạy thật với Discord mở cổng debug để xác nhận trên tài khoản của bro.",
+  "lastUpdated": "2026-10-24",
+  "wave37": {
+    "title": "Truy ra gốc rễ captcha-required = hCaptcha passive-pass",
+    "rootCause": "hCaptcha engine luôn chấm rủi ro thấp → trả token passive P1_ (pd:0), không bung thử thách. Discord cần token đã giải → trả captcha-required (khác invalid-response).",
+    "evidence": "Probe tách biệt (__probe.html) không crash hsw.js; checksiteconfig trả type=hsw+pass=true cho cả host discord.com và 127.0.0.1; token luôn P1_/pd:0 kể cả trên origin discord.com thật (cert giả + host-resolver-rules).",
+    "fixed": [
+      "main.js: User-Agent Chrome thật",
+      "renderer.js: size=invisible + hcaptcha.execute() + reset widget",
+      "renderer.js: chống lặp vô tận khi captcha-required sau khi đã gửi token",
+      "gỡ thí nghiệm headers gây 404",
+      "package.json: loại __probe*.html khỏi build"
+    ],
+    "devHooks": [
+      "AQ_PROBE",
+      "AQ_PROBE_DISCORD",
+      "AQ_PROBE_DUMP",
+      "AQ_CAPTCHA_PROBE_ID",
+      "AQ_CAPTCHA_PROBE_WAIT",
+      "debug:captcha-probe",
+      "debug:submit-captcha",
+      "tools/e2e-captcha.sh"
+    ],
+    "remaining": "Cần hCaptcha bung thử thách để có token pd>0. Nếu môi trường luôn passive-pass → chỉ còn cách để người dùng mở Discord cho quest bị chặn.",
+    "verify": "validate-ui 127/127 · node --check ALL OK · tsc OK · chạy thật: hsw.js crash 0 · invalid-response 0 · modal+execute OK"
+  },
+  "wave38": {
+    "request": "app phải TỰ chạy xác minh, không bắt người dùng bấm; widget phải hiện (không hộp trắng)",
+    "fixed": [
+      "renderer.js size normal",
+      "startCaptchaAutoSubmit",
+      "captchaTrace",
+      "main.js trace channel",
+      "AQ_VERBOSE",
+      "preload captchaTrace"
+    ],
+    "evidence": {
+      "slot": "372x76",
+      "iframe": "302x76",
+      "autoSubmittedToken": "P1_ len 3531, pd=0",
+      "hswCrashes": 0,
+      "discord": "400 captcha-required -> 403 10008"
+    },
+    "blocker": "hCaptcha luôn passive-pass (pd:0) trong Electron; không bung thử thách dù size normal/execute/origin discord.com that -> Discord không công nhận. Trần phía hCaptcha/Discord, không phải bug app."
+  },
+  "wave40": {
+    "title": "Triển khai A+B+C — giữ nguyên UI/UX, chỉ đổi logic",
+    "A": "electron/discordIdentity.js — danh tính Discord nhất quán (UA===XSP.browser_user_agent); 9 site header trong main.js dùng discordHeaders()",
+    "B": "shell:open-quest (deep link discord://-/quest-home#id → web) + preload openQuest + renderer act 'open' nhãn 'Mở Discord để nhận' (markup/class KHÔNG đổi)",
+    "C": "electron/discordCdp.js — CDP 0-dependency: GET /json (9223/9222/9229) → target page @discord.com → WebSocket tự viết → Runtime.evaluate; JS sẵn: XSP sống, RunningGameStore, navigate SPA",
+    "evidence": {
+      "cdp_selftest": "13 pass / 0 fail (Chromium thật)",
+      "validate_ui": "172/172 marker",
+      "tsc": "exit 0",
+      "probe_open": "tag/cls y hệt, data-act claim→open, openQuest gọi, claim không lặp"
+    },
+    "bug_found": "CDP frame decoder vứt phần dư khi frame bị cắt qua nhiều gói TCP → evaluate treo; sửa theo dõi `consumed`",
+    "deliverable": "docs/WAVES-40-KET-QUA.md"
+  },
+  "wave41": {
+    "objective": "Bien nhat ky thanh terminal #229 (tu go), doi nut dieu khien len sidebar, sua tuong phan Settings che do Sang, avatar mac dinh Discord, hoc fallback stream_progress_seconds tu repo tham chieu, xu ly on hsw.js + phien captcha het han.",
+    "files": [
+      "electron/renderer/index.html",
+      "electron/renderer/styles.css",
+      "electron/renderer/renderer.js",
+      "electron/main.js",
+      "src/questManager.ts",
+      "tools/validate-ui.js",
+      "tools/ui-shot.js",
+      "tools/contrast-audit.js",
+      "tools/probe-terminal.js",
+      "tools/e2e-live.js"
+    ],
+    "verified": {
+      "validator": "199/199",
+      "tsc": "exit 0",
+      "cdpSelftest": "13/13",
+      "contrast": "42/42 >= 4.5:1",
+      "jsErrors": "0",
+      "legacyLoader": "removed"
+    },
+    "honestLimits": [
+      "Khong the chay quet THAT tren account nguoi dung tu shell agent: safeStorage/DPAPI khong giai duoc ciphertext (khac phien dang nhap Windows). Da kiem tra chuoi nay doc lap."
+    ],
+    "nextWave": "Khi nguoi dung tu chay npm run dev va dang nhap: xac nhan 3 tab phan loai dung + quet that."
+  },
+  "nextSteps": [
+    "Bro mở Discord kèm cổng debug (Cài đặt → CDP → \"Mở lại Discord kèm debug\"), đăng nhập token, rồi xem tên hiển thị có đúng font/hiệu ứng của bro không.",
+    "Nếu font không hiện: kiểm log — có thể Discord chặn tải asset; khi đó app dùng style cache và fallback font.",
+    "Bro muốn thêm hiệu ứng nào chưa khớp thì gửi ảnh F12 của đúng hiệu ứng đó (class + computed style) để đối chiếu."
+  ],
+  "wave45b": {
+    "title": "ĐÍNH CHÍNH ĐĂNG NHẬP — authorize scope=bot không phải đăng nhập tài khoản",
+    "userQuestion": "nhưng cái này cũng chỉ là mời được bot vào server chứ không thực sự đăng nhập được account discord vào ??",
+    "verdict": "BRO ĐÚNG. Link https://discord.com/oauth2/authorize?...&scope=bot CHỈ mời bot, không đăng nhập tài khoản.",
+    "oauthTruth": "Tra docs OAuth2 chính thức Discord: (a) scope=bot chỉ thêm bot vào guild; (b) scope=identify trả Bearer access token, KHÔNG phải token tài khoản client; (c) KHÔNG có scope nào cho quest trong danh sách scope Discord; (d) implicit grant bị Discord khuyến cáo không dùng, vẫn không cho token tài khoản; (e) password grant Discord KHÔNG hỗ trợ. => Không có đường OAuth2 nào đăng nhập tài khoản vào app bên thứ ba. /quests/@me không tài liệu hoá, chỉ nhận token tài khoản client thật.",
+    "labelsFixed": [
+      "Tab: 'Cách 2 · Đăng nhập bằng Bot' -> 'Cách 2 · Mời bot vào server'",
+      "Tiêu đề: 'Đăng nhập bằng Discord' -> 'Mời bot vào server'",
+      "Phụ đề: 'Mời bot vào server · cấp quyền đọc hồ sơ' -> 'OAuth2 scope=bot · không phải đăng nhập tài khoản'",
+      "Nút: 'MỞ TRANG MỜI BOT (authorize)' -> 'MỞ TRANG MỜI BOT (scope=bot)'",
+      "Nút: 'Đăng nhập hồ sơ (scope identify)' -> 'Xem hồ sơ công khai (scope identify)'",
+      "Tab: 'Cách 1 · Console' -> 'Cách 1 · Đăng nhập tài khoản (Console)'",
+      "Sidebar guest (renderer.js:218 và :2747): 'Bấm để đăng nhập [Discord]' -> 'Bấm để dán token tài khoản'",
+      "Bước 4 hướng dẫn bot: bỏ câu 'mời bot vào server VÀ ĐĂNG NHẬP Auto Quest' -> 'mời bot vào server — KHÔNG phải đăng nhập tài khoản của bro'",
+      "Thông báo identify trong openAuthorize: thêm 'KHÔNG trả token đăng nhập tài khoản'"
+    ],
+    "truthNote": "index.html #oauthTruth (class guide-note warn) ở đầu Cách 2 — nói thẳng không đăng nhập được, và chỉ bro sang Cách 1.",
+    "realLoginAdded": {
+      "button": "index.html #btnUserTokImport — 'NẠP TOKEN TÀI KHOẢN TỪ FILE .TXT'",
+      "mainHandlers": "usertoken:import-txt (dialog .txt, nhận cả token trần lẫn 'token = ...', validate 3 phần ngăn dấu chấm) · usertoken:take (đọc MỘT LẦN rồi xoá khỏi RAM) · usertoken:discard · usertoken:pending-status (CHỈ trả {pending,length})",
+      "state": "main.js: let pendingUserToken = '' — chỉ sống trong RAM main process, KHÔNG bao giờ trả giá trị về renderer",
+      "renderer": "renderer.js: setUserTokNote() + handler nút → userTokenImportTxt → userTokenTake → ghi ui.token → api.saveConfig(collectConfig())",
+      "preload": "userTokenImportTxt / userTokenTake / userTokenDiscard / userTokenPendingStatus"
+    },
+    "measured": "probe-wave45b-login.js — 32 pass / 0 fail: UI hết câu sai (9 check) · URL thật cả 2 scope (5) · token validate + không lộ DOM/note (9) · UI đăng nhập thật có mặt (3) · preload đủ hàm (5) · 0 lỗi JS",
+    "tests": "validate-ui 333/333 (+14 marker) · probe-wave45b-login PASS · probe-wave45-oauth PASS · probe-wave44 PASS · probe-log-color PASS · probe-guest-centre PASS · probe-done-tile PASS · probe-wave42 PASS · csp-verify 0 vi phạm · contrast 60/60 · theme-audit 0 chìm cả 2 chế độ · quest-classify 10/0 · claim-seq sạch · tsc exit 0 · node --check 3 file OK · app boot không lỗi JS · rác tạm 0",
+    "doc": "docs/WAVES-45B-DINH-CHINH-DANG-NHAP.md"
+  },
+  "wave45": {
+    "title": "Dấu tích nhật ký + profile khách căn giữa + Discord OAuth2 login box + nạp token .txt",
+    "requests": [
+      "Nhật ký PHẢI có DẤU TÍCH (không phải tag chữ '[ ok ]') ở đầu mỗi dòng VÀ chữ đổi màu theo trạng thái",
+      "Profile phải CĂN GIỮA khi không có avatar",
+      "Khung ĐĂNG NHẬP BẰNG DISCORD, bấm ra https://discord.com/oauth2/authorize?client_id=...... kèm quyền bot",
+      "Nạp token ứng dụng từ file .txt vào đúng đường dẫn, KHÔNG paste lên chat",
+      "Bro test bằng `npm run dev`, KHÔNG phải bản portable"
+    ],
+    "rootCause": "Wave 44 dùng tag CHỮ '[ ok ]' — không phải dấu tích thị giác. Bro đòi icon thật.",
+    "fixed": [
+      "renderer.js: U229_ICON (5 path SVG) + u229IconHtml() — tích / X / chấm than / kim cương / mũi nhọn",
+      "renderer.js: appendLog dựng flex row <span.u229-ico><span.u229-tag><span.u229-body>, icon Ở ĐẦU, KHÔNG absolute",
+      "renderer.js: ensureProg/finishLoader cũng đổi icon (mũi nhọn -> tích khi xong)",
+      "renderer.js: thay cả cụm bot-login cũ bằng khối OAuth2 + app-token (oauthPermMask, refreshOauthPreview, openAuthorize, refreshAppTokState)",
+      "styles.css: .u229-line = flex row; .u229-ico/.u229-tag/.u229-body; màu ngữ nghĩa cho CẢ chữ + icon + tag",
+      "styles.css: khối guest-centre (userpanel + profile-hero data-state=guest -> column, căn giữa)",
+      "styles.css: .dlogin/.perm-chip/.oauth-*/apptok* + bản sáng",
+      "index.html: Cách 2 -> khung đăng nhập Discord (oauthAppId, 6 chip quyền, 2 nút authorize, preview URL) + khối token ứng dụng + hướng dẫn 6 bước",
+      "main.js: apptoken:status/import-txt/clear + oauth:build-url + bot:whoami (chỉ trả boolean + app_id, KHÔNG bao giờ trả secret)",
+      "main.js: app_secrets.json mã hoá safeStorage, chmod 600",
+      "preload.js: 5 cầu nối mới"
+    ],
+    "measured": {
+      "logTick": "9/9 dòng có icon SVG ở ĐẦU, 5 màu chữ khác nhau, 5 hình icon khác nhau, tương phản 7.07-15.12:1",
+      "guestCentre": "lệch tâm 0px (sidebar + hero), flex-direction=column khi guest, row + hiện nút Đăng xuất khi đã đăng nhập",
+      "oauth": "URL thật discord.com/oauth2/authorize mở đúng với client_id + permissions + scope=bot; bitmask 1024/3072/19456/347200 đúng phép OR",
+      "leak": "bot_token & client_secret: KHÔNG có trong nhật ký, KHÔNG có trong DOM, KHÔNG có dạng chữ thô trên đĩa"
+    },
+    "honestLimit": "Token BOT KHÔNG nhận được nhiệm vụ thay bro — Discord chỉ cho token TÀI KHOẢN NGƯỜI DÙNG gọi /quests/@me và claim-reward. OAuth2 scope identify KHÔNG cho token người dùng. Bot chỉ đọc được tên/ảnh đại diện + vào server.",
+    "tests": "validate-ui 319/319 · probe-log-color PASS · probe-guest-centre PASS · probe-wave45-oauth PASS · probe-wave44 PASS · probe-done-tile PASS · probe-wave42 PASS · csp-verify 0 vi phạm · theme-audit 0/0 chìm · contrast-audit 60/60 · quest-classify 10/0 · claim-seq sạch · tsc exit 0 · node --check 3 file OK · rác tạm 0 · app khởi động không lỗi JS",
+    "falseAlarm": "Dòng '12 mục dưới 4.5:1' trong lần chạy giữa lúc sửa là SỐ CŨ còn sót của tools/theme-audit.js trước khi chốt hex Wave 45 — chạy lại cả 2 chế độ: 0 mục chìm. Không phải lỗi thật.",
+    "doc": "docs/WAVES-45-KET-QUA.md"
+  },
+  "wave46": {
+    "title": "Xoá Mời bot · Logo Orb TO giữa · Fix chìm màu Sáng",
+    "userComplaints": [
+      "chỉnh profiles ở giữa về NHƯ CŨ (đừng căn giữa)",
+      "mục chưa làm xếp chồng lên nhau",
+      "logo orb phải TO ở chính giữa + logo/tên game trích từ server Discord",
+      "xoá hết chức năng mời bot server",
+      "ảnh đại diện + profile chìm màu khi chuyển chế độ sáng"
+    ],
+    "rootCauses": {
+      "overlap": " .qstate là con của lưới grid-column 1/-1, vẫn hiện khi scanning → đẩy 107px",
+      "colourSink": "THIẾU [hidden]{display:none!important} → thẻ hero tối vẫn VẼ dù đã hidden, #phDisplay 1.06:1"
+    },
+    "fixed": [
+      "setEmptyState() thêm hasCards guard + CSS .quest-list:has(> .qcard) > .qstate {display:none}",
+      "[hidden]{display:none!important} toàn cục (1 luật, sửa 15 mục chìm)",
+      "token hoá --avatar-shadow --orb-shadow --banner-c --orb-num --qdone-bg-a/b --qdone-name",
+      ".ph-orbbig 132px canh giữa thẻ hero + ảnh orb-logo-big.png 500×500",
+      ".qdone-orb 14px→44px, xếp dọc orb/số/logo, bỏ dạng viên thuốc",
+      "xoá toàn bộ apptoken:*/oauth:build-url/bot:whoami + readAppSecrets/writeAppSecrets/isSnowflake/looksLikeBotToken",
+      "xoá CSS .dlogin/.perm-chip/.oauth-*/.apptok* + 5 bridge preload"
+    ],
+    "measured": {
+      "validateUi": "328/328",
+      "themeAudit": "dark 0 chìm · light 0 chìm",
+      "contrastAudit": "ALL >= 4.5:1 (47 mẫu)",
+      "probeOrbBig": "13 pass / 0 fail (orb 132px, lệch tâm 0px, natural 500)",
+      "probeQuestStack": "12 pass / 0 fail (107px → 0px)",
+      "probeGuestCentre": "PASS (flex-direction=row)",
+      "cssBalance": "764/764",
+      "strays": "0"
+    },
+    "testsRemoved": [
+      "tools/probe-wave45-oauth.js",
+      "tools/probe-wave45b-login.js"
+    ],
+    "testsAdded": [
+      "tools/probe-orb-big.js",
+      "tools/shot-wave46.js"
+    ],
+    "screenshots": "build-release/wave46/ (5 PNG)"
+  },
+  "wave46b": {
+    "title": "Sửa 3 lỗi bro nêu lần 2: orb lòi trên banner · hàng lưới đè nhau · ảnh orb chưa tách nền",
+    "userComplaints": [
+      "sao tụ nhiên lòi logo orb phía trên",
+      "phần đa làm vẫn chưa fix chồng hết nhiệm vụ lên nhau",
+      "logo có dc add xoá nền đéo đâu ???"
+    ],
+    "rootCauses": {
+      "orbFloating": "Lớp phủ .ph-orbbig absolute top:168px + translate(-50%,-50%) -> tâm ngay mép banner -> nhô 74px (+quầng 18px) vào banner",
+      "gridRowOverlap": ".qgrid-done/.quest-list CHỈ khai báo cột, không khai báo hàng; ô aspect-ratio 1/1 (168px) trong lưới flex co giãn -> hàng auto ~108px -> ô tràn 60px đè hàng dưới",
+      "orbNoCutout": "PNG gốc alpha=128 màn đen phủ kín 500×500; alpha=0 chỉ 0.0%; 4 góc (0,0,0,128)"
+    },
+    "fixed": [
+      "Xoá hẳn .ph-orbbig; logo orb TO = ẢNH Ô AVATAR trong luồng bố cục (.ph-avatar-orb)",
+      "Thêm syncHeroOrb() — orb chỉ bật khi không có avatar thật VÀ ảnh nạp được",
+      "grid-auto-rows: max-content cho .quest-list + .qgrid-done",
+      "tools/cutout-orb-alpha.py — tách nền thật, alpha=0 ở 42.8%"
+    ],
+    "measured": {
+      "rowGapsBefore": "-60 / -59 / -60 px",
+      "rowGapsAfter": "9 / 8 / 8 px",
+      "gapBandsInShotBefore": 1,
+      "gapBandsInShotAfter": "9 (dark) / 10 (light)",
+      "gridsScanned": "3 lưới × 4 cỡ cửa sổ = 12 phép đo, 0 fail",
+      "heroOrbTop": "139px (banner 168px) — không nhô",
+      "heroOrbCentreOffset": "0px",
+      "orbAlphaZeroBefore": "0.0%",
+      "orbAlphaZeroAfter": "42.8%",
+      "orbCornersAfter": "(0,0,0,0) cả 4 góc",
+      "validateUi": "332/332",
+      "probeOrbBig": "17/0",
+      "probeQuestStack": "12/0",
+      "themeAudit": "0 chìm / 0 chìm",
+      "contrastAudit": "ALL >= 4.5:1 (47 mẫu)",
+      "cssBraces": "758/758"
+    },
+    "testsAdded": [
+      "tools/probe-all-grids.js",
+      "tools/probe-gap-collapse.js",
+      "tools/cutout-orb-alpha.py",
+      "tools/shot-wave46b.js"
+    ],
+    "testsUpdated": [
+      "tools/validate-ui.js (6 marker w46b:)",
+      "tools/probe-orb-big.js",
+      "tools/probe-done-tile.js",
+      "tools/jpeg-ascii.py (idct +128)"
+    ],
+    "screenshots": "build-release/wave46b/ (6 ảnh)",
+    "doc": "docs/WAVES-46B-FIX-3-LOI-LOGO-CHONG-NEN.md"
+  },
+  "wave46c": {
+    "date": "2026-10-24",
+    "request": "bro gửi 11 ảnh F12 Discord: gọi CDN đúng, orb to hơn, mọi ô có logo orb, logo riêng từng nhiệm vụ, hover đúng ảnh",
+    "rootCause": "loading=\"lazy\" trong vùng cuộn → ảnh không bao giờ nạp → naturalWidth=0 → rơi về chữ",
+    "fixes": [
+      "loading = eager",
+      "orb 44 → 78px (ô), 86 → 120px (hero)",
+      "badge orb luôn hiện trên mọi ô",
+      "tooltip 5 tầng theo ảnh Discord",
+      "logoIsWordmark()",
+      "hover ẩn bóng chữ mặt trước",
+      "light theme: drop-shadow cho wordmark trắng"
+    ],
+    "measurements": {
+      "anh nap": "1/6 → 6/6 request",
+      "orb o": "44px → 78px",
+      "orb hero": "86px → 120px",
+      "tiles co badge orb": "6/7 → 7/7"
+    },
+    "tests": "validate-ui 340/340 · probe-done-46c 14/0 · probe-done-tile PASS · probe-orb-big 17/0 · probe-all-grids 0 fail · probe-quest-stack 12/0 · theme-audit 0 chìm · contrast-audit 47 mẫu OK",
+    "shots": "build-release/wave46c/ (1..7 + fullpage)"
+  },
+  "wave46e": {
+    "title": "Nhật ký có hồn + dọn sạch chìm màu",
+    "date": "2026-10-24",
+    "doc": "docs/WAVES-46E-KET-QUA.md",
+    "shots": "build-release/wave46e/",
+    "requests": [
+      "Chỉ đổi màu CHỮ, cấm đổi khung — chữ chính đỏ, chữ thường màu dịu",
+      "Mỗi nhãn [] có huy hiệu chạy NGAY SAU chữ nhãn",
+      "Dòng dài kẹp 2 dòng + \"…\"",
+      "Nhận Orb thành công → chữ chạy quang phổ liên tục",
+      "Hồ sơ chìm chữ ở chế độ Sáng",
+      "Rà soát toàn bộ, cấm chỗ nào chìm màu"
+    ],
+    "rootCauses": {
+      "themeToggle": "Khối token Sáng dùng selector trần [data-theme=\"light\"] nên khớp luôn nút #themeLight (mang data-theme) → nút tự ghi đè --fg-muted, nhãn \"Sáng\" thành 2.17:1 trên nền tối",
+      "profileSunk": "Luật :has(.ph-banner:not(.default)) ép chữ TRẮNG lên mọi banner ảnh → banner sáng thì trắng trên trắng",
+      "clamp": "-webkit-line-clamp kẹp cả scrollHeight nên không đo được tràn, không bao giờ thêm \"…\"",
+      "captchaLoading": "Nền trắng + chữ xám hardcode, không có bản cho theme Tối"
+    },
+    "measurements": {
+      "pixelSweep": "158 phần tử × 2 theme · 6 màn · DARK 4.71:1 · LIGHT 4.79:1 · 0 lỗi",
+      "rainbowStops": "13/theme · DARK thấp nhất 6.48:1 · LIGHT thấp nhất 5.04:1",
+      "validateUi": "354/354"
+    }
+  },
+  "wave47": {
+    "title": "Kiểu tên hiển thị (Discord Display Name Styles)",
+    "date": "2026-10-24",
+    "doc": "docs/WAVES-47-KIEU-TEN-HIEN-THI.md",
+    "shots": "build-release/wave47/",
+    "sourceOfTruth": "client Discord qua CDP — không dùng bảng ánh xạ tự chế",
+    "threshold": "3:1 (chữ lớn đậm 23px), đích nâng sáng 3.4",
+    "measurements": {
+      "extract": "17/0",
+      "theme": "15/0 · 8 tổ hợp ≥ 3:1",
+      "validateUi": "369/369"
+    }
   }
 }

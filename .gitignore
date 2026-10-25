@@ -14,6 +14,15 @@ AUTO-QUEST.exe
 
 # Output EXE desktop (chỉ giữ script build, không commit file .exe)
 build-release/exe/
+# Artifact phát hành (đã gom sẵn để upload lên Releases)
+build-release/release-assets/
+# Ghi chú: installer.nsh + icon.icns KHÔNG bị ignore (là input build, phải commit)
+!resources/installer.nsh
+!resources/icon.icns
+!resources/icon-512.png
+!resources/icon-256.png
+!resources/icon-128.png
+!resources/icon-64.png
 
 # Cache & Logs
 .expo/
@@ -32,3 +41,25 @@ Thumbs.db
 *.token
 *.pem
 *.key
+
+# Thư mục tạm / rác điều tra (KHÔNG commit)
+.tmp/
+tmp-view/
+AUTO-QUEST-main/
+shots-*/
+build-release/ui-preview/
+build-release/wave*/
+build-release/build-ipa/
+
+# File harness/probe sinh trong lúc dev
+electron/renderer/.csp.html
+electron/renderer/.probe-*.html
+electron/renderer/.seq.html
+electron/renderer/__probe*.html
+electron/renderer/harness-*.js
+
+# Binary đóng gói & ảnh chụp
+*.AppImage
+*.deb
+*.dmg
+*.icns.bak
