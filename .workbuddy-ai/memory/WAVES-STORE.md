@@ -108,9 +108,15 @@
 
 ---
 
-## ⏳ CHỜ PUSH
+## ✅ ĐÃ PUSH — v1.0.0 (25/10/2026)
 
-> Khung giờ chờ push — gom mọi `#` chưa lên GitHub. Khi bro ra lệnh build ⇒ chuyển thành release notes.
+> Release: https://github.com/duyzoz/AUTO-QUEST/releases/tag/v1.0.0 (id `411911191`)
+> Commit `17c5eeb` → merge `4b44573` → `e78d050` trên nhánh `main`.
+> Asset: `Auto.Quest.Setup.1.0.0.exe` (84.85 MB) · `Auto.Quest.1.0.0.portable.exe` (84.33 MB) · `SHA256SUMS.txt`
+
+## ⏳ CHỜ PUSH (đợt sau)
+
+> Gom mọi `#` chưa lên GitHub. Khi bro ra lệnh build ⇒ chuyển thành release notes.
 
 | #        | Thay đổi ngắn                                                       | Ref code                                                      |
 | -------- | ------------------------------------------------------------------- | ------------------------------------------------------------- |

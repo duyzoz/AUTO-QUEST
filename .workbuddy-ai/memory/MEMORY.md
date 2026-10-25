@@ -57,6 +57,22 @@ NGƯỢC LÊN `bottom:calc(100%+10px)` · `--danger` = `rgb(220,38,38)` Sáng/`r
 multiaccount `#accSwitchModal`→`#accConfirmSwitchModal`⇒reload · guest hero nền **xanh Discord
 `rgb(88,101,242)`**. (Chi tiết 10 mục ở daily log 25/10.)
 
+## 🚀 ĐÃ PUSH v1.0.0 (25/10/2026)
+
+- Release **https://github.com/duyzoz/AUTO-QUEST/releases/tag/v1.0.0** (id `411911191`).
+- Asset: `Auto.Quest.Setup.1.0.0.exe` (84.85 MB) · `Auto.Quest.1.0.0.portable.exe` (84.33 MB)
+  · `SHA256SUMS.txt`. Đã xoá 2 asset cũ (`AUTO-QUEST.exe`, `.ipa`).
+- **🪤 Remote là repo KHÁC HOÀN TOÀN** (chỉ 1 commit `169c090 initial commit`, gốc
+  `vpsfreetrail6h/build-ipa`) ⇒ **không có merge-base**. Phải `git fetch` + `git merge
+  --allow-unrelated-histories -X ours FETCH_HEAD`. Push thẳng ⇒ `! [rejected] (fetch first)`.
+- **🪤 `LICENSE` phải CHUẨN MIT 100%**, KHÔNG thêm gì sau ⇒ GitHub mới báo `license: MIT`.
+  Để thêm phần "LƯU Ý BỔ SUNG" ⇒ `NOASSERTION / Other`. Disclaimer tách ra `DISCLAIMER.md`.
+- **🪤 LUÔN kiểm staged TRƯỚC commit**: `git add -A` từng nuốt 753 file gồm `.tmp/` (40MB),
+  `AUTO-QUEST-main/` (84MB, .exe cũ), `tmp-view/`, `shots-*/`. Đã ignore hết ⇒ còn 137 file/6.4MB.
+- **🪤 `node -e` trên Windows**: `/tmp/x` ⇒ `C:\tmp\x` ENOENT (Git Bash path ≠ Windows path) —
+  copy file vào repo rồi đọc đường dẫn tương đối.
+- API tạo release đã tồn tại ⇒ dùng `PATCH /releases/:id`, KHÔNG `POST` (`already_exists`).
+
 ## 📦 ĐÓNG GÓI PHÁT HÀNH (#97) — MIT + setup.exe + đa nền tảng
 
 - **`LICENSE`** (MIT, © 2026 duyzoz / NgDuy (ZoZ Community)) + **`LICENSE.txt`** (CRLF) cho
