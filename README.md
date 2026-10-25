@@ -390,9 +390,9 @@ Output luôn về `build-release/exe/latest/` (đã `.gitignore`) — không cò
 
 Phát hành theo **[MIT License](LICENSE)** — tự do dùng, sửa, chia sẻ, kể cả thương mại, miễn giữ nguyên dòng bản quyền.
 
-Dự án phục vụ mục đích học tập và tối ưu trải nghiệm cá nhân. **Không liên kết chính thức, không được tài trợ và không được xác nhận bởi Discord Inc.** Thương hiệu "Discord", logo, Orb và mọi tài nguyên liên quan thuộc bản quyền của Discord Inc. Người dùng tự chịu trách nhiệm tuân thủ Điều khoản Dịch vụ của Discord.
-
 Bản quyền © 2026 **duyzoz / NgDuy (ZoZ Community)**.
+
+> ⚠️ **Đọc [`DISCLAIMER.md`](DISCLAIMER.md)** trước khi dùng: dự án **học tập**, **không liên kết chính thức** với Discord Inc. Thương hiệu "Discord", logo, Orb thuộc bản quyền Discord Inc. Người dùng tự chịu trách nhiệm tuân thủ Điều khoản Dịch vụ của Discord.
 
 ---
 

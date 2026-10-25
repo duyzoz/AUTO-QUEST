@@ -19,21 +19,3 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-
----
-
-LƯU Ý BỔ SUNG (không thuộc nội dung giấy phép MIT ở trên):
-
-ZoZ Development / Auto Quest là dự án HỌC TẬP, mã nguồn mở, KHÔNG liên kết
-chính thức, không được tài trợ và không được xác nhận bởi Discord Inc.
-Thương hiệu "Discord", logo, Orb và mọi tài nguyên liên quan thuộc bản quyền
-của Discord Inc. và chỉ được dùng ở đây cho mục đích minh hoạ/học tập.
-
-Người dùng tự chịu toàn bộ trách nhiệm khi sử dụng phần mềm này, bao gồm việc
-tuân thủ Điều khoản Dịch vụ (Terms of Service) của Discord. Tác giả không
-chịu trách nhiệm cho bất kỳ tổn thất nào phát sinh, bao gồm nhưng không giới
-hạn ở việc tài khoản bị hạn chế, khoá hoặc chấm dứt.
-
-Toàn bộ dữ liệu (token, cấu hình, tài khoản) được xử lý và lưu trữ cục bộ
-trên máy người dùng — ứng dụng không gửi dữ liệu tới bất kỳ endpoint bên
-ngoài nào ngoài API chính thức của Discord.

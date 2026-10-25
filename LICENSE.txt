@@ -22,18 +22,20 @@ SOFTWARE.
 
 ---
 
-LƯU Ý BỔ SUNG (không thuộc nội dung giấy phép MIT ở trên):
+LUU Y BO SUNG (khong thuoc noi dung giay phep MIT o tren):
 
-ZoZ Development / Auto Quest là dự án HỌC TẬP, mã nguồn mở, KHÔNG liên kết
-chính thức, không được tài trợ và không được xác nhận bởi Discord Inc.
-Thương hiệu "Discord", logo, Orb và mọi tài nguyên liên quan thuộc bản quyền
-của Discord Inc. và chỉ được dùng ở đây cho mục đích minh hoạ/học tập.
+ZoZ Development / Auto Quest la du an HOC TAP, ma nguon mo, KHONG lien ket
+chinh thuc, khong duoc tai tro va khong duoc xac nhan boi Discord Inc.
+Thuong hieu "Discord", logo, Orb va moi tai nguyen lien quan thuoc ban quyen
+cua Discord Inc. va chi duoc dung o day cho muc dich minh hoa/hoc tap.
 
-Người dùng tự chịu toàn bộ trách nhiệm khi sử dụng phần mềm này, bao gồm việc
-tuân thủ Điều khoản Dịch vụ (Terms of Service) của Discord. Tác giả không
-chịu trách nhiệm cho bất kỳ tổn thất nào phát sinh, bao gồm nhưng không giới
-hạn ở việc tài khoản bị hạn chế, khoá hoặc chấm dứt.
+Nguoi dung tu chiu toan bo trach nhiem khi su dung phan mem nay, bao gom viec
+tuan thu Dieu khoan Dich vu (Terms of Service) cua Discord. Tac gia khong
+chiu trach nhiem cho bat ky ton that nao phat sinh, bao gom nhung khong gioi
+han o viec tai khoan bi han che, khoa hoac cham dut.
 
-Toàn bộ dữ liệu (token, cấu hình, tài khoản) được xử lý và lưu trữ cục bộ
-trên máy người dùng — ứng dụng không gửi dữ liệu tới bất kỳ endpoint bên
-ngoài nào ngoài API chính thức của Discord.
+Toan bo du lieu (token, cau hinh, tai khoan) duoc xu ly va luu tru cuc bo
+tren may nguoi dung - ung dung khong gui du lieu toi bat ky endpoint ben
+ngoai nao ngoai API chinh thuc cua Discord.
+
+Chi tiet day du: xem DISCLAIMER.md trong repo.
