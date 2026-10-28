@@ -1,0 +1,459 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ZoZ Web POC — trình duyệt gọi thẳng Discord API</title>
+<style>
+	:root{
+		--bg:#05060b; --card:#0b0e18; --line:#1d2334; --fg:#e6e9f2; --dim:#8b93a7;
+		--brand:#8b5cf6; --ok:#22c55e; --warn:#f59e0b; --bad:#ef4444;
+	}
+	*{box-sizing:border-box}
+	body{
+		margin:0; padding:28px 20px 64px; background:var(--bg); color:var(--fg);
+		font:14px/1.55 "Segoe UI",system-ui,-apple-system,sans-serif;
+	}
+	.wrap{max-width:980px;margin:0 auto}
+	h1{font-size:1.25rem;margin:0 0 4px;letter-spacing:-.01em}
+	h1 b{color:var(--brand)}
+	.sub{color:var(--dim);margin:0 0 20px;font-size:.86rem}
+	.card{
+		background:var(--card);border:1px solid var(--line);border-radius:12px;
+		padding:16px;margin-bottom:14px;
+	}
+	.card h2{font-size:.78rem;text-transform:uppercase;letter-spacing:.08em;color:var(--dim);margin:0 0 10px;font-weight:600}
+	.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+	input[type=password],input[type=text]{
+		flex:1 1 320px;min-width:220px;background:#05060b;border:1px solid var(--line);
+		color:var(--fg);border-radius:8px;padding:10px 12px;font:inherit;outline:none;
+	}
+	input:focus{border-color:var(--brand)}
+	button{
+		background:var(--brand);color:#fff;border:0;border-radius:8px;padding:10px 16px;
+		font:inherit;font-weight:600;cursor:pointer;
+	}
+	button.ghost{background:transparent;border:1px solid var(--line);color:var(--fg);font-weight:500}
+	button:disabled{opacity:.45;cursor:not-allowed}
+	.hint{color:var(--dim);font-size:.8rem;margin:10px 0 0}
+	.test{display:flex;gap:8px;align-items:flex-start;margin:6px 0;font-size:.84rem}
+	.dot{width:8px;height:8px;border-radius:50%;margin-top:6px;flex:0 0 auto;background:var(--dim)}
+	.dot.ok{background:var(--ok)} .dot.bad{background:var(--bad)} .dot.warn{background:var(--warn)}
+	.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px}
+	.stat{background:#05060b;border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+	.stat b{display:block;font-size:1.25rem;line-height:1.2}
+	.stat span{color:var(--dim);font-size:.74rem;text-transform:uppercase;letter-spacing:.06em}
+	.q{display:flex;gap:12px;align-items:center;border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:8px;background:#05060b}
+	.q .info{flex:1;min-width:0}
+	.q .name{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+	.q .meta{color:var(--dim);font-size:.78rem}
+	.q .orbs{color:var(--brand);font-weight:700;white-space:nowrap}
+	.q button{padding:7px 12px;font-size:.82rem}
+	.tag{font-size:.7rem;padding:2px 7px;border-radius:999px;border:1px solid var(--line);color:var(--dim)}
+	.tag.claimable{color:var(--ok);border-color:color-mix(in srgb,var(--ok) 40%,transparent)}
+	.tag.claimed{color:var(--dim)}
+	pre{
+		background:#05060b;border:1px solid var(--line);border-radius:10px;padding:12px;
+		max-height:280px;overflow:auto;font:12px/1.5 ui-monospace,Consolas,monospace;
+		white-space:pre-wrap;word-break:break-word;margin:0;
+	}
+	.err{color:var(--bad)} .good{color:var(--ok)} .warnc{color:var(--warn)}
+	#captchaCard{border-color:color-mix(in srgb,var(--warn) 45%,var(--line))}
+	.kv{display:grid;grid-template-columns:180px 1fr;gap:4px 12px;font:12px/1.6 ui-monospace,Consolas,monospace}
+	.kv i{color:var(--dim);font-style:normal}
+</style>
+</head>
+<body>
+<div class="wrap">
+	<h1>ZoZ <b>Web POC</b> — trình duyệt gọi thẳng Discord API</h1>
+	<p class="sub">Chứng minh: không cần server, không cần cầu nối, token không rời khỏi máy bro.</p>
+
+	<div class="card">
+		<h2>Tự kiểm tra môi trường</h2>
+		<div id="tests"></div>
+	</div>
+
+	<div class="card">
+		<h2>Token Discord (chỉ nằm trong RAM của tab này)</h2>
+		<div class="row">
+			<input id="token" type="password" placeholder="dán token xxx.yyy.zzz" autocomplete="off" spellcheck="false">
+			<button id="btnScan">Quét nhiệm vụ</button>
+			<button id="btnClear" class="ghost">Xoá token</button>
+		</div>
+		<p class="hint">
+			Không ghi vào <code>localStorage</code>, không gửi tới server nào. Mọi request chỉ đi tới
+			<code>discord.com</code>. Đóng tab là token mất.
+		</p>
+	</div>
+
+	<div class="card" id="statsCard" hidden>
+		<h2>Tổng quan</h2>
+		<div class="stats" id="stats"></div>
+	</div>
+
+	<div class="card" id="questCard" hidden>
+		<h2>Nhiệm vụ</h2>
+		<div id="quests"></div>
+	</div>
+
+	<div class="card" id="captchaCard" hidden>
+		<h2>Discord trả challenge CAPTCHA — dữ liệu THẬT</h2>
+		<div class="kv" id="captchaKv"></div>
+		<p class="hint" id="captchaNote"></p>
+	</div>
+
+	<div class="card">
+		<h2>Log</h2>
+		<pre id="log">sẵn sàng.</pre>
+	</div>
+</div>
+
+<script>
+(function () {
+	'use strict';
+
+	var API = 'https://discord.com/api/v10';
+	var token = '';
+	var quests = [];
+
+	var $ = function (id) { return document.getElementById(id); };
+
+	function log(msg, cls) {
+		var el = $('log');
+		var t = new Date().toLocaleTimeString('vi-VN');
+		var line = document.createElement('div');
+		if (cls) line.className = cls;
+		line.textContent = '[' + t + '] ' + msg;
+		el.appendChild(line);
+		el.scrollTop = el.scrollHeight;
+	}
+
+	function test(name, state, detail) {
+		var row = document.createElement('div');
+		row.className = 'test';
+		var dot = document.createElement('span');
+		dot.className = 'dot ' + state;
+		var txt = document.createElement('div');
+		txt.innerHTML = '<b>' + name + '</b><br><span style="color:#8b93a7">' + detail + '</span>';
+		row.appendChild(dot);
+		row.appendChild(txt);
+		$('tests').appendChild(row);
+	}
+
+	/* UTF-8 an toàn: X-Super-Properties là base64 của JSON. */
+	function b64(str) {
+		var bytes = new TextEncoder().encode(str);
+		var bin = '';
+		for (var i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+		return btoa(bin);
+	}
+
+	var chromeMajor = (function () {
+		var m = navigator.userAgent.match(/Chrome\/(\d+)\./);
+		return m ? m[1] : '0';
+	})();
+
+	/* Danh tính lấy TỪ CHÍNH TRÌNH DUYỆT — nhờ vậy UA và XSP luôn khớp tuyệt đối,
+	   thứ mà bản Electron phải giả lập và đang bị lệch (xem Waves#102). */
+	var PROPS = {
+		os: navigator.userAgent.indexOf('Windows') >= 0 ? 'Windows'
+			: navigator.userAgent.indexOf('Mac') >= 0 ? 'Mac OS X' : 'Linux',
+		browser: 'Chrome',
+		release_channel: 'stable',
+		client_version: 'web',
+		os_version: (navigator.userAgentData && navigator.userAgentData.platformVersion) || '10.0.0',
+		os_arch: 'x64',
+		app_arch: 'x64',
+		system_locale: navigator.language || 'en-US',
+		has_client_mods: false,
+		browser_user_agent: navigator.userAgent,
+		browser_version: chromeMajor + '.0.0.0',
+		client_build_number: 0,
+		client_event_source: null
+	};
+	var XSP = b64(JSON.stringify(PROPS));
+
+	function headers(json) {
+		var h = {
+			'Authorization': token,
+			'X-Super-Properties': XSP,
+			'X-Discord-Locale': navigator.language || 'en-US',
+			'X-Discord-Timezone': (function () {
+				try { return Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'; }
+				catch (e) { return 'UTC'; }
+			})(),
+			'Accept': '*/*'
+		};
+		if (json) h['Content-Type'] = 'application/json';
+		return h;
+	}
+
+	function norm(q) {
+		var cfg = q.config || {};
+		var rc = cfg.rewards_config || {};
+		var rewards = Array.isArray(rc.rewards) ? rc.rewards
+			: (Array.isArray(cfg.rewards) ? cfg.rewards : []);
+		var orbs = 0;
+		for (var i = 0; i < rewards.length; i++) {
+			if (typeof rewards[i].orb_quantity === 'number') orbs += rewards[i].orb_quantity;
+		}
+		var tasks = (cfg.task_config_v2 && cfg.task_config_v2.tasks)
+			|| (cfg.task_config && cfg.task_config.tasks) || {};
+		var names = Object.keys(tasks);
+		var task = names.length ? names[0] : 'UNKNOWN';
+		var target = tasks[task] && typeof tasks[task].target === 'number' ? tasks[task].target : 0;
+		var st = q.user_status || {};
+		var prog = st.progress && st.progress[task] && typeof st.progress[task].value === 'number'
+			? st.progress[task].value : 0;
+		var completed = !!st.completed_at;
+		var claimed = !!st.claimed_at;
+		return {
+			id: q.id,
+			name: (cfg.messages && cfg.messages.quest_name) || q.id,
+			orbs: orbs,
+			task: task,
+			target: target,
+			prog: prog,
+			platform: Array.isArray(rc.platforms) && rc.platforms.length ? rc.platforms[0] : 0,
+			status: completed ? (claimed ? 'claimed' : 'claimable') : 'todo',
+			expiresAt: cfg.expires_at || null,
+			preview: q.preview === true,
+			raw: q
+		};
+	}
+
+	async function selfTest() {
+		$('tests').innerHTML = '';
+
+		/* 1) CORS — dùng token rác: 401 = gọi được; TypeError = bị CORS chặn. */
+		try {
+			var r = await fetch(API + '/quests/@me', {
+				headers: { 'Authorization': 'Bogus.Token.Value', 'X-Super-Properties': XSP }
+			});
+			if (r.status === 401) {
+				test('CORS', 'ok', 'Gọi được Discord API từ origin này (HTTP 401 = đúng, token rác bị từ chối).');
+			} else {
+				test('CORS', 'warn', 'Gọi được nhưng Discord trả HTTP ' + r.status + ' — bất thường, kiểm tra mạng/proxy.');
+			}
+		} catch (e) {
+			test('CORS', 'bad', 'Bị chặn: ' + e.message + ' — nếu đang mở bằng file:// hãy chạy qua http://localhost.');
+		}
+
+		/* 2) UA <-> XSP: bản Electron phải giả lập; ở đây khớp tự nhiên. */
+		test('UA khớp X-Super-Properties', 'ok',
+			'UA thật = Chrome ' + chromeMajor + ', và XSP.browser_user_agent lấy đúng chuỗi đó.');
+
+		/* 3) Origin hiện tại */
+		test('Origin', location.protocol === 'file:' ? 'warn' : 'ok',
+			location.origin + (location.protocol === 'file:' ? ' (file:// gửi Origin: null — vẫn được Discord chấp nhận, nhưng nên chạy qua localhost)' : ''));
+
+		/* 4) Nơi lưu token */
+		test('Lưu token', 'ok', 'Chỉ trong biến RAM của tab. Không localStorage, không cookie, không server.');
+	}
+
+	async function fetchBalance() {
+		try {
+			var r = await fetch(API + '/users/@me/virtual-currency/balance', { headers: headers(false) });
+			if (!r.ok) return null;
+			var d = await r.json();
+			return typeof d.balance === 'number' ? d.balance : null;
+		} catch (e) { return null; }
+	}
+
+	function renderStats(balance) {
+		var claimable = quests.filter(function (q) { return q.status === 'claimable'; });
+		var todo = quests.filter(function (q) { return q.status === 'todo'; });
+		var claimed = quests.filter(function (q) { return q.status === 'claimed'; });
+		var sum = function (arr) { return arr.reduce(function (s, q) { return s + q.orbs; }, 0); };
+
+		$('stats').innerHTML =
+			'<div class="stat"><b>' + quests.length + '</b><span>nhiệm vụ</span></div>' +
+			'<div class="stat"><b>' + claimable.length + '</b><span>chờ nhận</span></div>' +
+			'<div class="stat"><b>' + sum(claimable) + '</b><span>orbs chờ nhận</span></div>' +
+			'<div class="stat"><b>' + todo.length + '</b><span>chưa làm</span></div>' +
+			'<div class="stat"><b>' + claimed.length + '</b><span>đã nhận</span></div>' +
+			'<div class="stat"><b>' + (balance === null ? '—' : balance) + '</b><span>ví orbs</span></div>';
+		$('statsCard').hidden = false;
+	}
+
+	function renderQuests() {
+		var box = $('quests');
+		box.innerHTML = '';
+		var list = quests.filter(function (q) { return !q.preview; });
+		if (!list.length) {
+			box.innerHTML = '<p class="hint">Không có nhiệm vụ nào.</p>';
+			$('questCard').hidden = false;
+			return;
+		}
+		list.forEach(function (q) {
+			var row = document.createElement('div');
+			row.className = 'q';
+
+			var info = document.createElement('div');
+			info.className = 'info';
+			var pct = q.target > 0 ? Math.min(100, Math.round(q.prog / q.target * 100)) : (q.status === 'todo' ? 0 : 100);
+			info.innerHTML =
+				'<div class="name">' + escapeHtml(q.name) + '</div>' +
+				'<div class="meta">' + q.task + ' · ' + Math.floor(q.prog) + '/' + q.target +
+				' (' + pct + '%) · <span class="tag ' + q.status + '">' +
+				(q.status === 'claimable' ? 'CHỜ NHẬN' : q.status === 'claimed' ? 'ĐÃ NHẬN' : 'CHƯA LÀM') +
+				'</span></div>';
+
+			var orbs = document.createElement('div');
+			orbs.className = 'orbs';
+			orbs.textContent = q.orbs ? q.orbs + ' Orbs' : '';
+
+			row.appendChild(info);
+			row.appendChild(orbs);
+
+			if (q.status === 'claimable') {
+				var btn = document.createElement('button');
+				btn.textContent = 'Nhận';
+				btn.addEventListener('click', function () { claim(q, btn); });
+				row.appendChild(btn);
+			}
+			box.appendChild(row);
+		});
+		$('questCard').hidden = false;
+	}
+
+	function escapeHtml(s) {
+		return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+			return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+		});
+	}
+
+	async function scan() {
+		token = $('token').value.trim().replace(/^["']|["']$/g, '');
+		if (!token || token.split('.').length < 3) {
+			log('Token không đúng định dạng (cần xxx.yyy.zzz).', 'err');
+			return;
+		}
+		$('btnScan').disabled = true;
+		$('captchaCard').hidden = true;
+		log('GET /quests/@me …');
+		try {
+			var r = await fetch(API + '/quests/@me', { headers: headers(false) });
+			log('→ HTTP ' + r.status);
+			if (r.status === 401) { log('Token không hợp lệ hoặc đã bị đổi mật khẩu.', 'err'); return; }
+			if (!r.ok) { log('Discord từ chối: ' + (await r.text()).slice(0, 300), 'err'); return; }
+			var data = await r.json();
+			var arr = Array.isArray(data.quests) ? data.quests : [];
+			quests = arr.map(norm);
+			log('Nhận ' + quests.length + ' nhiệm vụ (không nạp excluded_quests).', 'good');
+			var bal = await fetchBalance();
+			log('Số dư ví: ' + (bal === null ? 'không đọc được' : bal + ' Orbs'));
+			renderStats(bal);
+			renderQuests();
+		} catch (e) {
+			log('Lỗi mạng/CORS: ' + e.message, 'err');
+		} finally {
+			$('btnScan').disabled = false;
+		}
+	}
+
+	async function claim(q, btn) {
+		btn.disabled = true;
+		btn.textContent = 'Đang nhận…';
+		var body = {
+			platform: q.platform,
+			location: 11,
+			is_targeted: false,
+			metadata_raw: null,
+			metadata_sealed: null,
+			traffic_metadata_raw: q.raw.traffic_metadata_raw,
+			traffic_metadata_sealed: q.raw.traffic_metadata_sealed
+		};
+		log('POST claim-reward · ' + q.name + ' · platform=' + q.platform);
+		try {
+			var r = await fetch(API + '/quests/' + encodeURIComponent(q.id) + '/claim-reward', {
+				method: 'POST',
+				headers: headers(true),
+				body: JSON.stringify(body)
+			});
+			var data = null;
+			try { data = await r.json(); } catch (e) { data = null; }
+			log('→ HTTP ' + r.status + ' ' + JSON.stringify(data).slice(0, 300));
+
+			if (r.ok) {
+				q.status = 'claimed';
+				btn.remove();
+				log('ĐÃ NHẬN THẬT: ' + (data && data.orb_quantity_claimed ? data.orb_quantity_claimed + ' Orbs' : 'Discord xác nhận 2xx'), 'good');
+				var bal = await fetchBalance();
+				renderStats(bal);
+				renderQuests();
+				return;
+			}
+
+			if (data && (data.captcha_key || data.captcha_sitekey)) {
+				showCaptcha(data, r.status);
+				log('Discord yêu cầu CAPTCHA cho account này.', 'warnc');
+			} else {
+				log('Chưa nhận được: ' + ((data && data.message) || 'không rõ') +
+					(data && data.code ? ' (code ' + data.code + ')' : ''), 'err');
+			}
+		} catch (e) {
+			log('Lỗi: ' + e.message, 'err');
+		} finally {
+			btn.disabled = false;
+			btn.textContent = 'Nhận';
+		}
+	}
+
+	function showCaptcha(data, status) {
+		var ch = {
+			service: data.captcha_service || '',
+			sitekey: data.captcha_sitekey || '',
+			rqdata: data.captcha_rqdata || '',
+			rqtoken: data.captcha_rqtoken || '',
+			sessionId: data.captcha_session_id || '',
+			reasons: Array.isArray(data.captcha_key) ? data.captcha_key.length : (data.captcha_key ? 1 : 0),
+			code: data.code,
+			message: data.message
+		};
+		var rows = [
+			['HTTP', status],
+			['captcha_service', ch.service || '—'],
+			['captcha_key (số lý do)', ch.reasons],
+			['captcha_sitekey', ch.sitekey ? ch.sitekey.slice(0, 12) + '… (' + ch.sitekey.length + ' ký tự)' : 'KHÔNG CÓ'],
+			['captcha_rqdata', ch.rqdata ? 'có (' + ch.rqdata.length + ' ký tự)' : 'KHÔNG CÓ'],
+			['captcha_rqtoken', ch.rqtoken ? 'có' : 'KHÔNG CÓ'],
+			['captcha_session_id', ch.sessionId ? 'có (' + ch.sessionId.length + ' ký tự)' : 'KHÔNG CÓ'],
+			['code / message', (ch.code == null ? '—' : ch.code) + ' / ' + (ch.message || '—')]
+		];
+		var kv = $('captchaKv');
+		kv.innerHTML = '';
+		rows.forEach(function (p) {
+			var i = document.createElement('i');
+			i.textContent = p[0];
+			var v = document.createElement('span');
+			v.textContent = String(p[1]);
+			kv.appendChild(i);
+			kv.appendChild(v);
+		});
+		$('captchaNote').innerHTML = ch.sessionId
+			? 'Discord CÓ trả <code>captcha_session_id</code>. Bản Electron hiện tại lưu nó rồi <b>vứt đi</b> khi claim — ' +
+			  'đây là bằng chứng sống cho <b>Waves#103</b>.'
+			: 'Discord KHÔNG trả <code>captcha_session_id</code> cho challenge này — chỉ còn sitekey + rqdata + rqtoken.';
+		$('captchaCard').hidden = false;
+	}
+
+	$('btnScan').addEventListener('click', scan);
+	$('btnClear').addEventListener('click', function () {
+		token = '';
+		$('token').value = '';
+		quests = [];
+		$('statsCard').hidden = true;
+		$('questCard').hidden = true;
+		$('captchaCard').hidden = true;
+		log('Đã xoá token khỏi RAM.');
+	});
+	$('token').addEventListener('keydown', function (e) {
+		if (e.key === 'Enter') scan();
+	});
+
+	selfTest();
+})();
+</script>
+</body>
+</html>
