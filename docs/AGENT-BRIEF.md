@@ -131,6 +131,24 @@ không đoán). Đây là **lý do** port web khả thi: chỉ cần thay object
 
 ## 4. TRẠNG THÁI HIỆN TẠI
 
+> ### ⚠️ CẢNH BÁO SỐ 1 — CODE TRÊN GITHUB ≠ CODE TRONG BẢN ZIP ĐANG CHẠY
+>
+> Tính đến `9f66d5d`, **12 file code đang lệch** giữa repo và bản local mà chủ dự án build/chạy.
+> Không phải "một bên cũ hơn" — **hai nhánh khác nhau**:
+>
+> | File | Local có | Repo (GitHub) có |
+> |---|---|---|
+> | `electron/renderer/renderer.js` | `challengeOpened` (**8** lần) | **0** — tức bản chưa có cổng L2 |
+> | `src/questManager.ts` | `captchaBlockedClaims` (**8**) | **0** — tức bản chưa có chặn L5 |
+> | `electron/main.js` | `deepLink`/`webUrl`/`variants` | `summarizeClaimBody`/`claimQueues`/`waitFor`/`spacingWait` |
+>
+> **Hệ quả cho agent:**
+> 1. **Mọi số dòng trong tài liệu này trích từ BẢN LOCAL.** Trước khi tin, chạy `grep -n <tên hàm> <file>`
+>    trên chính máy mình. Không thấy hàm ⇒ bạn đang đọc bản khác, đừng "sửa cho khớp số dòng".
+> 2. **CẤM `git add -A`** khi sync code — sẽ trộn 2 nhánh và có thể **xoá mất** phần mới của bên kia.
+> 3. Muốn đồng bộ: diff **từng file**, đối chiếu với `.brain/2026-10-28.txt`, rồi chốt với chủ dự án
+>    bản nào đúng. Chưa chốt thì **đừng đụng code**.
+
 ### Đã xong (không làm lại)
 
 | Wave | Nội dung | Nguồn |
