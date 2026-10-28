@@ -1,15 +1,11 @@
 # Dependencies
 node_modules/
-mobile/node_modules/
 
 # Build outputs
 release/
 dist/
-dist-ios/
 build/
 build-output/
-Payload/
-*.ipa
 AUTO-QUEST.exe
 
 # Output EXE desktop (chỉ giữ script build, không commit file .exe)
@@ -25,8 +21,6 @@ build-release/release-assets/
 !resources/icon-64.png
 
 # Cache & Logs
-.expo/
-mobile/.expo/
 *.log
 npm-debug.*
 yarn-debug.*
@@ -49,7 +43,6 @@ AUTO-QUEST-main/
 shots-*/
 build-release/ui-preview/
 build-release/wave*/
-build-release/build-ipa/
 
 # File harness/probe sinh trong lúc dev
 electron/renderer/.csp.html

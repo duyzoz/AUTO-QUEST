@@ -16,3 +16,19 @@ HANDOFF — full-project audit, no code changed (session 2026-10-28 10:39 UTC).
 - Decision: fix nothing before Waves#101 probe — the three candidate causes cannot be separated by reading code alone.
 - Canonical numbering now: claim track #101–#108, web track #109–#116, infra #117. Older drafts that reused #109–#114 were renumbered and marked in place.
 - No build was run. No live Discord request was made.
+
+MOBILE/IOS REMOVED — web is now the only target (session 2026-10-28 10:52 UTC).
+- Owner decision (recorded as D9 in docs/AGENT-BRIEF.md): mobile + IPA builds are no longer wanted; the
+  single goal is the web (PWA) version. Removed from the repo: `mobile/` (30 files, React Native iOS),
+  `build-ipa/` (4 files), `docs/HUONG-DAN-CAI-TROLLSTORE.md`.
+- Cleaned references: README badge (Platforms now Windows | macOS | Linux | Web), mermaid mind map branch
+  (iOS TrollStore -> Web PWA), feature table row "OLED Saver (iOS)", download section (iPhone/TrollStore ->
+  Web section), repo tree. `.gitignore`: dropped `mobile/node_modules/`, `mobile/.expo/`, `.expo/`,
+  `Payload/`, `*.ipa`, `dist-ios/`, `build-release/build-ipa/`.
+- Numbering discipline: the docs handoff commit was relabelled `chore(docs)` (not `waves#101`) so wave
+  #101 stays reserved for the probe. This removal is also a chore, not a wave. Waves remain #101-#117.
+- New decision D10: because the target is the web, #102 (single Discord identity) and #103
+  (`captcha_session_id`) now outrank #105 — the origin trick of #105 only works inside Electron, a web
+  page cannot mint an hCaptcha token on the discord.com origin. On the web the only lever against
+  challenges is a lower-risk identity plus sending the full challenge payload.
+- Pushed: `f975558 -> 7bd7c53` (docs), then this removal commit. Verified remote refs with ls-remote.

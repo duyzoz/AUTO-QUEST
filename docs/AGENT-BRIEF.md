@@ -6,6 +6,7 @@ app_version: 1.0.0
 updated: 2026-10-28
 owner: duyzoz
 status: HANDOFF — phân tích xong, CHƯA sửa code claim
+target: WEB (PWA) là hướng DUY NHẤT — mobile/iOS/IPA đã bị xoá 28/10/2026
 next_wave: 101
 read_order:
   - docs/AGENT-BRIEF.md          # file này — luật + bản đồ + backlog
@@ -15,6 +16,11 @@ read_order:
 ---
 
 # AGENT BRIEF — ĐỌC FILE NÀY TRƯỚC KHI GÕ DÒNG CODE NÀO
+
+> **ĐÍCH ĐÃ CHỐT (28/10/2026): CHỈ CÒN WEB.** `mobile/` (React Native iOS) + `build-ipa/` +
+> `docs/HUONG-DAN-CAI-TROLLSTORE.md` **đã bị xoá khỏi repo** theo yêu cầu chủ dự án.
+> Đừng khôi phục, đừng viết code iOS, đừng nhắc TrollStore như một kênh phát hành.
+> Đường đi: **Electron (hiện tại) → tách vỏ → PWA web (đích)**.
 
 > Mục đích: một agent khác (hoặc bro sau 2 tuần) mở repo lên, đọc **đúng 1 file này** là biết
 > đang ở đâu, vì sao lại đi hướng này, việc tiếp theo là gì, và **cái gì bị cấm**.
@@ -173,12 +179,19 @@ không đoán). Đây là **lý do** port web khả thi: chỉ cần thay object
 | **D6** | Web = **95% tính năng / 100% giao diện**. Không hứa 100% | 7 điểm chặn, 2 điểm **không thể** vá: `safeStorage` (DPAPI) không có tương đương, và `spawn` (treo 24/7 khi đóng tab) | 2026-10-28 |
 | **D7** | Token trên web **không** lưu `localStorage` trần | Plaintext + XSS = mất token **toàn bộ user cùng lúc**. Bắt buộc IndexedDB + WebCrypto + passphrase, CSP nghiêm | 2026-10-28 |
 | **D8** | Waves **chỉ tăng**, không tái dùng số. Claim track `#101–#108`, web track `#109–#116`, hạ tầng `#117` | Luật của chủ dự án | 2026-10-28 |
+| **D9** | **Bỏ hẳn iOS/mobile/IPA. Đích duy nhất là WEB (PWA).** Đã xoá `mobile/`, `build-ipa/`, `docs/HUONG-DAN-CAI-TROLLSTORE.md`, dọn `.gitignore` + README | Chủ dự án chốt: *"tôi không cần mobile và ipa build nữa… bây giờ chỉ duy nhất là tôi muốn nó lên web"*. Giữ 2 nhánh nền tảng = gấp đôi công bảo trì cho một nhánh không dùng | 2026-10-28 |
+| **D10** | Vì đích là web, **#102 (danh tính) + #103 (`captcha_session_id`) được ưu tiên CAO HƠN #105** | Web **không thể** dùng mẹo origin `discord.com` của #105 (trang web không mint được token ở origin discord.com). Nghĩa là trên web, cách duy nhất để giảm captcha là **hạ risk của danh tính + gửi đủ challenge**. #105 chỉ còn giá trị cho bản Electron | 2026-10-28 |
 
 ---
 
 ## 6. BACKLOG — 17 WAVES, CÓ PHỤ THUỘC VÀ TIÊU CHÍ NGHIỆM THU
 
 Trạng thái: `TODO` · `WIP` · `DONE` · `BLOCKED`. Cập nhật cột này khi làm xong.
+
+> **Ưu tiên sau khi chốt D9/D10 (đích = web):** làm **#101 → #102 → #103** (đo, rồi hạ risk danh tính,
+> rồi gửi đủ challenge — cả 3 đều ăn cho **web**), tiếp **#106 + #108** (hết kẹt), rồi **nhảy sang Track B
+> #109+**. Các wave `#104 · #105 · #107` là để hoàn thiện **bản Electron**, làm sau nếu còn thời gian —
+> **#105 đặc biệt**: nó chỉ cứu được Electron, web không dùng được (xem D10).
 
 ### Track A — Claim ORBS (ưu tiên 1, làm trước)
 
@@ -193,7 +206,7 @@ Trạng thái: `TODO` · `WIP` · `DONE` · `BLOCKED`. Cập nhật cột này k
 | **#107** | **"Nhận tất cả (N)"** + retry có kỷ luật (gap 1200ms, 429 theo `retry_after`, ≤1 retry/quest/vòng) | #106 | Probe đếm request thật: ≤ 1 req/1.2s/account, không 2 claim song song cùng account | TODO |
 | **#108** | **Dọn nợ**: video quest NaN → `Date.now()` + `maxTicks`; scan % đạt 100%; auto-enroll thành công tắc (mặc định TẮT); `lastClaimAt` ra ngoài instance; `res.ok` phải kèm `claimed_at` | — | Không treo video quest; % quét chạm 100%; claim không cộng orbs ảo | TODO |
 
-### Track B — Web (chỉ bắt đầu khi Track A đã xong #103–#106)
+### Track B — Web (**ĐÍCH CHÍNH** — bắt đầu ngay sau #102/#103, không cần đợi hết Track A)
 
 | Wave | Việc | Phụ thuộc | Nghiệm thu | Trạng thái |
 |---|---|---|---|---|
@@ -225,7 +238,7 @@ Trạng thái: `TODO` · `WIP` · `DONE` · `BLOCKED`. Cập nhật cột này k
 | Hardcode `sku`, token, tài khoản, hay quest id | Trái I6 |
 | Copy `renderer.js` thành 2 bản song song | Trái D2 — sẽ lệch |
 | Chạy `npm run build` / build EXE khi chưa được duyệt | Luật của chủ dự án |
-| Đụng `mobile/` | Ngoài phạm vi, chủ dự án chưa cho |
+| Khôi phục `mobile/`, `build-ipa/`, hoặc viết code iOS/TrollStore | Đã bị xoá theo yêu cầu chủ dự án (D9). Đích là web |
 | Commit `node_modules/`, `build-release/exe/`, file token | `.gitignore` đã chặn — đừng `git add -f` |
 
 ---

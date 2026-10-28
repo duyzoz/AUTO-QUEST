@@ -2,7 +2,7 @@
 
 ![Release](https://img.shields.io/github/v/release/duyzoz/AUTO-QUEST?color=ff9e64\&label=Version)
 
-![Platform](https://img.shields.io/badge/Platforms-Windows%20%7C%20macOS%20%7C%20Linux%20%7C%20iOS%20TrollStore-10b981)
+![Platform](https://img.shields.io/badge/Platforms-Windows%20%7C%20macOS%20%7C%20Linux%20%7C%20Web%20(đang%20xây)-10b981)
 
 ![Theme](https://img.shields.io/badge/Theme-Dark%20Strong%20Vesper-e0af68)
 
@@ -149,10 +149,10 @@ mindmap
       Quét - Chọn - Auto ORBs
       Account Chip Login
       Dark Vesper UI
-    iOS TrollStore
-      React Native Expo
-      IPA No Revoke
-      OLED Saver
+    Web PWA (đang xây)
+      Dùng chung core/ui
+      Không cần cài đặt
+      Auto-update
     Core Bot
       TypeScript
       Discord API trực tiếp
@@ -244,7 +244,6 @@ flowchart LR
 | **Orbs chuẩn**                    | Mỗi nhiệm vụ cộng Orbs đúng **một lần** (dedupe theo quest id), không cộng ảo khi quét lại.                                                                                                                                                                                                                                                                                                                        |
 | **Bảo mật 100%**                  | Chỉ kết nối `discord.com` — chặn đứng mọi webhook/endpoint ngoài. Token mã hóa Windows DPAPI.                                                                                                                                                                                                                                                                                                                      |
 | **Treo AFK Loop**                 | Tự đếm ngược chu kỳ 15/30/45/60 phút để quét lại nhiệm vụ mới.                                                                                                                                                                                                                                                                                                                                                     |
-| **🌙 OLED Saver (iOS)**           | Giữ app hoạt động qua đêm với 0% hao pin.                                                                                                                                                                                                                                                                                                                                                                          |
 
 ---
 
@@ -277,10 +276,11 @@ Vào **[Releases](https://github.com/duyzoz/AUTO-QUEST/releases)** → chọn **
 - Mở `.dmg` → kéo **Auto Quest** vào **Applications**.
 - Lần đầu mở nếu bị chặn: **Chuột phải → Open** (hoặc `System Settings → Privacy & Security → Open Anyway`) — bản này chưa ký số (unsigned).
 
-### 📱 iPhone (TrollStore)
+### 🌐 Web (đang xây — hướng duy nhất từ 28/10/2026)
 
-- Tải **`AUTO-QUEST-PRO-TrollStore.ipa`** từ Releases/Actions.
-- Mở bằng **TrollStore** → **Install** (chạy vĩnh viễn, không hết hạn chứng chỉ).
+Bản iOS/TrollStore **đã được gỡ bỏ** khỏi dự án. Hướng phát triển tiếp theo là **bản web (PWA)** dùng
+chung `core/ui` với app desktop — xem [`docs/AGENT-BRIEF.md`](docs/AGENT-BRIEF.md) Track B (#109–#116)
+và bản chạy thử [`web-poc/index.html`](web-poc/index.html).
 
 ---
 
@@ -338,10 +338,8 @@ AUTO-QUEST-main/
 │   ├── main.js             # Main process + IPC
 │   ├── preload.js          # Bridge an toàn
 │   └── renderer/           # UI (index.html, renderer.js, styles.css)
-├── mobile/                 # iOS (React Native) — KHÔNG ĐỤNG
-├── tools/                  # Công cụ build (build.js EXE, upload IPA)
-├── build-release/         # Script + output build/release
-│   ├── build-ipa/         # Script build IPA iOS
+├── tools/                  # Công cụ build (build.js EXE) + probe/kiểm chứng
+├── build-release/          # Script + output build/release
 │   └── exe/               # Output EXE portable (gitignore)
 ├── docs/                  # Hướng dẫn sử dụng
 │   └── AGENT-BRIEF.md     # ★ ĐIỂM VÀO CHO AI AGENT: luật + decision log + backlog waves
