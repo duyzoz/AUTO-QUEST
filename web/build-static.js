@@ -55,6 +55,39 @@ copyDir(path.join(WEB, 'fonts'), path.join(OUT, 'web', 'fonts'));
 const integrity = require('./make-integrity');
 const manifest = integrity.distManifest();
 
+/* Wave#134 (audit): web-dist/_headers — Cloudflare Pages / Direct Upload đọc file
+   này và gắn security headers cho MỌI response. Lý do tồn tại: server.js chỉ là
+   bản local, còn production (Workers/Pages) KHÔNG có server.js ⇒ nếu không có
+   _headers thì site public không có CSP header, không frame-ancestors, không
+   nosniff… tức là bản deploy yếu hơn đúng cái bản đã được audit. CSP lấy trực
+   tiếp từ meta trong index.html để hai nơi không bao giờ lệch nhau. */
+function writeSecurityHeaders() {
+	let csp = '';
+	try {
+		const html = fs.readFileSync(path.join(OUT, 'index.html'), 'utf8');
+		const m = html.match(/http-equiv="Content-Security-Policy"\s*\n?\s*content="([^"]+)"/i);
+		if (m) csp = m[1].replace(/;\s*$/, "; frame-ancestors 'none';");
+	} catch {
+		/* không có index.html -> chỉ ghi các header tĩnh */
+	}
+	const lines = [
+		'/*',
+		...(csp ? ['  Content-Security-Policy: ' + csp] : []),
+		'  X-Content-Type-Options: nosniff',
+		'  Referrer-Policy: no-referrer',
+		'  X-Frame-Options: DENY',
+		'  Permissions-Policy: camera=(), microphone=(), geolocation=(), usb=(), payment=(), interest-cohort=()',
+		'  Strict-Transport-Security: max-age=15552000; includeSubDomains',
+		'',
+		'/sw.js',
+		'  Cache-Control: public, max-age=0, must-revalidate',
+		'',
+	].join('\n');
+	fs.writeFileSync(path.join(OUT, '_headers'), lines, 'utf8');
+	return Boolean(csp);
+}
+const headersOk = writeSecurityHeaders();
+
 function dirSize(dir) {
 	let n = 0;
 	for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
@@ -68,3 +101,6 @@ const bytes = dirSize(OUT);
 console.log('Đã đóng gói web-dist/ (' + (bytes / 1024 / 1024).toFixed(1) + ' MB).');
 console.log('Đã tạo integrity.json cho ' + Object.keys(manifest.files).length + ' tệp · v' + manifest.version + '.');
 console.log('Deploy: trỏ document root vào web-dist / . Mở qua HTTP(S), không mở file://.');
+console.log(headersOk
+	? 'Đã ghi _headers (CSP + nosniff + frame-deny + Permissions-Policy) — Pages/Direct Upload tự áp.'
+	: 'CẢNH BÁO: không đọc được CSP từ index.html ⇒ _headers ghi thiếu Content-Security-Policy.');

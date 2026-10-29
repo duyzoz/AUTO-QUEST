@@ -46,10 +46,36 @@ const MIME = {
 	'.map': 'application/json; charset=utf-8',
 };
 
+/* Wave#134 (audit): bản local phải gửi ĐỦ security headers, và CSP phải ĐÚNG BẰNG
+   meta tag trong index.html — hai bản khác nhau là source of truth khác nhau, bảo
+   mật kiểu gì cũng hổng. CSP vì vậy được ĐỌC THẲNG từ index.html lúc khởi động.
+   production (Cloudflare) không có server.js ⇒ xem web-dist/_headers + docs/DEPLOY.md. */
+function readCspFromHtml() {
+	try {
+		const html = fs.readFileSync(path.join(APP_DIR, 'index.html'), 'utf8');
+		const m = html.match(/http-equiv="Content-Security-Policy"\s*\n?\s*content="([^"]+)"/i);
+		return m ? m[1] : '';
+	} catch {
+		return '';
+	}
+}
+const SECURITY_CSP_RAW = readCspFromHtml();
+/* frame-ancestors KHÔNG dùng được qua <meta> (trình duyệt bỏ qua + báo lỗi console),
+   nên nó chỉ sống ở HTTP header — thêm vào đây, không bỏ trong meta. */
+const SECURITY_CSP = SECURITY_CSP_RAW ? SECURITY_CSP_RAW.replace(/;\s*$/, "; frame-ancestors 'none';") : '';
+const SECURITY_HEADERS = {
+	'X-Content-Type-Options': 'nosniff',
+	'Referrer-Policy': 'no-referrer',
+	'X-Frame-Options': 'DENY',
+	'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), usb=(), payment=(), interest-cohort=()',
+	'Strict-Transport-Security': 'max-age=15552000; includeSubDomains',
+	'Service-Worker-Allowed': '/',
+	...(SECURITY_CSP ? { 'Content-Security-Policy': SECURITY_CSP } : {}),
+};
+
 function send(res, status, body, headers) {
 	res.writeHead(status, {
-		'X-Content-Type-Options': 'nosniff',
-		'Referrer-Policy': 'no-referrer',
+		...SECURITY_HEADERS,
 		...(headers || {}),
 	});
 	res.end(body);
@@ -75,11 +101,10 @@ function serveFile(res, filePath, cache) {
 		const ext = path.extname(filePath).toLowerCase();
 		const type = MIME[ext] || 'application/octet-stream';
 		res.writeHead(200, {
+			...SECURITY_HEADERS,
 			'Content-Type': type,
 			'Content-Length': stat.size,
 			'Cache-Control': cache || 'no-cache',
-			'X-Content-Type-Options': 'nosniff',
-			'Referrer-Policy': 'no-referrer',
 		});
 		fs.createReadStream(filePath).pipe(res);
 	});

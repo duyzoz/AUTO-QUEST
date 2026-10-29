@@ -214,7 +214,83 @@ check('CSP cho phép Discord + hCaptcha, không mở toang', () => {
 	return 'connect-src hợp lệ';
 });
 
+/* ── 4b. Hàng rào bảo mật Wave#134 (audit) ─────────────────────────────── */
+check('CSP script-src đóng unsafe-inline/unsafe-eval + chốt base-uri/object-src/form-action', () => {
+	const meta = html.match(/http-equiv="Content-Security-Policy"\s+content="([^"]+)"/);
+	assert(meta, 'không tìm thấy CSP');
+	const csp = meta[1];
+	const script = csp.match(/script-src([^;]*)/);
+	assert(script, 'thiếu script-src');
+	assert(!/unsafe-inline/.test(script[1]), "script-src không được có 'unsafe-inline'");
+	assert(!/unsafe-eval/.test(script[1]), "script-src không được có 'unsafe-eval'");
+	assert(!/https:\/\/\*\.hcaptcha\.com/.test(script[1]), 'script-src phải ghi đích danh host hcaptcha, không wildcard');
+	for (const directive of ['base-uri', 'object-src', 'form-action']) {
+		assert(new RegExp(directive + '\\s').test(csp), 'thiếu ' + directive);
+	}
+	// frame-ancestors bị trình duyệt BỎ QUA trong <meta> (và báo lỗi console đỏ) ⇒
+	// nó phải nằm ở HTTP header do server.js / _headers phát ra.
+	assert(!/frame-ancestors/.test(csp), 'meta CSP không được chứa frame-ancestors');
+	const srv = read(path.join(WEB, 'server.js'));
+	const bld = read(path.join(WEB, 'build-static.js'));
+	assert(/frame-ancestors 'none'/.test(srv), 'server.js không phát frame-ancestors');
+	assert(/frame-ancestors 'none'/.test(bld), 'build-static không ghi frame-ancestors vào _headers');
+	assert(/X-Frame-Options': 'DENY'/.test(srv) && /X-Frame-Options: DENY/.test(bld), 'thiếu X-Frame-Options Deny');
+	// CSP chỉ có tác dụng nếu code không tự mở cửa sau: không được có eval/inline script.
+	const inlineScript = (html.match(/<script(?![^>]*\ssrc=)[^>]*>/gi) || []).length;
+	assert(inlineScript === 0, 'index.html có ' + inlineScript + ' khối <script> inline');
+	const inlineHandler = (html.match(/\son[a-z]+\s*=\s*["']/gi) || []).length;
+	assert(inlineHandler === 0, 'index.html có ' + inlineHandler + ' handler on*= inline');
+	return 'script-src khép kín, 0 inline script/handler';
+});
+
+check('Token không còn đường giáng cấp base64 khi IndexedDB bị chặn', () => {
+	const bridge = read(path.join(WEB, 'bridge.js'));
+	assert(!/return\s+'b64:'\s*\+/.test(bridge), "encryptToken vẫn có nhánh fallback 'b64:'");
+	assert(/secureStorage\s*=\s*false/.test(bridge), 'không còn cờ secureStorage khi không mã hoá được');
+	assert(/tokenReveal/.test(bridge), 'thiếu cổng tokenReveal có điều kiện');
+	return 'chỉ còn AES-GCM + reveal có cổng';
+});
+
+check('getConfig()/accountsList() không trả token plaintext', () => {
+	const bridge = read(path.join(WEB, 'bridge.js'));
+	const getConfig = bridge.match(/getConfig:\s*async\s*\(\)\s*=>\s*\{[\s\S]{0,900}?\n\t\t\},/);
+	assert(getConfig, 'không đọc được getConfig trong bridge');
+	assert(!/return\s*\{\s*\.\.\.cfg/.test(getConfig[0]), 'getConfig vẫn trả nguyên khối config (kèm token)');
+	assert(/hasToken/.test(getConfig[0]) && /token:\s*''/.test(getConfig[0]), 'getConfig phải mask token');
+	const accountsList = bridge.match(/accountsList:\s*async\s*\(\)\s*=>\s*\{[\s\S]{0,500}?\n\t\t\},/);
+	assert(accountsList, 'không đọc được accountsList');
+	assert(/map\(\s*\(\s*\{\s*token/.test(accountsList[0]), 'accountsList vẫn trả token từng tài khoản');
+	return 'mask + strip OK';
+});
+
+check('escapeHtml chỉ còn MỘT định nghĩa và escape cả nháy đơn', () => {
+	const r = read(path.join(APP, 'renderer.js'));
+	const defs = (r.match(/function escapeHtml\s*\(/g) || []).length;
+	assert(defs === 1, 'có ' + defs + ' định nghĩa escapeHtml (bản sau ghi đè bản trước bằng hoisting)');
+	assert(/'\/'\s*,\s*'&#39;'/.test(r) || /&#39;/.test(r), 'escapeHtml không escape dấu nháy đơn');
+	assert(/function aqAssetHash/.test(r) && /function aqAssetToken/.test(r), 'thiếu whitelist hash tài nguyên Discord');
+	return '1 định nghĩa, escape đủ & < > " \'';
+});
+
+check('Log engine được che secret trước khi ra UI', () => {
+	const bridge = read(path.join(WEB, 'bridge.js'));
+	assert(/function maskSecrets/.test(bridge), 'thiếu maskSecrets()');
+	assert(/pushLog\([^)]*maskSecrets\(/.test(bridge), 'dòng log từ worker không đi qua maskSecrets');
+	return 'worker log được che token';
+});
+
+check('Lưu cài đặt không xoá token đã lưu + whitelist đúng định dạng asset Discord', () => {
+	const bridge = read(path.join(WEB, 'bridge.js'));
+	assert(bridge.includes('prev.tokenEnc'), 'writeConfig không giữ lại tokenEnc cũ khi ô token trống (đổi theme sẽ đăng xuất người dùng)');
+	assert(bridge.includes('payload.accounts = prevAccounts'), 'writeConfig xoá sạch danh sách tài khoản khi caller không gửi mảng accounts');
+	const r = read(path.join(APP, 'renderer.js'));
+	assert(r.includes('(?:a_)?[0-9a-f]{16,32}'), 'aqAssetHash không nhận tiền tố a_ ⇒ avatar/banner gif Nitro bị chặn');
+	assert(!r.includes('[a_]?[0-9a-f]'), 'aqAssetHash dùng [a_]? (1 ký tự) ⇒ hash a_… luôn bị từ chối');
+	return 'giữ token khi lưu settings, a_ hash hợp lệ';
+});
+
 /* ── 5. JS parse (không thực thi) ──────────────────────────────────────── */
+
 check('Toàn bộ JS trong web/ parse được', () => {
 	const files = walk(WEB, []).filter((f) => /\.(?:js|mjs|cjs)$/.test(f));
 	const bad = [];

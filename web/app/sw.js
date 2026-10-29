@@ -5,7 +5,7 @@
    Chiến lược: stale-while-revalidate cho tài nguyên tĩnh; network-first cho
    điều hướng (để bản mới lên ngay khi có mạng, offline vẫn mở được vỏ). */
 
-const VERSION = 'autoquest-shell-v14';
+const VERSION = 'autoquest-shell-v15';
 const SHELL = [
 	'./',
 	'index.html',
@@ -38,13 +38,23 @@ self.addEventListener('install', (event) => {
 	);
 });
 
+const ALLOWED_ORIGIN = self.location.origin;
+
 self.addEventListener('message', (event) => {
 	const data = event.data || {};
+	/* Wave#134 (audit): trước đây LỆNH SKIP_WAITING chấp nhận từ mọi nguồn ⇒ bất kỳ
+	   script nào chạy trong trang (kể cả SDK bên thứ ba) đều ép kích hoạt bản SW đang
+	   chờ giữa lúc người dùng đang thao tác. Nay chỉ nhận message từ client thật, đúng
+	   origin của chính app. Nút "Áp dụng bản cập nhật" vẫn chạy vì nó gửi từ page. */
+	if (event.origin && event.origin !== ALLOWED_ORIGIN) return;
+	const src = event.source;
+	if (!src || typeof src.postMessage !== 'function') return;
+	if (!String(src.url || '').startsWith(ALLOWED_ORIGIN)) return;
 	if (data.type === 'SKIP_WAITING') {
 		self.skipWaiting();
 		return;
 	}
-	if (data.type === 'GET_VERSION' && event.source) {
+	if (data.type === 'GET_VERSION') {
 		try {
 			event.source.postMessage({ type: 'SW_VERSION', version: VERSION });
 		} catch {

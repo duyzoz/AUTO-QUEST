@@ -1248,9 +1248,14 @@ function questAssetUrl(p) {
    Thứ tự ưu tiên: logotype_dark → logotype_light → logotype → game_tile(_dark/_light)
    → icon application. Chỉ khi TẤT CẢ đều rỗng mới dùng logo Orb. */
 function appIconUrl(id, icon, size) {
+	/* Wave#134 (audit): id + icon đến từ API quest (bên thứ 3 kiểm soát một phần)
+	   ⇒ qua whitelist trước khi nội suy vào URL. */
 	if (!id || !icon) return '';
-	const ext = String(icon).startsWith('a_') ? 'gif' : 'png';
-	return `${QCDN}app-icons/${id}/${icon}.${ext}?size=${size || 128}`;
+	const sid = /^\d{17,20}$/.test(String(id).trim()) ? String(id).trim() : '';
+	const hash = aqAssetHash(icon);
+	if (!sid || !hash) return '';
+	const ext = hash.startsWith('a_') ? 'gif' : 'png';
+	return `${QCDN}app-icons/${sid}/${hash}.${ext}?size=${size || 128}`;
 }
 
 /** Ảnh logo THẬT của quest (không bao giờ trả logo Orb). '' nếu không có gì. */
@@ -1269,12 +1274,32 @@ function setQuestImg(img, p) {
 	return true;
 }
 
+/** Wave#134 (audit): hash tài nguyên Discord (avatar/banner) chỉ được là hex
+   16–32 ký tự, tuỳ tiền tố 'a_' (gif). Trả '' nếu sai ⇒ chỗ gọi bỏ hẳn khối nội
+   suy, không cho chuỗi lạ lọt vào url('…') hay src="…". */
+function aqAssetHash(v) {
+	const s = String(v ?? '').trim();
+	return /^(?:a_)?[0-9a-f]{16,32}$/i.test(s) ? s : '';
+}
+
+/** Wave#134 (audit): riêng avatar decoration — Discord dùng định dạng phối
+   (sku + hex + '_') nên không ép thuần hex được, tránh làm mất trang trí Nitro.
+   Vẫn chặn tuyệt đối ký tự phá CSS/URL: chỉ [A-Za-z0-9_.-], dài ≤ 100 ⇒ not
+   thoát nổi khỏi url('…') (nháy đơn, nháy đóng, chấm phẩy, khoảng trắng đều loại). */
+function aqAssetToken(v) {
+	const s = String(v ?? '').trim();
+	return /^[A-Za-z0-9_.-]{2,100}$/.test(s) ? s : '';
+}
+
 function toHexColor(v) {
 	if (v === null || v === undefined || v === '') return '';
 	const s = String(v).trim();
-	if (s.startsWith('#')) return s.length >= 7 ? s.slice(0, 7) : s;
-	if (/^\d+$/.test(s)) return `#${Number(s).toString(16).padStart(6, '0')}`;
-	if (/^[0-9a-f]{6}$/i.test(s)) return `#${s}`;
+	// Wave#134: chỉ nhận đúng định dạng #rrggbb / 6 hex / số nguyên colour Discord.
+	// Bản cũ trả nguyên văn mọi chuỗi bắt đầu bằng '#' có độ dài < 7 ⇒ chuỗi do người
+	// đăng quest kiểm soát (colorPrimary/colorSecondary) lọt vào background gradient.
+	if (/^#[0-9a-f]{6}$/i.test(s)) return s.toLowerCase();
+	if (/^\d{1,9}$/.test(s)) return `#${Number(s).toString(16).padStart(6, '0')}`;
+	if (/^[0-9a-f]{6}$/i.test(s)) return `#${s.toLowerCase()}`;
 	return '';
 }
 
@@ -2004,14 +2029,10 @@ function fmtClaimTime(iso) {
 	return `${p(d.getHours())}:${p(d.getMinutes())} ${p(d.getDate())}/${p(d.getMonth() + 1)}/${d.getFullYear()}`;
 }
 
-/** Thoát ký tự HTML để không phá DOM (tên quest do Discord cấp). */
-function escapeHtml(s) {
-	return String(s == null ? '' : s)
-		.replace(/&/g, '&amp;')
-		.replace(/</g, '&lt;')
-		.replace(/>/g, '&gt;')
-		.replace(/"/g, '&quot;');
-}
+/* Wave#134 (audit): bản escapeHtml thứ hai (yêu cầu ở đây từng thiếu dấu nháy đơn)
+   đã bị XOÁ — định nghĩa duy nhất là escapeHtml() ở đầu file, escape đủ & < > " '.
+   Hai hàm trùng tên cùng scope = bản khai báo sau thắng bằng hoisting, nên lần
+   nào ai ghép chuỗi vào thuộc tính bọc nháy đơn là thành XSS mà không ai hay. */
 
 /* Waves 22: giữ tham chiếu node theo id để không phải querySelector lại mỗi frame
    (180 thẻ × mỗi lần cập nhật tiến độ = rất nặng nếu query liên tục). */
@@ -3710,11 +3731,16 @@ function intToHex(n) {
 /** URL avatar Discord (hash thật theo id, rớt về ảnh mặc định theo id). */
 function discordAvatarSrc(a, size) {
 	const s = Number(size) || 64;
-	if (a && a.id && a.avatar) {
-		const ext = a.avatar.startsWith('a_') ? 'gif' : 'png';
-		return `${CDN}/avatars/${a.id}/${a.avatar}.${ext}?size=${s}`;
+	/* Wave#134 (audit): id (snowflake) + avatar hash phải qua whitelist trước khi
+	   nội suy vào URL — hàm này là cửa duy nhất của avatar trong danh sách tài
+	   khoản, và kết quả từng được ghép thẳng vào chuỗi HTML ở vài nơi. */
+	const hash = a ? aqAssetHash(a.avatar) : '';
+	const sid = a && /^\d{17,20}$/.test(String(a.id ?? '')) ? String(a.id) : '';
+	if (sid && hash) {
+		const ext = hash.startsWith('a_') ? 'gif' : 'png';
+		return `${CDN}/avatars/${sid}/${hash}.${ext}?size=${s}`;
 	}
-	const idx = a && a.id ? Number((BigInt(a.id) >> 22n) % 6n) || 0 : 0;
+	const idx = sid ? Number((BigInt(sid) >> 22n) % 6n) || 0 : 0;
 	return `${CDN}/embed/avatars/${idx}.png`;
 }
 
@@ -4028,8 +4054,9 @@ async function confirmSwitchAccount() {
 	try {
 		// BƯỚC 3: đổi active (main giải mã tokenEnc → ghi token chính).
 		await api.accountsSetActive(idx);
-		const cfg = await api.getConfig();
-		if (cfg && cfg.token && ui.token) ui.token.value = cfg.token;
+		// Wave#134: xin token qua tokenReveal() — đang trong cú click thật của user nên cổng mở.
+		const rev = typeof api.tokenReveal === 'function' ? await api.tokenReveal({ reason: 'account-switch' }) : null;
+		if (rev && rev.ok && rev.token && ui.token) ui.token.value = rev.token;
 		// BƯỚC 4: ghi config (kèm accounts/activeIdx để KHÔNG xoá danh sách).
 		await api.saveConfig(collectConfig());
 		appendLog(`[Multiaccount] Chuyển sang @${a.username || a.id} — đang nạp lại client…`, 'system');
@@ -4150,7 +4177,31 @@ const CDN = 'https://cdn.discordapp.com';
 function renderDiscordProfile(user) {
 	if (!user) return;
 	currentUser = user; // Waves 17: giữ lại cho modal logout (avatar + ID)
-	const { id, username, displayName, avatar, banner, accentColor, avatarDecoration, avatarDecorationSku, clan, profileEffect, themeColors, profileBanner, profileFrame } = user;
+	const {
+		username,
+		displayName,
+		accentColor,
+		avatarDecorationSku,
+		clan,
+		profileEffect,
+		themeColors,
+		profileBanner: rawProfileBanner,
+		profileFrame,
+		id: rawId,
+		avatar: rawAvatar,
+		banner: rawBanner,
+		avatarDecoration: rawDecoration,
+	} = user;
+	/* Wave#134 (audit): id + mọi hash tài nguyên đều đi qua whitelist TRƯỚC khi
+       xuống DOM. Trước đây banner/avatar/decoration (chuỗi Discord trả về) được
+       nội thẳng vào url('…') trong style, nên một giá trị chứa nháy đơn là thoát
+       khỏi url() và ghi được CSS tuỳ ý; id sai định dạng còn làm BigInt(id) ném
+       lỗi ở dưới. Tên/username vẫn textContent như cũ — không đụng UI. */
+	const id = /^\d{17,20}$/.test(String(rawId ?? '')) ? String(rawId) : '';
+	const avatar = aqAssetHash(rawAvatar);
+	const banner = aqAssetHash(rawBanner);
+	const profileBanner = aqAssetHash(rawProfileBanner);
+	const avatarDecoration = aqAssetToken(rawDecoration);
 
 	const display = displayName || username || 'Discord User';
 	ui.dpDisplay.textContent = display;
@@ -5965,10 +6016,9 @@ function openLogoutModal() {
 		ui.logoutAccName.textContent = currentUser.displayName || currentUser.username || name;
 		ui.logoutAccId.textContent = `ID: ${currentUser.id}`;
 		ui.logoutAccAvatar.innerHTML = '';
-		if (currentUser.avatar) {
-			const ext = currentUser.avatar.startsWith('a_') ? 'gif' : 'png';
+		if (aqAssetHash(currentUser.avatar) && /^\d{17,20}$/.test(String(currentUser.id ?? ''))) {
 			const img = document.createElement('img');
-			img.src = `${CDN}/avatars/${currentUser.id}/${currentUser.avatar}.${ext}?size=64`;
+			img.src = discordAvatarSrc({ id: currentUser.id, avatar: aqAssetHash(currentUser.avatar) }, 64);
 			img.alt = '';
 			ui.logoutAccAvatar.appendChild(img);
 		} else {
@@ -8269,11 +8319,24 @@ function applyBotProfile(u) {
 	ui.dpUsername.textContent = u.username ? `@${u.username}` : '';
 	ui.upName.textContent = name;
 	ui.upSub.textContent = u.bot ? 'Bot (chỉ đọc)' : (u.username ? `@${u.username}` : 'Đã kết nối');
-	if (u.avatar) {
-		const ext = String(u.avatar).startsWith('a_') ? 'gif' : 'png';
-		const src = `${CDN}/avatars/${u.id}/${u.avatar}.${ext}?size=128`;
-		ui.dpAvatar.innerHTML = `<img class="dp-avatar-img" src="${src}" alt="" />`;
-		ui.upAvatar.innerHTML = `<img src="${src}" alt="" />`;
+	/* Wave#134 (audit): avatar của bot không còn ghép chuỗi HTML thô. Trước đây
+	   `<img src="${src}">` nội thẳng id + hash Discord vào innerHTML ⇒ giá trị chứa
+	   nháy kép là thoát thuộc tính và chạy script. Giờ tạo <img> bằng property và
+	   hash/id phải qua whitelist (discordAvatarSrc tự fallback ảnh mặc định). */
+	const avHash = aqAssetHash(u.avatar);
+	const avId = /^\d{17,20}$/.test(String(u.id ?? '')) ? String(u.id) : '';
+	if (avHash && avId) {
+		for (const [holder, cls, size] of [
+			[ui.dpAvatar, 'dp-avatar-img', 128],
+			[ui.upAvatar, 'up-avatar-img', 64],
+		]) {
+			holder.innerHTML = '';
+			const img = document.createElement('img');
+			img.src = discordAvatarSrc({ id: avId, avatar: avHash }, size);
+			img.alt = '';
+			img.className = cls;
+			holder.appendChild(img);
+		}
 	} else {
 		ui.dpAvatar.innerHTML = defaultAvatarSvg(30);
 		ui.upAvatar.innerHTML = defaultAvatarSvg(20);
@@ -8292,9 +8355,13 @@ function applyBotProfile(u) {
 	ui.phUsername.textContent = u.username ? `@${u.username}` : 'Hồ sơ bot';
 	ui.phUserId.hidden = false;
 	ui.phUserIdValue.textContent = u.id;
-	if (u.avatar) {
-		const ext = String(u.avatar).startsWith('a_') ? 'gif' : 'png';
-		ui.phAvatar.innerHTML = `<img class="ph-avatar-img" src="${CDN}/avatars/${u.id}/${u.avatar}.${ext}?size=160" alt="" />`;
+	if (avHash && avId) {
+		ui.phAvatar.innerHTML = '';
+		const img = document.createElement('img');
+		img.className = 'ph-avatar-img';
+		img.src = discordAvatarSrc({ id: avId, avatar: avHash }, 160);
+		img.alt = '';
+		ui.phAvatar.appendChild(img);
 	} else {
 		ui.phAvatar.innerHTML = defaultAvatarSvg(34);
 	}
@@ -8828,13 +8895,38 @@ window.__aqDiag = {
 		setupServiceWorker();
 		renderQueueChip();
 		renderStats();
-		if (cfg.token) {
-			ui.token.value = cleanTokenClient(cfg.token);
-			// Waves 48: dùng CHUNG một đường đăng nhập với lúc dán token — tự vẽ hồ
-			// sơ, tự nạp số dư Orb, tự báo lỗi nếu token đã hết hạn.
-			await autoLoginFromToken();
-			renderQueueChip();
-			renderStats();
+		if (cfg.hasToken) {
+			/* Wave#134 (audit): getConfig() không còn trả token plaintext nữa ⇒ xin bridge
+			   qua tokenReveal() (được phép trong 6 giây đầu của trang, đúng một lần) để
+			   giữ NGUYÊN luồng tự đăng nhập như cũ. Không có reveal thì trang vẫn vẽ bình
+			   thường, chỉ là chưa tự login — người dùng dán token là chạy tiếp. */
+			const rev = typeof api.tokenReveal === 'function' ? await api.tokenReveal({ reason: 'boot-autologin' }) : null;
+			if (rev && rev.ok && rev.token) ui.token.value = cleanTokenClient(rev.token);
+			if (ui.token.value.trim()) {
+				// Waves 48: dùng CHUNG một đường đăng nhập với lúc dán token — tự vẽ hồ
+				// sơ, tự nạp số dư Orb, tự báo lỗi nếu token đã hết hạn.
+				await autoLoginFromToken();
+				renderQueueChip();
+				renderStats();
+			} else {
+				/* Wave#134: cửa sổ boot đã đóng (tab mở quá 6 giây mới load xong) ⇒ thử
+				   lại đúng một lần ở thao tác thật đầu tiên của người dùng. */
+				let retried = false;
+				const retryReveal = async () => {
+					if (retried) return;
+					retried = true;
+					const rev = await api.tokenReveal({ reason: 'boot-retry' });
+					if (rev && rev.ok && rev.token) {
+						ui.token.value = cleanTokenClient(rev.token);
+						await autoLoginFromToken();
+						renderQueueChip();
+						renderStats();
+					}
+				};
+				for (const ev of ['pointerdown', 'keydown']) {
+					window.addEventListener(ev, retryReveal, { capture: true, passive: true });
+				}
+			}
 		}
 		ui.loopMode.checked = cfg.loopMode !== false;
 		if (cfg.loopInterval) {

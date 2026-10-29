@@ -145,18 +145,30 @@
 		return deviceKeyPromise;
 	}
 
-	/** Mã hoá token trước khi ghi xuống đĩa. Khoá phi trích xuất ⇒ XSS đọc DB cũng vô ích. */
+	/** Mã hoá token trước khi ghi xuống đĩa.
+	 *  Wave#134 (audit): BỎ ĐƯỜNG GIÁNG CẤP base64. Bản cũ trả 'b64:'+b64(token) khi
+	 *  crypto.subtle/IndexedDB không dùng được (chế độ ẩn danh, ETP/Firefox chặn IDB)
+	 *  ⇒ token nằm trên đĩa dưới dạng đảo ngược tức thì: malware đọc profile hoặc
+	 *  ai đó mở DevTools là có token. Nay không có khoá = KHÔNG lưu token; phiên chỉ
+	 *  sống trong RAM và UI được báo để hiện cảnh báo. Trả null = "không lưu được". */
+	let secureStorage = true;
 	async function encryptToken(text) {
 		if (!text) return '';
 		const key = await getDeviceKey();
-		if (!key) return 'b64:' + b64FromBytes(new TextEncoder().encode(String(text)));
+		if (!key) {
+			secureStorage = false;
+			return null;
+		}
 		const iv = crypto.getRandomValues(new Uint8Array(12));
 		const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, new TextEncoder().encode(String(text)));
+		secureStorage = true;
 		return 'aes:' + b64FromBytes(iv) + ':' + b64FromBytes(new Uint8Array(ct));
 	}
 
 	async function decryptToken(payload) {
 		if (!payload || typeof payload !== 'string') return '';
+		/* Wave#134: vẫn ĐỌC được bản 'b64:' cũ (không làm mất tài khoản của người đã
+		   lưu từ bản trước) nhưng chỉ để di chuyển sang AES ngay — xem migrateLegacy(). */
 		if (payload.startsWith('b64:')) {
 			try {
 				return new TextDecoder().decode(bytesFromB64(payload.slice(4)));
@@ -183,6 +195,94 @@
 		return '';
 	}
 
+	/* Một lần / phiên: nâng cấp mọi tokenEnc còn ở dạng 'b64:' sang AES-GCM rồi ghi lại.
+	   Ghi bằng kvPut trực tiếp (không đi qua readConfig) để không đệ quy; hẹn ra
+	   microtask sau để không lồng ghi vào lúc đang đọc trong withConfigLock. */
+	let legacyMigrationDone = false;
+	function scheduleLegacyMigration(parsed) {
+		if (legacyMigrationDone) return;
+		const dirty =
+			typeof parsed?.tokenEnc === 'string' && parsed.tokenEnc.startsWith('b64:')
+				|| (Array.isArray(parsed?.accounts) && parsed.accounts.some((a) => typeof a?.tokenEnc === 'string' && a.tokenEnc.startsWith('b64:')));
+		if (!dirty) return;
+		legacyMigrationDone = true;
+		setTimeout(async () => {
+			try {
+				const fresh = (await kvGet('config')) || {};
+				let changed = 0;
+				if (typeof fresh.tokenEnc === 'string' && fresh.tokenEnc.startsWith('b64:')) {
+					const pt = await decryptToken(fresh.tokenEnc);
+					const enc = pt ? await encryptToken(pt) : null;
+					if (enc) {
+						fresh.tokenEnc = enc;
+						changed++;
+					}
+				}
+				for (const acc of Array.isArray(fresh.accounts) ? fresh.accounts : []) {
+					if (typeof acc?.tokenEnc === 'string' && acc.tokenEnc.startsWith('b64:')) {
+						const pt = await decryptToken(acc.tokenEnc);
+						const enc = pt ? await encryptToken(pt) : null;
+						if (enc) {
+							acc.tokenEnc = enc;
+							changed++;
+						}
+					}
+				}
+				if (changed) {
+					await kvPut('config', fresh);
+					pushLog('system', `Đã tự nâng cấp ${changed} token sang AES-GCM (bản cũ lưu dạng base64 không an toàn).`);
+				}
+			} catch {
+				/* lần sau thử lại */
+			}
+		}, 0);
+	}
+
+	/** Wave#134 (audit):_masks mọi chuỗi trông như token Discord / GitHub / bearer
+	   TRƯỚC khi dòng log rời engine. Trước đây engine-bundle có sanitizeLog() nhưng
+	   KHÔNG GỌI ở đâu ⇒ token lọt vào log màn hình (and vào file log người dùng export). */
+	const SECRET_PATTERNS = [
+		/[\w-]{23,26}\.[\w-]{5,32}\.[\w-]{25,110}/g, // Discord user token: 3 phần cách dấu chấm
+		/\bgh[pousr]_[A-Za-z0-9]{20,}\b/g,
+		/\b(nt|ot)[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{6,}\.[A-Za-z0-9_-]{25,}\b/g,
+		/(Authorization\s*:\s*)Bearer\s+\S+/gi,
+		/("token"\s*:\s*")[^"]{20,}(")/gi,
+	];
+	function maskSecrets(line) {
+		let out = String(line ?? '');
+		for (const re of SECRET_PATTERNS) out = out.replace(re, (m, a, b) => (a && b ? `${a}***${b}` : a ? `${a}***` : '***'));
+		return out;
+	}
+
+	/* ═════════════ 2b. TIẾT LỘ TOKEN THEO Ý NGƯỜI DÙNG (Wave#134) ═════════════
+	   Token không còn nằm trong kết quả getConfig()/accountsList() — kẻ xâm nhập
+	   thụ động (script bên thứ ba, XSS đọc config, log) không còn lấy được nó "miễn
+	   phí". Ai cần thấy token thật phải gọi tokenReveal() và phải có một thao tác
+	   THẬT của người dùng (isTrusted) hoặc đang trong 6 giây đầu của trang (để tự
+	   đăng nhập khi mở lại). Same-origin XSS + mồi được một cú click vẫn lấy được:
+	   web thuần không đóng nổi khe đó — chốt thật là CSP nghiêm + không còn sink. */
+	let gestureArmed = false;
+	let bootWindowUntil = Date.now() + 6000;
+	function armGesture() {
+		gestureArmed = true;
+	}
+	if (typeof document !== 'undefined') {
+		for (const ev of ['pointerdown', 'keydown', 'touchstart', 'visibilitychange']) {
+			document.addEventListener(ev, (e) => {
+				if (ev === 'visibilitychange') {
+					if (document.visibilityState === 'visible') armGesture();
+					return;
+				}
+				if (e && e.isTrusted) armGesture();
+			}, { capture: true, passive: true });
+		}
+	}
+	function maskToken(t) {
+		const s = String(t ?? '');
+		if (!s) return '';
+		return s.length <= 8 ? '••••' : `••••${s.slice(-4)}`;
+	}
+
 	/* ══════════════════════ 2. CONFIG / ACCOUNTS ══════════════════════════ */
 
 	const CONFIG_DEFAULTS = {
@@ -207,6 +307,7 @@
 			parsed = {};
 		}
 		let token = '';
+		scheduleLegacyMigration(parsed); // Wave#134: dọn bản 'b64:' cũ sang AES
 		if (parsed.tokenEnc) token = await decryptToken(parsed.tokenEnc);
 		const list = Array.isArray(parsed.accounts) ? parsed.accounts : [];
 		const accounts = [];
@@ -252,8 +353,34 @@
 			liteMode: liteMode === true,
 			autoLockMin: [0, 5, 15, 30].includes(Number(autoLockMin)) ? Number(autoLockMin) : 0,
 		};
-		if (remember && token) payload.tokenEnc = await encryptToken(token);
+		/* Wave#134: encryptToken trả null khi KHÔNG mã hoá được (không crypto / IDB bị
+		   chặn) ⇒ tuyệt đối không ghi token plaintext xuống localStorage. Các thiết
+		   lập khác vẫn lưu bình thường; UI hỏi secureStorage() để hiện cảnh báo.
+		   collectConfig() gửi token = ô nhập, mà ô nhập RỖNG khi người dùng chưa reveal
+		   ⇒ nếu không giữ bản cũ thì mỗi lần đổi theme/ngôn ngữ là bay token đăng nhập.
+		   Đường xoá token thật vẫn còn: đăng xuất lưu remember:false. */
+		let prev = {};
+		try {
+			prev = (await kvGet('config')) || {};
+		} catch {
+			prev = {};
+		}
+		let droppedToken = false;
+		let wroteNewToken = false;
+		if (remember && token) {
+			const enc = await encryptToken(token);
+			if (enc) {
+				payload.tokenEnc = enc;
+				wroteNewToken = true;
+			} else droppedToken = true;
+		}
+		if (!wroteNewToken && remember && prev.tokenEnc) payload.tokenEnc = prev.tokenEnc;
+		const prevAccounts = Array.isArray(prev.accounts) ? prev.accounts : [];
 		if (Array.isArray(accounts)) {
+			/* Wave#134: accountsList() không còn trả token ⇒ khi renderer ghi lại danh sách
+			   phải lấy tokenEnc của bản đang lưu (merge theo id), nếu không mỗi lần đổi
+			   cài đặt là xoá sạch token multiaccount. Tài khoản bị gỡ khỏi mảng thì mất
+			   tokenEnc đúng theo ý người dùng. */
 			const saved = [];
 			for (const acc of accounts) {
 				if (!acc) continue;
@@ -263,13 +390,29 @@
 					displayName: acc.displayName || '',
 					avatar: acc.avatar || '',
 				};
-				if (acc.token) a.tokenEnc = await encryptToken(acc.token);
+				if (acc.token) {
+					const enc = await encryptToken(acc.token);
+					if (enc) a.tokenEnc = enc;
+					else droppedToken = true;
+				} else if (acc.id) {
+					const old = prevAccounts.find((p) => p && p.id === acc.id && p.tokenEnc);
+					if (old) a.tokenEnc = old.tokenEnc;
+				}
 				saved.push(a);
 			}
 			payload.accounts = saved;
 			payload.activeIdx = typeof activeIdx === 'number' ? activeIdx : 0;
+		} else if (remember && Array.isArray(prev.accounts)) {
+			/* Không gửi mảng accounts ⇒ giữ nguyên danh sách đang lưu (đừng xoá
+			   chỉ vì một lần lưu chỉ đổi theme). */
+			payload.accounts = prevAccounts;
+			payload.activeIdx = typeof prev.activeIdx === 'number' ? prev.activeIdx : 0;
 		}
 		await kvPut('config', payload);
+		if (droppedToken) {
+			pushLog('system', 'CẢNH BÁO: trình duyệt không cho mã hoá (chế độ ẩn danh / chặn IndexedDB) nên token KHÔNG được lưu — phiên này chỉ sống trong RAM, đóng tab là mất.');
+		}
+		return { ok: true, secureStorage: !droppedToken };
 	}
 
 	let configChain = Promise.resolve();
@@ -1098,7 +1241,8 @@
 			return;
 		}
 		if (msg.type === 'log') {
-			pushLog(msg.stream === 'stderr' ? 'stderr' : 'stdout', String(msg.line == null ? '' : msg.line));
+			// Wave#134: mọi dòng từ engine đi qua maskSecrets trước khi ra log UI/file.
+			pushLog(msg.stream === 'stderr' ? 'stderr' : 'stdout', maskSecrets(msg.line == null ? '' : String(msg.line)));
 			return;
 		}
 		if (msg.type === 'event') {
@@ -1997,8 +2141,40 @@
 	window.autoquest = {
 		getConfig: async () => {
 			const cfg = await readConfig();
-			return { ...cfg, state: childState, version: '2.0.0-web' };
+			/* Wave#134 (audit): config công khai KHÔNG còn mang token plaintext.
+			   Bản cũ: mọi script trên trang (kể cả SDK hCaptcha mà CSP cho phép chạy
+			   cùng document) chỉ cần `await window.autoquest.getConfig()` là có token.
+			   Renderer muốn thấy token thật thì gọi tokenReveal() — có cổng canh. */
+			const { token, accounts, ...rest } = cfg;
+			return {
+				...rest,
+				token: '',
+				hasToken: !!token,
+				tokenMasked: maskToken(token),
+				accounts: (accounts || []).map(({ token: t, ...a }) => a),
+				state: childState,
+				version: '2.0.0-web',
+			};
 		},
+
+		/** Wave#134: đường DUY NHẤT trả token thật ra page. Chỉ mở khi (a) người dùng
+		   đã thao tác thật với trang (isTrusted pointerdown/keydown/touch), hoặc (b)
+		   trang mới mở dưới 6 giây (luồng TỰ đăng nhập lúc load lại). Một lần dùng
+		   trong cửa sổ boot, rồi đóng vĩnh viễn cho tới khi có thao tác thật. */
+		tokenReveal: async (opts) => {
+			const why = String(opts?.reason || '').slice(0, 40);
+			const inBootWindow = Date.now() < bootWindowUntil;
+			if (!gestureArmed && !inBootWindow) {
+				pushLog('system', `Từ chối revealed token (không có thao tác thật của người dùng) [${why || 'không rõ lý do'}].`);
+				return { ok: false, message: 'Cần thao tác thật của người dùng để xem token.' };
+			}
+			if (!gestureArmed && inBootWindow) bootWindowUntil = 0; // chỉ 1 lần cho boot
+			const cfg = await readConfig();
+			return { ok: true, token: cfg.token || '' };
+		},
+
+		/** Trạng thái ổ mã hoá: cho UI biết có đang phải chạy memory-only không. */
+		secureStatus: async () => ({ ok: true, secureStorage, storageMode, gestureArmed }),
 		saveConfig: (config) =>
 			withConfigLock(async () => {
 				try {
@@ -2023,7 +2199,11 @@
 
 		accountsList: async () => {
 			const cfg = await readConfig();
-			return { accounts: cfg.accounts, activeIdx: cfg.activeIdx };
+			// Wave#134: popup "Đổi tài khoản" chỉ cần metadata — bỏ hẳn token khỏi payload.
+			return {
+				accounts: (cfg.accounts || []).map(({ token, ...a }) => a),
+				activeIdx: cfg.activeIdx,
+			};
 		},
 
 		accountsAdd: async (acc) => {
