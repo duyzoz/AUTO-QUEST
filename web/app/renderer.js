@@ -5827,7 +5827,7 @@ function resetDiscordProfile() {
 	ui.upName.textContent = ZOZ_NAME;
 	ui.upSub.textContent = 'Bấm để dán token tài khoản';
 	/* Wave#89: guest ⇒ KHÔNG còn token của ai — xoá sạch để thẻ Cài đặt không
-	   giữ lại hint token cũ (bẫy: hint "MTAxNTky…" còn sót sau logout). */
+	   giữ lại hint token cũ (bẫy: vài ký tự đầu của token còn sót sau logout). */
 	ui.token.value = '';
 	lastAuthedToken = '';
 	ui.dpBanner.innerHTML = '';
