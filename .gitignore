@@ -1,0 +1,27 @@
+# Dependencies
+node_modules/
+
+# Bản build tĩnh (sinh lại bằng: node web/build-static.js)
+web-dist/
+
+# Logs / cache
+*.log
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Secrets & Tokens (KHÔNG BAO GIỜ commit)
+*token*.txt
+*.token
+*.pem
+*.key
+
+# File tạm khi test
+.tmp/
+tmp-view/
+shots-*/
+web/.qa-*

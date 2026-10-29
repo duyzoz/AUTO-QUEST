@@ -1,0 +1,478 @@
+/* ============================================================
+   MOBILE / TOUCH LAYER — THUẦN BỔ SUNG
+   Không sửa styles.css gốc. Mọi màu lấy từ token của app
+   (--fg, --line, --card…) nên không thể "chìm màu" ở cả 2 theme.
+   Chỉ kích hoạt ở màn hẹp / thiết bị cảm ứng.
+   ============================================================ */
+
+@supports (height: 100dvh) {
+	body,
+	.main-wrap {
+		height: 100dvh;
+	}
+}
+
+/* iOS: input <16px làm trang tự zoom khi focus → chặn bằng 16px ở màn hẹp. */
+@media (max-width: 1023px) {
+	input,
+	textarea,
+	select {
+		font-size: 16px;
+	}
+
+	.main-wrap {
+		padding-top: calc(56px + env(safe-area-inset-top, 0px));
+	}
+
+	.topbar {
+		height: calc(56px + env(safe-area-inset-top, 0px));
+		padding-top: env(safe-area-inset-top, 0px);
+		padding-left: max(14px, env(safe-area-inset-left, 0px));
+		padding-right: max(14px, env(safe-area-inset-right, 0px));
+	}
+
+	.content {
+		padding-left: max(14px, env(safe-area-inset-left, 0px));
+		padding-right: max(14px, env(safe-area-inset-right, 0px));
+		padding-bottom: calc(28px + env(safe-area-inset-bottom, 0px));
+	}
+
+	.sidebar {
+		padding-bottom: env(safe-area-inset-bottom, 0px);
+	}
+
+	/* Vùng chạm tối thiểu 44px — không đổi màu/nền, chỉ nới kích thước. */
+	.btn,
+	.tab-btn,
+	.nav-item,
+	.topbar-btn,
+	.ghost-btn {
+		min-height: 44px;
+	}
+
+	.nav-item {
+		padding-top: 12px;
+		padding-bottom: 12px;
+	}
+
+	/* 3 nút điều khiển thành hàng ngang đều nhau, không rơi lệch. */
+	.side-actions {
+		display: grid;
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+		gap: 8px;
+		width: 100%;
+		margin-left: 0;
+	}
+
+	.side-act {
+		justify-content: center;
+		padding-left: 10px;
+		padding-right: 10px;
+	}
+
+	.side-act-text {
+		white-space: nowrap;
+	}
+
+	/* Lưới nhiệm vụ: 2 cột tablet, 1 cột điện thoại — thẻ không bị bóp. */
+	.quest-list {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+
+	.capture-card {
+		width: min(560px, calc(100vw - 24px));
+		max-height: calc(100dvh - 24px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+		overflow-y: auto;
+		overscroll-behavior: contain;
+	}
+
+	/* hCaptCha mở bảng thử thách có thể cao hơn khung: cho modal cuộn,
+	   nhưng KHÔNG cắt iframe (overflow của .captcha-slot vẫn visible). */
+	.capture-card .captcha-slot {
+		overflow: visible;
+	}
+
+	.toast {
+		top: auto;
+		bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+	}
+}
+
+@media (max-width: 560px) {
+	.quest-list {
+		grid-template-columns: 1fr;
+	}
+
+	.quest-head {
+		align-items: stretch;
+	}
+
+	.quest-head .tab-buttons {
+		width: 100%;
+	}
+
+	.quest-head .tab-btn {
+		flex: 1 1 0;
+		justify-content: center;
+	}
+
+	.quest-head .chip {
+		align-self: flex-start;
+	}
+
+	.side-act {
+		font-size: 0.82rem;
+	}
+
+	.side-act-text {
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+
+	.content {
+		padding-left: max(10px, env(safe-area-inset-left, 0px));
+		padding-right: max(10px, env(safe-area-inset-right, 0px));
+	}
+}
+
+/* Thiết bị cảm ứng: bỏ hiệu ứng hover dính (sticky hover) gây "đứng hình". */
+@media (hover: none) {
+	.qcard:hover {
+		border-color: var(--line);
+	}
+	.btn:hover,
+	.tab-btn:hover,
+	.nav-item:hover {
+		transform: none;
+	}
+}
+
+/* Máy yếu: giảm hiệu ứng trang trí, giữ tín hiệu tiến trình. */
+@media (prefers-reduced-motion: reduce) {
+	.animate-rise,
+	.qcard.qin {
+		animation-duration: 0.01ms !important;
+	}
+}
+
+/* ============================================================
+   Wave#108/#109 — PANEL "DỮ LIỆU & CHẨN ĐOÁN" (thuần bổ sung)
+   Mọi màu lấy từ token của app ⇒ không chìm màu ở cả 2 theme.
+   ============================================================ */
+.field-extra {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin-top: 12px;
+}
+.aq-data-card {
+	width: min(560px, 100%);
+	text-align: left;
+	align-items: stretch;
+	max-height: min(88vh, 760px);
+	overflow-y: auto;
+	overscroll-behavior: contain;
+}
+.aq-data-section {
+	width: 100%;
+	margin-top: 14px;
+	padding-top: 14px;
+	border-top: 1px solid var(--line);
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+}
+.aq-data-section .accsw-h4 {
+	margin: 0;
+}
+.aq-data-field {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+.aq-data-label {
+	font-size: 0.76rem;
+	color: var(--fg-muted);
+}
+.aq-data-input {
+	width: 100%;
+}
+.aq-data-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	width: 100%;
+}
+.aq-data-actions .btn {
+	flex: 1 1 auto;
+	min-width: 150px;
+}
+.aq-data-hint {
+	margin: 0;
+}
+.aq-data-preview {
+	border: 1px solid var(--line-strong);
+	background: var(--well);
+	border-radius: var(--radius-field);
+	padding: 10px 12px;
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	width: 100%;
+}
+.aq-data-preview[hidden] {
+	display: none;
+}
+.aq-data-preview-meta {
+	margin: 0;
+	font-size: 0.78rem;
+	line-height: 1.5;
+	color: var(--fg-muted);
+	word-break: break-word;
+}
+.aq-data-pre {
+	width: 100%;
+	max-height: 260px;
+	overflow: auto;
+	margin: 0;
+	padding: 12px;
+	border-radius: var(--radius-field);
+	border: 1px solid var(--line-strong);
+	background: var(--well);
+	color: var(--fg);
+	font-size: 0.72rem;
+	line-height: 1.55;
+	white-space: pre-wrap;
+	word-break: break-word;
+	text-align: left;
+}
+.aq-data-pre[hidden] {
+	display: none;
+}
+.aq-data-status {
+	width: 100%;
+	margin: 8px 0 0;
+	font-size: 0.8rem;
+	line-height: 1.5;
+	color: var(--emerald);
+	text-align: center;
+}
+.aq-data-status.is-err {
+	color: var(--danger-soft);
+}
+.aq-data-status[hidden] {
+	display: none;
+}
+[data-theme="light"] .aq-data-status {
+	color: #047857;
+}
+[data-theme="light"] .aq-data-status.is-err {
+	color: #b91c1c;
+}
+[data-theme="light"] .aq-data-preview,
+[data-theme="light"] .aq-data-pre {
+	background: rgba(120, 92, 52, 0.06);
+}
+
+/* ============================================================
+   Wave#111 — TÌM KIẾM · LỌC · NHẬN TẤT CẢ (thuần bổ sung)
+   Mọi màu lấy từ token ⇒ không chìm màu ở cả 2 theme.
+   ============================================================ */
+.quest-tools {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+	margin: -2px 0 12px;
+}
+.quest-search {
+	position: relative;
+	display: flex;
+	align-items: center;
+	flex: 1 1 220px;
+	min-width: 0;
+	height: 36px;
+	padding: 0 10px;
+	background: var(--well);
+	border: 1px solid var(--line-strong);
+	border-radius: var(--radius-field);
+	transition: border-color 0.15s ease;
+}
+.quest-search:focus-within {
+	border-color: color-mix(in oklab, var(--brand) 55%, var(--line-strong));
+}
+.quest-search-ico {
+	flex: none;
+	margin-right: 7px;
+	color: var(--fg-subtle);
+}
+.quest-search input {
+	flex: 1 1 auto;
+	min-width: 0;
+	height: 100%;
+	padding: 0;
+	margin: 0;
+	background: transparent;
+	border: none;
+	outline: none;
+	color: var(--fg);
+	font: inherit;
+	font-size: 0.82rem;
+}
+.quest-search input::placeholder {
+	color: var(--fg-subtle);
+}
+.quest-search input::-webkit-search-cancel-button,
+.quest-search input::-webkit-search-decoration {
+	-webkit-appearance: none;
+	appearance: none;
+}
+.quest-search-clear {
+	display: grid;
+	place-items: center;
+	flex: none;
+	width: 24px;
+	height: 24px;
+	margin-left: 4px;
+	padding: 0;
+	border: none;
+	border-radius: 9999px;
+	background: transparent;
+	color: var(--fg-muted);
+	cursor: pointer;
+}
+.quest-search-clear:hover {
+	background: var(--tint-08);
+	color: var(--fg);
+}
+.quest-search-clear[hidden] {
+	display: none;
+}
+.quest-filter {
+	height: 36px;
+	padding: 0 10px;
+	flex: 0 1 auto;
+}
+.quest-filter-count {
+	font-size: 0.72rem;
+	color: var(--fg-muted);
+	white-space: nowrap;
+}
+.quest-filter-count[hidden] {
+	display: none;
+}
+.quest-claim-all {
+	height: 36px;
+	padding: 0 14px;
+	font-size: 0.8rem;
+	flex: 0 0 auto;
+}
+.quest-claim-all[hidden] {
+	display: none;
+}
+/* Thẻ bị bộ lọc ẩn phải biến mất THẬT — thuộc tính hidden có thể bị
+   `display: flex/grid` của thẻ đè lên nếu không ép. */
+.qcard[hidden],
+.qdone[hidden] {
+	display: none !important;
+}
+
+@media (max-width: 560px) {
+	.quest-tools {
+		gap: 6px;
+	}
+	.quest-search {
+		flex: 1 1 100%;
+	}
+	.quest-filter {
+		flex: 1 1 auto;
+	}
+	.quest-claim-all {
+		flex: 1 1 auto;
+	}
+}
+
+/* Wave#112: trình duyệt bỏ qua việc dựng thẻ nằm ngoài khung nhìn —
+   danh sách 60–180 thẻ vẫn cuộn mượt trên máy yếu. `auto` ghi nhớ kích
+   thước thật sau lần dựng đầu nên không bị nhảy layout. */
+@supports (content-visibility: auto) {
+	.qcard,
+	.qdone {
+		content-visibility: auto;
+		contain-intrinsic-size: auto 260px;
+	}
+}
+
+/* iOS: input trong hàng lọc vẫn phải 16px để không tự zoom khi focus. */
+@media (max-width: 1023px) {
+	.quest-search input {
+		font-size: 16px;
+	}
+	.quest-filter {
+		font-size: 16px;
+	}
+}
+
+/* ============================================================
+   WAVES #117-#131 — MOBILE / TOUCH
+   ============================================================ */
+@media (max-width: 1023px) {
+	.update-bar {
+		top: calc(64px + env(safe-area-inset-top, 0px));
+		width: calc(100vw - 20px);
+		max-width: 560px;
+		justify-content: space-between;
+	}
+	.update-bar-text {
+		flex: 1 1 auto;
+	}
+	.claim-pill {
+		bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+		font-size: 0.76rem;
+	}
+	.claim-queue-chip {
+		min-height: 40px;
+	}
+	.lock-veil {
+		padding: 16px;
+	}
+}
+
+@media (max-width: 560px) {
+	.stats-tiles {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+	.stats-bars {
+		height: 132px;
+		gap: 5px;
+		padding-left: 6px;
+		padding-right: 6px;
+	}
+	.stats-bar-fill {
+		width: min(26px, 100%);
+	}
+	.stats-recent-head {
+		align-items: flex-start;
+	}
+	.stats-actions {
+		width: 100%;
+	}
+	.stats-actions .ghost-btn {
+		flex: 1 1 0;
+		justify-content: center;
+	}
+	.version-grid {
+		grid-template-columns: 1fr;
+	}
+	.setting-row {
+		align-items: stretch;
+		flex-direction: column;
+	}
+	.setting-select {
+		width: 100%;
+	}
+	.claim-pill {
+		width: calc(100vw - 24px);
+		justify-content: center;
+	}
+}

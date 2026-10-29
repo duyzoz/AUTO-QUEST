@@ -1,0 +1,19 @@
+{
+	"name": "autoquest-web",
+	"productName": "ZoZ Development",
+	"version": "2.0.0",
+	"description": "Auto Quest thuần web — treo Orb Discord, token chỉ nằm trong trình duyệt, không proxy, không Electron.",
+	"private": true,
+	"type": "commonjs",
+	"author": "NgDuy (ZoZ Community)",
+	"license": "MIT",
+	"scripts": {
+		"start": "node web/server.js",
+		"build:engine": "node web/build-engine.js",
+		"build:static": "node web/build-static.js",
+		"build": "node web/build-static.js",
+		"integrity": "node web/make-integrity.js --dev",
+		"test": "node web/test/self-test.js",
+		"verify": "node web/test/self-test.js && node web/make-integrity.js --dev"
+	}
+}

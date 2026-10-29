@@ -1,0 +1,130 @@
+'use strict';
+
+/* #106 — Service Worker: chỉ cache VỎ ỨNG DỤNG (cùng origin).
+   Tuyệt đối KHÔNG đụng request Discord/hCaptcha: mọi request khác origin đi thẳng.
+   Chiến lược: stale-while-revalidate cho tài nguyên tĩnh; network-first cho
+   điều hướng (để bản mới lên ngay khi có mạng, offline vẫn mở được vỏ). */
+
+const VERSION = 'autoquest-shell-v14';
+const SHELL = [
+	'./',
+	'index.html',
+	'renderer.js',
+	'styles.css',
+	'mobile.css',
+	'fonts.css',
+	'web/identity.js',
+	'web/display-name-style.js',
+	'web/bridge.js',
+	'web/engine-worker.js',
+	'web/engine-bundle.js',
+	'assets/orb-logo.png',
+	'assets/orb-logo-big.png',
+	'assets/zoZ-logo.png',
+	'assets/zoZ-logo-ico.png',
+	'manifest.webmanifest',
+];
+
+self.addEventListener('install', (event) => {
+	event.waitUntil(
+		caches
+			.open(VERSION)
+			.then((cache) => cache.addAll(SHELL))
+			.catch(() => {
+				/* thiếu file nào đó không được làm chết SW */
+			}),
+		// Wave#123: bản mới CHỜ người dùng bấm "Cập nhật" (postMessage SKIP_WAITING)
+		// thay vì tự nhảy — tránh reload giữa lúc đang cày nhiệm vụ.
+	);
+});
+
+self.addEventListener('message', (event) => {
+	const data = event.data || {};
+	if (data.type === 'SKIP_WAITING') {
+		self.skipWaiting();
+		return;
+	}
+	if (data.type === 'GET_VERSION' && event.source) {
+		try {
+			event.source.postMessage({ type: 'SW_VERSION', version: VERSION });
+		} catch {
+			/* ignore */
+		}
+	}
+});
+
+self.addEventListener('activate', (event) => {
+	event.waitUntil(
+		caches
+			.keys()
+			.then((keys) => Promise.all(keys.filter((k) => k !== VERSION).map((k) => caches.delete(k))))
+			.then(() => self.clients.claim()),
+	);
+});
+
+self.addEventListener('fetch', (event) => {
+	const req = event.request;
+	if (req.method !== 'GET') return;
+
+	let url;
+	try {
+		url = new URL(req.url);
+	} catch {
+		return;
+	}
+	// Chỉ xử lý cùng origin — Discord/hCaptcha/cdn đi thẳng ra mạng.
+	if (url.origin !== self.location.origin) return;
+
+	// Wave#127: manifest toàn vẹn phải luôn là bản MỚI NHẤT, không qua cache.
+	if (url.pathname.endsWith('/integrity.json')) {
+		event.respondWith(
+			fetch(req).catch(
+				() =>
+					new Response('{"files":{}}', {
+						status: 503,
+						headers: { 'Content-Type': 'application/json; charset=utf-8' },
+					}),
+			),
+		);
+		return;
+	}
+
+	if (req.mode === 'navigate') {
+		event.respondWith(
+			fetch(req)
+				.then((res) => {
+					if (res && res.ok) {
+						const copy = res.clone();
+						caches.open(VERSION).then((c) => c.put('index.html', copy)).catch(() => {});
+					}
+					return res;
+				})
+				.catch(() =>
+					caches.match('index.html').then(
+						(hit) =>
+							hit ||
+							new Response('Auto Quest cần mạng để tải lần đầu.', {
+								status: 503,
+								headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+							}),
+					),
+				),
+		);
+		return;
+	}
+
+	event.respondWith(
+		caches.match(req).then((hit) => {
+			const network = fetch(req)
+				.then((res) => {
+					if (res && res.ok) {
+						const copy = res.clone();
+						caches.open(VERSION).then((c) => c.put(req, copy)).catch(() => {});
+					}
+					return res;
+				})
+				.catch(() => hit);
+			return hit || network;
+		}),
+	);
+});

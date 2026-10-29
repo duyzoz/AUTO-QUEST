@@ -1,0 +1,35 @@
+{
+	"name": "Auto Quest — ZoZ Development",
+	"short_name": "Auto Quest",
+	"description": "Treo Orb Discord — chạy 100% cục bộ trong trình duyệt, token chỉ nằm trên máy bạn.",
+	"lang": "vi",
+	"dir": "ltr",
+	"start_url": "./",
+	"scope": "./",
+	"display": "standalone",
+	"display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
+	"orientation": "any",
+	"background_color": "#0b0e18",
+	"theme_color": "#0b0e18",
+	"categories": ["utilities", "productivity"],
+	"icons": [
+		{
+			"src": "assets/zoZ-logo.png",
+			"sizes": "512x512",
+			"type": "image/png",
+			"purpose": "any"
+		},
+		{
+			"src": "icon.png",
+			"sizes": "720x720",
+			"type": "image/png",
+			"purpose": "any"
+		},
+		{
+			"src": "assets/orb-logo.png",
+			"sizes": "256x256",
+			"type": "image/png",
+			"purpose": "any"
+		}
+	]
+}

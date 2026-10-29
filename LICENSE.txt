@@ -1,0 +1,41 @@
+MIT License
+
+Copyright (c) 2026 duyzoz / NgDuy (ZoZ Community)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+---
+
+LUU Y BO SUNG (khong thuoc noi dung giay phep MIT o tren):
+
+ZoZ Development / Auto Quest la du an HOC TAP, ma nguon mo, KHONG lien ket
+chinh thuc, khong duoc tai tro va khong duoc xac nhan boi Discord Inc.
+Thuong hieu "Discord", logo, Orb va moi tai nguyen lien quan thuoc ban quyen
+cua Discord Inc. va chi duoc dung o day cho muc dich minh hoa/hoc tap.
+
+Nguoi dung tu chiu toan bo trach nhiem khi su dung phan mem nay, bao gom viec
+tuan thu Dieu khoan Dich vu (Terms of Service) cua Discord. Tac gia khong
+chiu trach nhiem cho bat ky ton that nao phat sinh, bao gom nhung khong gioi
+han o viec tai khoan bi han che, khoa hoac cham dut.
+
+Toan bo du lieu (token, cau hinh, tai khoan) duoc xu ly va luu tru cuc bo
+tren may nguoi dung - ung dung khong gui du lieu toi bat ky endpoint ben
+ngoai nao ngoai API chinh thuc cua Discord.
+
+Chi tiet day du: xem DISCLAIMER.md trong repo.

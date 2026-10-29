@@ -1,0 +1,34 @@
+MODEL CHECK: UNKNOWN-MODEL — session 2026-10-28 06:26 UTC (runtime exact model ID unavailable)
+
+Waves#97–100 — ORB claim audit and recovery.
+- Initial pass matched claim metadata, enforced success-only state updates, added per-account queues, and routed CAPTCHA to Discord externally. The user corrected this direction: claim and human CAPTCHA must stay in this client.
+- Root causes confirmed from repo history: the Electron hCaptcha can return passive `P1_/pd:0` without an interactive challenge; sending its callback led to repeated rejections. Claim data also changed missing `traffic_metadata_raw/sealed` into explicit `null`, unlike the bot path. CAPTCHA error objects could lose `sitekey` when a partial `err.captcha` shadowed raw response data.
+- Follow-up keeps the hCaptcha widget in-app, requires an opened interactive challenge and rejects passive `P1_` callbacks when no challenge opened. New user log revealed `render=explicit` was paired with only DOM `load`, not hCaptcha's required API `onload` callback; prior passive observations must be retested after this initialization fix, so do not yet attribute them to service-side mode.
+- Preserved account/quest CAPTCHA dedupe, stale-account guards, rate-limit handling, and token-safe diagnostics. Fixed hCaptcha script retry after load failure; kept absent metadata absent; merged all REST error shapes; removed the unused external quest handoff IPC.
+- `pnpm run build:bot` compiled successfully and synchronized `electron/bot`. Syntax-check Electron JavaScript after the onload fix; no test suite or live Discord request was run.
+- Numbering note: the project ledger already has a previous Waves#97 release-packaging entry. These four labels are retained because the user explicitly requested #97–100; see docs/WAVES-97-100-ORB-CLAIM.md.
+
+HANDOFF — full-project audit, no code changed (session 2026-10-28 10:39 UTC).
+- Read everything: bot.ts, all 9 src/*.ts, electron/main.js (2.130 lines, 32 ipcMain.handle), preload.js, discordIdentity.js, discordCdp.js, renderer.js (6.033), styles.css (5.796), index.html (668), docs/*.md.
+- Wrote the agent entry point `docs/AGENT-BRIEF.md`: invariants I1–I7, decision log D1–D8, file map with measured line counts, 17-wave backlog (#101–#117) with dependencies + checkable acceptance, verification recipes, anti-goals, open questions OPEN-1..OPEN-5, report template.
+- Evidence docs: `docs/RA-SOAT-ORBS-CLAIM.md` (L1–L11 with file:line), `docs/PORT-WEB-100-PHAN-TICH.md` (port ledger, 7 blockers), `docs/WEB-VERSION-KHA-THI.md` (3 real curl probes proving Discord CORS echoes any Origin), `web-poc/index.html` (runnable proof).
+- Root causes, ranked: (1) two Discord identities in one app — `src/constants.ts` 1.0.9259/621195/`browser_version 42.11.4`/`sec-ch-ua v=138` vs `discordIdentity.js` 1.0.9262/641004/Chrome 148, plus one shared `X-Installation-Id` for every account; (2) `captcha_session_id` extracted then dropped by `buildClaimBody()`; (3) `challengeOpened` gate turns passive hCaptcha auto-pass into a dead end (this is the "says captcha solved but no captcha shown" symptom); (4) `captchaBlockedClaims` blocks a quest for the whole session without re-emitting `quest:captcha`; (5) `claimBusy` has two early-return paths that never reset; (6) video quest `enrolled_at` NaN loops forever silently.
+- Decision: fix nothing before Waves#101 probe — the three candidate causes cannot be separated by reading code alone.
+- Canonical numbering now: claim track #101–#108, web track #109–#116, infra #117. Older drafts that reused #109–#114 were renumbered and marked in place.
+- No build was run. No live Discord request was made.
+
+MOBILE/IOS REMOVED — web is now the only target (session 2026-10-28 10:52 UTC).
+- Owner decision (recorded as D9 in docs/AGENT-BRIEF.md): mobile + IPA builds are no longer wanted; the
+  single goal is the web (PWA) version. Removed from the repo: `mobile/` (30 files, React Native iOS),
+  `build-ipa/` (4 files), `docs/HUONG-DAN-CAI-TROLLSTORE.md`.
+- Cleaned references: README badge (Platforms now Windows | macOS | Linux | Web), mermaid mind map branch
+  (iOS TrollStore -> Web PWA), feature table row "OLED Saver (iOS)", download section (iPhone/TrollStore ->
+  Web section), repo tree. `.gitignore`: dropped `mobile/node_modules/`, `mobile/.expo/`, `.expo/`,
+  `Payload/`, `*.ipa`, `dist-ios/`, `build-release/build-ipa/`.
+- Numbering discipline: the docs handoff commit was relabelled `chore(docs)` (not `waves#101`) so wave
+  #101 stays reserved for the probe. This removal is also a chore, not a wave. Waves remain #101-#117.
+- New decision D10: because the target is the web, #102 (single Discord identity) and #103
+  (`captcha_session_id`) now outrank #105 — the origin trick of #105 only works inside Electron, a web
+  page cannot mint an hCaptcha token on the discord.com origin. On the web the only lever against
+  challenges is a lower-risk identity plus sending the full challenge payload.
+- Pushed: `f975558 -> 7bd7c53` (docs), then this removal commit. Verified remote refs with ls-remote.

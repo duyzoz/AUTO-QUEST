@@ -1,0 +1,128 @@
+# 2026-10-20 — AUTO-QUEST .brain log
+> Agent đọc README (mục Log AI Agent + Quy Trình Waves) trước khi code. Ghi ngắn gọn, tiết kiệm token.
+
+## MODEL CHECK
+- `step-5-preview` — model THẬT của phiên này (lấy từ runtime thông tin phiên làm việc).
+- CẤM copy model phiên trước. Không biết → ghi `UNKNOWN-MODEL`.
+
+## QUY TẮC (cho agent sau)
+- CẤM push sang repo khác. CẤM build EXE/push main/release nếu chủ chưa ra lệnh.
+- KHÔNG đụng mobile/, .github/workflows/build-ios.yml.
+- Token file `push github(token).txt` chỉ đọc khi chủ yêu cầu push.
+- **WAVES: chỉ TĂNG** (max+1). CẤM trùng/lùi/reset 0. Nhiều thay đổi 1 phiên → gộp 1 waves.
+- Bổ sung 20/10: **Waves I/I-B/II/III là MỤC CHÍNH** (khung bắt buộc). Waves con **tự vibe sáng tạo** hoặc theo promt user — **CẤM đặt tên trùng đề mục chính**; waves con dùng số riêng + tên riêng sáng tạo.
+- Ghi log đúng **tên model đang chạy thật**, không copy phiên trước.
+
+## Backlog đã vibe (chờ duỵệt / làm dần) — ngày 20/10
+- W10 ✨ Nút "Mở trong Discord" (locked IPC discord.com only) — **đã làm xong trong Waves 9 ngày 19/10** (gộp).
+- W11 ♿ a11y log (aria-live) — **đã làm trong Waves 9** (gộp).
+- W12 📊 Tổng Orbs đã chọn — **đã làm trong Waves 9** (gộp).
+- W13 ⚡ Throttle progress event → giảm reflow khi chạy nhiều quest.
+- W14 🔒 Test security guard: zero-call xác nhận chặn URL ngoài + chặn webhook.
+- W15 🧹 Chuẩn hoá log level bot (đổi console.log emoji → structured log).
+- W16 🧪 Unit test cho escapeHtml + dedupe quest:done.
+- W17 📦 Build checksum: ghi sha256 vào build-release/exe/CHECKSUMS.txt.
+- W18 🎨 Empty-state có nút action (Quét ngay) thay vì chữ trống.
+- W19 💾 Lưu pref autoScroll/loopMode vào config.
+- W20 🔔 Toast cảnh báo token hết hạn khi auth:check fail ở init.
+
+## ~21:45 · step-5-preview · WAVES 10 DONE — SMOOTH PROGRESS (mục chính: Waves II)
+- Luật mới từ chủ: Waves I/I-B/II/III = **mục chính**; waves con tự vibe/tên riêng sáng tạo, CẤM trùng tên đề mục chính. Đã ghi vào README + file log này.
+- Code (waves con "Smooth Progress" — tên riêng, không trùng đề mục):
+  - renderer.js: `scheduleRender()` + `upsertQuest(id, patch, {defer:true})` — event `quest:progress` (tần suất cao) được gộp render mỗi 1 frame (requestAnimationFrame) thay vì re-render mỗi event.
+  - Dọn `ui.remember` — tham chiếu id `#remember` không tồn tại trong HTML (rác từ phiên bản cũ).
+  - Pref `autoScroll`: lưu qua `saveConfig({autoScroll})` khi toggle; main.js `readConfig/writeConfig` thêm field `autoScroll` (mặc định true); init đọc lại.
+  - Cảnh báo token hết hạn: init auth fail → appendLog warn + toast "Token đã lưu hết hạn".
+- Kiểm thử (Waves III): node --check 3 file JS, DOM-id scan (42 el() ids khớp HTML), tsc --noEmit — tất cả pass.
+- README: badge Waves 10, roadmap + sổ waves thêm W10 "Smooth Progress", log 3 bản ghi mới nhất (9 → 8 → 10 mới nhất trên cùng... đúng thứ tự: 10, 9, 8).
+- Không build EXE, không push.
+
+## ~22:05 · step-5-preview · WAVES 11 DONE — DISCORD DRESS-UP (đại cải tổ UI, waves con của Waves II)
+- Chủ gửi mẫu kasumu.cloud: profile Discord thật (banner CDN + avatar + decoration + clan badge), yêu cầu bê nguyên "profile Discord" vào app, menu tách Auto Quest / Cài đặt, XOÁ sạch phần kiếm tiền. Chỉ lấy ý tưởng, không copy link monetize.
+- `main.js` auth:check trả thêm: banner, accent_color, avatar_decoration_data.asset, primary_guild (clan tag/badge/guildId) — đúng payload Discord `/users/@me`.
+- `index.html` viết lại:
+  - `.dprofile` đầu trang: banner (CDN → accent gradient → blurple default), avatar 96px CDN (gif cho a_), decoration lớp phủ, clan badge + tag, status dot, dp-badge login.
+  - CSP thêm `img-src https://cdn.discordapp.com`.
+  - Nav 3 trang icon khối (SVG): Auto Quest (stats + quests + console) / Cài đặt (token + guide + AFK loop + actions) / Giới thiệu (security banner + list + disclaimer).
+  - Xoá security-banner giữa app + brand header cũ (chuyển security vào Giới thiệu).
+- `renderer.js`:
+  - `renderDiscordProfile(user)` — vẽ banner/avatar/decoration/clan thật từ CDN; `resetDiscordProfile()` guest mode.
+  - setState hiển thị status ngay trên dp-badge (live/err/online).
+  - `switchPage(quest|settings|about)` — nav, bấm Quét/Chạy tự về trang Auto Quest.
+  - loginChip → dp-badge; event login → vẽ profile nếu chưa có.
+  - Bỏ sạch accountChip/chipName/chipAvatar/statusText cũ.
+- `styles.css`: khối `.dprofile/.dnav/.page` mới (~250 dòng) + responsive dp-* thay titlebar/chip cũ.
+- Kiểm thử: node --check ×3 pass; DOM-id scan 50 ids khớp HTML; tsc --noEmit pass.
+- Không build EXE, không push. Waves kế tiếp = 12.
+
+## ~23:30 · step-5-preview · WAVES 12 DONE — LEFT RAIL REBUILD (sửa bố cục theo kasumu, waves con của Waves II)
+- Chủ chê bố cục Waves 11 sai (profile trên đầu) → yêu cầu **y hệt Discord web/kasumu**: left rail icon dọc trái, user panel đáy-trái có icon ĐĂNG XUẤT, popout profile có SỐ DƯ ORB.
+- `index.html` viết lại khối layout:
+  - `<aside class="rail">` 3 nút icon (Auto Quest/Cài đặt/Giới thiệu) + `.userpanel#dprofile` đáy rail.
+  - `.up-pop#upPop` (hidden): banner `#dpBanner` + avatar-wrap (`#dpAvatar` + `#dpDecoration` lớp phủ) + clan (`#dpClanBadge`/`#dpClanTag`) + **khung `.up-pop-orbs`**: label "SỐ ORB KHẢ DỤNG" + `#orbBalance` + `#orbPending`, icon orb SVG radialGradient #ffe9c4→#ffb85c→#e0821a.
+  - `.up-row#upRow`: avatar nhỏ `#upAvatar` + tên `#upName`/`#upSub` + **`#btnLogout` icon đăng xuất** (thay mic/headset/settings).
+  - Actions (Quét/Auto ORBs/Dừng) dời xuống ngay dưới danh sách quest ở page Auto Quest.
+- `styles.css`: nền #1e1f22, rail-btn 48px bo góc 16→14px active + pill trắng 4px; up-pop absolute phía trên panel, bo 12px, animation; dp-avatar 72px, dp-decoration inset -10px; up-logout hover #f23f43; orb-value #ffb85c letter-spacing; responsive rail 64px mobile.
+- `renderer.js`:
+  - ui map mới: upRow/upPop/upAvatar/upName/upSub/btnLogout/orbBalance/orbPending (bỏ chip* cũ).
+  - `renderDiscordProfile` vẽ cả pop lẫn row; `resetDiscordProfile` guest; `setState` ghi trạng thái vào upSub.
+  - `logout()`: xoá token config + reset profile + xoá số dư về "—".
+  - init(): resetDiscordProfile() trước, config có token → authCheck → vẽ profile đầy đủ.
+  - **event mới `orbs:balance`** (case mới trong handleEvent): cập nhật orbBalance/orbPending/statOrbs + log.
+- `bot.ts` + `events.ts` (ORB THẬT, cấm bịa):
+  - events.ts thêm `'orbs:balance'` vào QuestEventType.
+  - scanQuests(): sau quest:inventory tính `orbBalance` = tổng orb quest `isCompleted()` **VÀ** `hasClaimedRewards()` (Discord `user_status.claimed_at`); quest done chưa claim → `pendingClaim`. `report('orbs:balance', {...})`.
+  - runSelectedQuests(): sau when-all-settled **refresh lại balance** (claim xong số dư tăng thật) → report orbs:balance lần 2.
+  - `orb_pending`/ước lượng KHÔNG hiển thị vào số khả dụng — chỉ qua nhánh pendingClaim.
+- Biên dịch: tsc -p tsconfig.build.json → electron/bot/bot.js có freshBalance + orbs:balance ×2.
+- Kiểm thử: node --check ×3 (renderer/main/preload) pass; DOM-id scan **58/58 khớp**; tsc --noEmit + compile pass; node --check bot.js pass.
+- README: badge Waves 12, roadmap thêm W12 "Left Rail Rebuild", sổ waves W12, feature thêm "SỐ ORB KHẢ DỤNG (THẬT)", log 3 bản ghi (12/11/10).
+- Không build EXE, không push. Waves kế tiếp = 13.
+
+## ~23:20 · step-5-preview · WAVES 13 DONE — KASUMU RESKIN (bê UI kasumu-ui + diệt 100% emoji, waves con của Waves II)
+- Bro ra lệnh: bản cũ coi như vứt, vào `kasumu-ui/` (bên ngoài repo, trích xuất UI thật của kasumu.cloud) bê NGUYÊN UI/UX qua source. CẤM đổi bản chất Auto Quest (không phải app vượt link). CẤM TUYỆT ĐỐI icon emoji mặc định (xấu) — phải design log/theme chuẩn.
+- Đọc kasumu-ui: index/settings/earn/withdraw + 2 file CSS. Trích design tokens:
+  - Màu: ink-950 #05060b (bg chính), ink-900 #090b13 (sidebar/card), ink-850 #0b0e18 (pop), ink-800 #10141f (hover), fg #f3f5fa, fg-muted #aab3c8, fg-subtle #838da4, line #ffffff14, line-strong #ffffff29, brand #8b5cf6 violet, brand-bright #a78bfa, emerald #00d294, cyan #00d2ef, well rgba(5,6,11,.65).
+  - Font: Inter variable (100-900) + JetBrains Mono (400-700) — copy 13 woff2 vào electron/renderer/assets/fonts/, sinh fonts.css 31 @font-face từ CSS gốc (giữ unicode-range, đổi path). CSP font-src 'self' có sẵn.
+  - Hiệu ứng: kasumi-rise .42s cubic-bezier(.22,1,.36,1) + stagger 60/120/180/240ms; text-gradient (trắng→#d7dbe8→brand-bright); skeleton shimmer.
+- index.html viết lại (B layout kasumu):
+  - .bg-layers 3 lớp: #07090e + 2 radial glow (đỏ 20%/top, xanh 85%) + overlay ink-950/50.
+  - Sidebar 256px fixed: brand AUTO QUEST, userpanel (pop profile + ORB giữ nguyên từ W12, pop giờ MỞ XUỐNG dưới), nav "Menu" 3 item (nav-item: thanh trắng 3px .nav-ind, icon 18px, active bg-white/8).
+  - Main max-w-6xl: hero-card (tint violet, text-gradient title, CTA btn-discord #5865F2), stats-row 3 card (stat-ico 32px bo 8px tint emerald/violet/cyan + ring color-mix tint 30%), quests-card (tab + chip counter + select-tools hidden attr + actions), console-card.
+  - Toàn bộ icon = SVG stroke 2px kiểu lucide inline (dashboard, settings, info, coins, list-checks, timer, refresh, play, square, clipboard, eye, save, folder, copy, shield...). empty-ico là SVG inbox 34px.
+  - Mobile <1024px: topbar + btnDrawer + drawer-overlay; sidebar trượt translateX; switchPage tự closeDrawer.
+- styles.css viết lại hoàn toàn bằng token kasumu (không còn màu vesper/gold/copper cũ).
+- renderer.js:
+  - ui thêm btnToggleTokenText/btnDrawer/drawerOverlay/sidebar.
+  - switchTab/renderQuests/switchPage đổi style.display → hidden attr.
+  - btnStart label update giữ SVG (query .btn-ico, thay text node cuối) — không còn innerHTML ▶.
+  - btnToggleToken đổi span text (Hiện/Ẩn) thay vì emoji trong textContent.
+  - Thêm openDrawer/closeDrawer + js-hero-cta (guest→settings focus token; logged-in→quest).
+  - Toàn bộ toast/log bỏ emoji (✅ 🔮 🔍 ▶ 📋 🎉 ⚠️...). "Hoàn thành ✓" → "Hoàn thành".
+- bot.ts + src/questManager.ts: strip emoji prefix trong console.log (🔍📡📋🔮⚠️🎉🧭🎯✅⚡💤🎮🏆🎁). Tái biên dịch electron/bot/ — compiled output cũng 0 emoji.
+- main.js: backgroundColor #05060b, title "AUTO QUEST · Treo Orb Discord".
+- Kiểm thử: tsc -p tsconfig.build.json pass; node --check ×4 (bot/renderer/main/preload) pass; DOM-id scan 62/62; emoji scan regex 11 file source + 2 compiled = 0.
+- Lưu ý: btnToggleToken giờ là SVG + <span id="btnToggleTokenText">Hiện</span> — renderer đổi qua span, KHÔNG đè textContent cả nút (giữ icon).
+- Commit ca99883. Không build EXE, không push. Waves kế tiếp = 14.
+
+## ~23:55 · step-5-preview · WAVES 14 DONE — PROFILE HERO + SIDEBAR BALANCE (waves con của Waves II)
+- Bro duyệt layout "chuẩn rồi" nhưng 2 lỗi: (1) dán token xong chỉ có hero text giữa trang, KHÔNG có profile Discord; (2) SỐ ORB KHẢ DỤNG lại nằm trong pop profile mà không trích xuất được — phải chuyển ra ngoài đáy sidebar (sát đáy trái) + style GIỐNG kasumu "Số dư khả dụng" (font-mono, XANH emerald như tiền) + trích xuất THẬT khi đăng nhập, không cần chạy bot.
+- main.js:
+  - IPC mới `orbs:fetch` (GET /quests/@me với token người dùng): balance = quest completed + claimed_at; pendingClaim = completed chưa claim; activeOrbs = đang cày. Timeout 15s, chỉ gọi discord.com.
+  - `auth:check` trả kèm `user.token` để renderer gọi fetchOrbs ngay sau login.
+- preload.js: thêm `fetchOrbs(token)`.
+- renderer.js:
+  - ui refs thêm heroGuest/heroProfile/phBanner/phAvatar/phDecoration/phDisplay/phUsername/phClanBadge/phClanTag/sideBalance.
+  - `fetchOrbBalance(token)`: gọi orbs:fetch → sb-value (số mono emerald) + sb-sub (pending text) + sideBalance[data-state=live] + statOrbs + log. Lỗi → về guest.
+  - `resetSideBalance()`: guest state cho khối balance.
+  - `renderDiscordProfile`: giờ cũng vẽ hero giữa trang (banner CDN/accent/default, avatar 92px + decoration, display, username mono, clan badge+tag) + ẩn heroGuest + GỌI fetchOrbBalance.
+  - `resetDiscordProfile`: thêm guest cho hero + sideBalance.
+  - `orbs:balance` event từ bot: cũng set sideBalance[data-state=live] + sb-sub text chuẩn.
+  - logout() dọn đoạn orb trùng (resetDiscordProfile lo hết).
+- index.html:
+  - BỎ khung orbs cũ trong pop profile (up-pop-orbs → CSS all:unset+display:none kỹ thuật).
+  - Thêm `#sideBalance` đáy sidebar: sb-top (label "Số dư khả dụng" + stat-ico coins emerald) + sb-value #orbBalance mono emerald 1.7rem + sb-sub #orbPending.
+  - Thêm `#heroProfile` cạnh heroGuest (hidden mặc định): ph-banner 116px + ph-body (ph-avatarwrap > ph-avatar 92px + ph-decoration) + ph-id (namerow: ph-display 1.45rem + clan badge/tag) + ph-username mono.
+- styles.css: thêm block .side-balance (border, radius 1rem, data-state live → viền emerald) + .sb-* + block .profile-hero/.ph-* (padding 0, overflow hidden, banner gradient, body margin-top -36px avatar đè lên banner kiểu Discord).
+- Kiểm thử: node --check ×3 pass; DOM-id scan 72/72 khớp; emoji scan 5 file renderer/main = 0 (dọn thêm 2 emoji sót trong main.js log boot/stop: 🛡️⏹️).
+- Không build EXE, không push. Waves kế tiếp = 15.

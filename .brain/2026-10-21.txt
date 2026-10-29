@@ -1,0 +1,704 @@
+# 2026-10-21 — AUTO-QUEST .brain log (ngày mới)
+
+## ~00:10 · step-5-preview · WAVES 15 DONE — PROFILE CENTERPIECE & LOGOUT GUARD (waves con của Waves II)
+- Requirenemts bro (kèm screenshot): (1) XOÁ khung hero guest ở đầu trang; hero profile giữa PHẢI cân bằng, không che khuất; (2) khung "Số dư khả dụng" đáy sidebar phải có NỀN XANH EMERALD như tiền (hơi xanh, glow); (3) hiệu ứng khung TÊN (nameplate collectible Discord) bọc quanh tên + khung wuwa (clan tag) — màu riêng từng user (accentColor), hero giữa BẮT BUỘC có, pop khung quản lý chỉ khi MỞ RA; (4) bấm Đăng xuất phải có popup xác nhận 2 nút: Huỷ / Đăng xuất; (5) gọi chuẩn decoration avatar từ Discord CDN (đã có từ W11).
+- index.html:
+  - XOÁ #heroGuest (guest hero card + CTA). Chỉ còn #heroProfile (hidden khi guest — guest không có hero).
+  - Tên trong hero bọc `<span class="ph-nameplate" id="phNameplate">` quanh #phDisplay; clan tag thêm class .ph-tag. Pop: tên bọc .ph-nameplate.up-nameplate#dpNameplate; tag .up-tag.
+  - Thêm modal #logoutModal (.modal-veil > .modal-card: icon logout đỏ, title "Bạn có muốn đăng xuất tài khoản này không?", desc động theo tên user, 2 nút #btnLogoutCancel "Huỷ" / #btnLogoutConfirm "Đăng xuất").
+- styles.css:
+  - .side-balance: NỀN XANH EMERALD thật — 2 lớp radial-gradient emerald + rgba(0,92,66,.13), viền rgba(0,210,148,.3), inset highlight + glow xanh đổ xuống; ::after sheen chéo kiểu thẻ ngân hàng; [data-state=live] tăng đậm (viền .55, glow mạnh); [data-state=guest] lặng về gần tối (tint 5%).
+  - .ph-nameplate: khung bọc tên bo tròn 12px — nền gradient màu --np (set từ accentColor user qua JS, fallback #8b5cf6), 2 lớp ring (1px màu + 4px alpha), mask-composite viền gradient chạy quanh, ::before, ::after light sweep quét ngang 5.5s (npSweep). text-shadow màu user. .up-nameplate bản nhỏ 9px padding cho pop.
+  - .up-tag/.ph-tag: viền+nền theo màu --np (wuwa đúng tone user).
+  - .modal-veil (blur backdrop, veilIn) + .modal-card (ink-850, radius 1.125rem, icon đỏ bo 14px) + .btn-danger (#fb2c36) + .btn-ghost.
+- renderer.js:
+  - Bỏ ui.heroGuest + handler .js-hero-cta (element đã xoá).
+  - Thêm ui refs: phNameplate, dpNameplate, logoutModal, btnLogoutCancel, btnLogoutConfirm.
+  - renderDiscordProfile: set --np = intToHex(accentColor) || #8b5cf6 lên heroProfile + cả 2 nameplate → hiệu ứng tên MÀU RIÊNG TỪNG USER; heroProfile.hidden = false (bắt buộc hiện khi login).
+  - logout() cũ → openLogoutModal()/closeLogoutModal()/confirmLogout(): modal mở focus nút Đăng xuất, bấm Huỷ/outside/Escape đóng, Đăng xuất mới xoá token + reset.
+- Guest vẫn thấy: sidebar (balance block guest tint) + stats + quest card; không còn hero chữ giữa trang.
+- Kiểm thử: node --check ×3 pass; DOM-id 76 refs / 79 ids — 0 missing; emoji scan 5 file = 0; nameplate/modal CSS classes verified.
+- KHÔNG build EXE, KHÔNG push. Waves kế tiếp = 16.
+
+## ~01:00 · step-5-preview · WAVES 16 DONE — ORB WALLET TRUTH (balance từ ví thật + fix build EINVAL)
+- Bro báo: SỐ ORB sai lệch. Nguyên nhân: bot tính balance từ quest list hiện hành (isCompleted + hasClaimedRewards/claimed_at) — KHÔNG phải ví thật của account (quest claim trên app Discord không phản ánh vào list cũ bot giữ).
+- Fix chuẩn (bot.ts):
+  - Helper MỚI fetchOrbBalance(questManager): GET /quests/@me/claimed — ENDPOINT CHÍNH THỨC Discord trả danh sách quest ĐÃ TRẢ THƯỞNG.
+    - balance = tổng user_status.orb_quantity_claimed (fallback: tổng config.rewards[].orb_quantity nếu Discord chưa ghi số).
+    - pendingClaim = quest done CHƯA claim (đếm từ list hiện hành: preview=false, isCompleted, !hasClaimedRewards → getQuestOrbs).
+    - Trả null nếu endpoint lỗi → caller dùng fallback cũ (từ realInventory: done + claimed → balance, done chưa claim → pending).
+  - scanQuests: thay khối try/catch inline bằng helper. Log "Số dư Orb khả dụng (claimed list): N".
+  - runSelectedQuests: sau Promise.allSettled + orb:summary → GỌI LẠI fetchOrbBalance → report orbs:balance bằng số VÍ THẬT sau claim (fallback list cũ nếu lỗi).
+- renderer.js case 'orbs:balance': text gọn "Số Orb khả dụng (claimed list)" + sub "Tổng Orb khả dụng từ mission đã claim trên account."
+- Kiểm thử: npx tsc --noEmit -p tsconfig.json = 0 lỗi.
+- BONUS FIX tools/build.js: run() dùng execFileSync shell:false + cmd='npx.cmd' → spawnSync EINVAL trên Node ≥22.12 (chặn spawn .cmd không shell — CVE-2024-27980). Fix: shell: process.platform === 'win32'. Build lại OK toàn phần:
+  - [1/4] env ✔ (electron, electron-builder, typescript, icon 186KB)
+  - [2/4] tsc biên dịch bot core ✔ electron/bot/bot.js
+  - [3/4] electron-builder portable ✔ (electron 38.8.6, nsis-3.0.4.1, signing signtool)
+  - [4/4] EXE: build-release\exe\AUTO-QUEST-1.0.0-portable.exe · 83.41 MB · sha256 5414ef60aba7e41b · tổng output 417.46 MB · 271.0s
+- README: badge W16 + bảng waves + next=W17; log 3 bản ghi (16/15/14 — xoá 13/12).
+- KHÔNG push (chờ lệnh). Waves kế tiếp = 17.
+
+## ~10:45 · step-5-preview · WAVES 17 DONE — KASUMU PROFILE POLISH (nameplate pill + ID + veil + login/logout)
+- Bro gửi 4 screenshot (model KHÔNG đọc được ảnh — làm theo mô tả text + đối chiếu source kasumu-ui/assets/css):
+  1. NAMEPLATE kiểu kasumu pill: .ph-nameplate border-radius 999px, border color-mix(np 45%, white 14%), nền 2 lớp (gradient np 16%→transparent + --well), inset ring 5% white, shadow 0 2px 12px -6px np55, backdrop blur 4px; .np-media opacity .5; .ph-display text-shadow đậm hơn. Clan tag (.up-tag/.ph-tag): nền --well + viền --line-strong (bỏ tông np). .up-nameplate pill nhỏ 4px 12px.
+  2. ID DISCORD ở hero: #phUserId (chip mono: pill viền --line nền --well, icon terminal SVG 12px, text "ID: <id>" #phUserIdValue). renderer: renderDiscordProfile set hidden=!id + textContent=id; resetDiscordProfile → hidden + '—'. auth:check đã trả id từ trước (main.js không đổi).
+  3. GIÁP BANNER–AVT MỜ MỜ: .ph-banner::after veil gradient 64px (transparent → card 88%) đè đáy banner; .ph-avatarwrap::before halo radial (card 80% 40% → transparent 72%) blur 6px nền avatar (z 0, avatar z mặc định đè lên).
+  4. LOGIN/LOGOUT kasumu: (a) nút Đăng nhập #dpBadge thêm inline SVG logo Discord chính thức (viewBox 127.14 96.36) + span#dpBadgeText — renderer đổi text QUA SPAN (up-pop-login display inline-flex gap 8, icon 17×13). (b) Modal logout: thẻ #logoutAccount (well, radius field, avatar 34px + tên + ID mono nhỏ) — renderer giữ biến module `currentUser` (set ở renderDiscordProfile, null ở resetDiscordProfile), openLogoutModal vẽ avatar CDN hoặc icon person fallback, guest → hidden. (c) .btn-ghost nền --well.
+- DOM mới: phUserId, phUserIdValue, dpBadgeText, logoutAccount, logoutAccAvatar, logoutAccName, logoutAccId (7 id; renderer refs 83 / html ids 86 / 0 missing / emoji 0).
+- BUILD CỨNG 2 LẦN DO SAFE-DELETE SHIM: app.asar cũ trong build-release\exe\win-unpacked bị HANDLE GIỮ (electron app từng chạy) — trash-failed refuse fallback delete → build crash ở cleanDir LẦN 1, ở extractArchive (electron-builder tự rm win-unpacked) LẦN 2. Kill electron.exe không nhả khóa; rename cũng Access denied.
+  FIX tools/build.js (chuẩn):
+  - cleanDir + cleanFile MỚI: try/catch → warn, KHÔNG fail build (electron-builder tự ghi đè file cũ).
+  - OUT chính mỗi lần build = OUT_DIR/run-YYYYMMDD-HHMMSS (electron-builder chỉ chạm run dir FRESH, tránh folder cũ bị khoá); dọn run cũ giữ KEEP_RUNS=3; file rác gốc OUT_DIR xoá được thì xoá.
+  - Verify: walk OUT_RUN_DIR, chọn EXE mới nhất theo mtime; dirSize trên OUT_RUN_DIR.
+- BUILD THÀNH CÔNG: build-release\exe\run-20261021-103907\AUTO-QUEST-1.0.0-portable.exe · 83.41 MB · sha256 e57a1ee1e6901482 · 246.4s.
+- Rác sót vô hại (khoá hệ thống): build-release\exe\win-unpacked\resources\app.asar — user xoá tay sau khi thoát app + antivirus nhả file. Có thể嵌 1 build nữa khi folder này bị xoá được.
+- README: badge W17 + bảng + next=W18; log 3 bản (17/16/15 — xoá 14). KHÔNG push (chờ lệnh). Waves kế tiếp = 18.
+
+## ~18:45 · step-5-preview · WAVES 18 DONE — NAMEPLATE FULL WRAP + BADGES + FIX POPUP LOGOUT
+- Bro chốt (kèm 6 screenshot, model KHÔNG xem ảnh — bám mô tả):
+  1. Khung hiệu ứng bảng tên phải BAO TRÙM cả tên + logo wuwa + huy hiệu (không chỉ tên như W17).
+  2. Trích TOÀN BỘ huy hiệu từ token Discord, xếp ngay cạnh chữ.
+  3. Acc nào có hiệu ứng tên → trích luôn hiệu ứng ĐỘNG.
+  4. Khung quản lý (popup) làm y hệt Discord popup.
+  5. BÁO LỖI: nút đăng xuất KHÔNG hiện popup thông báo.
+- BUG #1 ĐÃ TÌM RA + FIX (logout popup chết): `ui.logoutDesc` ĐƯỢC DÙNG trong openLogoutModal (dòng ~994) từ Waves 15 nhưng KHÔNG BAO GIỜ khai báo trong `ui` map (ui map chỉ có logoutModal/btnLogoutCancel/btnLogoutConfirm/... từ W15). → `undefined.textContent = ...` throw TypeError → JS chết IM LẶNG (KHÔNG crash app, chỉ modal không hiện). Fix: `logoutDesc: el('logoutDesc')` vào ui map. BÀI HỌC: thiếu ref trong ui map = lỗi câm, khó phát hiện; rule: mọi id dùng trong JS phải có el() trong ui map.
+- main.js auth:check — trích thêm từ /users/@me:
+  - `badges[]` (b.icon hash + b.description; bỏ badge không có icon VÀ không có trong map)
+  - `premiumType` (user.premium_type)
+  - BADGE_ICONS map cứng 16 badge-id → icon hash CDN badge-icons (staff/partner/certified_moderator/hypesquad_online_house_1/2/3/bug_hunter/bug_hunter_level_1/2/active_developer/early_supporter/premium=nitro/verified_developer/early_verified_bot_developer) + BADGE_LABELS tiếng Việt/Anh.
+- index.html:
+  - Hero: #phNameplate giờ bọc: h2#phDisplay + span.ph-np-clan (img#phClanBadge + span#phClanTag) — clan badge/tag CHUYỂN TỪ NGOÀI nameplate vào TRONG pill. Thêm span#phBadges (cạnh tên, hàng badge).
+  - Pop: #dpNameplate tương tự (span.dp-display + .ph-np-clan: #dpClanBadge + #dpClanTag). XOÁ div.up-pop-clan cũ. Thêm div.up-pop-badges#dpBadges (hàng badge dưới tên, Discord style).
+  - Thêm id="phAvatarwrap" (cho JS toggle ring).
+- renderer.js:
+  - ui map: + logoutDesc, phBadges, dpBadges, phAvatarwrap.
+  - renderBadges(holder, badges, premiumType): img.user-badge src = cdn/badge-icons/<icon>.png?size=64, title=description, onerror → remove; Nitro auto-add (icon 2ba085e2e59eaa6f39a0e5e7c3f0e0a2) nếu premiumType>0; holder.hidden = !children.length. Gọi cho #phBadges + #dpBadges trong renderDiscordProfile.
+  - Ring avatar hiệu ứng: hasEffect = có avatarDecoration HOẶC nameplate.asset → phAvatarwrap.classList.toggle('has-effect') + copy --np từ phNameplate (palette) sang phAvatarwrap.
+  - resetDiscordProfile: dọn phBadges/dpBadges (innerHTML + hidden), bỏ has-effect.
+- styles.css:
+  - .ph-np-clan: inline-flex align-center gap 6 flex-shrink 0 (clan trong pill).
+  - .user-badge: 22×22, hover scale 1.15; .ph-badges/.up-pop-badges: inline-flex flex-wrap gap 5; .up-pop-badges margin-top 8.
+  - Ring: .ph-avatarwrap.has-effect::after — conic-gradient (--np) inset -5px, blur 3px, z -1, animation npRingSpin 4s linear infinite.
+  - upPopIn thêm scale .98→1 (popup "sổ ra" mượt kiểu Discord).
+  - np-media opacity .5→.85 (webm hiệu ứng lửa RÕ hơn); .up-nameplate padding 5px 14px + .dp-display nowrap.
+  - XOá .up-pop-clan; .dp-clan-badge 18px + .ph-clan-badge 20px flex-shrink 0; .dp-clan-tag white-space nowrap.
+- CSP: media-src https://cdn.discordapp.com ĐÃ CÓ SẴN (W13) → webm nameplate chạy OK trong Electron.
+- Test: node --check renderer.js/main.js OK; DOM refs 87 / ids 89 / 0 missing; emoji 0 (4 file).
+- BUILD OK: build-release\exe\run-20261021-184003\AUTO-QUEST-1.0.0-portable.exe · 83.41 MB · sha256 58485ccca64e8a83 · 379s.
+- README badge W18 + bảng + next=W19; log 3 bản (18/17/16). KHÔNG push. Waves kế = 19.
+
+## ~19:02 · step-5-preview · WAVES 18 HOTFIX — SỬA APP VỠ LAYOUT (lỗi do chính W18)
+- User chụp màn hình GIẬN: main content vỡ tươm — 3 stat cards TRỐNG (chỉ header), quests card + console mất nội dung. Sidebar vẫn OK.
+- NGUYÊN NHÂN GỐC: edit thêm `id="phAvatarwrap"` (W18) chèn THÊM `</div>` ngay sau `<div class="ph-avatarwrap">` → `.ph-body` đóng sớm → cây DOM lồng sai → Chromium auto-correct phá toàn bộ layout. node --check + tsc CHỈ check JS → KHÔNG phát hiện được.
+- FIX: bỏ `</div>` thừa. Validate parser riêng → cân bằng 100%.
+- CHỐNG LẠI: tools/build.js thêm validateHtml() — quét cân bằng MỌI thẻ index.html, fail build NGAY nếu lệch (không ship app vỡ). Đặt sau bước tsc, trước electron-builder.
+- REBUILD OK: run-20261021-190132\AUTO-QUEST-1.0.0-portable.exe · 83.42 MB · sha256 88e92ada35772fb9 · 256s.
+- RULE MỚI (ghi nhớ): sửa HTML xong PHẢI validate cấu trúc; build.js đã tự chặn. node --check KHÔNG BAO GIỜ đủ cho HTML.
+
+### Waves 19 — 19:45 · Badge Icon Path Fix (huy hiệu vẫn không hiện)
+- User: layout đã xong nhưng VẪN CHƯA CÓ HUY HIỆU (profile "Hsin" chỉ có nameplate + clan tag).
+- NGUYÊN NHÂN 2 LỚP:
+  (1) /users/@me (self) KHÔNG trả badges[] → phải suy từ public flags bitfield (đã làm W18: FLAG_BADGES + collectBadges()).
+  (2) MỚI: Discord đã CHUYỂN 3 badge (Staff / Moderator Programs Alumni / Nitro) khỏi
+      cdn.discordapp.com/badge-icons/{hash}.png sang discord.com/assets/{hash}.svg.
+      Hash cũ trong BADGE_ICONS trả 404 (curl xác nhận): Staff 5e74e9b6... 404,
+      Mod fee16240... 404, Nitro 2ba085e2... 404. 9 hash còn lại vẫn 200.
+- FIX:
+  - main.js BADGE_ICONS: 3 badge → URL đầy đủ đã verify curl 200:
+    staff   = https://discord.com/assets/48d5bdcffe9e7848067c2e187f1ef951.svg
+    mod     = https://discord.com/assets/c981e58b5ea4b7fedd3a643cf0c60564.svg
+    nitro   = https://cdn.discordapp.com/assets/content/f61ddf640d11d9bdfaf9de265eb862edf28986b659e545f293b54adf229433af.svg
+  - renderer.js: badgeIconUrl() resolver 2 dạng (URL đầy đủ HOẶC hash cũ badge-icons).
+  - collectBadges(): gắn fallbackIcon → renderer tự thử icon đã verify khi ảnh lỗi, hết mới ẩn.
+  - Nitro suy ngay ở main khi premium_type > 0 (không chỉ renderer).
+  - CSP img-src mở thêm https://discord.com (thiếu = SVG bị chặn IM LẶNG trong app đóng gói).
+- NGUỒN HASH ĐÚNG: repo MIT mezotv/discord-badges README liệt kê URL asset Discord thật.
+  (grep.app bị Vercel checkpoint chặn, web search fail, GitHub code search cần auth.)
+- DỌN RÁC: xoá tools/debug-badges.js + tools/dbg/ (debug Electron tạm; không đọc được
+  tokenEnc vì Electron 38 app-bound encryption — chỉ app đóng gói mới giải mã được).
+- Test: node --check ×2 OK; DOM 87 refs/89 ids 0 missing; emoji 0; grep sạch hash cũ.
+- Verify asar đã đóng gói: 3 hash mới + fallbackIcon + CSP mới đều có mặt.
+- BUILD OK: run-20261021-193648\AUTO-QUEST-1.0.0-portable.exe · 83.41 MB · sha256 3be3359e0b42f614 · 428s.
+- KHÔNG push (chờ lệnh). Waves kế = 20.
+- BÀI HỌC: icon badge CDN có thể BỊ DISCORD CHUYỂN PATH — luôn curl verify hash trước khi ship;
+  và icon lỗi phải có chuỗi fallback + ẩn graceful, không để icon vỡ.
+
+### Waves 20 — 21:05 · Orb Engine v2 (port logic từ Discord-Auto-Quests-main)
+- Bro chốt: UI/UX XONG — CẤM ĐỤNG. Chuyển sang AUTO ORB: đọc source tham khảo
+  C:/Users/Admin/Desktop/AUTO-QUEST-main/Discord-Auto-Quests-main, rà soát logic cốt lõi,
+  bê tính năng hữu ích nhất (KHÔNG bê UI), chú trọng an toàn tài khoản.
+- Bro CHỐT qua AskUserQuestion: "Giữ nguyên: không tự nhận nhiệm vụ" → KHÔNG port auto-enroll.
+
+SOURCE THAM KHẢO (đã đọc hết):
+  farm.ts (365 dòng) + src/engine.ts (617 dòng). Cấu trúc: Quest class + QuestStore
+  (pending/claimable/enroll/execute), HieuTool extends Client, patchedFetch + IDENTIFY spoof.
+  Endpoint họ dùng: /quests/@me, /quests/{id}/enroll|claim-reward|video-progress|heartbeat|
+  console-heartbeat|mobile-heartbeat|stream-progress|social-action|progress,
+  /users/@me/virtual-currency/balance.
+
+6 ĐIỂM HỌ HƠN DỰ ÁN MÌNH → ĐÃ PORT:
+1) Phủ 20 event_name (mình chỉ 7). Thêm: PLAY_ON_NINTENDO, PLAY_ON_MOBILE, PLAY_SOCIAL_GAME,
+   WATCH_STREAM, FOLLOW_SOCIAL, SHARE_CONTENT, JOIN_COMMUNITY, COMPLETE_SURVEY, REDEEM_CODE,
+   MAKE_PURCHASE, PLAY_ON_DESKTOP_V2. STREAM_ON_DESKTOP KHÔNG còn bị skip.
+2) File MỚI src/taskTypes.ts: TASK_PRIORITY (Gameplay>Streaming>Video>Social>Passive),
+   TASK_META (label tiếng Việt + kind), pickTaskName(), taskKindOf(), taskLabelOf(),
+   isAutomatableKind(). kind → endpoint:
+     video→video-progress | desktop→heartbeat | console→console-heartbeat |
+     mobile→mobile-heartbeat | stream→stream-progress | activity→heartbeat{stream_key} | 
+     social→social-action | passive→GET /progress
+3) Ví Orb THẬT: GET /users/@me/virtual-currency/balance (đúng số Discord hiển thị).
+   Claimed-list chỉ còn là fallback. Payload orbs:balance thêm field `source`.
+4) Startup auto-claim: đầu mỗi đợt (mode full/run, KHÔNG áp dụng mode scan) tự claim-reward
+   cho quest isCompleted && !hasClaimedRewards. Event mới: quest:claim. Vẫn KHÔNG enroll.
+5) Console quét chuẩn: in từng dòng "[Loại] Tên — N Orbs — done/needed (%) — cờ trạng thái",
+   + tổng Orb theo danh sách, + số quest chờ claim, + danh sách nhiệm vụ sắp cày kèm Orbs.
+6) Đọc cả task_config_v2 VÀ task_config (v1) — trước chỉ v2 nên bỏ sót quest.
+   application_id lấy từ applications[0].id của ĐÚNG task (game đích), fallback app quest.
+
+CHỐNG TREO (tự thêm, source gốc bị treo vô hạn):
+- desktop/console/mobile/activity: maxTicks + 5 lỗi liên tục → dừng.
+- stream: maxTicks + 3 lỗi liên tục → dừng (endpoint 404 với token user thì thoát ngay).
+- passive: 3 lỗi liên tục → skip (trước có thể treo 10 phút).
+
+FILES SỬA (KHÔNG đụng index.html / styles.css / renderer.js):
+- src/taskTypes.ts (MỚI, ~135 dòng)
+- src/interface.ts: enum QuestTaskConfigType +10 type; task_config? bật; task_config_v2? optional
+- src/questManager.ts: +getTasks/resolveTaskName/getTaskLabel/getTaskKind/isAutomatable/
+  getTaskTarget/getTaskProgress/getTaskApplicationId/fetchWalletBalance/claimAllClaimable/
+  finishQuest/failQuest + doingQuest switch theo kind + 5 executor mới (console/mobile/stream/
+  social/passive) + desktop nhận thêm STREAM_ON_DESKTOP & appId param
+- src/events.ts: thêm 'quest:claim'
+- bot.ts: fetchOrbBalance (wallet→claimed-list→local), scanQuests nhận diện chuẩn + log,
+  startup claim trong runQuestCycle, log danh sách sắp cày kèm Orbs
+
+TEST: tsc --noEmit sạch. Test offline 19 case PASS (15 loại quest + v1 fallback +
+ưu tiên multi-task + thiếu config + app-id từ task + app-id fallback).
+BUILD OK: run-20261021-210124\AUTO-QUEST-1.0.0-portable.exe · 83.41 MB ·
+sha256 d5f0b7c9e4ee5cd5 · 391s. Verify asar có taskTypes.js, console-heartbeat,
+mobile-heartbeat, stream-progress, social-action, virtual-currency/balance, claimAllClaimable.
+- KHÔNG push. Waves kế = 21.
+- BÀI HỌC: source tham khảo hay ở CHỖ PHỦ ĐỦ LOẠI NHIỆM VỤ + dùng ví thật, không phải UI.
+  Nhưng vòng lặp while(!completed) của họ KHÔNG có trần → phải tự thêm maxTicks/fail-fast.
+
+================================================================
+WAVES 21 — Wallet Truth + Full-HD Fit + chip nameplate/decoration + dời thẻ Số dư
+2026-10-21 22:30 · model step-5-preview
+================================================================
+
+BỐI CẢNH: Bro gửi 4 ảnh + 4 yêu cầu. UI đã "chốt" từ Waves 20 nhưng đây là yêu cầu
+sửa UI tường minh của bro → được phép đụng lại.
+
+(1) SỐ DƯ SAI BẢN CHẤT — mở app hiện 28600 Orb
+  Nguyên nhân: Waves 16/20 lấy số dư bằng cách CỘNG DỒN orb_quantity_claimed của TOÀN BỘ
+  quest đã claim từ trước tới giờ → đó là tổng lịch sử, không phải số dư hiện tại.
+  Fix electron/main.js (orbs:fetch): gọi SONG SONG 3 endpoint, ưu tiên TUYỆT ĐỐI
+    GET /users/@me/virtual-currency/balance   → { balance }  ← VÍ THẬT
+    GET /quests/@me/claimed                   → fallback cộng dồn
+    GET /quests/@me                           → pendingClaim (done chưa claim)
+  Payload trả { ok, balance, pendingClaim, source, totalQuests }.
+  source = 'wallet' | 'claimed-list' → renderer log rõ nguồn để bro biết đang đọc đâu.
+
+(2) KHUNG FULL-HD + LOG CHIẾM ÍT DIỆN TÍCH
+  styles.css:
+   - body: flex + center → shell luôn canh giữa.
+   - .shell: height 100vh + max-height 1080px + max-width 1920px
+     → màn 2K/4K VẪN giữ đúng 1920x1080, KHÔNG kéo giãn (đúng yêu cầu "mặc định ở 1080").
+   - .sidebar: position fixed → absolute (bám .shell, không bám viewport).
+   - .main-wrap: height 100vh → 100%.
+   - media (min-height:980px) and (min-width:1024px): .main-wrap overflow hidden;
+     .content height 100%; .quests-card flex 1 + .quest-list tự cuộn bên trong;
+     .console-card flex 0 0 auto; .console height/max-height CHỐT 120px.
+     → 1080p trở lên KHÔNG phải lướt; màn thấp hơn vẫn cuộn như cũ.
+   - .console base: padding 10px 12px, font-size .75rem, max-height 200px.
+
+(3) CHIP TÀI KHOẢN — nameplate PHỦ KHUNG NGOÀI + avatar decoration
+  index.html (.up-row):
+   - .up-frame  #upFrame  : absolute inset 0, border-radius inherit, overflow hidden,
+                            z-index 0, opacity 0 → .has-np thì .85. Chứa video webm
+                            (collectibles/{asset}/asset.webm) hoặc static.png fallback.
+   - .up-row.has-np::after : vòng viền inset -2px, border-radius calc(0.75rem+2px),
+                            border + glow màu var(--np) → hiệu ứng phủ RA NGOÀI khung.
+   - .up-row overflow hidden → visible (để vòng ngoài không bị cắt; media vẫn bị
+     .up-frame tự cắt).
+   - #upAvatarwrap (34x34) + #upDeco (142%, translate(-50%,-50%), center/contain,
+     avatar-decoration-presets/{asset}.png?size=96&passthrough=true).
+     Có decoration → bỏ box-shadow xanh của avatar.
+   - #upClanTag: pill cyan cạnh tên (trước chỉ có ở popout).
+  renderer.js:
+   - applyChipNameplate(nameplate): dựng webm → fallback img, set --np theo
+     NAMEPLATE_PALETTES, bật/tắt .has-np.
+   - renderDiscordProfile(): ghi decoration vào #upDeco + clan tag vào #upClanTag,
+     gọi applyChipNameplate(user.nameplate).
+   - resetDiscordProfile(): dọn sạch toàn bộ state chip.
+
+(4) DỜI THẺ SỐ DƯ VÀO AUTO ORB
+  - Xoá #sideBalance khỏi đáy sidebar → thành Ô ĐẦU TIÊN của .stats-row.
+  - XOÁ stat card trùng "Số Orb khả dụng": #statOrbs + #statOrbsBonus (grep 0 ref).
+  - Sidebar còn: brand + chip + menu trên-xuống.
+  - Giữ NGUYÊN màu emerald gốc (không đổi gradient/sheen).
+  - Thêm: @keyframes sbPop (scale 1 → 1.16 → .965 → 1.035 → 1, .62s) cho .sb-value;
+          ::before gradient trắng + @keyframes sbSweep (1.05s) lướt ĐÚNG 1 LƯỢT.
+  - setSideBalance(): gỡ class → void offsetWidth (reflow) → gắn lại → tự gỡ sau 1500ms.
+  - Tôn trọng prefers-reduced-motion (tắt cả 2 animation).
+
+TOOLING MỚI
+  tools/validate-ui.js — 3 lớp kiểm:
+    1) cân bằng thẻ HTML (bỏ qua void + self-closing SVG: path/circle/rect/... )
+    2) đối chiếu mọi el('x') trong renderer.js với id thật trong index.html
+    3) 19 marker của Waves 21 (html/css/js)
+  Kết quả: còn mở 0 · ids 91 / refs 89 / missing 0 · markers 19/19.
+
+LỖI GẶP
+  - Heredoc trong Git Bash ăn mất dấu gạch chéo → validator regex hỏng
+    ("/max-height:/s*1080px/"). Fix: ghi file bằng tool Write thay vì heredoc.
+  - Script patch README bị SyntaxError vì chuỗi đơn chứa el('id') → đổi thành el().
+  - Build #1 (run-20261021-221105) đã đóng gói asar TRƯỚC khi sửa CSS cuối → kill,
+    xoá run-dir, build lại để asar khớp 100% source.
+
+BUILD
+  run-20261021-221627/AUTO-QUEST-1.0.0-portable.exe · 83.42 MB ·
+  sha256 1ab40f4e2d81100a · 502.4s
+  Verify asar (extract toàn bộ): inset:-2px ✓ sbPop ✓ sbSweep ✓ max-height:1080px ✓
+  max-width:1920px ✓ height:120px ✓ 142% ✓ upFrame/upDeco/upClanTag/upAvatarwrap ✓
+  virtual-currency/balance ✓ · statOrbs 0 ✓
+  - KHÔNG push. Waves kế = 22.
+
+BÀI HỌC
+  - "Số dư" KHÔNG BAO GIỜ được suy ra bằng cộng dồn lịch sử claim. Chỉ có
+    virtual-currency/balance mới là ví hiện tại.
+  - Muốn 1 trang không cuộn: KHÔNG set height cứng từng khối, mà cho khối co giãn
+    (flex 1 + min-height 0) và CHỐT CỨNG đúng 1 khối (console 120px) — còn lại tự chia.
+  - overflow:hidden ở khung cha sẽ CẮT luôn hiệu ứng phủ ra ngoài → phải cho cha visible,
+    và để chính lớp media tự cắt bằng border-radius + overflow của nó.
+
+================================================================
+WAVES 22 — Quest Card Rebuild (thẻ nhiệm vụ thật kiểu Discord)
+2026-10-21 23:10 · model step-5-preview
+================================================================
+
+BỐI CẢNH: Bro gửi 5 ảnh. Yêu cầu:
+ (a) thêm tab "Chưa nhận" → tổng 3 tab: Chưa làm / Chưa nhận / Đã làm
+ (b) bỏ khung nhật ký rời → đưa LÊN CẠNH thẻ Số dư; xoá 2 thẻ Tiến độ nhiệm vụ + Chế độ treo
+ (c) bỏ HOÀN TOÀN cách hiện nhiệm vụ cũ → thẻ y hệt Discord quest card
+ (d) 3 thẻ/dòng, khung nhỏ bo tròn, không tràn viền, không đè hàng dưới
+ (e) ô tích chọn trên thẻ; vòng tiến độ chạy theo chiều kim đồng hồ; % hiện khi rê chuột
+ (f) tab Đã làm: ô orb + logo game (kiểu "Nhiệm vụ đã nhận thưởng")
+ (g) log chỉ đếm N/M nảy số + vòng xoay snake, xong báo tổng
+ (h) popup quản lý: bỏ hiệu ứng bảng tên bên trong + bỏ dòng "Đóng khung quản lý"
+
+DỮ LIỆU THẬT (không bịa)
+- src/questManager.ts: THÊM `static getQuestCardData(quest)` trả:
+  hero, heroVideo, gameTile, logotype, publisher, gameTitle, expiresAt,
+  colorPrimary, colorSecondary, rewardKind ('orbs'|'item'), rewardTitle,
+  rewardAsset, rewardName — đọc từ config.assets / messages / colors / rewards_config.
+- bot.ts: `scanQuests()` đổi từ .map() sang vòng lặp:
+  · report('scan:start', {total:0}) NGAY khi bắt đầu (trước fetchQuests)
+  · sau fetch: report('scan:start', {total:N}) để chốt mốc đếm
+  · mỗi quest: report('quest:scan-progress', {done:i+1,total}) + yield mỗi 12 quest
+  · item mang thêm ...card (dữ liệu thẻ)
+- src/events.ts: + 'scan:start', 'quest:scan-progress'
+
+RENDERER (electron/renderer/renderer.js)
+- Bỏ toàn bộ buildQuestNode/updateQuestNode cũ (hàng ngang + .bar).
+- MỚI: setQuestImg() — resolver asset quest, dò format 1 LẦN/phiên
+  (questAssetFmt: '' | '.png' | '.jpg' | '.webp' | false) để KHÔNG bắn 4 request hỏng/ảnh.
+- MỚI: buildQuestCard/updateQuestCard (.qcard), buildDoneTile (.qdone).
+- MỚI: ORB_GLYPH — SVG thuần KHÔNG gradient id (tránh trùng id khi 180 thẻ).
+- renderQuests(): 3 danh sách; cache node theo id (questNodes) + cache ref DOM
+  (node._r) + chỉ sort khi needSort → tránh appendChild 180 lần/frame.
+- setScanning()/bumpScan()/setLogCount()/setListsLoading(): loading đồng bộ 3 tab.
+- Bỏ ui.autoScroll / btnSaveLog / btnScrollBottom / statQuests / statMode.
+- renderDiscordProfile(): applyNameplate(null, dpNameplate) + dpBadge.hidden = true.
+
+HTML
+- 3 tab (tabActive/tabNew/tabDone) + 3 list (questListActive/New/Done) + 3 qstate.
+- .stats-row = [sideBalance][console-card]; xoá statQuests/statMode + console rời.
+- Popup: bỏ class ph-nameplate khỏi #dpNameplate, #dpBadge hidden.
+- Bỏ style="--tint" trên hero (CSP style-src 'self' chặn IM LẶNG từ trước).
+
+CSS
+- .quest-list: grid 3 cột minmax(0,1fr), gap 12, overflow-y auto.
+- .qcard: height 126px CỐ ĐỊNH (banner 54 + body 70) → không tràn hàng dưới.
+- .qring: stroke-dasharray 125.66, rotate(-90deg) → chạy chiều kim đồng hồ.
+- .qcard-pct: opacity 0 → 1 khi hover .qcard-reward.
+- .snake-spin: conic-gradient + mask + @keyframes snakeSpin.
+- .stats-row: minmax(210px,.8fr) 1.55fr; .console max-height 88px.
+- media (min-height: 900px) — HẠ TỪ 980 vì viewport 1080p thật chỉ ~975px;
+  kèm thu hero (banner 168→92, avatar 92→66).
+
+ĐO THỰC TẾ (tools/ui-shot.js — harness Electron)
+- vh 975 · content 975 (= viewport, KHÔNG lướt) · actions y=895 (trong màn)
+- card 126 / banner 54 / body 70 / pub 11 / main 42 / title 15 / desc 13
+- 3 cột × 344px, hàng cách 152px (126 + 12 gap) → không dính viền
+- ring offset: 34% → 82.94, 51% → 61.57, 68% → 40.21 (đúng công thức)
+- loading: spinHidden false, animationName snakeSpin, cards 0, logCount 5/12
+
+LỖI GẶP & BÀI HỌC
+1. CSP chặn inline script → harness phải dùng file .js cùng thư mục ('self').
+2. CSP `style-src 'self'` chặn style="" → hero mất --tint từ trước (đã fix).
+3. Nội dung thẻ tràn 16px sang hàng dưới = đúng lỗi "dính viền" bro thấy
+   → phải cố định height + overflow hidden ở .qcard-body.
+4. Breakpoint 980px quá cao: cửa sổ 1080 nhưng viewport chỉ ~975 → media
+   không kích hoạt → vẫn phải lướt. Hạ xuống 900px.
+5. capturePage trên cửa sổ show:false trả frame cũ → phải showInactive().
+6. Git Bash heredoc ăn backslash → viết file bằng tool Write, không heredoc.
+
+BUILD
+run-20261021-231934/AUTO-QUEST-1.0.0-portable.exe · 83.42 MB ·
+sha256 34638c3c72fcaa4d · 268.1s
+Verify asar: tabNew/questListNew/logSpin/logCount/console ✓ · statQuests/statMode 0 ✓
+· grid 3 cột ✓ · height 126px ✓ · media 900px ✓ · quest-assets ✓ · bot scan:start ✓
+- KHÔNG push. Waves kế = 23.
+
+================================================================================
+WAVES 23 — REAL ASSETS + TERMINAL LOG (bro: "logo orbs phải THẬT", "log kiểu terminal")
+================================================================================
+BỐI CẢNH: bro gửi 1 ảnh + 6 ý. (1) icon orb "tự bịa", không lấy chuẩn từ server.
+(2) khung profile giữa bị cắt giảm quá mạnh → ảnh bìa gần như khuất + hiệu ứng bảng
+tên bị cắt. (3) nhiệm vụ orb "không có avt riêng" → gọi endpoint SAI. (4) nhật ký
+phải chạy kiểu terminal tải model (snake + % + loaded N/M), KHÔNG sổ từng dòng.
+(5) logo orb phải THẬT. (6) fix layout profile giữa.
+
+--- PHÁT HIỆN LỚN NHẤT (root cause của "không có ảnh") -------------------------
+Dùng safeStorage giải mã token trong %APPDATA%/AUTO-QUEST/autoquest_config.json
+rồi gọi THẬT GET /api/v10/quests/@me (27 quest). Kết quả:
+  config.assets.hero = "quests/1547647018090893312/1557073684320227349.jpg"
+→ ĐÂY KHÔNG PHẢI HASH, mà là ĐƯỜNG DẪN TƯƠNG ĐỐI. Code cũ ghép
+  https://cdn.discordapp.com/quest-assets/<hash> + dò .png/.jpg/.webp  → SAI 100%.
+URL ĐÚNG: https://cdn.discordapp.com/ + path  → 200 image/jpeg (246KB) thật.
+Probe còn xác nhận: quest-assets/ → 403 AccessDenied; quests/quests/ → 404 NoSuchKey.
+Ghi nhớ: asset path có sẵn đuôi file → KHÔNG cần dò format nữa.
+Biến thể: hero, hero_video, quest_bar_hero, game_tile_light/_dark,
+logotype_light/_dark, và giá trị "PLACEHOLDER" = không có asset → phải bỏ qua.
+Theme app TỐI → ưu tiên *_dark (Discord đặt tên theo theme ĐÍCH).
+
+--- LOGO ORBS THẬT (không bịa) ----------------------------------------------
+Không có URL CDN cho orb: orb reward có "asset": null, balance chỉ trả {balance}.
+→ Đào bundle web Discord (tải 675 chunk từ discord.com/app, 20MB) → tìm
+  OrbsIcon:()=>ge.C  →  ge=n(318254)  → module 318254 nằm ngay trong web.js.
+Trích được 2 path SVG 24×24 NGUYÊN VĂN: vòng bát giác vát góc (evenodd tạo lỗ)
++ ngôi sao 4 cánh. Đây chính là icon Discord dùng cho tiền tệ Orbs.
+Đã thay ORB_GLYPH cũ (khối lập phương hexagon tự vẽ) bằng ORB_PATHS thật,
+dùng fill="currentColor" + .orb-glyph{color:#b9a7ff} (KHÔNG gradient id).
+
+--- AVATAR DECORATION .mp4 ---------------------------------------------------
+rewards[].asset của quest item là .mp4 (decoration động). Render <video
+muted loop playsInline preload="none" poster=hero>, CHỈ play khi pointerenter →
+20-30 thẻ không cùng decode video → không lag. Thêm field rewardIsVideo ở
+QuestManager.getQuestCardData (bot.ts tự lan qua QuestCardData).
+
+--- PROFILE HERO -------------------------------------------------------------
+Breakpoint ≥900px: banner 92→140, ph-body margin-top -26→-30 padding-bottom
+12→14, avatar 66→80 (border 5). Đo lại: hero 144→224px, decoration inset -12
+kết thúc ở 202 < card 204 → KHÔNG bị cắt đáy nữa. actions vẫn ở y=895 < 975.
+
+--- NHẬT KÝ KIỂU TERMINAL LOADER --------------------------------------------
+Bỏ hẳn appendLog khi scan:start và dòng "Xong — …" dài. Thêm khối .log-loader:
+  ● Đang nạp nhiệm vụ          42%
+  ▓▓▓▓▓▓▓▓▓░░░░░░░░░░░░░░░░░░░░
+  12/27              đang đọc quest…
+- ll-bar > i::after = vệt sáng chạy (llSweep) → cảm giác terminal đang tải.
+- finishLoader(): đẩy 100%, 320ms sau thu khối, append ĐÚNG 1 dòng
+  "Đã nạp 27 nhiệm vụ (1.1s) · 1 chưa làm · 9 chưa nhận · 17 đã làm".
+- loaderToken chống race khi bấm quét lần 2 trong lúc chờ 320ms.
+
+--- TOOLING -----------------------------------------------------------------
+tools/dump-quests.js (MỚI): giải mã token → gọi API thật → ghi
+  build-release/ui-preview/real-quests.json đúng shape bot.ts gửi UI.
+tools/ui-shot.js: đọc real-quests.json (fallback 12 mẫu), dữ liệu nhét vào
+  harness-data.js (KHÔNG nhét JSON khổng lồ vào executeJavaScript → lỗi parse),
+  đo thêm ring (stroke-dashoffset) + overflow từng thẻ, chụp new-zoom.png.
+tools/validate-ui.js: 32→34 marker (thêm "real orb glyph" M11.64.22c.3-.12,
+  "terminal log loader" finishLoader + ll-bar; đổi marker resolver sang questAssetUrl).
+Đã xoá toàn bộ script probe tạm (probe-*, dl-*, orb-sheet*, check-parse).
+
+--- KẾT QUẢ ĐO (harness, dữ liệu THẬT 27 quest) ------------------------------
+cards: Chưa làm 1 · Chưa nhận 9 · Đã làm 17 = 27 ✓
+card 126 / banner 54 / body 70 / overflow -2 (không tràn) ✓
+hero 224 · list 352 · actions y=895 trong viewport 975 ✓
+ring: active off=12.57px (90%) · new off=125.66px (0%) ✓ đúng chiều kim đồng hồ
+tsc --noEmit sạch · 34/34 marker · 93 ids / 90 refs / 0 missing · HTML cân bằng.
+
+================================================================================
+WAVES 24 — LOG TERMINAL THẬT + SỬA AUTO ORBs KHÔNG CHẠY
+================================================================================
+BỐI CẢNH: bro gắt "thanh nhật kí VẪN CHƯA THAY ĐỔI", "mục chưa nhận có rất nhiều
+nhiệm vụ dead", "vào app chưa ấn quét mà thanh load đã xoay", "thanh loading đứng
+đơ không xoay", "load xong phải mờ dần chứ không mất một phát", "3 nút macOS bên
+trái", và nặng nhất: "chọn nhiệm vụ chưa làm + ấn AUTO ORBs nó LẶP LẠI QUÉT chứ
+không chạy auto".
+
+--- 6 GỐC RỄ TÌM ĐƯỢC (đo bằng code, không đoán) -------------------------------
+1. LOG VẪN "KIỂU CŨ": `api.onLog(payload => appendLog(...))` đổ TOÀN BỘ stdout của
+   bot vào nhật ký → mỗi lần quét/chạy là hàng chục dòng "▸ [Xem video] ...".
+   → Lọc: chỉ giữ dòng khớp /\[LỖI\]|❌|⚠|cảnh báo|lỗi |thất bại|rate.?limit|bị chặn|không thể/i
+2. THANH LOAD "ĐỨNG ĐƠ": vệt sáng `::after` nằm TRONG `.ll-bar > i` mà `i` có
+   `width:0` ở 0% → bị overflow:hidden cắt sạch → không thấy chuyển động nào.
+   → Tách 2 lớp: `.ll-bar::before` quét trên TOÀN thanh nền (@keyframes llScan),
+     `.ll-bar > i` có background 220% + @keyframes llStripe chạy vô hạn.
+3. "MẤT MỘT PHÁT": `case 'scan:complete'` gọi `dropLoader()` NGAY sau khi
+   finishLoader vừa hẹn 320ms → xoá phần tử trước khi transition chạy.
+   → Bỏ dropLoader ở scan:complete; finishLoader thêm class `.is-out`
+     (opacity 0 + translateY(-6px) + max-height 0, transition .5s) rồi mới remove
+     sau 620ms.
+4. XOAY VÒNG KHI CHƯA QUÉT: HTML để `.qstate` mặc định (không is-empty) với chữ
+   "Đang tải nhiệm vụ…" → vòng snake xoay ngay khi mở app.
+   → 3 state có sẵn class `is-empty` + chữ "Chưa có nhiệm vụ nào — bấm Quét nhiệm
+     vụ để tải."; setListsLoading(false) khi không có card → trả về trạng thái rỗng;
+     setEmptyState() ưu tiên câu nhắc quét khi questOrder.length === 0.
+5. NHIỆM VỤ DEAD: `/quests/@me` trả CẢ quest đã hết hạn. Đo thật 27 quest →
+   **23 quest hết hạn**, trong đó 9 quest 'new' (chưa nhận) đã chết từ 05–10/10.
+   → Lọc trong bot.ts: bỏ preview, bỏ chưa tới starts_at, bỏ (expired && !done).
+     Kết quả: 27 → 20 (16 done + 4 new thật). Tab "Chưa nhận" 9 → 4.
+6. AUTO ORBs KHÔNG CHẠY — 3 lỗi chồng nhau:
+   a) `runQuestCycle()` gọi `scanQuests()` vô điều kiện → phát `scan:start` +
+      `quest:inventory` → UI reset về trạng thái quét ⇒ "lặp lại quét".
+      → `scanQuests({silent: runMode==='run'})`; test thật: scan:start = 0,
+        quest:inventory = 0.
+   b) Ô tích trong tab "Chưa nhận" KHÔNG có listener (chỉ gắn cho questListActive)
+      → bấm không ăn, selected.size = 0, nút Auto ORBs luôn disabled.
+      → onQuestCheckChange() gắn cho CẢ questListActive + questListNew.
+   c) `canSelectQuest` chặn status 'new' + `filterQuestsValidToDo` đòi isStarted
+      → chọn quest chưa nhận cũng bị loại ⇒ "không chạy".
+      → Cho chọn 'new'; mode run tự `acceptQuest()` ĐÚNG danh sách đã tích rồi lọc
+        lại theo isEnrolledQuest.
+   d) `quest:start` set status='running' → thẻ nhảy khỏi tab đang xem.
+      → Giữ status, chỉ bật cờ `running`; nhãn "Đang chạy"; dataset.status='running'
+        để vòng % phát sáng. Đo: 50% → stroke-dashoffset 62.83px.
+
+--- UI ------------------------------------------------------------------------
+- `.log-dots` 3 chấm 9px #ff5f57 / #febc2e / #28c840 (macOS), khung nhật ký bo tròn.
+- Loader gọn: padding 6px 8px, gap 5px, bar 5px → vừa 88px của `.console`.
+- Tự nhảy tab: quét xong nếu "Chưa làm" rỗng mà "Chưa nhận" có bài → switchTab('new').
+- "Chọn tất cả" hiện ở cả tab Chưa làm + Chưa nhận.
+- logCount mặc định "—" thay vì "0/0".
+
+--- TOOLING ------------------------------------------------------------------
+tools/ui-shot.js: thêm boot.png (trạng thái trước khi quét), log-zoom.png (chụp
+  riêng khung nhật ký), running-zoom.png (thẻ đang chạy), đo BOOTSTATE /
+  LOADSTATE / FADESTATE / RUNSTATE / CLICKSTATE / SENTSTATE; stub api.start ghi
+  window.__lastStart để verify config gửi bot.
+tools/test-run-mode.js (MỚI): giải mã token → spawn electron/bot/bot.js với
+  MODE=run, SELECTED_QUESTS rỗng → đếm event. Kết quả: scan:start=0,
+  quest:inventory=0, finish.note đúng.
+tools/dump-quests.js: lọc dead giống bot + in raw→giữ + đếm theo status.
+tools/validate-ui.js: 34 → **45 marker** (macOS dots, llScan/llStripe, is-out,
+  empty-state, LOG_KEEP, running-flag, selectable-new).
+
+--- KẾT QUẢ ĐO (harness, 20 nhiệm vụ THẬT) -------------------------------------
+BOOT: isEmpty=true, spinner display:none, 0 card, logCount "—", 1 dòng log, 3 dots ✓
+LOAD: spinner xoay (snakeSpin), bar llStripe, 9/20 = 45% ✓
+FADE: .is-out=true, opacity→0 ✓  SAU: loader biến mất, còn đúng 2 dòng log ✓
+RUN:  nhãn "Đang chạy", offset 62.83px = 50%, vẫn ở tab cũ ✓
+CLICK: "Auto ORBs (1)" enabled → SENT {mode:'run', n:1} ✓
+tsc --noEmit sạch · 45/45 marker · 93 ids / 90 refs / 0 missing · HTML cân bằng.
+BUILD: run-20261022-062549 · 83.43 MB · sha256 e7c276fb516e99e3 · 236s.
+
+================================================================================
+WAVES 25 — THANH NẠP ĐỨNG IM (CSS) + PHÂN LOẠI 3 TAB SAI 100%
+================================================================================
+BỐI CẢNH: bro báo (1) thanh nạp "đứng yên từ 0% rồi chạy vọt lên 100%", vòng xoay
+trên khung nhật ký "cấm có animation nào"; (2) tab "Chưa nhận" có tới 30+ nhiệm vụ
+nhưng vào Discord thì chỉ có vài cái chưa làm + mấy cái avatar decoration chưa
+nhận; "Chưa làm" thì trống. Yêu cầu đọc lại repo gốc Discord-Auto-Quests-main.
+
+--- GỐC RỄ 1: ANIMATION CHẾT VÌ prefers-reduced-motion ------------------------
+styles.css có:
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: .01ms !important; animation-iteration-count: 1 !important;
+      transition-duration: .01ms !important; } }
+→ Windows tắt "Show animations" = Chromium báo reduce → MỌI animation chết
+  (thanh nạp, vòng snake, cả ring). Đúng triệu chứng 0% → nhảy 100%.
+FIX: bỏ selector `*`. Chỉ tắt hiệu ứng trang trí (.animate-rise, sbPop, sbSweep,
+  logBump, qcard/qdone). GIỮ TÍN HIỆU TIẾN TRÌNH: .snake-spin 1.6s,
+  .ll-bar::before 2.4s, .ll-bar > i 3s.
+ĐO (emulate Emulation.setEmulatedMedia prefers-reduced-motion: reduce):
+  w1 42.32% → w2 46.2% → w3 47.7% (moved: true), spinner snakeSpin 1.6s,
+  trackSweep llScan, fill llStripe 3s.
+
+--- GỐC RỄ 2: EVENT DỒN CỤC ---------------------------------------------------
+Quét 27 quest xong trong ~80ms → UI nhận 1 cục → thanh nhảy cóc.
+FIX kép:
+  (a) bot.ts: `await sleep(24)` mỗi quest khi không silent → 27 quest ≈ 650ms.
+  (b) renderer: thanh nạp TỰ CHẠY bằng rAF (loaderTick): % đích từ event, % hiển
+      thị bò ≥0.6%/frame tới đích; khi chờ bot bò 0.1%/frame (không bao giờ đứng).
+      Giữ loader TỐI THIỂU 900ms rồi mới is-out → trôi + mờ 620ms.
+      Chỉ fade khi loaderShownPct ≥ 99 (không nhảy cóc lên 100).
+
+--- GỐC RỄ 3: PHÂN LOẠI TAB SAI HOÀN TOÀN -------------------------------------
+Repo gốc src/engine.ts dùng 3 cờ ĐỘC LẬP: isCompleted() (completed_at),
+isEnrolled() (enrolled_at), isClaimed() (claimed_at); claimable() =
+isCompleted && !isClaimed.
+Code cũ của mình: status = done | enrolled | new  →  'new' đẩy vào tab "Chưa nhận"
+⇒ tab đó chứa toàn quest CHƯA ENROLL (phần lớn đã hết hạn) = 30+ rác.
+FIX: status = 'todo' | 'claimable' | 'claimed'
+  todo      = !completed_at                → tab Chưa làm
+  claimable = completed_at && !claimed_at  → tab Chưa nhận  (đúng mấy cái avt)
+  claimed   = completed_at && claimed_at   → tab Đã làm
+Kèm: quest:claim là EVENT RIÊNG (redeemQuest đổi từ quest:done → quest:claim có id)
+  để thẻ đi đúng đường: Chưa làm → (xong) Chưa nhận → (claim) Đã làm.
+  quest:done giờ = "vừa xong 100%, chưa chắc đã nhận thưởng" → status claimable.
+  Captcha: report quest:done kèm note → UI log 1 lần "cần mở Discord bấm Nhận".
+ĐO THẬT (20 quest sau lọc dead): 4 chưa làm · 3 chưa nhận · 13 đã nhận.
+  3 cái chưa nhận đúng là 3 avatar decoration:
+    "an Acolyte Survivor Avatar Decoration", "Trang Trí Avatar Champions
+     Shanghai: Hạ Quạ Bay Hỉ", "a Kung Fu Coach tracker set".
+⇒ khớp 100% với những gì bro thấy trong Discord.
+
+--- PHỤ ----------------------------------------------------------------------
+- canSelectQuest: chỉ status 'todo' (claimable phải đi nhận thưởng, không cày).
+- selectTools ("Chọn tất cả") chỉ ở tab Chưa làm (2 tab kia không có checkbox).
+- setScanning reset loaderTargetPct/loaderShownPct; dropLoader cancelAnimationFrame.
+- dump-quests.js: cùng công thức status + lọc dead theo status === 'todo'.
+- validate-ui.js: 45 → **52 marker** (no global motion kill, loader keeps motion,
+  loaderTick rAF, minHold 900, claimable, quest:claim).
+- ui-shot.js: emulate reduced-motion + đo MOTION (3 mốc width) + đổi mô phỏng
+  chạy sang tab Chưa làm.
+
+--- KẾT QUẢ ----------------------------------------------------------------
+tsc --noEmit sạch · 52/52 marker · 93 ids / 90 refs / 0 missing · HTML cân bằng.
+BUILD: run-20261022-065938 · 83.43 MB · sha256 bbd9bf0e77a0f51f · 259.9s.
+asar verify: 0.01ms !important = 0 · ll-bar::before animation-duration = 1 ·
+  requestAnimationFrame(loaderTick) = 2 · minHold 900 = 1 · claimable = 7 (bot).
+
+================================================================================
+WAVES 26 — STREAM TỪNG QUEST + DEDUPE + AVATAR SHIMMER
+================================================================================
+BỐI CẢNH: bro báo (1) quét ra 30+ nhiệm vụ "chưa làm" ảo, có lặp; (2) thanh nạp
+0% đứng yên rồi nhảy 90% mới load hàng trăm quest; (3) mấy cái avatar decoration
+chưa nhận không có hiệu ứng gì; (4) ấn quét còn delay.
+
+--- GỐC RỄ 1: excluded_quests làm phình danh sách --------------------------------
+`client.fetchQuests(true)` nạp CẢ `excluded_quests` (quest Discord cố tình ẩn với
+user: hết hạn, sai khu vực, không target). Đo thật: 26 quest thật + 32 excluded
+= 58 quest → UI phình gấp đôi, nhiều cái trùng tên khác ID.
+FIX: `fetchQuests(false)` — chỉ lấy `quests`, bỏ `excluded_quests`.
+Kết quả: 26 raw → 19 sau lọc dead (3 claimable · 12 claimed · 4 todo).
+
+--- GỐC RỄ 2: nạp 1 cục cuối cùng ------------------------------------------------
+Bot gom toàn bộ quest vào mảng `inventory`, rồi phát DUY NHẤT 1 event
+`quest:inventory` khi xong. UI nhận 1 cục 19 quest → render 1 lần. Ngườ dùng thấy
+"đứng im rồi đột ngột hiện hàng loạt".
+FIX: event `quest:item` mới — gửi TỪNG quest ngay sau khi lọc dead + dedupe.
+Renderer nhận `upsertQuest` ngay → thẻ xuất hiện dần theo từng quest.
+Kèm: `quest:scan-progress` giờ dùng `inventory.length / all.length` (quest thật /
+tổng raw) thay vì `i+1 / all.length` → % chạy đúng tỷ lệ quest hợp lệ.
+
+--- GỐC RỄ 3: dedupe thiếu -------------------------------------------------------
+Discord có thể trả cùng quest 2 lần (excluded + normal). Thêm `seenIds` Set<string>
+để bỏ qua ID đã gặp — không tính tiến độ, không render.
+
+--- GỐC RỄ 4: avatar decoration không có hiệu ứng -------------------------------
+Quest cho avatar decoration (rewardKind='item') hiển thị y hệt quest Orb, không
+khác biệt. Ngườ dùng không nhận ra đó là "trang trí avatar".
+FIX CSS:
+  - `@keyframes avatarShimmer` gradient cầu vồng chạy vòng quanh viền thẻ.
+  - `.qcard[data-reward-kind="item"]` có viền 1.5px + background gradient
+    (ff5f57 → febc2e → 28c840 → 5865f2 → eb459f).
+  - Nhãn trạng thái tự thêm "✨" phía trước.
+  - `prefers-reduced-motion` chỉ làm chậm 6s (không tắt) để vẫn nhận diện được.
+Đo harness: 4 thẻ có `[data-reward-kind="item"]`.
+
+--- KẾT QUẢ --------------------------------------------------------------------
+tsc --noEmit sạch · 57/57 marker · 93 ids / 90 refs / 0 missing · HTML cân bằng.
+BUILD: run-20261022-074714 · 83.43 MB · sha256 ba6bc9f502352366 · 232.8s.
+asar verify: quest:item case=1 · dataset.rewardKind=2 · seenIds=1 · quest:item=1
+  · fetchQuests(false)=1 · avatarShimmer=1 · data-reward-kind=1.
+
+================================================================================
+WAVES 27 — UI/UX: SCROLLBAR, VIỀN CẦU VỒNG PROFILE, BUFFER RAM, LOG MÀU
+================================================================================
+BỐI CẢNH: bro gửi 2 ảnh chụp. Yêu cầu: (1) thanh lướt xấu + làm giảm độ đẹp;
+(2) nhật ký có dòng code dead "nhận thưởng" + lag; (3) ảnh bìa profile giữa bị
+cắt; (4) VIỀN GRADIENT CẦU VỒNG phải ở KHUNG PROFILE chứ không phải mục "Chưa
+nhận"; (5) tooltip % đang viền VUÔNG thô → bo tròn; logo orb cắt hết nền chỉ để
+logo; (6) nhật ký cần MÀU SẮC; (7) khi quét KHÔNG render nhiệm vụ theo thời gian
+thực — phải nạp xong hết vào RAM rồi mới đổ ra 1 lượt + hiệu ứng trôi vào mờ dần;
+(8) "Chưa làm" gọi chưa chuẩn (thừa chút); (9) ấn quét phải vào trạng thái quét NGAY.
+
+--- FIX 1: SCROLLBAR -------------------------------------------------------------
+Trước: width 5px, thumb trắng .1 thô, không bo. Sau: 6px, thumb trong suốt .06,
+border trong suốt + background-clip, track margin 4px, hover .16, radius 9999.
+
+--- FIX 2: LOG DEAD + LAG --------------------------------------------------------
+`quest:claim` và `quest:redeem` mỗi quest appendLog 1 dòng → 12 quest = 12 dòng
+rác + reflow DOM liên tục gây lag. FIX: gom vào sessionClaimCount/sessionClaimOrbs,
+chỉ toast ngắn; cuối phiên in ĐÚNG 1 dòng tổng kết "Đã nhận thưởng N nhiệm vụ
+(~X Orbs) trong phiên này."
+
+--- FIX 3: ẢNH BÌA PROFILE BỊ CẮT -----------------------------------------------
+Media query `min-height:900 + min-width:1024` ép `.ph-banner { height: 140px }`
+→ cắt mất ảnh bìa. FIX: trả về 168px (bằng mặc định), avatar 86px, body margin
+-34px, padding cân lại.
+
+--- FIX 4: VIỀN CẦU VỒNG ĐÚNG CHỖ ----------------------------------------------
+Waves 26 gắn gradient cầu vồng vào THẺ "Chưa nhận" (SAI — bro muốn ở khung
+Profile). FIX: chuyển sang `.profile-hero::before` — viền 1.5px, gradient 7 màu
+(#ff5f57 #febc2e #28c840 #5865f2 #b45bff #eb459f → loop), @keyframes profileAura
+6s, dùng mask-composite xor để chỉ ăn viền. Thẻ avatar decoration đổi thành
+`box-shadow: inset 3px 0 0 0 #b45bff` (thanh tím trái) + nhãn ✨ — nhẹ, không thô.
+
+--- FIX 5: TOOLTIP % + ORB ------------------------------------------------------
+`.qcard-pct` trước: inset:0 + border-radius 12px (ô vuông bo nhẹ che cả orb).
+Sau: đĩa tròn 40px căn giữa, box-shadow ring 1.5px, scale .85→1 khi hover.
+`.qcard-reward-art`: radius 50%, nền radial tối mờ; `.orb-glyph` màu #c9b8ff +
+drop-shadow tím (bỏ khung/nền, chỉ còn logo orb).
+
+--- FIX 6: LOG MÀU --------------------------------------------------------------
+`.log-line` thêm chấm màu 4px bên trái (::before, currentColor). ok=#3fd07a,
+warn=#ffce4d, stderr=#ff6b6b, orb=#b79dff, system=#9aa4b2. Chấm sáng + glow.
+
+--- FIX 7: BUFFER RAM + TRÔI VÀO -------------------------------------------------
+TRƯỚC: quest:item render ngay từng quest → giật khi loading.
+SAU: `scanBuffer` mảng RAM — quest:item chỉ push vào buffer. `quest:inventory`
+mới đổ HẾT ra 1 lượt + `animateQuestsIn()` gọi @keyframes questIn (translateY
+10px + scale .98 → 0/1) stagger 14ms/thẻ (max 320ms).
+ĐO harness: MIDSTREAM cardsMidStream=0 (chưa render) → AFTER INVENTORY cards=19
+qin=19 (trôi vào hết). Nhật ký còn đúng 2 dòng.
+
+--- FIX 8: PHÂN BIỆT QUEST TRÙNG TÊN -------------------------------------------
+"Bản 2.3 Hải Đại Bằng Lai" xuất hiện 2 lần (2 id, 2 mùa) → nhìn như lặp.
+FIX: sau dedupe, đếm nameCount; tên nào >1 thì thêm " · đợt DD/MM" (theo expiresAt).
+Stream quest:item CHUYỂN sang sau bước này để tên đã phân biệt.
+
+--- FIX 9: VÀO TRẠNG THÁI QUÉT NGAY ---------------------------------------------
+Trước: `await api.start(cfg)` xong mới setState('scanning') → trễ rõ.
+SAU: setScanning(true) + setState('scanning') + switchPage('quest') + 1 dòng log
+NGAY, rồi mới gọi bot. Lỗi thì dropLoader + về idle.
+
+--- KẾT QUẢ --------------------------------------------------------------------
+tsc --noEmit sạch · 69/69 marker · 93 ids / 90 refs / 0 missing · HTML cân bằng.
+BUILD: run-20261022-083126 · 83.43 MB · sha256 d2593c5bc23d6219 · 298.0s.
+asar: scanBuffer=7 · animateQuestsIn=2 · profileAura=2 · questIn=1 · banner168=1
+  · pct50%=16 · log stderr dot=1 · nameCount=3 · quest:item report=1.
+
+================================================================================
+WAVES 27b — FIX VIỀN CẦU VỒNG BÁM SAI (THIẾU position:relative)
+================================================================================
+BỐI CẢNH: bro gắt "viền cầu vồng phải bo ở profile chính giữa cơ mà mày bo cả
+k đấy sai mẹ rồi". Đúng — viền bao 1 vùng TO HƠN card.
+
+--- GỐC RỄ --------------------------------------------------------------------
+`.profile-hero::before` dùng `position: absolute; inset: 0` NHƯNG `.profile-hero`
+KHÔNG có `position: relative`. → Pseudo-element định vị theo ancestor có position
+gần nhất (page/body) ⇒ viền cầu vồng bao quanh CẢ CỘT content, không phải card.
+Đây là lỗi kinh điển của absolute-positioned pseudo.
+
+--- FIX -----------------------------------------------------------------------
+1. Thêm `position: relative` vào `.profile-hero` (kèm comment cảnh báo).
+2. Thêm `border-radius: 1rem` tường minh (để `border-radius: inherit` khớp chắc).
+3. Bổ sung `mask:` chuẩn (không chỉ `-webkit-mask`) + `mask-composite: exclude`
+   để Firefox/Chromium đều ăn viền đúng.
+
+--- ĐO (harness, đo getComputedStyle) ------------------------------------------
+AURA: heroPos="relative" ✓ · beforeInset="0px" ✓ · beforeAnim="profileAura" ✓
+  · beforeBg="linear-gradient(115deg, rgb(255,95,87)..." ✓
+  · heroBox = {x:528, y:20, w:1104, h:250} → viền bám ĐÚNG #heroProfile
+Thêm screenshot riêng: hero-aura.png (chụp khung profile + 6px viền).
+
+--- KẾT QUẢ ------------------------------------------------------------------
+tsc --noEmit sạch · 69/69 marker · 93 ids / 0 missing · HTML cân bằng.
+BUILD: run-20261022-084115 · 83.43 MB · sha256 d8989830d1c8c27d · 270.5s.
+asar: position:relative=1 · profileAura=2 · mask-composite:exclude=1.

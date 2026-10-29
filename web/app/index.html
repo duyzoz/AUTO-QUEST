@@ -1,0 +1,930 @@
+<!doctype html>
+<html lang="vi">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+		<meta name="theme-color" content="#0b0e18" />
+		<meta
+			http-equiv="Content-Security-Policy"
+			content="default-src 'none'; script-src 'self' https://js.hcaptcha.com https://*.hcaptcha.com 'unsafe-inline' 'unsafe-eval'; worker-src 'self' blob: https://*.hcaptcha.com https://newassets.hcaptcha.com; style-src 'self' 'unsafe-inline' https://*.hcaptcha.com; frame-src https://*.hcaptcha.com https://newassets.hcaptcha.com; child-src blob: https://*.hcaptcha.com https://newassets.hcaptcha.com; connect-src 'self' https://discord.com https://*.discord.com https://cdn.discordapp.com https://*.discordsays.com https://*.hcaptcha.com https://hcaptcha.com https://newassets.hcaptcha.com; img-src 'self' https://cdn.discordapp.com https://discord.com https://*.discord.com https://*.hcaptcha.com data: blob:; media-src https://cdn.discordapp.com https://discord.com https://*.discord.com; font-src 'self' data: https://*.hcaptcha.com; manifest-src 'self';"
+		/>
+		<title>ZoZ Development</title>
+		<link rel="manifest" href="manifest.webmanifest" />
+		<link rel="stylesheet" href="fonts.css" />
+		<link rel="stylesheet" href="styles.css" />
+		<link rel="stylesheet" href="mobile.css" />
+	</head>
+	<body data-page="quest">
+		<a class="skip-link" href="#pageQuest" id="skipLink">Tới nội dung chính</a>
+		<!-- Lớp nền kasumu: base + 2 radial glow + overlay -->
+		<div class="bg-layers" aria-hidden="true">
+			<div class="bg-base"></div>
+			<div class="bg-glow"></div>
+			<div class="bg-overlay"></div>
+		</div>
+
+		<!-- Topbar mobile -->
+		<header class="topbar">
+			<button type="button" class="topbar-btn" id="btnDrawer" aria-label="Mở menu">
+				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18" aria-hidden="true"><path d="M4 5h16"/><path d="M4 12h16"/><path d="M4 19h16"/></svg>
+			</button>
+			<span class="topbar-brand">ZoZ Community</span>
+		</header>
+		<div class="drawer-overlay" id="drawerOverlay" aria-hidden="true"></div>
+
+		<!-- Wave#123 — thanh cập nhật PWA: chỉ hiện khi có Service Worker mới chờ. -->
+		<div class="update-bar" id="updateBar" role="status" hidden>
+			<span class="update-bar-text" id="updateBarText">Đã có bản cập nhật mới.</span>
+			<button class="btn btn-primary update-bar-btn" id="btnUpdateReload" type="button">Cập nhật</button>
+			<button class="ghost-btn update-bar-later" id="btnUpdateDismiss" type="button">Để sau</button>
+		</div>
+
+		<div class="shell">
+			<!-- ============ SIDEBAR 256px (kasumu) ============ -->
+			<aside class="sidebar" id="sidebar">
+				<div class="side-inner">
+					<!-- Wave#96 — BRANDING: logo nằm CẠNH tên (không còn absolute xa tít),
+					     có vòng bao quanh; tên app CHỈ "ZoZ Development" — đã XOÁ hẳn
+					     dòng tag "Nền tảng ALL IN ONE DISCORD" theo lệnh bro. -->
+					<div class="side-brand">
+						<span class="brand-logo-wrap">
+							<img class="brand-logo" src="assets/zoZ-logo.png" alt="ZoZ" aria-hidden="true" draggable="false" />
+						</span>
+						<span class="brand-name">ZoZ Development</span>
+					</div>
+
+					<!-- Điều hướng chính — Wave#87 (bro lệnh): 3 mục ĐẨY LÊN TRÊN,
+					     profile chuyển xuống gần đáy. -->
+					<nav class="side-nav" aria-label="Điều hướng chính">
+						<ul class="nav-list">
+							<li>
+								<button class="nav-item active" id="navQuest" aria-selected="true">
+									<span class="nav-ind" aria-hidden="true"></span>
+									<svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
+									<span class="nav-text">Auto Quest</span>
+								</button>
+							</li>
+							<li>
+								<button class="nav-item" id="navSettings">
+									<span class="nav-ind" aria-hidden="true"></span>
+									<svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915"/><circle cx="12" cy="12" r="3"/></svg>
+									<span class="nav-text">Cài Đặt</span>
+								</button>
+							</li>
+							<li>
+								<button class="nav-item" id="navStats">
+									<span class="nav-ind" aria-hidden="true"></span>
+									<svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18"/><path d="M7 15v3"/><path d="M12 10v8"/><path d="M17 6v12"/></svg>
+									<span class="nav-text">Thống kê</span>
+								</button>
+							</li>
+							<li>
+								<button class="nav-item" id="navAbout">
+									<span class="nav-ind" aria-hidden="true"></span>
+									<svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+									<span class="nav-text">Giới Thiệu</span>
+								</button>
+							</li>
+						</ul>
+					</nav>
+
+					<!-- Đẩy profile xuống gần đáy sidebar (Wave#87) -->
+					<div class="side-spacer" aria-hidden="true"></div>
+
+					<!-- Thẻ tài khoản / đăng nhập (Discord profile) — GIỮ Ở ĐÚY -->
+					<div class="userpanel" id="dprofile" data-state="guest">
+						<!-- Popout profile. Wave#87: giờ MỞ LÊN TRÊN (sổ ngược) vì
+						     Thẻ profile nằm ở gần đáy sidebar — vậy popout phải luồn
+						     lên trên để không bị cắt. -->
+						<div class="up-pop" id="upPop" hidden>
+							<!-- Waves 49c: PROFILE EFFECT — phải là <div> chứ KHÔNG
+							     được là <img>: con của <img> không bao giờ được
+							     layout (display:inline, offsetParent null) → mọi
+							     layer effect tàng hình. -->
+							<div class="up-pop-effect" id="dpEffect" aria-hidden="true" hidden></div>
+							<div class="up-pop-banner default" id="dpBanner"></div>
+							<div class="up-pop-body">
+								<div class="up-pop-avatarwrap">
+									<!-- Waves 49: PROFILE FRAME ôm sát avatar -->
+									<div class="dp-frame" id="dpFrame" aria-hidden="true"></div>
+									<div class="dp-avatar" id="dpAvatar">
+										<svg viewBox="0 0 24 24" width="30" height="30" fill="currentColor" aria-hidden="true"><path d="M12 12c2.7 0 4.8-2.2 4.8-4.9S14.7 2.3 12 2.3 7.2 4.4 7.2 7.1 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.9v2.4h19.2v-2.4c0-3.3-6.4-4.9-9.6-4.9z"/></svg>
+									</div>
+									<div class="dp-decoration" id="dpDecoration" aria-hidden="true"></div>
+								</div>
+							<div class="up-pop-name">
+								<!-- Waves 22: BỎ hiệu ứng bảng tên trong popup — chỉ tên thật + tag clan -->
+								<span class="up-nameplate" id="dpNameplate">
+									<span class="dp-display" id="dpDisplay">Chưa đăng nhập</span>
+									<span class="ph-np-clan">
+										<img class="dp-clan-badge" id="dpClanBadge" alt="" hidden />
+										<span class="dp-clan-tag up-tag" id="dpClanTag" hidden></span>
+									</span>
+								</span>
+								<span class="dp-username" id="dpUsername">Dán token ở Cài đặt</span>
+							</div>
+							<!-- Toàn bộ huy hiệu trích từ token — hàng badge dưới tên (Discord style) -->
+							<div class="up-pop-badges" id="dpBadges" hidden></div>
+							<!-- Wave#88 (Multiaccount): nút "Đổi account" ở CUỐI cùng
+							     của popout — bấm để mở popup "Dán token tài khoản".
+							     Chỉ hiện khi ĐÃ đăng nhập. -->
+							<button class="up-pop-switch" id="btnSwitchAccount" type="button" hidden>
+								<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3v4a2 2 0 0 1-2 2H2"/><path d="M16 21v-4a2 2 0 0 1 2-2h4"/><path d="m18 14 4 4-4 4"/><path d="m6 10-4-4 4-4"/></svg>
+								<span>Đổi tài khoản</span>
+							</button>
+							<!-- Wave#90: nút ĐĂNG XUẤT trong popout (icon ĐỎ).
+							     Nút này giúpx "hiệu ứng" (efecrred) khi bấm, chỉ
+							     thay vị trí + màu icon ra ĐỎ theo lệnh bro. -->
+							<button class="up-pop-logout" id="btnLogout2" type="button" hidden>
+								<svg class="up-pop-logout-ico" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
+								<span>Đăng xuất</span>
+							</button>
+							<!-- Khách: dòng "Đăng nhập tài khoản" (Chỉ hiện khi guest) -->
+							<button class="up-pop-login" id="dpBadge" hidden>
+								<svg class="up-pop-login-ico" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.317 4.3698a19.7913 19.7913 0 0 0-4.8851-1.5152.0741.0741 0 0 0-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 0 0-.0785-.037 19.7363 19.7363 0 0 0-4.8852 1.515.0699.0699 0 0 0-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 0 0 .0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 0 0 .0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 0 0-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 0 1-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 0 1 .0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 0 1 .0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 0 1-.0066.1276 12.2986 12.2986 0 0 1-1.873.8914.0766.0766 0 0 0-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 0 0 .0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 0 0 .0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 0 0-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.4189-2.1568 2.4189Z"/></svg>
+								<span id="dpBadgeText">Đăng nhập tài khoản</span>
+							</button>
+						</div>
+					</div>
+					<!-- Hàng panel: avatar + tên + nút Đổi account + đăng xuất
+					     (Wave#88: PHẢI là SIBLING của #upPop, KHÔNG nằm trong pop —
+					     popout neo `bottom:100%` theo .userpanel nên hàng panel
+					     phải đứng ngoài để toạ độ đúng.) -->
+					<button class="up-row" id="upRow" aria-haspopup="true" aria-expanded="false">
+							<!-- Waves 21: hiệu ứng bảng tên phủ LÊN KHUNG BO TRÒN NGOÀI (không nằm trong nội dung) -->
+							<span class="up-frame" id="upFrame" aria-hidden="true"></span>
+							<span class="up-avatarwrap" id="upAvatarwrap">
+								<span class="up-avatar" id="upAvatar">
+									<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true"><path d="M12 12c2.7 0 4.8-2.2 4.8-4.9S14.7 2.3 12 2.3 7.2 4.4 7.2 7.1 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.9v2.4h19.2v-2.4c0-3.3-6.4-4.9-9.6-4.9z"/></svg>
+								</span>
+								<!-- Trang trí ảnh đại diện Discord (avatar decoration) — tràn ra ngoài khung tròn -->
+								<span class="up-deco" id="upDeco" aria-hidden="true"></span>
+							</span>
+							<span class="up-text">
+								<span class="up-name-row">
+									<strong class="up-name" id="upName">Chưa đăng nhập</strong>
+									<span class="up-tag" id="upClanTag" hidden></span>
+								</span>
+								<small class="up-sub" id="upSub">Đã đăng nhập</small>
+							</span>
+							<!-- Wave#88: nút "Đổi tài khoản" — mở popup add-account. -->
+							<span class="up-switch" id="btnSwitchAccountRow" title="Đổi tài khoản" role="button" tabindex="0" aria-label="Đổi tài khoản" hidden>
+								<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3v4a2 2 0 0 1-2 2H2"/><path d="M16 21v-4a2 2 0 0 1 2-2h4"/><path d="m18 14 4 4-4 4"/><path d="m6 10-4-4 4-4"/></svg>
+							</span>
+							<!-- Wave#90: icon ĐĂNG XUẤT BẮT BUỘC màu ĐỎ (var(--danger)). -->
+							<span class="up-logout up-logout-red" id="btnLogout" title="Đăng xuất" role="button" tabindex="0" aria-label="Đăng xuất" hidden>
+								<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
+							</span>
+						</button>
+					</div>
+				</div>
+			</aside>
+
+			<!-- ============ MAIN (kasumu max-w-6xl) ============ -->
+			<div class="main-wrap" id="appScroll">
+				<main class="content">
+					<!-- ============ PAGE: AUTO QUEST ============ -->
+					<section class="page active" id="pageQuest" role="tabpanel">
+						<!-- Profile card CHÍNH GIỮA (Waves 15: duy nhất 1 hero, cân bằng, có decoration bolt vào tên) -->
+						<div class="hero-card profile-hero animate-rise" id="heroProfile" hidden>
+							<!-- Waves 44: phải có sẵn class `default` trong HTML — luật
+							     `:has(.ph-banner:not(.default))` dùng để đổi chữ sang
+							     trắng khi có banner thật; thiếu class này thì lúc mới
+							     dựng trang chữ bị trắng trên nền trắng (1:1). -->
+							<!-- Waves 49c: PROFILE EFFECT trong hero — cũng phải là <div>
+							     (xem chú thích ở #dpEffect: con của <img> không được layout). -->
+							<div class="ph-effect" id="phEffect" aria-hidden="true" hidden></div>
+							<div class="ph-banner default" id="phBanner"></div>
+							<div class="ph-body">
+								<div class="ph-avatarwrap" id="phAvatarwrap">
+									<!-- Waves 49: PROFILE FRAME ôm sát avatar hero -->
+									<div class="ph-frame" id="phFrame" aria-hidden="true"></div>
+									<div class="ph-avatar" id="phAvatar">
+										<!-- Waves 46b — LOGO ORB TO Ở CHÍNH GIỮA.
+										     Trước đây orb là một lớp phủ `.ph-orbbig` đặt absolute
+										     giữa thẻ, nên nó "lòi" lên trên banner (bro:
+										     "sao tự nhiên lòi logo orb phía trên"). Nay orb
+										     LỚN chính là ẢNH ĐẠI DIỆN ở tâm thẻ — đúng vị trí
+										     chính giữa, không còn lớp phủ lơ lửng.
+										     Ảnh nền trong suốt thật (RGBA, đã tách nền). -->
+										<img
+											class="ph-avatar-orb"
+											id="phAvatarOrb"
+											src="assets/orb-logo-big.png"
+											alt=""
+											draggable="false"
+										/>
+										<svg class="ph-avatar-fallback" viewBox="0 0 24 24" width="34" height="34" fill="currentColor" aria-hidden="true"><path d="M12 12c2.7 0 4.8-2.2 4.8-4.9S14.7 2.3 12 2.3 7.2 4.4 7.2 7.1 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.9v2.4h19.2v-2.4c0-3.3-6.4-4.9-9.6-4.9z"/></svg>
+									</div>
+									<div class="ph-decoration" id="phDecoration" aria-hidden="true"></div>
+								</div>
+								<div class="ph-id">
+									<div class="ph-namerow">
+										<!-- Nameplate: khung bo tròn BAO TRÙM cả tên + clan badge + clan tag (Discord profile popup style) -->
+										<span class="ph-nameplate" id="phNameplate">
+											<h2 class="ph-display" id="phDisplay">Chưa đăng nhập</h2>
+											<span class="ph-np-clan">
+												<img class="ph-clan-badge" id="phClanBadge" alt="" hidden />
+												<span class="dp-clan-tag ph-tag" id="phClanTag" hidden></span>
+											</span>
+										</span>
+										<!-- Toàn bộ huy hiệu trích từ token (Nitro, HypeSquad, Active Dev...) xếp cạnh chữ -->
+										<span class="ph-badges" id="phBadges" hidden></span>
+									</div>
+									<p class="ph-username mono" id="phUsername">Dán token ở Cài đặt để hiển thị profile Discord</p>
+									<!-- Wave#87 (bro lệnh): guest = NÚT "Đăng nhập tài khoản Discord"
+									     (avatar Discord xanh + icon), KHÔNG phải ZoZ ORB.
+									     JS ẩn khi đã đăng nhập. -->
+									<button class="ph-login-hint" id="phLoginHint" type="button" hidden>
+										<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.317 4.3698a19.7913 19.7913 0 0 0-4.8851-1.5152.0741.0741 0 0 0-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 0 0-.0785-.037 19.7363 19.7363 0 0 0-4.8852 1.515.0699.0699 0 0 0-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 0 0 .0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 0 0 .0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 0 0-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 0 1-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 0 1 .0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 0 1 .0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 0 1-.0066.1276 12.2986 12.2986 0 0 1-1.873.8914.0766.0766 0 0 0-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 0 1 .0842-.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 0 0 .0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 0 0-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.4189-2.1568 2.4189Z"/></svg>
+										<span>Đăng nhập tài khoản Discord</span>
+									</button>
+									<p class="ph-userid mono" id="phUserId" hidden>
+										<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 16V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h13a2 2 0 0 0 2-2Z"/><path d="m7 9 3 3-3 3"/><path d="M13 15h4"/></svg>
+										<span>ID: <span id="phUserIdValue">—</span></span>
+									</p>
+								</div>
+							</div>
+						</div>
+
+												<!-- ============ HÀNG THẺ: SỐ DƯ + NHẬT KÝ (Waves 22) ============ -->
+						<div class="stats-row">
+							<!-- SỐ DƯ KHẢ DỤNG — NỀN XANH EMERALD như tiền (kasumi money card) -->
+							<div class="side-balance animate-rise stagger-1" id="sideBalance" data-state="guest">
+								<div class="sb-top">
+									<span class="sb-label">Số dư khả dụng</span>
+									<span class="stat-ico tint-emerald sb-ico">
+										<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13.744 17.736a6 6 0 1 1-7.48-7.48"/><path d="M15 6h1v4"/><path d="m6.134 14.768.866-.5 2 3.464"/><circle cx="16" cy="8" r="6"/></svg>
+									</span>
+								</div>
+								<div class="sb-value mono" id="orbBalance">—</div>
+								<p class="sb-sub" id="orbPending">Đăng nhập để trích xuất Orb từ account</p>
+							</div>
+
+							<!-- NHẬT KÝ HOẠT ĐỘNG — TERMINAL #229 (self-typing).
+							     Giữ NGUYÊN vị trí cũ (hàng thẻ cạnh Số dư), không tràn viền.
+							     Toàn bộ tiến trình quét + trạng thái loading chạy bằng
+							     các DÒNG terminal trong khung này — không loader riêng. -->
+							<section class="card console-card animate-rise stagger-2" id="consoleCard">
+								<div class="log-head">
+									<span class="log-dots" aria-hidden="true">
+										<i class="log-dot d-red"></i>
+										<i class="log-dot d-amber"></i>
+										<i class="log-dot d-green"></i>
+									</span>
+									<span class="log-title">Nhật ký hoạt động</span>
+									<span class="net-badge" id="netBadge" hidden>Ngoại tuyến</span>
+									<span class="log-live">
+										<span class="log-count mono" id="logCount">—</span>
+									</span>
+									<button class="ghost-btn log-recover" id="btnRecover" type="button" title="Khởi động lại tiến trình vừa lỗi" hidden>Khôi phục</button>
+									<button class="ghost-btn log-clear" id="btnClearLog" type="button">Xóa</button>
+								</div>
+								<div class="u229 mono" id="console" role="log" aria-live="polite" aria-label="Nhật ký hoạt động"></div>
+							</section>
+						</div>
+
+						<!-- Quests card -->
+						<section class="card quests-card animate-rise stagger-3">
+							<div class="card-head quest-head">
+								<div class="tab-buttons">
+									<button class="tab-btn active" id="tabActive">
+										Chưa làm
+										<span class="tab-count mono" id="countActive">0</span>
+									</button>
+									<button class="tab-btn" id="tabNew">
+										Chưa nhận
+										<span class="tab-count mono" id="countNew">0</span>
+									</button>
+									<button class="tab-btn" id="tabDone">
+										Đã làm
+										<span class="tab-count mono" id="countDone">0</span>
+									</button>
+								</div>
+								<!-- Waves 43: 3 nút điều khiển nằm NGAY CẠNH hàng tab (khung
+								     "Đã làm"), gọn trong lưới quest — KHÔNG còn tiêu đề
+								     "Điều khiển"/"Menu", không nhét ở đáy sidebar nữa. -->
+								<div class="side-actions" id="sideActions">
+									<button class="btn btn-outline side-act" id="btnScan">
+										<svg class="btn-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
+										<span class="side-act-text">Quét nhiệm vụ</span>
+									</button>
+									<button class="btn btn-primary side-act" id="btnStart" disabled>
+										<svg class="btn-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="6 3 20 12 6 21 6 3"/></svg>
+										<span class="side-act-text">Auto ORBs</span>
+									</button>
+									<button class="btn btn-danger side-act" id="btnStop" disabled>
+										<svg class="btn-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="18" x="3" y="3" rx="2"/></svg>
+										<span class="side-act-text">Dừng</span>
+									</button>
+								</div>
+								<span class="chip mono" id="questCounter">0 / 0</span>
+							</div>
+
+							<!-- Wave#111: tìm kiếm · lọc · nhận tất cả -->
+							<div class="quest-tools" id="questTools">
+								<label class="quest-search" for="questSearch">
+									<svg class="quest-search-ico" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.2-3.2"/></svg>
+									<input id="questSearch" type="search" placeholder="Tìm nhiệm vụ, game, phần thưởng…" autocomplete="off" spellcheck="false" />
+									<button class="quest-search-clear" id="btnQuestSearchClear" type="button" title="Xoá tìm kiếm" hidden>
+										<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+									</button>
+								</label>
+								<select id="questFilter" class="custom-select quest-filter" aria-label="Lọc nhiệm vụ">
+									<option value="all">Tất cả nhiệm vụ</option>
+									<option value="orbs">Có thưởng Orb</option>
+									<option value="manual">Cần làm thủ công</option>
+									<option value="urgent">Sắp hết hạn (3 ngày)</option>
+								</select>
+								<button class="btn btn-primary quest-claim-all" id="btnClaimAll" type="button" hidden>Nhận tất cả</button>
+								<button class="chip chip-ghost claim-queue-chip" id="claimQueueChip" type="button" hidden
+									title="Tiếp tục nhận các nhiệm vụ đang chờ xác minh">Chờ xác minh: 0</button>
+								<span class="quest-filter-count mono" id="questFilterCount" hidden></span>
+							</div>
+
+							<div class="select-tools" id="selectTools" hidden>
+								<label class="check small select-all-wrap">
+									<input type="checkbox" id="selectAll" />
+									<span id="selectAllLabel">Chọn tất cả</span>
+								</label>
+								<span class="selected-info"><span id="selectedLabel">Đã chọn:</span> <strong id="selectedCount">0</strong> <span class="selected-orbs mono" id="selectedOrbs"></span></span>
+							</div>
+
+							<!-- 3 tab: Chưa làm · Chưa nhận · Đã làm — lưới 3 thẻ / dòng -->
+							<div class="quest-list" id="questListActive">
+								<div class="qstate is-empty" id="stateActive">
+									<p class="qstate-text">Chưa có nhiệm vụ nào — bấm <strong>Quét nhiệm vụ</strong> để tải.</p>
+								</div>
+							</div>
+
+							<div class="quest-list" id="questListNew" hidden>
+								<div class="qstate is-empty" id="stateNew">
+									<p class="qstate-text">Chưa có nhiệm vụ nào — bấm <strong>Quét nhiệm vụ</strong> để tải.</p>
+								</div>
+							</div>
+
+							<div class="quest-list qgrid-done" id="questListDone" hidden>
+								<div class="qstate is-empty" id="stateDone">
+									<p class="qstate-text">Chưa có nhiệm vụ nào — bấm <strong>Quét nhiệm vụ</strong> để tải.</p>
+								</div>
+							</div>
+
+						</section>
+					</section>
+
+					<!-- ============ PAGE: THỐNG KÊ (Wave#121) ============ -->
+					<section class="page" id="pageStats" role="tabpanel" hidden>
+						<section class="card stats-card">
+							<div class="card-head">
+								<div class="card-title-group">
+									<span class="card-ico tint-emerald">
+										<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18"/><path d="M7 15v3"/><path d="M12 10v8"/><path d="M17 6v12"/></svg>
+									</span>
+									<h2 class="card-title">Thống kê &amp; lịch sử</h2>
+								</div>
+								<span class="chip mono" id="statsScope">—</span>
+							</div>
+
+							<div class="stats-tiles">
+								<div class="stats-tile">
+									<span class="stats-tile-label">Tổng Orb đã nhận</span>
+									<strong class="stats-tile-value mono tint-emerald" id="statsOrbs">0</strong>
+								</div>
+								<div class="stats-tile">
+									<span class="stats-tile-label">Nhiệm vụ đã nhận</span>
+									<strong class="stats-tile-value mono" id="statsClaims">0</strong>
+								</div>
+								<div class="stats-tile">
+									<span class="stats-tile-label">Chuỗi ngày hoạt động</span>
+									<strong class="stats-tile-value mono" id="statsStreak">0</strong>
+								</div>
+								<div class="stats-tile">
+									<span class="stats-tile-label">Trung bình mỗi ngày</span>
+									<strong class="stats-tile-value mono" id="statsAvg">0</strong>
+								</div>
+							</div>
+
+							<h3 class="stats-subtitle">7 ngày gần nhất</h3>
+							<div class="stats-bars" id="statsBars" role="img" aria-label="Biểu đồ Orb theo ngày"></div>
+
+							<div class="stats-recent-head">
+								<h3 class="stats-subtitle">Nhận thưởng gần đây</h3>
+								<div class="stats-actions">
+									<button class="ghost-btn" id="btnStatsCsv" type="button">Xuất CSV</button>
+									<button class="ghost-btn" id="btnStatsClear" type="button">Xoá lịch sử</button>
+								</div>
+							</div>
+							<ul class="stats-recent" id="statsRecent"></ul>
+							<p class="qstate is-empty stats-empty" id="statsEmpty">Chưa có lịch sử nhận thưởng. Lịch sử được lưu cục bộ theo từng tài khoản.</p>
+						</section>
+					</section>
+
+					<!-- ============ PAGE: CÀI ĐẶT ============ -->
+					<section class="page" id="pageSettings" role="tabpanel" hidden>
+						<section class="card config-card">
+							<div class="card-head">
+								<div class="card-title-group">
+									<span class="card-ico tint-violet">
+										<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915"/><circle cx="12" cy="12" r="3"/></svg>
+									</span>
+									<h2 class="card-title">Cấu hình tài khoản</h2>
+								</div>
+							</div>
+
+							<!-- Wave#89: CÀI ĐẶT — Chỉ HIỂN THỊ avatar + tag + UID + token (ẩn/hiện + copy).
+							     KHÔNG còn ô DÁN TOKEN trong Cài đặt (token nhập trong popup "Đổi tài khoản"). -->
+							<div class="acc-cfg">
+								<div class="acc-cfg-top">
+									<span class="acc-cfg-avwrap" id="accCfgAvwrap" hidden>
+										<span class="acc-cfg-ring" aria-hidden="true"></span>
+										<span class="acc-cfg-avatar" id="accCfgAvatar">
+											<svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor" aria-hidden="true"><path d="M12 12c2.7 0 4.8-2.2 4.8-4.9S14.7 2.3 12 2.3 7.2 4.4 7.2 7.1 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.9v2.4h19.2v-2.4c0-3.3-6.4-4.9-9.6-4.9z"/></svg>
+										</span>
+									</span>
+									<span class="acc-cfg-avwrap acc-cfg-avwrap-placeholder" id="accCfgAvwrapGone" hidden>
+										<svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8z"/><circle cx="12" cy="12" r="3.5"/></svg>
+									</span>
+									<span class="acc-cfg-meta">
+										<span class="acc-cfg-user mono" id="accCfgUser">@chưa đăng nhập</span>
+										<span class="acc-cfg-name" id="accCfgDisplayName">Chưa có tài khoản</span>
+										<span class="acc-cfg-uid mono" id="accCfgUid" hidden>UID: <span id="accCfgUidValue">—</span></span>
+									</span>
+									<button class="chip chip-ghost" id="btnAccCfgSwitch" type="button" title="Mở popup đổi tài khoản">
+										<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3v4a2 2 0 0 1-2 2H2"/><path d="M16 21v-4a2 2 0 0 1 2-2h4"/><path d="m18 14 4 4-4 4"/><path d="m6 10-4-4 4-4"/></svg>
+										Đổi tài khoản
+									</button>
+								</div>
+
+								<!-- Token HIỂN THỊ (ẩn/hiện + copy) — collapsible drawer. -->
+								<div class="acc-cfg-tokenbox">
+									<button type="button" class="guide-header" id="btnTokenDrawer"
+										aria-expanded="false" aria-controls="accCfgTokenBody">
+										<span class="guide-icon">
+											<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14" aria-hidden="true"><circle cx="8" cy="15" r="4"/><path d="M10.5 12.5 19 4"/><path d="m17 6 3 3"/><path d="m15 9 2 2"/></svg>
+										</span>
+										<strong>Token Discord</strong>
+										<span class="acc-cfg-token-hint mono" id="accCfgTokenHint">chưa có</span>
+										<span class="guide-chev" aria-hidden="true">
+											<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="m6 9 6 6 6-6"/></svg>
+										</span>
+									</button>
+									<div class="guide-body" id="accCfgTokenBody" hidden>
+										<div class="acc-cfg-tokenrow">
+											<code class="acc-cfg-tokentext mono" id="accCfgToken">chưa có token</code>
+											<button class="ghost-btn" id="btnTokenEye" title="Hiện/ẩn">
+												<svg class="ghost-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg>
+												<span id="btnTokenEyeText">Hiện</span>
+											</button>
+											<button class="ghost-btn" id="btnTokenCopy" title="Copy">
+												<svg class="ghost-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+												Copy
+											</button>
+										</div>
+										<p class="hint">Token được mã hoá (AES-GCM) ngay trong trình duyệt. Copy chỉ để lưu an toàn / sử dụng ở nơi tin cậy.</p>
+									</div>
+								</div>
+
+								<!-- Dòng trạng thái đăng nhập (id giữ nguyên để engine test-pass) -->
+								<p class="token-status" id="tokenStatus" role="status" aria-live="polite" hidden></p>
+
+								<!-- Ô input ẩn: khám phát của ui.token.value (renderer cũ
+									 còn dựa vào đây để tự đăng nhập / get token). -->
+								<input id="token" type="hidden" />
+
+								<!-- Nút cũ — KHÔNG hiển thị (display:none), giữ id để handler
+									 trong renderer.js không crash. -->
+								<div class="acc-cfg-legacy">
+									<button id="btnPaste" type="button"></button>
+									<button id="btnToggleToken"><span id="btnToggleTokenText">Hiện</span></button>
+									<button id="btnSaveToken" type="button"></button>
+									<button class="btn-copy-script" id="btnCopyScript" type="button"></button>
+									<button class="btn-copy-script" id="btnUserTokImport" type="button"></button>
+									<div class="guide-body" id="guideBody" hidden></div>
+									<div class="guide-steps" id="guidePaneConsole" hidden></div>
+									<button id="btnGuideToggle" type="button"></button>
+									<p class="guide-note" id="userTokNote" hidden></p>
+								</div>
+							</div>
+							<div class="loop-box">
+								<label class="check loop-check">
+									<input type="checkbox" id="loopMode" checked />
+									<span class="loop-title">Chế độ Treo Orb liên tục (AFK Loop)</span>
+								</label>
+								<p class="hint">Tự động lặp lại kiểm tra và cày nhiệm vụ mới hoặc tự thử lại sau khi hết thời gian giới hạn API.</p>
+								<div class="loop-interval-row" id="loopIntervalRow">
+									<span>Thời gian lặp lại quét:</span>
+									<select id="loopInterval" class="custom-select">
+										<option value="15">Mỗi 15 phút</option>
+										<option value="30" selected>Mỗi 30 phút (Khuyên dùng)</option>
+										<option value="45">Mỗi 45 phút (Chu kỳ Discord)</option>
+										<option value="60">Mỗi 60 phút</option>
+									</select>
+								</div>
+							</div>
+
+							<div class="field-extra">
+								<button class="ghost-btn" id="btnOpenFolder">
+									<svg class="ghost-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg>
+									Thư mục cấu hình
+								</button>
+								<button class="ghost-btn" id="btnDataPanel">
+									<svg class="ghost-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v6c0 1.7 3.6 3 8 3s8-1.3 8-3V5"/><path d="M4 11v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6"/></svg>
+									Dữ liệu &amp; chẩn đoán
+								</button>
+							</div>
+						</section>
+
+						<!-- Waves 28: GIAO DIỆN — chế độ Sáng/Tối -->
+						<section class="card config-card">
+							<div class="card-head">
+								<div class="card-title-group">
+									<span class="card-ico tint-cyan">
+										<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+									</span>
+									<h2 class="card-title">Giao diện</h2>
+								</div>
+							</div>
+							<div class="theme-toggle-row" id="themeToggleRow" role="radiogroup" aria-label="Chế độ hiển thị">
+								<button class="theme-opt" id="themeDark" data-theme="dark" role="radio" aria-checked="true">
+									<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+									<span>Tối</span>
+								</button>
+								<button class="theme-opt" id="themeLight" data-theme="light" role="radio" aria-checked="false">
+									<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+									<span>Sáng</span>
+								</button>
+							</div>
+							<div class="setting-row">
+								<span class="setting-label">Ngôn ngữ giao diện</span>
+								<select id="langSelect" class="custom-select setting-select" aria-label="Ngôn ngữ giao diện">
+									<option value="vi" selected>Tiếng Việt</option>
+									<option value="en">English</option>
+								</select>
+							</div>
+						</section>
+
+						<!-- Wave#129/#127 — Tối ưu máy yếu + khoá riêng tư -->
+						<section class="card config-card">
+							<div class="card-head">
+								<div class="card-title-group">
+									<span class="card-ico tint-amber">
+										<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3Z"/></svg>
+									</span>
+									<h2 class="card-title">Tối ưu &amp; riêng tư</h2>
+								</div>
+							</div>
+							<label class="check loop-check">
+								<input type="checkbox" id="liteMode" />
+								<span class="loop-title">Chế độ nhẹ (máy yếu)</span>
+							</label>
+							<p class="hint">Tắt bớt hiệu ứng nền, blur và chuyển động — giảm tải CPU/GPU trên máy cấu hình thấp.</p>
+							<div class="setting-row">
+								<span class="setting-label">Tự khoá màn hình khi rảnh</span>
+								<select id="autoLockSelect" class="custom-select setting-select" aria-label="Tự khoá màn hình">
+									<option value="0" selected>Tắt</option>
+									<option value="5">Sau 5 phút</option>
+									<option value="15">Sau 15 phút</option>
+									<option value="30">Sau 30 phút</option>
+								</select>
+							</div>
+							<p class="hint">Khoá chỉ che giao diện (không dừng tiến trình). Token vẫn được mã hoá trong trình duyệt.</p>
+						</section>
+
+						<!-- Wave#123 — phiên bản & cập nhật -->
+						<section class="card config-card">
+							<div class="card-head">
+								<div class="card-title-group">
+									<span class="card-ico tint-cyan">
+										<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M16 8h5V3"/></svg>
+									</span>
+									<h2 class="card-title">Phiên bản &amp; cập nhật</h2>
+								</div>
+							</div>
+							<div class="version-grid">
+								<div class="version-item">
+									<span class="version-label">Ứng dụng</span>
+									<strong class="version-value mono" id="appVersion">—</strong>
+								</div>
+								<div class="version-item">
+									<span class="version-label">Service Worker</span>
+									<strong class="version-value mono" id="swVersion">—</strong>
+								</div>
+							</div>
+							<div class="field-extra">
+								<button class="ghost-btn" id="btnCheckUpdate" type="button">Kiểm tra cập nhật</button>
+							</div>
+							<p class="hint" id="updateStatus" role="status" aria-live="polite"></p>
+						</section>
+					</section>
+
+					<!-- ============ PAGE: GIỚI THIỆU ============ -->
+					<section class="page" id="pageAbout" role="tabpanel" hidden>
+						<section class="card about-card">
+							<div class="card-head">
+								<div class="card-title-group">
+									<span class="card-ico tint-emerald">
+										<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1 1 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></svg>
+									</span>
+									<h2 class="card-title">Về ZoZ Development</h2>
+								</div>
+							</div>
+							<div class="security-banner">
+								<span class="sec-icon tint-emerald">
+									<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18" aria-hidden="true"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1 1 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>
+								</span>
+								<div class="sec-text" id="aboutBanner">
+									<strong>Bảo mật 100%:</strong> Đã ngắt toàn bộ endpoint ngoài và webhook. Token được mã hóa AES-GCM ngay trong trình duyệt của bạn.
+								</div>
+								<span class="chip sec-chip">SECURE LOCAL</span>
+							</div>
+							<ul class="about-list" id="aboutList">
+								<li>Chỉ kết nối <strong>discord.com</strong> — chặn đứng mọi webhook/endpoint ngoài.</li>
+								<li>Không tự nhận nhiệm vụ — chỉ cày nhiệm vụ bạn đã nhận trong Discord.</li>
+								<li>Số ORB là số THẬT: đếm từ quest đã hoàn thành + đã claim thưởng trên account.</li>
+								<li>100% local: không telemetry, không tracking, không link kiếm tiền.</li>
+							</ul>
+							<p class="hint" id="aboutHint">Dự án phục vụ mục đích học tập và tối ưu trải nghiệm cá nhân. Không liên kết chính thức với Discord Inc.</p>
+						</section>
+					</section>
+				</main>
+			</div>
+		</div>
+
+		<!-- Modal xác nhận ĐĂNG XUẤT (Waves 15 · Waves 17 reskin kasumu) -->
+		<div class="modal-veil" id="logoutModal" hidden>
+			<div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="logoutTitle">
+				<div class="modal-ico">
+					<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
+				</div>
+				<h3 class="modal-title" id="logoutTitle">Bạn có muốn đăng xuất tài khoản này không?</h3>
+				<p class="modal-desc" id="logoutDesc">Token sẽ được LƯU trong danh sách tài khoản config (bro chốt). Bạn vẫn đăng nhập lại được mà không cần dán lại.</p>
+				<!-- Waves 17: thẻ tài khoản sẽ đăng xuất (avatar + tên + ID) -->
+				<div class="modal-account" id="logoutAccount" hidden>
+					<span class="modal-account-avatar" id="logoutAccAvatar" aria-hidden="true"></span>
+					<span class="modal-account-meta">
+						<strong class="modal-account-name" id="logoutAccName">—</strong>
+						<small class="modal-account-id mono" id="logoutAccId">ID: —</small>
+					</span>
+				</div>
+				<div class="modal-actions">
+					<button class="btn btn-ghost" id="btnLogoutCancel" type="button">Huỷ</button>
+					<button class="btn btn-danger" id="btnLogoutConfirm" type="button">Đăng xuất</button>
+				</div>
+			</div>
+		</div>
+
+		<!-- Wave#108/#109 — DỮ LIỆU & CHẨN ĐOÁN
+		     Sao lưu mã hoá (PBKDF2 200k + AES-256-GCM), khôi phục, chẩn đoán môi trường.
+		     Token không bao giờ hiển thị ở đây; chỉ có trong IndexedDB của trình duyệt. -->
+		<div class="modal-veil" id="dataModal" hidden>
+			<div class="modal-card aq-data-card" role="dialog" aria-modal="true" aria-labelledby="dataTitle">
+				<h3 class="modal-title" id="dataTitle">Dữ liệu &amp; chẩn đoán</h3>
+				<p class="modal-desc" id="dataIntro">Toàn bộ dữ liệu nằm trong trình duyệt này. Bản sao lưu được mã hoá bằng mật khẩu bạn đặt — không có mật khẩu thì không đọc được.</p>
+
+				<section class="aq-data-section">
+					<h4 class="accsw-h4">Sao lưu / Khôi phục</h4>
+					<div class="aq-data-field">
+						<label class="aq-data-label" for="dataPassword" id="dataPassLabel">Mật khẩu sao lưu (tối thiểu 8 ký tự)</label>
+						<div class="input-wrap aq-data-input">
+							<input id="dataPassword" type="password" spellcheck="false" autocomplete="new-password"
+								placeholder="Mật khẩu mã hoá file…" />
+							<button class="ghost-btn" id="btnDataToggle" type="button" title="Hiện/ẩn mật khẩu">
+								<span id="btnDataToggleText">Hiện</span>
+							</button>
+						</div>
+					</div>
+					<div class="aq-data-actions">
+						<button class="btn btn-primary" id="btnBackupExport" type="button">Sao lưu mã hoá</button>
+						<button class="btn btn-ghost" id="btnBackupImport" type="button">Khôi phục từ file</button>
+					</div>
+					<p class="hint aq-data-hint" id="dataBackupHint">File <strong>.json</strong> chứa token đã mã hoá AES-256-GCM; khôi phục sẽ THAY THẾ toàn bộ tài khoản đang lưu.</p>
+					<div class="aq-data-preview" id="dataImportPreview" hidden>
+						<p class="aq-data-preview-meta" id="dataImportMeta">—</p>
+						<div class="aq-data-actions">
+							<button class="btn btn-danger" id="btnBackupApply" type="button">Ghi đè &amp; khôi phục</button>
+							<button class="btn btn-ghost" id="btnBackupCancel" type="button">Huỷ</button>
+						</div>
+					</div>
+				</section>
+
+				<section class="aq-data-section">
+					<h4 class="accsw-h4">Chẩn đoán môi trường</h4>
+					<div class="aq-data-actions">
+						<button class="btn btn-ghost" id="btnRunDiagnostics" type="button">Chạy chẩn đoán</button>
+						<button class="btn btn-ghost" id="btnExportCfg" type="button">Xuất cấu hình (không token)</button>
+					</div>
+					<pre class="aq-data-pre mono" id="dataDiagOut" hidden></pre>
+				</section>
+
+				<!-- Wave#119 — nhật ký yêu cầu (đã che token) -->
+				<section class="aq-data-section">
+					<h4 class="accsw-h4">Nhật ký yêu cầu Discord</h4>
+					<div class="aq-data-actions">
+						<button class="btn btn-ghost" id="btnReqLogCopy" type="button">Sao chép (đã che token)</button>
+						<button class="btn btn-ghost" id="btnReqLogClear" type="button">Xoá nhật ký</button>
+					</div>
+					<pre class="aq-data-pre mono aq-data-reqlog" id="reqLogOut" hidden></pre>
+					<p class="hint aq-data-hint" id="reqLogHint">Chỉ ghi phương thức, đường dẫn, mã trạng thái và thời gian — không bao giờ ghi token.</p>
+				</section>
+
+				<!-- Wave#127 — toàn vẹn ứng dụng -->
+				<section class="aq-data-section">
+					<h4 class="accsw-h4">Toàn vẹn ứng dụng</h4>
+					<div class="aq-data-actions">
+						<button class="btn btn-ghost" id="btnRunIntegrity" type="button">Kiểm tra toàn vẹn</button>
+					</div>
+					<p class="aq-integrity-banner" id="tamperWarn" role="alert" hidden>Cảnh báo: tệp ứng dụng đã bị thay đổi so với bản phát hành. Chỉ tiếp tục nếu bạn tự sửa mã.</p>
+					<pre class="aq-data-pre mono" id="integrityOut" hidden></pre>
+				</section>
+
+				<!-- Wave#127 — vùng nguy hiểm -->
+				<section class="aq-data-section aq-data-danger">
+					<h4 class="accsw-h4">Vùng nguy hiểm</h4>
+					<p class="hint aq-data-hint" id="dataDangerHint">Xoá toàn bộ dữ liệu cục bộ (token, tài khoản, lịch sử, cài đặt). Không thể hoàn tác.</p>
+					<div class="aq-data-actions">
+						<button class="btn btn-danger" id="btnWipeData" type="button">Xoá toàn bộ dữ liệu</button>
+					</div>
+				</section>
+
+				<p class="aq-data-status" id="dataStatus" role="status" aria-live="polite"></p>
+
+				<div class="modal-actions">
+					<button class="btn btn-ghost" id="btnDataClose" type="button">Đóng</button>
+				</div>
+			</div>
+		</div>
+
+		<!-- Wave#88 — MODAL "ĐỔI TÀI KHOẢN" (multiaccount).
+		   Chứa 2 PURPOSE CHÍNH: mục Dán Token Discord + mục Tài khoản.
+		   Bo góc lớn (radius 1.6rem) theo bro: POPUP CHỮ NHẬT BO TRÒN.
+		   Đủ RỘNG để vừa 2 mục nhưng KHÔNG gọn rặt ok. -->
+		<div class="modal-veil acc-switch-veil" id="accSwitchModal" hidden>
+			<div class="modal-card acc-switch-card" role="dialog" aria-modal="true" aria-labelledby="accSwitchTitle">
+				<h3 class="modal-title" id="accSwitchTitle">Tài khoản Discord</h3>
+
+				<!-- Mục 1: Dán Token Discord -->
+				<section class="accsw-section">
+					<h4 class="accsw-h4">Dán Token Discord</h4>
+					<div class="input-wrap accsw-input">
+						<input id="accswToken" type="password" spellcheck="false" autocomplete="off"
+							placeholder="Dán token Discord của bạn…" />
+						<button class="ghost-btn" id="accswPaste" title="Dán từ clipboard">
+							<svg class="ghost-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg>
+							Dán
+						</button>
+						<button class="ghost-btn" id="accswToggle" title="Hiện/ẩn">
+							<svg class="ghost-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg>
+							<span id="accswToggleText">Hiện</span>
+						</button>
+						<button class="ghost-btn save-btn" id="accswAdd" title="Thêm tài khoản (luôn lưu token)">
+							<svg class="ghost-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+							Thêm
+						</button>
+					</div>
+					<!-- Hướng dẫn LẤY TOKEN (recursive, collapsible như install màn Cài đặt) -->
+					<div class="guide-box">
+						<button type="button" class="guide-header" id="accswGuideToggle"
+							aria-expanded="false" aria-controls="accswGuideBody">
+							<span class="guide-icon">
+								<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14" aria-hidden="true"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg>
+							</span>
+							<strong>Hướng dẫn lấy Token trong 5 giây</strong>
+							<span class="guide-chev" aria-hidden="true">
+								<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="m6 9 6 6 6-6"/></svg>
+							</span>
+						</button>
+						<div class="guide-body" id="accswGuideBody" hidden>
+							<div class="guide-steps">
+								<p class="guide-note"><strong>Đăng nhập trang Cài đặt</strong> → bấm "Lấy token" → copy vào ô phía trên.</p>
+								<div class="step-item"><span class="step-num mono">1</span><span>Mở Discord (Web/App) → F12 → tab <strong>Console</strong>.</span></div>
+								<div class="step-item"><span class="step-num mono">2</span><span>Bấm nút "Copy lệnh lấy token" bên dưới — lệnh sẽ tự copy vào clipboard, dán vào Console rồi Enter.</span></div>
+								<div class="step-item"><span class="step-num mono">3</span><span>Bấm "Dán" trong ô trên → bấm "Thêm" → app TỰ ĐĂNG NHẬP + lưu token.</span></div>
+								<button class="btn-copy-script" id="accswCopyScript"><span class="ghost-ico" aria-hidden="true"></span>Copy lệnh lấy token</button>
+							</div>
+						</div>
+					</div>
+				</section>
+
+				<!-- Mục 2: Tài khoản (danh sách đã lưu) -->
+				<section class="accsw-section">
+					<h4 class="accsw-h4">Tài khoản của bạn</h4>
+					<p class="accsw-sub">Bấm tài khoản để đổi. Tài khoản ĐANG DÙNG có viền emerald.</p>
+					<ul class="accsw-list" id="accswList"></ul>
+					<p class="accsw-empty" id="accswEmpty" hidden>Chưa có tài khoản nào đã lưu.</p>
+				</section>
+
+				<div class="modal-actions">
+					<button class="btn btn-ghost" id="btnAccSwitchCancel" type="button">Đóng</button>
+				</div>
+			</div>
+		</div>
+
+		<!-- Wave#88 — MODAL XÁC NHẬN "CHUYỂN TÀI KHOÁN SANG @username" -->
+		<div class="modal-veil" id="accConfirmSwitchModal" hidden>
+			<div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="accSwitchConfirmTitle">
+				<h3 class="modal-title" id="accSwitchConfirmTitle">Bạn có muốn chuyển tài khoản sang <span class="acc-confirm-name mono" id="accSwitchConfirmName">@…</span> ?</h3>
+				<p class="modal-desc">Client sẽ nạp lại token + avatar + màu focus. Trong thời gian đó mọi tác vụ chạy vẫn giữ nguyên.</p>
+				<div class="modal-account" id="accSwitchPreview" hidden>
+					<span class="modal-account-avatar" id="accSwitchPreviewAvatar" aria-hidden="true"></span>
+					<span class="modal-account-meta">
+						<strong class="modal-account-name" id="accSwitchPreviewName">—</strong>
+						<small class="modal-account-id mono" id="accSwitchPreviewId">ID: —</small>
+					</span>
+				</div>
+				<div class="modal-actions">
+					<button class="btn btn-ghost" id="btnAccSwitchConfirmCancel" type="button">Đóng</button>
+					<button class="btn btn-primary" id="btnAccSwitchConfirmOk" type="button">Xác Nhận</button>
+				</div>
+			</div>
+		</div>
+
+		<!-- ============================================================
+		     Wave#96 (bro lệnh) — MÀN "ĐANG ĐĂNG NHẬP" KHI CHUYỂN ACCOUNT.
+		     Bro chốt NGUYÊN VĂN: "khi ấn XÁC NHẬN CHUYỂN ACCOUNT thì NGAY LẬP
+		     TỨC client CHỈ CÒN MỖI CHỮ ĐANG ĐĂNG NHẬP Ở CHÍNH GIỮA VÀ THANH
+		     XOAY LOADING XOAY TỪ TỪ PHÍA DƯỚI, CẤM THÊM SỰ VẬT NÀO ĐẰNG SAU,
+					     CHỈ 2 SỰ VẬT ĐẤY THÔI."
+		     ⇒ Overlay này phủ ĐẶC toàn viewport, nền MỜ (backdrop blur) che
+		     sạch UI cũ (kể cả nhiệm vụ đã/chưa nhận của phiên trước), và chỉ
+		     chứa ĐÚNG 2 phần tử: chữ + vòng xoay.
+		     ============================================================ -->
+		<div class="login-veil" id="loginVeil" hidden aria-live="polite" aria-busy="true">
+			<div class="login-veil-inner">
+				<div class="login-veil-text" id="loginVeilText">Đang đăng nhập</div>
+				<div class="login-veil-spin" id="loginVeilSpin" aria-hidden="true">
+					<span class="login-veil-dot"></span><span class="login-veil-dot"></span><span class="login-veil-dot"></span><span class="login-veil-dot"></span><span class="login-veil-dot"></span><span class="login-veil-dot"></span><span class="login-veil-dot"></span><span class="login-veil-dot"></span>
+				</div>
+			</div>
+		</div>
+
+		<!-- Waves 31: Modal XÁC MINH hCaptcha (giữ nguyên)
+		     NGAY TRONG APP (không bypass, không bẻ khoá): widget hCaptcha THẬT do
+		     Discord cấp sitekey/rqdata, người dùng tự giải, Discord tự xác minh. -->
+		<div class="modal-veil capture-veil" id="captchaModal" hidden>
+			<div class="modal-card capture-card" role="dialog" aria-modal="true" aria-labelledby="captchaTitle">
+				<div class="captcha-head">
+					<div class="captcha-shield" aria-hidden="true">
+						<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
+					</div>
+					<div class="captcha-head-text">
+						<h3 class="modal-title" id="captchaTitle">Xác minh bạn là người thật</h3>
+						<p class="modal-desc" id="captchaSub">Discord yêu cầu xác minh trước khi trao thưởng nhiệm vụ này.</p>
+					</div>
+				</div>
+
+				<div class="captcha-target" id="captchaTarget" hidden>
+					<span class="captcha-target-art" id="captchaTargetArt"></span>
+					<span class="captcha-target-meta">
+						<span class="captcha-target-name" id="captchaTargetName"></span>
+						<span class="captcha-target-sub" id="captchaTargetSub"></span>
+					</span>
+				</div>
+
+				<!-- Khung chứa widget hCaptcha thật (do Discord cấp sitekey). -->
+				<div class="captcha-slot" id="captchaSlot">
+					<div class="captcha-loading" id="captchaLoading">
+						<span class="captcha-spinner" aria-hidden="true"></span>
+						<span>Đang tải trình xác minh…</span>
+					</div>
+					<div class="h-captcha" id="hcaptchaWidget"></div>
+				</div>
+
+				<p class="captcha-hint" id="captchaHint">
+					App tự chạy xác minh — bạn không cần bấm gì. Nếu Discord bung ô thử thách, hãy giải rồi app tự nhận thưởng.
+				</p>
+				<p class="captcha-err" id="captchaErr" hidden></p>
+
+				<div class="modal-actions">
+					<button class="btn btn-ghost" id="btnCaptchaCancel" type="button">Để sau</button>
+					<button class="btn btn-orb" id="btnCaptchaRetry" type="button">Gửi xác minh ngay</button>
+				</div>
+			</div>
+		</div>
+
+		<!-- Wave#117 — viên tiến trình nhận thưởng nổi (không chặn thao tác) -->
+		<div class="claim-pill" id="claimPill" role="status" aria-live="polite" hidden>
+			<span class="claim-pill-spin" aria-hidden="true"></span>
+			<span class="claim-pill-text" id="claimPillText">Đang xác minh…</span>
+			<span class="claim-pill-count mono" id="claimPillCount" hidden>0</span>
+		</div>
+
+		<!-- Wave#127 — màn khoá riêng tư khi rảnh -->
+		<div class="lock-veil" id="lockVeil" hidden role="dialog" aria-modal="true" aria-labelledby="lockTitle">
+			<div class="lock-card">
+				<span class="lock-ico" aria-hidden="true">
+					<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+				</span>
+				<h3 class="lock-title" id="lockTitle">Đã khoá màn hình</h3>
+				<p class="lock-desc">Tiến trình vẫn chạy nền. Bấm nút bên dưới hoặc nhấn Enter để quay lại.</p>
+				<button class="btn btn-primary" id="btnUnlock" type="button">Mở khoá</button>
+			</div>
+		</div>
+
+		<div class="toast" id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
+
+		<script src="web/identity.js"></script>
+		<script src="web/display-name-style.js"></script>
+		<script src="web/bridge.js"></script>
+		<script src="renderer.js"></script>
+	</body>
+</html>

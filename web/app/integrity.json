@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "version": "2.0.0",
+  "createdAt": "2026-10-29T12:08:49.292Z",
+  "files": {
+    "index.html": "i6q72vnfqtvg+46YI3ufIhCnYejxZ9h4oyM7dywIffc=",
+    "renderer.js": "/ZVaR43Ie7XOOWfv3f2jvESuw7rgN6SnPZ2BWBON7p4=",
+    "styles.css": "Ws2VGyjs+ZzeUgfJzPyU8EA42PCzSTVePdY7eeRq/N8=",
+    "mobile.css": "x7H/9kJm2deh7cqUAtBIRyE/78nczoUYIphotfYsHqI=",
+    "fonts.css": "U4/m5jmHWyfQzMd2EDNkTD6WuO20V4R2+WQkLB8W8LU=",
+    "manifest.webmanifest": "+8CGfetQJwgP75mb0wBoXCgDMQ0+hVdPUTAuZydGRQA=",
+    "sw.js": "fFDeuxrVQWieG6jzkr2BcG5tHpBdpowoQmzjA7syCh4=",
+    "web/identity.js": "gQIitE4hdh7k/WdbRWcV/YgMUwAMoH7YmginuSS7q+U=",
+    "web/display-name-style.js": "OcvXwY1y4EhxeZa1qsbcZhNSEFJ2nagPGLcRmf7plMI=",
+    "web/bridge.js": "LtFRHxGbXUzULIREZc1sbEtOD78hc8Nv3t/wYvslCyY=",
+    "web/engine-worker.js": "o62nfrB87JeqnW0sVqyc+BTaCQLyCDIrvQvjK8hdlNY=",
+    "web/engine-bundle.js": "GxTJT+mlPe/iC6rw4QNhpSW+bqnGTBRvBp6jmaDKT14="
+  }
+}
