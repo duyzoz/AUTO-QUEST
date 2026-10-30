@@ -52,6 +52,8 @@ const ui = {
 	themeLight: el('themeLight'),
 	themeSystem: el('themeSystem'),
 	btnDrawer: el('btnDrawer'),
+	btnTopbarAccount: el('btnTopbarAccount'),
+	navAccount: el('navAccount'),
 	drawerOverlay: el('drawerOverlay'),
 	sidebar: el('sidebar'),
 	selectAll: el('selectAll'),
@@ -189,6 +191,14 @@ const ui = {
 	btnLogout2: el('btnLogout2'),
 	// Wave#88 (Multiaccount) — popup "Đổi tài khoản" + xác nhận.
 	accSwitchModal: el('accSwitchModal'),
+	accountSheetVeil: el('accountSheetVeil'),
+	sheetAvatar: el('sheetAvatar'),
+	sheetName: el('sheetName'),
+	sheetId: el('sheetId'),
+	sheetBalance: el('sheetBalance'),
+	btnSheetSwitch: el('btnSheetSwitch'),
+	btnSheetLogout: el('btnSheetLogout'),
+	btnSheetClose: el('btnSheetClose'),
 	accswToken: el('accswToken'),
 	accswPaste: el('accswPaste'),
 	accswToggle: el('accswToggle'),
@@ -6825,6 +6835,7 @@ ui.upRow.addEventListener('click', (e) => {
 		openAccSw(); // Wave#88: guest bấm → popup Dán Token + Tài khoản
 		return;
 	}
+	if (isMobileLayout()) { openAccountSheet(); return; } // Waves#245: mobile dùng sheet, không dùng .up-pop ngược
 	const willShow = ui.upPop.hidden;
 	ui.upPop.hidden = !willShow;
 	ui.upRow.setAttribute('aria-expanded', String(willShow));
@@ -7150,6 +7161,7 @@ function openDrawer() {
 	ui.sidebar.classList.add('open');
 	ui.drawerOverlay.classList.add('show');
 	document.body.classList.add('drawer-open');
+	try { if (ui.btnDrawer) ui.btnDrawer.setAttribute('aria-expanded', 'true'); } catch {}
 	try { if (ui.navQuest) ui.navQuest.focus(); } catch {}
 }
 function closeDrawer(opts) {
@@ -7157,11 +7169,106 @@ function closeDrawer(opts) {
 	ui.sidebar.classList.remove('open');
 	ui.drawerOverlay.classList.remove('show');
 	document.body.classList.remove('drawer-open');
+	try { if (ui.btnDrawer) ui.btnDrawer.setAttribute('aria-expanded', 'false'); } catch {}
 	if (wasOpen && opts && opts.returnFocus) { try { if (ui.btnDrawer) ui.btnDrawer.focus(); } catch {} }
 }
 ui.btnDrawer.addEventListener('click', openDrawer);
 ui.drawerOverlay.addEventListener('click', () => closeDrawer({ returnFocus: true }));
-document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && ui.sidebar && ui.sidebar.classList.contains('open')) closeDrawer({ returnFocus: true }); });
+/* Waves#259: vuốt ngang sang trái để đóng drawer (chỉ vuốt ngang, không
+   chặn cuộn dọc, không preventDefault — vuốt cạnh của iOS vẫn là back). */
+let drawerTouch = null;
+if (ui.sidebar) {
+	ui.sidebar.addEventListener('touchstart', (e) => {
+		const t = e.changedTouches && e.changedTouches[0];
+		if (t) drawerTouch = { x: t.clientX, y: t.clientY, at: Date.now() };
+	}, { passive: true });
+	ui.sidebar.addEventListener('touchend', (e) => {
+		if (!drawerTouch) return;
+		const t = e.changedTouches && e.changedTouches[0];
+		const dx = t ? t.clientX - drawerTouch.x : 0;
+		const dy = t ? t.clientY - drawerTouch.y : 0;
+		const dt = Date.now() - drawerTouch.at;
+		drawerTouch = null;
+		if (ui.sidebar.classList.contains('open') && dx < -60 && Math.abs(dy) < 80 && dt < 600) closeDrawer({ returnFocus: true });
+	}, { passive: true });
+}
+/* Waves#245/#256/#259: focus trap chung cho drawer, bottom sheet và mọi
+   modal-veil đang mở; Esc đóng sheet trước, rồi tới drawer. */
+function trapFocusIn(container, e) {
+	if (!container || e.key !== 'Tab') return;
+	const focusables = Array.from(container.querySelectorAll('button, input, select, textarea, [tabindex]:not([tabindex="-1"])'))
+		.filter((el) => !el.disabled && el.offsetParent !== null);
+	if (!focusables.length) return;
+	const first = focusables[0];
+	const last = focusables[focusables.length - 1];
+	if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+	else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+}
+document.addEventListener('keydown', (e) => {
+	if (e.key === 'Escape' && ui.accountSheetVeil && !ui.accountSheetVeil.hidden) { closeAccountSheet({ returnFocus: true }); return; }
+	if (e.key === 'Escape' && ui.sidebar && ui.sidebar.classList.contains('open')) { closeDrawer({ returnFocus: true }); return; }
+	if (e.key !== 'Tab') return;
+	if (ui.accountSheetVeil && !ui.accountSheetVeil.hidden) { trapFocusIn(ui.accountSheetVeil, e); return; }
+	if (ui.sidebar && ui.sidebar.classList.contains('open')) { trapFocusIn(ui.sidebar, e); return; }
+	const openVeil = document.querySelector('.modal-veil:not([hidden])');
+	if (openVeil) trapFocusIn(openVeil, e);
+});
+/* Waves#256: bàn phím iOS mở lên thì cuộn ô đang nhập vào tầm nhìn
+   (chỉ màn hẹp, chỉ trong modal/sheet/capture — desktop không đổi). */
+document.addEventListener('focusin', (e) => {
+	const t = e.target;
+	if (!t || window.innerWidth > 1023) return;
+	if (t.tagName !== 'INPUT' && t.tagName !== 'TEXTAREA' && t.tagName !== 'SELECT') return;
+	if (!t.closest('.modal-veil, .sheet-veil, .capture-card')) return;
+	try { t.scrollIntoView({ block: 'nearest' }); } catch {}
+});
+
+/* ---------------- Waves#243/#245: Bottom sheet tài khoản (mobile) ---------------- */
+let sheetReturnFocus = null;
+function isMobileLayout() { return window.innerWidth <= 1023; }
+function syncAccountSheet() {
+	if (!ui.sheetName) return;
+	const name = ui.upName ? ui.upName.textContent.trim() : '';
+	const sub = ui.upSub ? ui.upSub.textContent.trim() : '';
+	ui.sheetName.textContent = name || 'Chưa đăng nhập';
+	ui.sheetId.textContent = sub || '';
+	const bal = ui.orbBalance ? ui.orbBalance.textContent.trim() : '';
+	ui.sheetBalance.textContent = (bal && bal !== '—') ? (bal + ' Orbs') : 'Chưa có số dư Orb';
+	try {
+		if (ui.sheetAvatar && ui.upAvatar && ui.upAvatar.querySelector('img')) ui.sheetAvatar.innerHTML = ui.upAvatar.innerHTML;
+	} catch {}
+}
+function openAccountSheet() {
+	if (!ui.accountSheetVeil) return;
+	sheetReturnFocus = document.activeElement;
+	syncAccountSheet();
+	ui.accountSheetVeil.hidden = false;
+	try { if (ui.btnTopbarAccount) ui.btnTopbarAccount.setAttribute('aria-expanded', 'true'); } catch {}
+	try { if (ui.btnSheetSwitch) ui.btnSheetSwitch.focus(); } catch {}
+}
+function closeAccountSheet(opts) {
+	if (!ui.accountSheetVeil) return;
+	ui.accountSheetVeil.hidden = true;
+	try { if (ui.btnTopbarAccount) ui.btnTopbarAccount.setAttribute('aria-expanded', 'false'); } catch {}
+	if (opts && opts.returnFocus && sheetReturnFocus && sheetReturnFocus.focus) { try { sheetReturnFocus.focus(); } catch {} }
+	sheetReturnFocus = null;
+}
+if (ui.accountSheetVeil) ui.accountSheetVeil.addEventListener('click', (e) => { if (e.target === ui.accountSheetVeil) closeAccountSheet({ returnFocus: true }); });
+if (ui.btnSheetClose) ui.btnSheetClose.addEventListener('click', () => closeAccountSheet({ returnFocus: true }));
+if (ui.btnSheetSwitch) ui.btnSheetSwitch.addEventListener('click', () => { closeAccountSheet({}); openAccSw(); });
+if (ui.btnSheetLogout) ui.btnSheetLogout.addEventListener('click', () => { closeAccountSheet({}); openLogoutModal(); });
+if (ui.btnTopbarAccount) ui.btnTopbarAccount.addEventListener('click', () => {
+	if (ui.sidebar && ui.sidebar.classList.contains('open')) closeDrawer({ returnFocus: false });
+	openAccountSheet();
+});
+if (ui.navAccount) ui.navAccount.addEventListener('click', () => {
+	if (isMobileLayout()) {
+		closeDrawer({ returnFocus: false });
+		openAccountSheet();
+	} else if (ui.upRow) {
+		try { ui.upRow.scrollIntoView({ block: 'nearest' }); ui.upRow.focus(); } catch {}
+	}
+});
 
 /* ---------------- User Actions ---------------- */
 

@@ -307,6 +307,7 @@
 	transition: border-color 0.15s ease;
 }
 .quest-search:focus-within {
+	border-color: var(--brand);
 	border-color: color-mix(in oklab, var(--brand) 55%, var(--line-strong));
 }
 .quest-search-ico {
@@ -535,5 +536,408 @@
 	.claim-pill {
 		width: calc(100vw - 24px);
 		justify-content: center;
+	}
+}
+
+/* ============================================================
+   WAVES #241-#268 — MOBILE UI/UX (chỉ màn hẹp / cảm ứng)
+   Nguyên tắc: mọi rule dưới đây đều nằm trong @media màn hẹp hoặc
+   là fallback đặt TRƯỚC khai báo hiện đại, nên desktop không đổi.
+   Màu chỉ dùng token của app, spacing theo thang đã có, mục chạm
+   tối thiểu 44px theo skill UI/UX §1.2, input tối thiểu 16px để
+   iOS không tự zoom (§4.4).
+   ============================================================ */
+
+/* #248: iOS tự phóng chữ trong đoạn dài làm vỡ hàng cao cố định. */
+html {
+	-webkit-text-size-adjust: 100%;
+	text-size-adjust: 100%;
+}
+
+/* #242: chiều cao thật — vh trước, dvh sau (shell từng chỉ có 100vh). */
+@media (max-width: 1023px) {
+	.shell {
+		height: 100vh;
+		height: 100dvh;
+	}
+	.main-wrap {
+		height: 100vh;
+		height: 100dvh;
+	}
+	.modal-card,
+	.acc-switch-card {
+		max-height: 92vh;
+		max-height: 92dvh;
+	}
+	/* #250: safe-area cho modal veil + drawer. */
+	.modal-veil {
+		padding: 12px;
+		padding-top: max(12px, env(safe-area-inset-top, 0px));
+		padding-bottom: max(12px, env(safe-area-inset-bottom, 0px));
+		padding-left: max(12px, env(safe-area-inset-left, 0px));
+		padding-right: max(12px, env(safe-area-inset-right, 0px));
+	}
+	.sidebar {
+		padding-top: env(safe-area-inset-top, 0px);
+	}
+	/* #251: drawer không còn cố định 256px (màn 320px chỉ còn 64px nhìn xuyên). */
+	.sidebar {
+		width: min(280px, 85vw);
+	}
+	/* #249: vùng chạm thật 44x44 (icon bên trong giữ nguyên kích thước). */
+	.topbar-btn {
+		width: 44px;
+		height: 44px;
+	}
+	.topbar-brand {
+		flex: 1 1 auto;
+		min-width: 0;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+	.topbar-spacer {
+		flex: 0 0 auto;
+	}
+	.up-switch,
+	.up-logout {
+		width: 44px;
+		height: 44px;
+	}
+	.up-pop-switch,
+	.up-pop-logout {
+		min-height: 44px;
+	}
+	.accsw-remove {
+		width: 44px;
+		height: 44px;
+	}
+	.quest-search-clear {
+		width: 44px;
+		height: 44px;
+	}
+	.qdone-modal-close {
+		width: 44px;
+		height: 44px;
+		top: 8px;
+		right: 8px;
+	}
+	/* #244: profile dính đáy drawer (nền đặc, trên nội dung cuộn) thay vì
+	   bị spacer đẩy xuống dưới nếp gấp mà không có dấu hiệu cuộn. */
+	.userpanel {
+		position: sticky;
+		bottom: 0;
+		z-index: 2;
+		background: var(--ink-900);
+		padding-top: 12px;
+		padding-bottom: 0;
+		border-top: 1px solid var(--line);
+	}
+	/* #247/#248: chữ không tràn, hàng chữ cao tối thiểu thay vì cao cố định. */
+	.side-act-text {
+		white-space: normal;
+		text-align: center;
+	}
+	.accsw-user,
+	.modal-account-id,
+	.acc-cfg-uid {
+		overflow-wrap: anywhere;
+		word-break: break-word;
+	}
+	.accsw-name {
+		white-space: normal;
+		overflow-wrap: anywhere;
+	}
+	.qcard-kicker,
+	.qcard-desc,
+	.up-sub,
+	.sb-sub,
+	.accsw-sub,
+	.quest-filter-count {
+		font-size: 0.75rem;
+	}
+	.up-tag {
+		font-size: 0.75rem;
+	}
+	.quest-search,
+	.quest-filter,
+	.quest-adv-toggle {
+		height: auto;
+		min-height: 44px;
+	}
+	/* #254: hàng thưởng/chip/đếm ngược của thẻ được wrap, không cắt. */
+	.qcard-foot {
+		flex-wrap: wrap;
+		min-width: 0;
+	}
+	.qcard-main,
+	.qcard-reward {
+		min-width: 0;
+	}
+	/* #255: hàng cài đặt thành cột từ 1023px (trước đây chỉ từ 560px). */
+	.setting-row {
+		align-items: stretch;
+		flex-direction: column;
+	}
+	.setting-select {
+		width: 100%;
+	}
+	.stats-tiles {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+	/* #256: modal nào cũng có trần dvh + cuộn riêng bên trong. */
+	.modal-card {
+		overflow-y: auto;
+		overscroll-behavior: contain;
+	}
+	.modal-actions {
+		flex-wrap: wrap;
+	}
+	.modal-actions .btn,
+	.modal-actions .ghost-btn {
+		flex: 1 1 auto;
+		min-height: 44px;
+	}
+	/* #246: modal đổi tài khoản — 1 cột, ô token 1 hàng riêng, nút 44px,
+	   danh sách cuộn riêng (desktop giữ nguyên không kẹp chiều cao). */
+	.acc-switch-card {
+		padding: 16px 12px;
+		border-radius: 20px;
+		overflow-y: auto;
+	}
+	.accsw-section {
+		padding: 12px;
+	}
+	.accsw-input {
+		flex-wrap: wrap;
+	}
+	.accsw-input input {
+		flex: 1 1 100%;
+		min-width: 0;
+	}
+	.accsw-input .ghost-btn {
+		flex: 1 1 30%;
+		min-height: 44px;
+	}
+	.accsw-list {
+		max-height: 40vh;
+		max-height: 40dvh;
+		overflow-y: auto;
+		overscroll-behavior: contain;
+	}
+	.accsw-item {
+		min-height: 56px;
+	}
+	.accsw-av {
+		width: 44px;
+		height: 44px;
+	}
+	/* #258: toast ở đáy, pill đẩy lên trên toast (trước đây cùng đáy 16/22px). */
+	.claim-pill {
+		bottom: calc(76px + env(safe-area-inset-bottom, 0px));
+	}
+	/* #260: bỏ blur + glow nặng trên mobile (hiệu năng máy cũ). */
+	.modal-veil {
+		backdrop-filter: none;
+		-webkit-backdrop-filter: none;
+	}
+	.bg-glow {
+		display: none;
+	}
+	/* #264: chữ được chọn bằng nhấn giữ trên mobile (nút/nav giữ none). */
+	.content,
+	.qcard-title,
+	.qcard-desc,
+	.up-name,
+	.accsw-name,
+	.modal-account-name {
+		user-select: text;
+		-webkit-user-select: text;
+	}
+}
+
+/* #243: nút tài khoản trên topbar — chỉ mobile, desktop ẩn hẳn. */
+.topbar-account {
+	display: none;
+}
+@media (max-width: 1023px) {
+	.topbar-account {
+		display: inline-flex;
+		margin-left: auto;
+	}
+}
+
+/* #245: bottom sheet tài khoản — fixed, trên drawer (40), dưới modal (200).
+   Scrim dùng đúng rgba của .drawer-overlay đã có. Khi ẩn: display:none
+   nên không chặn bấm (đúng luật z-index/pointer-events của skill §3). */
+.sheet-veil {
+	position: fixed;
+	inset: 0;
+	z-index: 190;
+	background: rgba(0, 0, 0, 0.55);
+	display: flex;
+	align-items: flex-end;
+	justify-content: center;
+}
+.sheet-veil[hidden] {
+	display: none;
+}
+.account-sheet {
+	width: min(560px, 100%);
+	max-height: 80vh;
+	max-height: 80dvh;
+	overflow-y: auto;
+	overscroll-behavior: contain;
+	background: var(--ink-850);
+	border: 1px solid var(--line-strong);
+	border-bottom: none;
+	border-radius: 20px 20px 0 0;
+	padding: 12px 16px calc(20px + env(safe-area-inset-bottom, 0px));
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	animation: sheetUp 0.22s var(--ease-out-quint);
+}
+@keyframes sheetUp {
+	from { transform: translateY(24px); opacity: 0; }
+	to { transform: none; opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+	.account-sheet { animation: none; }
+}
+.sheet-grip {
+	width: 32px;
+	height: 4px;
+	margin: 0 auto;
+	border-radius: 9999px;
+	background: var(--line-strong);
+}
+.sheet-title {
+	font-size: 1.05rem;
+	font-weight: 700;
+	color: var(--fg);
+}
+.sheet-account {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	min-width: 0;
+}
+.sheet-avatar {
+	width: 44px;
+	height: 44px;
+	flex-shrink: 0;
+	border-radius: 50%;
+	background: var(--brand);
+	color: #fff;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	overflow: hidden;
+}
+.sheet-avatar img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+.sheet-meta {
+	flex: 1;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+}
+.sheet-name {
+	font-size: 0.9rem;
+	font-weight: 700;
+	overflow-wrap: anywhere;
+}
+.sheet-id,
+.sheet-balance {
+	font-size: 0.75rem;
+	color: var(--fg-muted);
+	overflow-wrap: anywhere;
+}
+.sheet-actions {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+.sheet-actions .btn,
+.sheet-actions .ghost-btn {
+	min-height: 44px;
+	justify-content: center;
+}
+
+/* #251: lưới Đã làm theo màn hình (trước đây 6 cột ở mọi màn hình). */
+@media (max-width: 560px) {
+	.qgrid-done {
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+	}
+	.qdone {
+		contain-intrinsic-size: auto 140px;
+	}
+}
+@media (min-width: 561px) and (max-width: 1023px) {
+	.qgrid-done {
+		grid-template-columns: repeat(4, minmax(0, 1fr));
+	}
+}
+
+/* #253: toolbar ở 561-1023px giống quy tắc ≤560px đã có: tìm kiếm 100%
+   hàng đầu, nhóm lọc nâng cao full width. */
+@media (min-width: 561px) and (max-width: 1023px) {
+	.quest-search {
+		flex: 1 1 100%;
+	}
+	.quest-advanced {
+		flex-direction: column;
+		align-items: stretch;
+	}
+	.quest-adv-group {
+		flex: 1 1 auto;
+	}
+	.quest-adv-group .quest-filter {
+		flex: 1 1 auto;
+	}
+}
+
+/* #252: điện thoại xoay ngang (cao ≤430px): hero gọn, modal vừa chiều cao. */
+@media (max-height: 430px) and (orientation: landscape) {
+	.hero-card {
+		padding: 16px 20px;
+	}
+	.content {
+		gap: 12px;
+	}
+	.quest-list {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+	.modal-card,
+	.acc-switch-card,
+	.account-sheet {
+		max-height: 92vh;
+		max-height: 92dvh;
+	}
+}
+
+/* #266: tablet 768-1023px — drawer rộng hơn, vẫn dùng drawer (không
+   sidebar cố định, để không đổi layout desktop). */
+@media (min-width: 768px) and (max-width: 1023px) {
+	.sidebar {
+		width: 300px;
+	}
+	.quest-list {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+}
+
+/* #251: màn rất hẹp 320px — padding/content thu lại, không cuộn ngang. */
+@media (max-width: 360px) {
+	.content {
+		padding-left: max(8px, env(safe-area-inset-left, 0px));
+		padding-right: max(8px, env(safe-area-inset-right, 0px));
+	}
+	.topbar-brand {
+		font-size: 0.875rem;
 	}
 }

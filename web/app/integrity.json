@@ -1,12 +1,12 @@
 {
   "schema": 1,
   "version": "2.0.0",
-  "createdAt": "2026-10-30T11:04:24.139Z",
+  "createdAt": "2026-10-30T11:41:38.459Z",
   "files": {
-    "index.html": "nPofHLcNywjo+OxEJaB2TqGhGMc0GqT/cY8mGqI4Hhw=",
-    "renderer.js": "AKxSBuTWjrlNb0ka1IOSbtxpP1FCkejgEmFMkYKRGKI=",
-    "styles.css": "CpO6/7nf5UMDG9lS0BzrvbX37lDFxZyuppN7A/gu8Bc=",
-    "mobile.css": "/20F5rLpI6GNvDyxLTW3hW57yE+s7JLZIMoeIds0sD8=",
+    "index.html": "xaKblmw8x3eKKxyYElpd+6BxRULm73a9WL6zo1Xadfs=",
+    "renderer.js": "iak8NRKJSok60+73DQ1DUS8ys2mA+5UsahAqPW4NAt8=",
+    "styles.css": "rhZ6YDT+8+CwkQ0YFLHzKYo5ZyX+bvbstrgLQytX2pg=",
+    "mobile.css": "Lc2Dxf1/JxqvwfQxs9DC+bw5zxagDEe9I43Rnoa1dks=",
     "fonts.css": "U4/m5jmHWyfQzMd2EDNkTD6WuO20V4R2+WQkLB8W8LU=",
     "manifest.webmanifest": "7EjJkOSwL3ZSRkaI7oAmR2uSDafMbhB1EbuT2iht8Qw=",
     "sw.js": "zMvxy7tvRQnj7RhNKE9FpIrCglzA5Ife7y8pOHHt2X4=",

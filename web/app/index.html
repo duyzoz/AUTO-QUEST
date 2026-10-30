@@ -23,6 +23,9 @@
 		<link rel="icon" type="image/png" sizes="256x256" href="assets/zoZ-logo-round.png" />
 		<link rel="apple-touch-icon" href="assets/zoZ-logo-ico.png" />
 		<meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff" />
+		<meta name="apple-mobile-web-app-capable" content="yes" />
+		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+		<meta name="apple-mobile-web-app-title" content="Auto Quest" />
 		<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0b0e18" />
 		<link rel="stylesheet" href="fonts.css" />
 		<link rel="stylesheet" href="styles.css" />
@@ -39,10 +42,14 @@
 
 		<!-- Topbar mobile -->
 		<header class="topbar">
-			<button type="button" class="topbar-btn" id="btnDrawer" aria-label="Mở menu">
+			<button type="button" class="topbar-btn" id="btnDrawer" aria-label="Mở menu" aria-controls="sidebar" aria-expanded="false">
 				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18" aria-hidden="true"><path d="M4 5h16"/><path d="M4 12h16"/><path d="M4 19h16"/></svg>
 			</button>
 			<span class="topbar-brand">ZoZ Community</span>
+			<span class="topbar-spacer" aria-hidden="true"></span>
+			<button type="button" class="topbar-btn topbar-account" id="btnTopbarAccount" aria-label="Tài khoản" aria-haspopup="dialog" aria-expanded="false">
+				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.5-6 8-6s8 2 8 6"/></svg>
+			</button>
 		</header>
 		<!-- Wave#123 — thanh cập nhật PWA: chỉ hiện khi có Service Worker mới chờ. -->
 		<div class="update-bar" id="updateBar" role="status" hidden>
@@ -74,6 +81,13 @@
 					     profile chuyển xuống gần đáy. -->
 					<nav class="side-nav" aria-label="Điều hướng chính">
 						<ul class="nav-list">
+						<li>
+							<button class="nav-item" id="navAccount" aria-label="Tài khoản">
+								<span class="nav-ind" aria-hidden="true"></span>
+								<svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.5-6 8-6s8 2 8 6"/></svg>
+								<span class="nav-text">Tài khoản</span>
+							</button>
+						</li>
 							<li>
 								<button class="nav-item active" id="navQuest" aria-selected="true">
 									<span class="nav-ind" aria-hidden="true"></span>
@@ -917,7 +931,31 @@
 			</div>
 		</div>
 
-		<!-- Wave#88 — MODAL XÁC NHẬN "CHUYỂN TÀI KHOÁN SANG @username" -->
+				<!-- Waves#243/#245 — BOTTOM SHEET TÀI KHOẢN (mobile ≤1023px): thay cho
+		     .up-pop mở ngược trong drawer cuộn (dễ bị cắt trên Safari cũ).
+		     Desktop giữ nguyên .up-pop. Nút trong sheet tái dùng đúng handler
+		     đổi tài khoản / đăng xuất đã có, không tạo luồng account mới. -->
+		<div class="sheet-veil" id="accountSheetVeil" hidden>
+			<div class="account-sheet" role="dialog" aria-modal="true" aria-labelledby="accountSheetTitle">
+				<div class="sheet-grip" aria-hidden="true"></div>
+				<h3 class="sheet-title" id="accountSheetTitle">Tài khoản</h3>
+				<div class="sheet-account">
+					<span class="sheet-avatar" id="sheetAvatar" aria-hidden="true"><svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor" aria-hidden="true"><path d="M12 12c2.7 0 4.8-2.2 4.8-4.9S14.7 2.3 12 2.3 7.2 4.4 7.2 7.1 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.9v2.4h19.2v-2.4c0-3.3-6.4-4.9-9.6-4.9z"/></svg></span>
+					<span class="sheet-meta">
+						<strong class="sheet-name" id="sheetName">—</strong>
+						<small class="sheet-id mono" id="sheetId">—</small>
+						<small class="sheet-balance" id="sheetBalance">—</small>
+					</span>
+				</div>
+				<div class="sheet-actions">
+					<button class="btn btn-primary" id="btnSheetSwitch" type="button">Đổi tài khoản</button>
+					<button class="ghost-btn" id="btnSheetLogout" type="button">Đăng xuất</button>
+					<button class="ghost-btn" id="btnSheetClose" type="button">Đóng</button>
+				</div>
+			</div>
+		</div>
+
+<!-- Wave#88 — MODAL XÁC NHẬN "CHUYỂN TÀI KHOÁN SANG @username" -->
 		<div class="modal-veil" id="accConfirmSwitchModal" hidden>
 			<div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="accSwitchConfirmTitle">
 				<h3 class="modal-title" id="accSwitchConfirmTitle">Bạn có muốn chuyển tài khoản sang <span class="acc-confirm-name mono" id="accSwitchConfirmName">@…</span> ?</h3>

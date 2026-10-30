@@ -30,3 +30,25 @@ tra bằng trình duyệt thật.
 - [ ] Chọn theo game ở tab Chưa làm chỉ chọn đúng game đó.
 - [ ] Thẻ chia sẻ tải về là ảnh PNG chỉ có tên/game/phần thưởng/ngày, không code.
 - [ ] Sau một lần quét có quest mới: có thông báo riêng "Có N quest mới".
+
+## Mobile (CHƯA XÁC MINH)
+
+- [ ] iPhone 7 Safari iOS 15: viền/nền các thẻ vẫn có màu (fallback cho
+      trình duyệt cũ), không còn khung trắng/xám do màu hiện đại bị vứt.
+- [ ] iPhone 7: bấm nút tài khoản trên topbar mở bottom sheet (không còn
+      popout ngược bị cắt trong drawer), đổi tài khoản và đăng xuất đúng.
+- [ ] iPhone 7: drawer cuộn tới đâu cũng thấy hàng tài khoản dính ở đáy,
+      bấm mục Tài khoản ở đầu nav tới đúng khu vực tài khoản.
+- [ ] iPhone SE 320px: không cuộn ngang ở bất kỳ tab nào, modal đổi tài
+      khoản vừa màn hình, danh sách tài khoản cuộn riêng.
+- [ ] iPhone Pro Max 430px: lưới Đã làm 3 cột đọc được, toolbar không bóp chữ.
+- [ ] Android màn nhỏ: tương tự SE, PWA icon maskable hiển thị đúng.
+- [ ] Xoay ngang: hero gọn, modal vừa chiều cao, danh sách 2 cột.
+- [ ] Tablet 768-1023px: drawer rộng hơn, danh sách 2 cột, toolbar đủ rộng.
+- [ ] Bàn phím iOS mở trong modal: ô đang nhập được cuộn vào tầm nhìn.
+- [ ] Vuốt ngang sang trái đóng được drawer, không chặn cuộn dọc.
+- [ ] Nút menu, đổi tài khoản, đăng xuất, xóa tài khoản đều bấm được dễ
+      dàng bằng ngón tay (vùng chạm 44px), cả 2 theme Sáng/Tối.
+- [ ] Chữ nhỏ (tên game, mô tả, nhật ký) đọc được ở cỡ chữ lớn của iOS,
+      không tràn khung khi phóng to 200%.
+- [ ] Nhấn giữ tên nhiệm vụ/ID để copy được trên mobile.

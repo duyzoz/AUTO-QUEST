@@ -814,6 +814,115 @@ check('Waves#240: docs/DEPLOY.md đồng bộ đường dẫn, không chứa log
 	return 'DEPLOY đồng bộ, không log waves';
 });
 
+
+check('Waves#241: color-mix có fallback đặt trước (hero, search focus, side-act, accsw, claim chip)', () => {
+	const css = read(path.join(APP, 'styles.css'));
+	const mobile = read(path.join(APP, 'mobile.css'));
+	const must = [
+		[/\.side-act\.is-busy \{[^}]*border-color: var\(--emerald\);[^}]*color-mix/, 'side-act busy'],
+		[/\.quest-search:focus-within \{[^}]*border-color: var\(--brand\);[^}]*color-mix/, 'quest-search focus (mobile)'],
+		[/\.accsw-item:hover \{[^}]*background: var\(--ink-800\);[^}]*color-mix/, 'accsw hover'],
+		[/\.claim-queue-chip:hover \{[^}]*background: transparent;[^}]*color-mix/, 'claim chip hover'],
+	];
+	const hay = css + '\n' + mobile;
+	for (const [re, name] of must) assert(re.test(hay), 'thiếu fallback trước color-mix: ' + name);
+	return 'fallback trước color-mix ở các component chính';
+});
+check('Waves#242: dvh đặt sau vh cho shell/modal (fallback trước, hiện đại sau)', () => {
+	const mobile = read(path.join(APP, 'mobile.css'));
+	const shell = mobile.indexOf('.shell {');
+	assert(shell >= 0, 'thiếu rule .shell mobile');
+	const block = mobile.slice(shell, shell + 400);
+	assert(/height: 100vh;[\s\S]*?height: 100dvh;/.test(block), '.shell phải có 100vh rồi 100dvh');
+	assert(/max-height: 92vh;[\s\S]*?max-height: 92dvh;/.test(mobile), 'modal phải có 92vh rồi 92dvh');
+	return 'vh trước, dvh sau';
+});
+check('Waves#243/#245: topbar account + bottom sheet tài khoản (mobile), tái dùng handler cũ', () => {
+	const html = read(path.join(APP, 'index.html'));
+	const js = read(path.join(APP, 'renderer.js'));
+	for (const id of ['btnTopbarAccount', 'navAccount', 'accountSheetVeil', 'sheetName', 'sheetBalance', 'btnSheetSwitch', 'btnSheetLogout', 'btnSheetClose']) assert(html.includes('id="' + id + '"'), 'thiếu id HTML: ' + id);
+	assert(/openAccountSheet\(\)/.test(js) && /closeAccountSheet\(/.test(js), 'thiếu hàm mở/đóng sheet');
+	assert(/openAccSw\(\)/.test(js), 'sheet phải tái dùng openAccSw');
+	assert(/openLogoutModal\(\)/.test(js), 'sheet phải tái dùng openLogoutModal');
+	assert(/isMobileLayout\(\)/.test(js), 'mobile mới dùng sheet thay .up-pop');
+	return 'topbar account + sheet + nav shortcut có đủ';
+});
+check('Waves#244/#249/#250: drawer sticky profile, chạm 44px, safe-area', () => {
+	const mobile = read(path.join(APP, 'mobile.css'));
+	assert(/\.userpanel \{[^}]*position: sticky;[^}]*bottom: 0;/.test(mobile), 'userpanel phải sticky bottom trên mobile');
+	for (const sel of ['.topbar-btn', '.up-switch', '.accsw-remove', '.quest-search-clear', '.qdone-modal-close']) assert(new RegExp(sel.replace('.', '\\.') + '[^}]*44px').test(mobile), 'thiếu 44px: ' + sel);
+	assert(/env\(safe-area-inset-bottom/.test(mobile) && /env\(safe-area-inset-top/.test(mobile), 'thiếu safe-area top/bottom');
+	return 'sticky profile + 44px + safe-area';
+});
+check('Waves#246: modal đổi tài khoản mobile — 1 cột, nút 44px, list cuộn riêng', () => {
+	const mobile = read(path.join(APP, 'mobile.css'));
+	assert(/\.accsw-input \{[^}]*flex-wrap: wrap;/.test(mobile), 'ô token phải wrap');
+	assert(/\.accsw-input input \{[^}]*flex: 1 1 100%;/.test(mobile), 'input token phải full width hàng riêng');
+	assert(/\.accsw-list \{[^}]*max-height: 40vh;[^}]*max-height: 40dvh;[^}]*overflow-y: auto;/.test(mobile), 'list phải cuộn riêng trong dvh');
+	assert(/\.accsw-item \{[^}]*min-height: 56px;/.test(mobile), 'mỗi tài khoản tối thiểu 56px');
+	return 'acc-switch mobile 1 cột + list cuộn riêng';
+});
+check('Waves#247/#248: chống tràn chữ + text-size-adjust + chữ nhỏ tối thiểu 0.75rem', () => {
+	const mobile = read(path.join(APP, 'mobile.css'));
+	assert(/-webkit-text-size-adjust: 100%;/.test(mobile), 'thiếu -webkit-text-size-adjust');
+	assert(/\.side-act-text \{[^}]*white-space: normal;/.test(mobile), 'side-act-text phải bỏ nowrap trên mobile');
+	assert(/\.qcard-kicker,/.test(mobile) && /font-size: 0\.75rem;/.test(mobile), 'chữ nhỏ mobile phải lên 0.75rem');
+	return 'text-size-adjust + bỏ nowrap + chữ 0.75rem';
+});
+check('Waves#251/#266: lưới Đã làm 3/4/6 cột, drawer 85vw, tablet 300px', () => {
+	const mobile = read(path.join(APP, 'mobile.css'));
+	assert(/\.qgrid-done \{\s*grid-template-columns: repeat\(3,/.test(mobile), '≤560px phải 3 cột Done');
+	assert(/\.qgrid-done \{\s*grid-template-columns: repeat\(4,/.test(mobile), '561-1023px phải 4 cột Done');
+	assert(/width: min\(280px, 85vw\);/.test(mobile), 'drawer mobile phải min(280px, 85vw)');
+	assert(/width: 300px;/.test(mobile), 'tablet phải drawer 300px');
+	return 'Done 3/4 cột + drawer 85vw/300px';
+});
+check('Waves#253/#255: toolbar và setting từ 1023px trở xuống thành cột', () => {
+	const mobile = read(path.join(APP, 'mobile.css'));
+	assert(/\.setting-row \{\s*align-items: stretch;\s*flex-direction: column;/.test(mobile), 'setting-row phải thành cột từ 1023px');
+	assert(/\.quest-search \{\s*flex: 1 1 100%;/.test(mobile), 'search toolbar 561-1023px phải 100% hàng đầu');
+	return 'toolbar/setting cột từ 1023px';
+});
+check('Waves#256/#258/#259: modal dvh + stack toast/pill + drawer aria/swipe/trap', () => {
+	const mobile = read(path.join(APP, 'mobile.css'));
+	const js = read(path.join(APP, 'renderer.js'));
+	const html = read(path.join(APP, 'index.html'));
+	assert(/\.modal-card \{\s*overflow-y: auto;/.test(mobile), 'modal-card phải cuộn riêng');
+	assert(/\.claim-pill \{\s*bottom: calc\(76px/.test(mobile), 'pill phải đẩy lên trên toast');
+	assert(/aria-controls="sidebar" aria-expanded/.test(html), 'nút drawer phải có aria-controls/expanded');
+	assert(/trapFocusIn/.test(js) && /touchend/.test(js) && /dx < -60/.test(js), 'thiếu focus trap hoặc swipe đóng drawer');
+	return 'modal dvh + stack + drawer a11y/gesture';
+});
+check('Waves#260/#261/#262: bỏ blur mobile, PWA iOS, font tiếng Việt', () => {
+	const mobile = read(path.join(APP, 'mobile.css'));
+	const html = read(path.join(APP, 'index.html'));
+	const fonts = read(path.join(APP, 'fonts.css'));
+	assert(/\.modal-veil \{\s*backdrop-filter: none;/.test(mobile), 'mobile phải bỏ backdrop blur modal');
+	assert(/\.bg-glow \{\s*display: none;/.test(mobile), 'mobile phải bỏ glow nền');
+	assert(/apple-mobile-web-app-capable/.test(html), 'thiếu meta apple-mobile-web-app-capable');
+	assert(/U\+1EA0-1EF9/.test(fonts), 'thiếu dải unicode tiếng Việt trong fonts.css');
+	return 'no-blur mobile + PWA iOS + font VI';
+});
+check('Waves#263/#264: kicker light dùng token tương phản, chữ mobile được chọn', () => {
+	const css = read(path.join(APP, 'styles.css'));
+	const mobile = read(path.join(APP, 'mobile.css'));
+	assert(/\[data-theme="light"\] \.qcard-kicker \{ color: var\(--brand-bright\); \}/.test(css), 'kicker light phải dùng token brand-bright');
+	assert(/user-select: text;/.test(mobile), 'chữ mobile phải được chọn (user-select: text)');
+	return 'kicker light token + selectable text';
+});
+check('Waves#267: smoke checklist có mục mobile, tất cả CHƯA XÁC MINH', () => {
+	const sm = read(path.join(ROOT, 'web', 'test', 'SMOKE-CHECKLIST.md'));
+	assert(/iPhone 7/.test(sm) && /320px/.test(sm) && /430px/.test(sm) && /xoay ngang/i.test(sm), 'checklist mobile thiếu thiết bị');
+	assert(!/đã chụp/i.test(sm.split('## Mobile')[1] || ''), 'mục mobile không được tự nhận đã chụp');
+	return 'smoke checklist mobile đủ thiết bị, chưa xác minh';
+});
+check('Waves#268: docs mobile QA không chứa log waves, README không bị sửa', () => {
+	const d = read(path.join(ROOT, 'docs', 'MOBILE-QA.md'));
+	assert(!/Waves #\d/.test(d) && !/Waves#\d/.test(d), 'docs mobile không được chứa log waves');
+	assert(/iPhone 7/.test(d) && /320/.test(d), 'docs mobile thiếu ma trận thiết bị');
+	return 'docs MOBILE-QA không log waves';
+});
+
 /* ── In kết quả ────────────────────────────────────────────────────────── */
 for (const r of results) {
 	const tag = r.ok ? 'PASS' : 'FAIL';

@@ -298,6 +298,7 @@ body {
 .side-act-text { flex: 0 0 auto; text-align: center; }
 /* Nút đang chạy: viền xanh + nhãn (không chỉ dựa vào màu — kèm chữ) */
 .side-act.is-busy {
+	border-color: var(--emerald);
 	border-color: color-mix(in oklab, var(--emerald) 55%, var(--line-strong));
 	color: var(--emerald);
 }
@@ -454,6 +455,7 @@ body {
 }
 /* Hover: chỉ đậm nền nhẹ, KHÔNG đổi border (đã xoá khung). */
 .up-row:hover {
+	background: var(--tint-06);
 	background: color-mix(in oklab, var(--tint-06) 60%, var(--up-row-bg));
 }
 .up-row:focus-visible { outline: 2px solid var(--brand-bright); outline-offset: 1px; }
@@ -485,6 +487,7 @@ body {
    fallback màu brand cho khung nameplate. Chỉ giữ khung khi có palette THẬT
    (`--np` được JS gán), còn lại KHÔNG viền, KHÔNG quầng. */
 .up-row.has-np[data-np-real='1'] .up-frame {
+	box-shadow: none;
 	box-shadow:
 		inset 0 0 0 1px color-mix(in oklab, var(--np) 35%, transparent),
 		0 0 18px -8px color-mix(in oklab, var(--np) 72%, transparent);
@@ -1348,6 +1351,7 @@ body {
 	border: 1px solid var(--line);
 	border-radius: 1rem;
 	background: var(--card);
+	box-shadow: 0 0 0 1px transparent;
 	box-shadow: 0 0 0 1px color-mix(in oklab, var(--tint, var(--brand)) 30%, transparent);
 	padding: 40px 28px;
 	text-align: center;
@@ -1406,6 +1410,7 @@ body {
 	border-radius: inherit;
 	padding: 1.5px;
 	/* Mặc định: xanh thương hiệu. Có nameplate → renderer set --np theo palette. */
+	background: var(--card);
 	background: linear-gradient(135deg,
 		color-mix(in oklab, var(--np, #5865f2) 92%, #fff 8%),
 		var(--np, #5865f2) 45%,
@@ -1425,6 +1430,7 @@ body {
 }
 /* Quầng sáng nhẹ cùng màu bảng tên — có nameplate mới bật */
 .profile-hero.has-aura {
+	box-shadow: none;
 	box-shadow:
 		0 0 0 1px color-mix(in oklab, var(--np) 30%, transparent),
 		0 0 26px -10px color-mix(in oklab, var(--np) 75%, transparent);
@@ -1653,6 +1659,7 @@ body {
 	right: 0;
 	bottom: 0;
 	height: var(--banner-fade-h, 26px);
+	background: var(--card);
 	background: linear-gradient(
 		180deg,
 		transparent 0%,
@@ -1726,6 +1733,7 @@ body {
 	position: absolute;
 	inset: -14px;
 	border-radius: 50%;
+	background: radial-gradient(circle, var(--card) 40%, transparent 72%);
 	background: radial-gradient(circle, color-mix(in oklab, var(--card) 80%, transparent) 40%, transparent 72%);
 	filter: blur(6px);
 	z-index: 0;
@@ -2510,9 +2518,11 @@ body {
         giờ có viền màu bịa.
 	   Viền vẽ bằng `box-shadow`/`border` mảnh, KHÔNG nền đục ⇒ không vi phạm
 	   luật "cấm tấm nền đặc sau chữ". */
+	border: transparent;
 	border: 1.5px solid
 		var(--np-ring, color-mix(in sRGB, var(--theme-b, transparent) 78%, transparent));
 	background: none;
+	box-shadow: none;
 	box-shadow:
 		0 0 0 1px color-mix(in sRGB, var(--np-ring, var(--theme-b, transparent)) 22%, transparent),
 		0 2px 10px -4px color-mix(in sRGB, var(--np-ring, var(--theme-b, transparent)) 55%, transparent);
@@ -2572,6 +2582,7 @@ body {
 	position: absolute;
 	inset: -5px;
 	border-radius: 50%;
+	background: var(--card);
 	background: conic-gradient(
 		from 0deg,
 		transparent 0%,
@@ -2612,9 +2623,11 @@ body {
 	border-radius: 999px;
 	/* Waves 55 — cùng cơ chế với `.ph-nameplate`: viền động theo palette bảng
 	   tên thật, dự phòng màu Nitro trên cùng của user, dự phòng cuối = không viền. */
+	border: transparent;
 	border: 1.5px solid
 		var(--np-ring, color-mix(in sRGB, var(--theme-b, transparent) 78%, transparent));
 	background: none;
+	box-shadow: none;
 	box-shadow:
 		0 0 0 1px color-mix(in sRGB, var(--np-ring, var(--theme-b, transparent)) 22%, transparent),
 		0 2px 10px -4px color-mix(in sRGB, var(--np-ring, var(--theme-b, transparent)) 55%, transparent);
@@ -2654,6 +2667,7 @@ body {
 	border: 1px solid var(--line);
 	border-radius: 1rem;
 	background: var(--card);
+	box-shadow: 0 0 0 1px transparent;
 	box-shadow: 0 0 0 1px color-mix(in oklab, var(--tint, var(--brand)) 30%, transparent);
 	transition: border-color 0.2s ease, background 0.2s ease;
 }
@@ -3499,7 +3513,9 @@ body {
 }
 .qcard:hover { border-color: var(--line-strong); }
 .qcard[data-selected="1"] {
+	border-color: var(--brand);
 	border-color: color-mix(in oklab, var(--brand) 62%, var(--line));
+	box-shadow: 0 0 0 1px transparent;
 	box-shadow: 0 0 0 1px color-mix(in oklab, var(--brand) 35%, transparent);
 }
 .qcard[data-status="running"] {
@@ -3819,6 +3835,7 @@ body {
 .qdone:hover,
 .qdone:focus-visible,
 .qdone--hover {
+	border-color: var(--brand);
 	border-color: color-mix(in oklab, var(--brand) 55%, var(--line));
 	z-index: 5;
 }
@@ -4910,7 +4927,7 @@ body {
 
 /* --- Thẻ nhiệm vụ --- */
 [data-theme="light"] .qcard { background: #ffffff; border-color: var(--line-strong); }
-[data-theme="light"] .qcard:hover { border-color: color-mix(in oklab, var(--brand) 45%, var(--line-strong)); }
+[data-theme="light"] .qcard:hover { border-color: var(--line-strong); border-color: color-mix(in oklab, var(--brand) 45%, var(--line-strong)); }
 [data-theme="light"] .qcard-title { color: var(--fg); }
 [data-theme="light"] .qcard-desc { color: var(--fg-muted); }
 [data-theme="light"] .qdone { background: #ffffff; border-color: var(--line); }
@@ -5111,25 +5128,31 @@ body {
 /* Waves 41: GUIDE BOX + nút copy ở chế độ Sáng — trước hardcode rgba tím mờ
    nên chữ bị "chìm". Nay token hoá, chữ đậm đủ tương phản trên nền sáng. */
 [data-theme="light"] .guide-box {
+	background: transparent;
 	background: color-mix(in oklab, var(--brand) 7%, #ffffff);
+	border-color: var(--line-strong);
 	border-color: color-mix(in oklab, var(--brand) 26%, var(--line-strong));
 }
 [data-theme="light"] .guide-header { color: var(--brand-strong); }
 [data-theme="light"] .guide-steps { color: var(--fg-muted); }
 [data-theme="light"] .step-num {
+	background: transparent;
 	background: color-mix(in oklab, var(--brand) 16%, #ffffff);
 	color: var(--brand-strong);
 }
 [data-theme="light"] .btn-copy-script {
+	background: transparent;
 	background: color-mix(in oklab, var(--brand) 11%, #ffffff);
+	border-color: var(--line-strong);
 	border-color: color-mix(in oklab, var(--brand) 38%, var(--line-strong));
 	color: var(--brand-strong);
 }
-[data-theme="light"] .btn-copy-script:hover { background: color-mix(in oklab, var(--brand) 18%, #ffffff); }
+[data-theme="light"] .btn-copy-script:hover { background: transparent; background: color-mix(in oklab, var(--brand) 18%, #ffffff); }
 
 /* --- Nút chọn chế độ Sáng/Tối --- */
 [data-theme="light"] .theme-opt { background: #fff; }
 [data-theme="light"] .theme-opt[aria-checked="true"] {
+	background: transparent;
 	background: color-mix(in oklab, var(--brand) 12%, #fff);
 }
 
@@ -5161,11 +5184,14 @@ body {
 	transition: border-color 0.18s ease, background 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
 }
 .theme-opt svg { width: 17px; height: 17px; }
-.theme-opt:hover { border-color: color-mix(in oklab, var(--brand) 45%, var(--line-strong)); color: var(--fg); }
+.theme-opt:hover { border-color: var(--line-strong); border-color: color-mix(in oklab, var(--brand) 45%, var(--line-strong)); color: var(--fg); }
 .theme-opt[aria-checked="true"] {
 	color: var(--fg);
+	border-color: var(--brand);
 	border-color: color-mix(in oklab, var(--brand) 70%, var(--line-strong));
+	background: var(--well);
 	background: color-mix(in oklab, var(--brand) 14%, var(--well));
+	box-shadow: 0 0 0 1px transparent;
 	box-shadow: 0 0 0 1px color-mix(in oklab, var(--brand) 35%, transparent);
 }
 
@@ -5216,13 +5242,17 @@ body {
 .qcard-act[data-act="claim"],
 .qcard-act[data-act="retry"] {
 	cursor: pointer;
+	border-color: var(--brand);
 	border-color: color-mix(in oklab, var(--brand) 68%, var(--line-strong));
+	background: transparent;
 	background: color-mix(in oklab, var(--brand) 20%, transparent);
 	color: var(--fg);
+	box-shadow: 0 0 0 1px transparent, 0 6px 18px -10px var(--brand);
 	box-shadow: 0 0 0 1px color-mix(in oklab, var(--brand) 30%, transparent), 0 6px 18px -10px var(--brand);
 }
 .qcard-act[data-act="claim"]:hover,
 .qcard-act[data-act="retry"]:hover {
+	background: transparent;
 	background: color-mix(in oklab, var(--brand) 34%, transparent);
 	border-color: var(--brand-bright);
 	transform: translateY(-1px);
@@ -5234,6 +5264,7 @@ body {
 .qcard-act[data-act="busy"] {
 	opacity: 0.85;
 	cursor: progress;
+	border-color: var(--cyan);
 	border-color: color-mix(in oklab, var(--cyan) 55%, var(--line-strong));
 	color: var(--cyan);
 }
@@ -5243,7 +5274,9 @@ body {
 /* Trạng thái: ĐÃ NHẬN — tick xanh */
 .qcard-act[data-act="claimed"] {
 	cursor: default;
+	border-color: var(--emerald);
 	border-color: color-mix(in oklab, var(--emerald) 52%, var(--line-strong));
+	background: transparent;
 	background: color-mix(in oklab, var(--emerald) 16%, transparent);
 	color: var(--emerald);
 }
@@ -5251,11 +5284,13 @@ body {
 /* Trạng thái: LỖI — nút thử lại */
 .qcard-act[data-act="error"] {
 	cursor: pointer;
+	border-color: var(--danger);
 	border-color: color-mix(in oklab, var(--danger) 55%, var(--line-strong));
+	background: transparent;
 	background: color-mix(in oklab, var(--danger) 14%, transparent);
 	color: var(--danger-soft);
 }
-.qcard-act[data-act="error"]:hover { background: color-mix(in oklab, var(--danger) 24%, transparent); }
+.qcard-act[data-act="error"]:hover { background: transparent; background: color-mix(in oklab, var(--danger) 24%, transparent); }
 
 /* Nút phụ (bỏ qua) bên phải nút chính */
 .qcard-act-2 {
@@ -5306,7 +5341,9 @@ body {
 	display: flex;
 	align-items: center;
 	justify-content: center;
+	background: transparent;
 	background: color-mix(in oklab, var(--brand) 16%, transparent);
+	border: 1px solid transparent;
 	border: 1px solid color-mix(in oklab, var(--brand) 38%, transparent);
 	color: var(--brand-bright);
 }
@@ -5398,7 +5435,9 @@ body {
 	font-size: 0.76rem;
 	line-height: 1.5;
 	color: var(--danger-soft);
+	background: transparent;
 	background: color-mix(in oklab, var(--danger) 12%, transparent);
+	border: 1px solid transparent;
 	border: 1px solid color-mix(in oklab, var(--danger) 32%, transparent);
 	border-radius: 0.6rem;
 	padding: 8px 10px;
@@ -5413,11 +5452,14 @@ body {
 	margin-top: 2px;
 }
 .btn-orb {
+	background: transparent;
 	background: color-mix(in oklab, var(--brand) 30%, transparent);
+	border-color: var(--brand);
 	border-color: color-mix(in oklab, var(--brand) 62%, var(--line-strong));
 	color: var(--fg);
 }
 .btn-orb:hover:not(:disabled) {
+	background: transparent;
 	background: color-mix(in oklab, var(--brand) 46%, transparent);
 	border-color: var(--brand-bright);
 }
@@ -5576,9 +5618,11 @@ body {
 	   cắt". Hover giờ chỉ đổi MÀU VIỀN + NỀN (không dịch chuyển hình học). */
 	transition: border-color 0.15s ease, background 0.15s ease;
 }
-.accsw-item:hover { border-color: var(--brand); background: color-mix(in oklab, var(--brand) 10%, var(--ink-800)); }
+.accsw-item:hover { border-color: var(--brand); background: var(--ink-800); background: color-mix(in oklab, var(--brand) 10%, var(--ink-800)); }
 .accsw-item.is-active {
+	border-color: var(--emerald);
 	border-color: color-mix(in oklab, var(--emerald) 60%, var(--line-strong));
+	background: var(--ink-800);
 	background: color-mix(in oklab, var(--emerald) 10%, var(--ink-800));
 }
 .accsw-av {
@@ -5609,6 +5653,7 @@ body {
 	font-weight: 700;
 	padding: 2px 8px;
 	border-radius: 999px;
+	background: transparent;
 	background: color-mix(in oklab, var(--emerald) 18%, transparent);
 	color: var(--emerald);
 	white-space: nowrap;
@@ -5626,7 +5671,7 @@ body {
 	align-items: center;
 	justify-content: center;
 }
-.accsw-remove:hover { background: color-mix(in oklab, var(--danger) 18%, transparent); color: var(--danger); }
+.accsw-remove:hover { background: transparent; background: color-mix(in oklab, var(--danger) 18%, transparent); color: var(--danger); }
 .accsw-empty { text-align: center; color: var(--fg-subtle); font-size: 0.8rem; padding: 10px 0; }
 .accsw-empty[hidden] { display: none; }
 
@@ -5744,7 +5789,7 @@ body {
 [data-theme="light"] .acc-switch-card { background: #f7f8fb; }
 [data-theme="light"] .accsw-section { background: #ffffff; border-color: rgba(15,23,42,0.12); }
 [data-theme="light"] .accsw-item { background: #ffffff; border-color: rgba(15,23,42,0.14); }
-[data-theme="light"] .accsw-item:hover { border-color: var(--brand); background: color-mix(in oklab, var(--brand) 8%, #ffffff); }
+[data-theme="light"] .accsw-item:hover { border-color: var(--brand); background: transparent; background: color-mix(in oklab, var(--brand) 8%, #ffffff); }
 [data-theme="light"] .acc-cfg-ring { opacity: 0.55; }
 [data-theme="light"] .acc-cfg-tokenrow { background: #ffffff; border-color: rgba(15,23,42,0.14); }
 [data-theme="light"] .up-pop-switch { background: var(--ink-600); border-color: rgba(15,23,42,0.2); }
@@ -5771,6 +5816,7 @@ body {
 	place-items: center;
 	/* ĐỤC gần tuyệt đối: nền theme + alpha 0.98 để hở HE hé không đáng kể.
 	   Không dùng màu cứng để tự khớp cả theme Sáng lẫn Tối. */
+	background: var(--ink-950);
 	background: color-mix(in srgb, var(--ink-950) 98%, transparent);
 	-webkit-backdrop-filter: blur(10px) saturate(0.7);
 	backdrop-filter: blur(10px) saturate(0.7);
@@ -5900,7 +5946,9 @@ body {
 	align-items: center;
 	padding: 1px 8px;
 	border-radius: 9999px;
+	border: 1px solid transparent;
 	border: 1px solid color-mix(in oklab, #f59e0b 45%, transparent);
+	background: transparent;
 	background: color-mix(in oklab, #f59e0b 14%, transparent);
 	color: #f5b73d;
 	font-size: 0.62rem;
@@ -5922,14 +5970,18 @@ body {
 	font-weight: 700;
 	padding: 3px 9px;
 	border-radius: 9999px;
+	border: 1px solid transparent;
 	border: 1px solid color-mix(in oklab, var(--danger) 40%, transparent);
+	background: transparent;
 	background: color-mix(in oklab, var(--danger) 12%, transparent);
 	color: var(--danger-soft);
 }
-.log-recover:hover { background: color-mix(in oklab, var(--danger) 20%, transparent); }
+.log-recover:hover { background: transparent; background: color-mix(in oklab, var(--danger) 20%, transparent); }
 
 .claim-queue-chip {
+	border-color: transparent;
 	border-color: color-mix(in oklab, #f59e0b 42%, transparent);
+	background: transparent;
 	background: color-mix(in oklab, #f59e0b 13%, transparent);
 	color: #eab308;
 	cursor: pointer;
@@ -5937,7 +5989,7 @@ body {
 	padding: 5px 10px;
 	min-height: 30px;
 }
-.claim-queue-chip:hover { background: color-mix(in oklab, #f59e0b 22%, transparent); }
+.claim-queue-chip:hover { background: transparent; background: color-mix(in oklab, #f59e0b 22%, transparent); }
 :root[data-theme="light"] .claim-queue-chip { color: #7a4d00; }
 .claim-queue-chip[disabled] { opacity: 0.55; cursor: progress; }
 
@@ -6137,6 +6189,7 @@ body {
 	align-items: center;
 	justify-content: center;
 	padding: 24px;
+	background: var(--ink-950);
 	background: color-mix(in oklab, var(--ink-950) 78%, transparent);
 	backdrop-filter: blur(14px);
 	-webkit-backdrop-filter: blur(14px);
@@ -6163,7 +6216,9 @@ body {
 	width: 52px;
 	height: 52px;
 	border-radius: 15px;
+	border: 1px solid transparent;
 	border: 1px solid color-mix(in oklab, var(--brand) 40%, transparent);
+	background: transparent;
 	background: color-mix(in oklab, var(--brand) 15%, transparent);
 	color: var(--brand-bright);
 }
@@ -6174,14 +6229,16 @@ body {
 .aq-integrity-banner {
 	margin-top: 8px;
 	padding: 9px 12px;
+	border: 1px solid transparent;
 	border: 1px solid color-mix(in oklab, var(--danger) 42%, transparent);
 	border-radius: var(--radius-field);
+	background: transparent;
 	background: color-mix(in oklab, var(--danger) 10%, transparent);
 	color: var(--danger-soft);
 	font-size: 0.76rem;
 	line-height: 1.5;
 }
-.aq-data-danger { border-top: 1px solid color-mix(in oklab, var(--danger) 26%, var(--line)); }
+.aq-data-danger { border-top: 1px solid var(--line); border-top: 1px solid color-mix(in oklab, var(--danger) 26%, var(--line)); }
 
 body.lite .bg-glow { display: none; }
 body.lite *,
@@ -6328,3 +6385,8 @@ body.lite .claim-pill-spin { animation-duration: 1.6s; }
 .stats-table th, .stats-table td { padding: 6px 8px; border-bottom: 1px solid var(--line, rgba(15,23,42,0.1)); text-align: left; }
 .stats-history { margin: 10px 0; }
 .qdone-modal-input { width: 100%; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--line-strong, rgba(15,23,42,0.2)); background: transparent; color: inherit; margin-bottom: 10px; }
+
+
+/* Waves#263: kicker #8ea1ff trên nền trắng light chỉ ~2.5:1 — light dùng
+   token brand-bright (đã ~6.5:1 trên trắng), dark giữ nguyên. */
+[data-theme="light"] .qcard-kicker { color: var(--brand-bright); }
