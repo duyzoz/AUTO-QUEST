@@ -847,6 +847,17 @@ check('Waves#243/#245: topbar account + bottom sheet tài khoản (mobile), tái
 	assert(/isMobileLayout\(\)/.test(js), 'mobile mới dùng sheet thay .up-pop');
 	return 'topbar account + sheet + nav shortcut có đủ';
 });
+check('BUGFIX navAccount desktop: bấm "Tài khoản" phải MỞ khung tài khoản, không chỉ scroll+focus', () => {
+	const js = read(path.join(APP, 'renderer.js'));
+	const m = js.match(/navAccount\.addEventListener\('click'[\s\S]*?\n\}\);/);
+	assert(m, 'không tìm thấy handler navAccount');
+	const block = m[0];
+	assert(/openAccountSheet\(\)/.test(block), 'nhánh mobile phải mở sheet');
+	assert(/openAccSw\(\)/.test(block), 'nhánh desktop guest phải mở popup Đổi tài khoản');
+	assert(/upRow\.click\(\)/.test(block), 'nhánh desktop đã đăng nhập phải mở popout qua upRow');
+	assert(!/scrollIntoView\(\{ block: 'nearest' \}\); ui\.upRow\.focus\(\)/.test(block), 'không được chỉ scroll+focus rồi dừng (đó chính là lỗi chết nút)');
+	return 'navAccount mở sheet/popout/modal theo trạng thái';
+});
 check('Waves#244/#249/#250: drawer sticky profile, chạm 44px, safe-area', () => {
 	const mobile = read(path.join(APP, 'mobile.css'));
 	assert(/\.userpanel \{[^}]*position: sticky;[^}]*bottom: 0;/.test(mobile), 'userpanel phải sticky bottom trên mobile');

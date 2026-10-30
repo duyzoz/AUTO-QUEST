@@ -7266,7 +7266,24 @@ if (ui.navAccount) ui.navAccount.addEventListener('click', () => {
 		closeDrawer({ returnFocus: false });
 		openAccountSheet();
 	} else if (ui.upRow) {
-		try { ui.upRow.scrollIntoView({ block: 'nearest' }); ui.upRow.focus(); } catch {}
+		// BUGFIX (sau Waves #241-#268): trước đây nhánh desktop chỉ
+		// scroll tới hàng profile + focus nó — hàng đó trên desktop đã
+		// hiện sẵn ở đáy sidebar nên bấm "Tài khoản" trông như chết hẳn:
+		// không mở popout, không mở modal, không đổi trang (không có
+		// trang 'account' nào trong switchPage cả). Nay bấm "Tài khoản"
+		// phải MỞ đúng khung tài khoản như bấm hàng profile: guest thì
+		// mở popup Đổi tài khoản, đã đăng nhập thì mở popout profile
+		// (dùng lại handler của upRow để giữ đúng logic đo lại khung
+		// khi panel vừa hiện). Popout đã mở sẵn thì giữ nguyên, không
+		// đóng ngược lại.
+		try { ui.upRow.scrollIntoView({ block: 'nearest' }); } catch {}
+		if (ui.dprofile && ui.dprofile.dataset.state === 'guest') {
+			openAccSw();
+		} else if (ui.upPop && ui.upPop.hidden) {
+			ui.upRow.click();
+		} else if (ui.upPop) {
+			try { const b = ui.upPop.querySelector('button'); if (b) b.focus(); } catch {}
+		}
 	}
 });
 
