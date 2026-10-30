@@ -1698,7 +1698,6 @@ const CLAIM_DIAG_BRANCH = {
 };
 const CLAIM_DIAG_SOURCE = {
 	'callback': { vi: 'callback hCaptcha', en: 'hCaptcha callback' },
-	'auto-poll': { vi: 'tự động quét', en: 'auto-poll' },
 	'manual': { vi: 'bấm thủ công', en: 'manual submit' },
 };
 // Wave chẩn đoán claim (không đổi hành vi): chỉ dựng nhãn chẩn đoán từ
@@ -3416,14 +3415,13 @@ async function openCaptchaModal(quest, captcha) {
 			captchaCtx.widgetId = null;
 		}
 		ui.captchaWidget.innerHTML = '';
-	// Waves 38: BRO YÊU CẦU "tự túc ấn xác minh, không cần người dùng bấm".
-	// → App tự gọi `hcaptcha.execute()` để hCaptcha tự chạy xác minh:
-	//   • Nếu hCaptcha cho qua (passive) → callback bắn NGAY, app tự gửi Discord
-	//     mà người dùng KHÔNG phải bấm gì (đúng ý bro).
-	//   • Nếu hCaptcha bung bảng thử thách → widget VẪN HIỆN (size 'normal' +
-	//     execute) để người dùng giải trực tiếp, rồi app tự gửi.
-	// Trước đây để `size:'invisible'` → hộp hoàn toàn trắng, không có gì để bấm
-	// (bro phàn nàn). Nay dùng size 'normal': luôn có UI thật, có checkbox thật.
+	// Wave sửa claim mobile (Ethan duyệt 2026-10-30): BỎ chế độ tự chạy xác minh.
+	// Lý do: token từ hcaptcha.execute() tự động là token "passive" — hộp chỉ quay
+	// rồi mất, không hiện thử thách — và Discord trả 403 · 10008 (nhánh D) vì token
+	// đó không được tính là đã giải. Nay widget chỉ dựng ở size 'normal', KHÔNG
+	// execute, KHÔNG tự quét token: người dùng tick vào ô, giải thử thách nếu hiện,
+	// token từ lần tương tác thật đó mới qua callback (hoặc nút "Gửi xác minh ngay")
+	// để gửi claim. Claim nào không bị bắt captcha thì không qua bước này.
 	const renderOpts = {
 		sitekey: captcha.sitekey,
 		size: 'normal',
@@ -3439,13 +3437,12 @@ async function openCaptchaModal(quest, captcha) {
 			// Waves 41: hCaptcha "passive" token sống rất ngắn (vài chục giây). Khi nó
 			// hết hạn, widget KHÔNG tự lấy token mới → phải reset để lấy phiên mới.
 			// Trước đây chỉ báo lỗi mà không tự làm mới → user thấy "dead link" lặp lại.
-			appendLog('[Cảnh báo] Phiên xác minh hết hạn (token hCaptcha sống ngắn) — đang tự làm mới…', 'warn');
-			setCaptchaError('Phiên xác minh hết hạn — app đang tự làm mới, đợi chút hoặc giải lại ô bên trên.');
+			appendLog('[Cảnh báo] Phiên xác minh hết hạn — đã reset hộp, chờ người dùng tick lại.', 'warn');
+			setCaptchaError('Phiên xác minh hết hạn — tick lại ô bên trên để lấy phiên mới.');
 			// Tự reset widget để lấy phiên mới rồi chạy lại xác minh.
 			try {
 				if (captchaCtx && captchaCtx.widgetId != null) {
 					window.hcaptcha.reset(captchaCtx.widgetId);
-					hcaptchaRecover(captcha);
 				}
 			} catch {
 				/* widget đã bị gỡ — người dùng bấm "Thử lại" */
@@ -3456,7 +3453,7 @@ async function openCaptchaModal(quest, captcha) {
 		`[Hệ thống] Dựng hCaptcha: sitekey=${String(captcha.sitekey).slice(0, 12)}…` +
 			` · rqdata=${captcha.rqdata ? 'có (' + captcha.rqdata.length + ' ký tự)' : 'THIẾU'}` +
 			` · rqtoken=${captcha.rqtoken ? 'có' : 'không'}` +
-			` · chế độ=TỰ ĐỘNG (app tự chạy xác minh)`,
+			` · chế độ=THỦ CÔNG (người dùng tick hộp rồi mới gửi)`,
 		'system',
 	);
 	if (!captcha.rqdata) {
@@ -3468,22 +3465,9 @@ async function openCaptchaModal(quest, captcha) {
 	captchaCtx.widgetId = hcaptcha.render(ui.captchaWidget, renderOpts);
 	if (ui.captchaLoading) ui.captchaLoading.hidden = true;
 	if (ui.btnCaptchaRetry) ui.btnCaptchaRetry.disabled = false;
-	// TỰ ĐỘNG chạy xác minh — không cần người dùng bấm gì.
-	try {
-		const execArgs = { async: false };
-		if (captcha.rqdata) execArgs.rqdata = captcha.rqdata;
-		hcaptcha.execute(captchaCtx.widgetId, execArgs);
-		appendLog('[Hệ thống] Đã tự chạy xác minh — nếu hCaptcha bung ô thử thách, hãy giải rồi app tự gửi.', 'system');
-	} catch (e) {
-		appendLog(
-			`[Cảnh báo] Không gọi được hcaptcha.execute (${e.message}) — đã có widget để bấm thủ công.`,
-			'warn',
-		);
-	}
-	// Waves 38: NẾU callback không bắn (một số môi trường hCaptcha chỉ đẩy token
-	// vào getResponse), app TỰ ĐỘNG đọc token và gửi — người dùng KHÔNG phải bấm.
-	// Đây chính là "tự túc ấn xác minh rồi gửi" mà bro yêu cầu. Dừng ngay khi có.
-	startCaptchaAutoSubmit();
+	// Wave sửa claim mobile: KHÔNG tự execute, KHÔNG tự quét token nữa.
+	// Hộp đứng yên chờ người dùng tick; token từ tương tác thật mới được gửi.
+	appendLog('[Hệ thống] Hộp xác minh đã sẵn — tick vào ô, giải thử thách nếu hiện, rồi app tự gửi khi có token (hoặc bấm \'Gửi xác minh ngay\').', 'system');
 	// Waves 38: đo trạng thái widget ra terminal (chẩn đoán hộp trắng / không bấm được).
 	if (window.autoquest && window.autoquest.captchaTrace) {
 		let n = 0;
@@ -3518,13 +3502,9 @@ async function openCaptchaModal(quest, captcha) {
 /** Người dùng giải xong captcha → tự gọi lại claim kèm captcha_key (2A). */
 async function onCaptchaSolved(captchaToken, source = 'callback') {
 	if (!captchaCtx || !captchaToken) return;
-	if (captchaCtx.submitted) return; // Waves 38: chỉ gửi 1 lần (auto + callback không đua)
+	if (captchaCtx.submitted) return; // Chỉ gửi 1 lần (callback + nút bấm không đua nhau).
 	captchaCtx.submitted = true;
 	lastCaptchaSubmit = { source, delayMs: captchaCtx.openedAt ? Date.now() - captchaCtx.openedAt : null };
-	if (captchaCtx.autoTimer) {
-		clearInterval(captchaCtx.autoTimer);
-		captchaCtx.autoTimer = null;
-	}
 	const { quest } = captchaCtx;
 	const captcha = captchaCtx.captcha;
 	appendLog('[Hệ thống] Đã có kết quả xác minh — tự gửi lại yêu cầu nhận thưởng tới Discord…', 'system');
@@ -3543,74 +3523,6 @@ async function onCaptchaSolved(captchaToken, source = 'callback') {
 	}
 }
 
-/**
- * Waves 41: LÀM MỚI phiên hCaptCha sau khi token cũ hết hạn ("dead link").
- * Vì sao cần: token passive sống rất ngắn; khi hết hạn widget không tự lấy token
- * mới. Ta reset widget rồi chạy lại execute() + vòng auto-submit → không bắt user
- * bấm lại nhiều lần. Chỉ 1 lần cho mỗi lần mở modal để tránh vòng lặp vô tận.
- */
-function hcaptchaRecover(captcha) {
-	if (!captchaCtx || captchaCtx.recovering) return;
-	captchaCtx.recovering = true;
-	captchaCtx.submitted = false;
-	if (captchaCtx.autoTimer) {
-		clearInterval(captchaCtx.autoTimer);
-		captchaCtx.autoTimer = null;
-	}
-	try {
-		const execArgs = { async: false };
-		if (captcha && captcha.rqdata) execArgs.rqdata = captcha.rqdata;
-		window.hcaptcha.execute(captchaCtx.widgetId, execArgs);
-		appendLog('[Hệ thống] Đã tự làm mới phiên xác minh — chạy lại.', 'system');
-		startCaptchaAutoSubmit();
-	} catch (e) {
-		appendLog(`[Cảnh báo] Không làm mới được phiên xác minh (${e.message}) — hãy giải lại ô bên trên.`, 'warn');
-	}
-}
-
-/**
- * Waves 38: TỰ ĐỘNG gửi xác minh — không cần người dùng bấm "Tôi đã giải xong".
- * Vì sao cần: hCaptcha trong một số môi trường chỉ đẩy token vào getResponse()
- * mà KHÔNG gọi callback (hoặc callback bắn trước khi widget settle). Vòng poll
- * này đọc token mỗi 800ms; có token hợp lệ → tự onCaptchaSolved() → tự claim.
- * Dừng sau 2 phút (hết hạn phiên) để không treo vô hạn.
- */
-function startCaptchaAutoSubmit() {
-	if (!captchaCtx) return;
-	let waited = 0;
-	const MAX_MS = 120000;
-	captchaCtx.autoTimer = setInterval(() => {
-		waited += 800;
-		if (!captchaCtx || captchaCtx.submitted) {
-			clearInterval(captchaCtx && captchaCtx.autoTimer);
-			return;
-		}
-		if (ui.captchaModal && ui.captchaModal.hidden) {
-			clearInterval(captchaCtx.autoTimer);
-			captchaCtx.autoTimer = null;
-			return;
-		}
-		let token = null;
-		try {
-			token = window.hcaptcha && captchaCtx.widgetId != null
-				? window.hcaptcha.getResponse(captchaCtx.widgetId)
-				: null;
-		} catch {
-			token = null;
-		}
-		if (token) {
-			appendLog('[Hệ thống] hCaptcha đã trả kết quả — tự động gửi (không cần bấm).', 'system');
-			onCaptchaSolved(token, 'auto-poll');
-			return;
-		}
-		if (waited >= MAX_MS) {
-			clearInterval(captchaCtx && captchaCtx.autoTimer);
-			if (captchaCtx) captchaCtx.autoTimer = null;
-			setCaptchaError('Hết thời gian chờ xác minh. Bấm "Thử lại" hoặc giải ô thử thách bên trên.');
-		}
-	}, 800);
-}
-
 /** Nút "Tôi đã giải xong" — đọc token từ widget nếu callback chưa bắn. */
 function onCaptchaRetryClick() {
 	if (!captchaCtx || captchaCtx.widgetId == null) {
@@ -3624,9 +3536,9 @@ function onCaptchaRetryClick() {
 		token = null;
 	}
 	if (!token) {
-		// Waves 38: không còn bắt buộc "đánh dấu ô". App tự chạy xác minh; nút này
-		// chỉ để ép gửi ngay khi widget đã có token (hoặc thử lại).
-		setCaptchaError('Chưa có kết quả xác minh. App đang tự chạy — đợi chút, hoặc giải ô thử thách nếu có.');
+		// Nút dự phòng khi callback chưa bắn: chỉ gửi khi widget ĐÃ có token
+		// từ lần người dùng tick/giải, không tự tạo token.
+		setCaptchaError('Chưa có kết quả xác minh. Tick vào ô bên trên, giải thử thách nếu hiện, rồi bấm lại nút này.');
 		return;
 	}
 	onCaptchaSolved(token, 'manual');

@@ -934,12 +934,12 @@ check('Waves#268: docs mobile QA không chứa log waves, README không bị s�
 	return 'docs MOBILE-QA không log waves';
 });
 
-check('Wave chẩn đoán claim: thẻ ghi nhánh C/D + nguồn token + thời gian, không đổi hành vi', () => {
+check('Wave chẩn đoán claim: thẻ ghi nhánh C/D + nguồn token + thời gian', () => {
 	const js = read(path.join(APP, 'renderer.js'));
 	const css = read(path.join(APP, 'styles.css'));
 	assert(/CLAIM_DIAG_BRANCH/.test(js) && /'captcha-still-required'/.test(js) && /'grant-403-10008'/.test(js), 'thiếu map nhánh C/D');
 	assert(/onCaptchaSolved\(captchaToken, source = 'callback'\)/.test(js), 'onCaptchaSolved phải nhận source');
-	assert(/onCaptchaSolved\(token, 'auto-poll'\)/.test(js), 'đường tự động quét phải ghi source auto-poll');
+	assert(!/onCaptchaSolved\(token, 'auto-poll'\)/.test(js), 'đường tự động quét đã bị wave sửa gỡ nên không còn');
 	assert(/onCaptchaSolved\(token, 'manual'\)/.test(js), 'đường bấm thủ công phải ghi source manual');
 	assert(/openedAt: Date\.now\(\)/.test(js), 'mở hộp captcha phải ghi openedAt để tính thời gian');
 	assert(/claimBranch: 'captcha-still-required'/.test(js), 'nhánh C phải ghi claimBranch');
@@ -951,6 +951,23 @@ check('Wave chẩn đoán claim: thẻ ghi nhánh C/D + nguồn token + thời g
 	assert(m && /var\(--fg-muted\)/.test(m[0]) && !/#[0-9a-fA-F]{3,8}/.test(m[0]), 'dòng chẩn đoán phải dùng token màu, không màu thô');
 	assert(/\.qcard-diag:empty \{ display: none; \}/.test(css), 'dòng chẩn đoán trống phải ẩn');
 	return 'nhánh C/D + nguồn token + thời gian trên thẻ/log, không token';
+});
+
+check('Wave sửa claim mobile: bỏ tự gửi captcha, chỉ gửi token từ tương tác thật', () => {
+	const js = read(path.join(APP, 'renderer.js'));
+	const html = read(path.join(APP, 'index.html'));
+	assert(!/startCaptchaAutoSubmit\(/.test(js), 'còn lời gọi tự quét token');
+	assert(!/function startCaptchaAutoSubmit/.test(js), 'còn hàm tự quét token (code chết)');
+	assert(!/autoTimer/.test(js), 'còn timer tự quét token');
+	assert(!/\.execute\(captchaCtx/.test(js), 'còn lời gọi hcaptcha.execute tự động');
+	assert(!/hcaptchaRecover\(/.test(js), 'còn lời gọi làm mới tự động đã xóa');
+	assert(/size: 'normal'/.test(js), 'widget phải giữ size normal để người dùng tick được');
+	assert(/callback: \(token\) => onCaptchaSolved\(token\)/.test(js), 'callback khi người dùng tick/giải phải còn');
+	assert(/onCaptchaSolved\(token, 'manual'\)/.test(js), 'nút gửi thủ công phải còn để dự phòng khi callback chưa bắn');
+	assert(!html.includes('App tự chạy xác minh'), 'gợi ý trong modal không được nói tự chạy nữa');
+	assert(html.includes('Tick vào ô xác minh'), 'modal phải hướng dẫn tick ô');
+	assert(!/'auto-poll'/.test(js), 'nguồn token tự quét không còn xảy ra nên không còn trong map chẩn đoán');
+	return 'không tự execute/quét, tick + callback + nút gửi còn đủ';
 });
 
 /* ── In kết quả ────────────────────────────────────────────────────────── */
