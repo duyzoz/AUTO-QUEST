@@ -479,15 +479,7 @@
    WAVES #117-#131 — MOBILE / TOUCH
    ============================================================ */
 @media (max-width: 1023px) {
-	.update-bar {
-		top: calc(64px + env(safe-area-inset-top, 0px));
-		width: calc(100vw - 20px);
-		max-width: 560px;
-		justify-content: space-between;
-	}
-	.update-bar-text {
-		flex: 1 1 auto;
-	}
+
 	.claim-pill {
 		bottom: calc(16px + env(safe-area-inset-bottom, 0px));
 		font-size: 0.76rem;

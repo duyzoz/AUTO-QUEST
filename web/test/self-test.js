@@ -325,14 +325,16 @@ check('Waves#148: chẩn đoán claim có mặt, không chứa secret', () => {
 	return 'claimDiagnostics + lastClaim trong diagnostics, secret đã che';
 });
 
-check('Waves#149: tự áp dụng SW chỉ khi app rảnh, không reload giữa lúc chạy', () => {
+check('Xóa sạch tính năng cập nhật: không popup, không nút, không phiên bản, SW tự kích hoạt + network-first', () => {
 	const r = read(path.join(APP, 'renderer.js'));
-	assert(/scheduleIdleSwUpdate/.test(r), 'thiếu scheduleIdleSwUpdate()');
-	assert(/appIsIdleForUpdate/.test(r), 'thiếu appIsIdleForUpdate()');
-	const guard = r.match(/function appIsIdleForUpdate[\s\S]*?\n\}/)[0];
-	assert(/state === 'idle'/.test(guard) && /bulkClaimBusy/.test(guard) && /scanning/.test(guard) && /captchaModal/.test(guard), 'guard idle thiếu state/bulkClaimBusy/scanning/captcha');
-	assert(/swAutoUpdateTimer/.test(r), 'thiếu timer ân hạn / huỷ khi bấm Để sau');
-	return 'SW auto-activate gated on idle + 10s grace + dismiss cancel';
+	const html = read(path.join(APP, 'index.html'));
+	const sw = read(path.join(APP, 'sw.js'));
+	for (const id of ['updateBar', 'btnUpdateReload', 'btnUpdateDismiss', 'btnCheckUpdate', 'updateStatus', 'appVersion', 'swVersion']) assert(!html.includes('id="' + id + '"'), 'index còn ' + id);
+	for (const tok of ['scheduleIdleSwUpdate', 'appIsIdleForUpdate', 'requestSafeSwUpdate', 'showUpdateBar', 'setUpdateStatus', 'APP_VERSION', 'update.available', 'checkUpdate']) assert(!r.includes(tok), 'renderer còn ' + tok);
+	assert(!/verifyAndActivate/.test(sw), 'sw còn xác minh cập nhật');
+	assert(/autoquest-shell-v16/.test(sw) && /skipWaiting/.test(sw), 'sw phải là v16 và tự kích hoạt');
+	assert(/Network-first cho file app/.test(sw), 'sw phải lấy file app network-first');
+	return 'không còn popup/nút/phiên bản cập nhật; SW v16 tự kích hoạt, network-first';
 });
 
 check('escapeHtml chỉ còn MỘT định nghĩa và escape cả nháy đơn', () => {
@@ -489,12 +491,15 @@ check('Waves#179: SW cache CDN kiểm tra content-type + kích thước, có l�
 	assert(/CLEAR_CDN_CACHE/.test(sw), 'thiếu lệnh CLEAR_CDN_CACHE');
 	return 'CDN validation + clear control có mặt';
 });
-check('Waves#184: SW postMessage chỉ nhận type trong allowlist, từ chối message sai dạng', () => {
+check('SW message: chỉ còn lệnh xóa cache CDN, không còn lệnh cập nhật', () => {
 	const sw = read(path.join(APP, 'sw.js'));
-	assert(/ALLOWED_TYPES/.test(sw) && /VERIFY_AND_ACTIVATE/.test(sw), 'thiếu allowlist message');
-	assert(/typeof data\.type !== 'string'/.test(sw), 'thiếu kiểm tra dạng message');
-	return 'SW message allowlist có mặt';
+	assert(/CLEAR_CDN_CACHE/.test(sw), 'thiếu lệnh xóa cache CDN');
+	assert(!/VERIFY_AND_ACTIVATE/.test(sw) && !/SKIP_WAITING/.test(sw.replace(/self\.skipWaiting\(\)/g, '')), 'còn lệnh cập nhật thủ công');
+	assert(/data\.type !== 'CLEAR_CDN_CACHE'/.test(sw), 'thiếu kiểm tra type message (chỉ CLEAR_CDN_CACHE)');
+	assert(/event\.origin/.test(sw), 'thiếu kiểm tra origin message');
+	return 'chỉ CLEAR_CDN_CACHE, có kiểm tra dạng + origin';
 });
+
 check('Waves#175: build number chỉ có một điểm cập nhật (identity.js) + cảnh báo hết hạn', () => {
 	const id = read(path.join(WEB, 'identity.js'));
 	assert(/WEB_BUILD_DATE/.test(id) && /buildNumberStale/.test(id), 'thiếu ngày build / cảnh báo hết hạn');
@@ -721,13 +726,13 @@ check('Waves#227/#228: .brain ghi quyết định đo lường + quy trình buil
 	assert(/653945/.test(read(path.join(WEB, 'identity.js'))), 'placeholder build number hiện tại phải giữ nguyên');
 	return '.brain có #227/#228, placeholder không đổi';
 });
-check('Waves#229: SW verify thử nhiều đường dẫn, fail-safe khi mọi đường dẫn lỗi', () => {
+check('SW không còn verify cập nhật: kích hoạt ngay, không fail-safe cập nhật', () => {
 	const sw = read(path.join(APP, 'sw.js'));
-	assert(/candidates/.test(sw) && /name\.slice\(4\)/.test(sw), 'verify phải thử đường dẫn thay thế cho layout web-dist');
-	assert(/bundle fetch failed/.test(sw), 'mọi candidate lỗi phải fail, không activate');
-	assert(/VERIFY_AND_ACTIVATE/.test(sw), 'giữ kênh VERIFY_AND_ACTIVATE');
-	return 'candidates + fail-safe';
+	assert(!/verifyAndActivate/.test(sw), 'còn hàm verify cập nhật đã xóa');
+	assert(/skipWaiting/.test(sw), 'SW mới phải tự kích hoạt');
+	return 'không verify, tự kích hoạt';
 });
+
 check('Waves#230: veil vào thang — capture 300 < lock 400, modal/login giữ đỉnh', () => {
 	const css = read(path.join(APP, 'styles.css'));
 	const cap = Number((css.match(/\.capture-veil \{[^}]*z-index: (\d+)/) || [])[1]);

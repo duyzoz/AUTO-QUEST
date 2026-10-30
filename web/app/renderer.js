@@ -139,20 +139,12 @@ const ui = {
 	pageStats: el('pageStats'),
 	pageAbout: el('pageAbout'),
 	// Waves #117–#131
-	updateBar: el('updateBar'),
-	updateBarText: el('updateBarText'),
-	btnUpdateReload: el('btnUpdateReload'),
-	btnUpdateDismiss: el('btnUpdateDismiss'),
 	netBadge: el('netBadge'),
 	btnRecover: el('btnRecover'),
 	claimQueueChip: el('claimQueueChip'),
 	langSelect: el('langSelect'),
 	liteMode: el('liteMode'),
 	autoLockSelect: el('autoLockSelect'),
-	appVersion: el('appVersion'),
-	swVersion: el('swVersion'),
-	btnCheckUpdate: el('btnCheckUpdate'),
-	updateStatus: el('updateStatus'),
 	statsScope: el('statsScope'),
 	statsOrbs: el('statsOrbs'),
 	statsClaims: el('statsClaims'),
@@ -337,7 +329,6 @@ const scanBuffer = [];
 /* ═══════════════════════════════════════════════════════════════════
    WAVES #117–#131 — trạng thái cục bộ
    ═══════════════════════════════════════════════════════════════════ */
-const APP_VERSION = '2.0.0';
 const HISTORY_KEY = 'autoquest.history.v1';
 const QUEUE_KEY = 'autoquest.claimQueue.v1';
 const HISTORY_MAX = 400;
@@ -379,7 +370,6 @@ const i18nDict = {
 	'settings.appearance': ['Giao diện', 'Appearance'],
 	'settings.lang': ['Ngôn ngữ giao diện', 'Interface language'],
 	'settings.optimize': ['Tối ưu & riêng tư', 'Performance & privacy'],
-	'settings.version': ['Phiên bản & cập nhật', 'Version & updates'],
 	'settings.themeDark': ['Tối', 'Dark'],
 	'settings.themeLight': ['Sáng', 'Light'],
 	'settings.lite': ['Chế độ nhẹ (máy yếu)', 'Lite mode (low-end device)'],
@@ -407,8 +397,6 @@ const i18nDict = {
 	'settings.interval60': ['Mỗi 60 phút', 'Every 60 minutes'],
 	'settings.folder': ['Thư mục cấu hình', 'Config folder'],
 	'settings.data': ['Dữ liệu & chẩn đoán', 'Data & diagnostics'],
-	'settings.versionApp': ['Ứng dụng', 'App'],
-	'settings.versionSw': ['Service Worker', 'Service Worker'],
 	'stats.title': ['Thống kê & lịch sử', 'Stats & history'],
 	'stats.orbs': ['Tổng Orb đã nhận', 'Total Orbs claimed'],
 	'stats.claims': ['Nhiệm vụ đã nhận', 'Quests claimed'],
@@ -422,9 +410,6 @@ const i18nDict = {
 		'Chưa có lịch sử nhận thưởng. Lịch sử được lưu cục bộ theo từng tài khoản.',
 		'No claim history yet. History is stored locally per account.',
 	],
-	'update.available': ['Đã có bản cập nhật mới.', 'A new version is available.'],
-	'update.now': ['Cập nhật', 'Update'],
-	'update.later': ['Để sau', 'Later'],
 	'lock.title': ['Đã khoá màn hình', 'Screen locked'],
 	'lock.desc': [
 		'Tiến trình vẫn chạy nền. Bấm nút bên dưới hoặc nhấn Enter để quay lại.',
@@ -496,7 +481,6 @@ const i18nDict = {
 	],
 	'logout.cancel': ['Huỷ', 'Cancel'],
 	'logout.confirm': ['Đăng xuất', 'Sign out'],
-	'common.checkUpdate': ['Kiểm tra cập nhật', 'Check for updates'],
 };
 
 function t(key) {
@@ -7890,7 +7874,7 @@ function applyLang(lang, persist = true) {
 	if (ui.statsEmpty) ui.statsEmpty.textContent = t('stats.empty');
 
 	const settingsTitles = document.querySelectorAll('#pageSettings .config-card .card-title');
-	const settingKeys = ['settings.account', 'settings.appearance', 'settings.optimize', 'settings.version'];
+	const settingKeys = ['settings.account', 'settings.appearance', 'settings.optimize'];
 	settingsTitles.forEach((node, i) => {
 		if (settingKeys[i]) node.textContent = t(settingKeys[i]);
 	});
@@ -7929,9 +7913,6 @@ function applyLang(lang, persist = true) {
 	});
 	btnText(ui.btnOpenFolder, 'settings.folder');
 	btnText(ui.btnDataPanel, 'settings.data');
-	const versionLabels = document.querySelectorAll('#pageSettings .version-label');
-	if (versionLabels[0]) versionLabels[0].textContent = t('settings.versionApp');
-	if (versionLabels[1]) versionLabels[1].textContent = t('settings.versionSw');
 	if (ui.liteMode) {
 		const liteCard = ui.liteMode.closest('.config-card');
 		const liteHint = liteCard && liteCard.querySelector('.hint');
@@ -7942,9 +7923,6 @@ function applyLang(lang, persist = true) {
 		if (lockHint && lockHint.classList.contains('hint')) lockHint.textContent = t('settings.lockHint');
 	}
 
-	if (ui.updateBar) ui.updateBarText.textContent = t('update.available');
-	if (ui.btnUpdateReload) ui.btnUpdateReload.textContent = t('update.now');
-	if (ui.btnUpdateDismiss) ui.btnUpdateDismiss.textContent = t('update.later');
 	langSet('#lockTitle', 'lock.title');
 	langSet('#lockVeil .lock-desc', 'lock.desc');
 	if (ui.btnUnlock) ui.btnUnlock.textContent = t('lock.unlock');
@@ -7965,7 +7943,6 @@ function applyLang(lang, persist = true) {
 	if (ui.btnWipeData) ui.btnWipeData.textContent = t('data.wipe');
 	if (ui.btnDataClose) ui.btnDataClose.textContent = t('data.close');
 	langSet('#dataTitle', 'data.title');
-	if (ui.btnCheckUpdate) ui.btnCheckUpdate.textContent = t('common.checkUpdate');
 
 	const dataIntro = document.getElementById('dataIntro');
 	if (dataIntro) dataIntro.textContent = t('data.intro');
@@ -8292,7 +8269,7 @@ async function checkIntegrity() {
 			);
 			return;
 		}
-		const lines = [`AUTO-QUEST ${APP_VERSION} · ${new Date().toLocaleString(en ? 'en-US' : 'vi-VN')}`, ''];
+		const lines = [`AUTO-QUEST · ${new Date().toLocaleString(en ? 'en-US' : 'vi-VN')}`, ''];
 		const bad = [];
 		const missing = [];
 		for (const [file, expected] of entries) {
@@ -8374,177 +8351,18 @@ if (ui.btnWipeData) {
 
 /* ---------------- Wave#123: PWA update + phiên bản ---------------- */
 
-let swRegistration = null;
-let swReloading = false;
-let updateDismissed = false;
-let swAutoUpdateTimer = null;
-
-function setUpdateStatus(text) {
-	if (!ui.updateStatus) return;
-	ui.updateStatus.textContent = text || '';
-}
-
-function showUpdateBar() {
-	if (!ui.updateBar) return;
-	updateDismissed = false;
-	ui.updateBarText.textContent = t('update.available');
-	ui.updateBar.hidden = false;
-}
-
-function hideUpdateBar() {
-	if (ui.updateBar) ui.updateBar.hidden = true;
-}
-
-/* Waves#149: app có được coi là RẢNH để tự áp dụng bản SW đang chờ không.
-   Chặn tuyệt đối khi đang chạy/quét/nhận hàng loạt/captcha mở — không bao
-   giờ reload giữa lúc đang cày (lỗi cũ của Wave#123 là tự nhảy). */
-function appIsIdleForUpdate() {
-	return state === 'idle' && !bulkClaimBusy && !scanning && !(ui.captchaModal && !ui.captchaModal.hidden) && !swReloading;
-}
-
-/* Waves#149: tự kích hoạt bản SW đang chờ KHI APP RẢNH (sau khi chạy xong
-   hoặc đã idle), với 10 giây ân hạn + thanh cập nhật hiển thị rõ để người
-   dùng kịp bấm "Để sau". Hết ân hạn mà vẫn rảnh thì mới gửi SKIP_WAITING
-   (controllerchange sẽ reload — lúc đó không còn gì đang chạy). */
-function scheduleIdleSwUpdate() {
-	if (swAutoUpdateTimer) clearTimeout(swAutoUpdateTimer);
-	swAutoUpdateTimer = null;
-	if (!swRegistration || !swRegistration.waiting || !navigator.serviceWorker.controller) return;
-	if (updateDismissed) return;
-	if (!appIsIdleForUpdate()) return;
-	showUpdateBar();
-	setUpdateStatus(
-		currentLang === 'en'
-			? 'Update will apply automatically in 10s while the app is idle — press “Later” to postpone.'
-			: 'Bản cập nhật sẽ tự áp dụng sau 10 giây khi app rảnh — bấm “Để sau” để hoãn.',
-	);
-	swAutoUpdateTimer = setTimeout(() => {
-		swAutoUpdateTimer = null;
-		if (!appIsIdleForUpdate()) return;
-		const waiting = swRegistration && swRegistration.waiting;
-		if (!waiting) return;
-		requestSafeSwUpdate();
-	}, 10000);
-}
-
-async function showSwVersion() {
-	if (!ui.swVersion) return;
-	let version = '';
-	try {
-		const keys = await caches.keys();
-		const shells = keys.filter((key) => key.startsWith('autoquest-shell-')).sort();
-		if (shells.length) version = shells[shells.length - 1].replace('autoquest-shell-', '');
-	} catch {
-		/* ignore */
-	}
-	ui.swVersion.textContent = version || '—';
-	if (navigator.serviceWorker && navigator.serviceWorker.controller) {
-		try {
-			navigator.serviceWorker.controller.postMessage({ type: 'GET_VERSION' });
-		} catch {
-			/* ignore */
-		}
-	}
-}
-
 async function setupServiceWorker() {
-	if (ui.appVersion) ui.appVersion.textContent = APP_VERSION;
-	if (
-		!('serviceWorker' in navigator) ||
-		!(location.protocol === 'https:' || location.hostname === '127.0.0.1' || location.hostname === 'localhost')
-	) {
-		setUpdateStatus('Service Worker chỉ hoạt động trên HTTPS hoặc localhost.');
-		return;
-	}
-	navigator.serviceWorker.addEventListener('message', (event) => {
-		const data = event.data || {};
-		if (data.type === 'SW_VERSION' && ui.swVersion) ui.swVersion.textContent = data.version || '—';
-		// Waves#183: only the SW's own verification may arm a reload.
-		if (data.type === 'SW_VERIFIED') { swReloading = true; setUpdateStatus(currentLang === 'en' ? 'Update verified — applying…' : 'Đã xác minh bản cập nhật — đang áp dụng…'); setTimeout(() => { if (swReloading) location.reload(); }, 800); }
-		if (data.type === 'SW_VERIFY_FAILED') { swReloading = false; setUpdateStatus(currentLang === 'en' ? 'Update verification failed — not applied (bundle hash mismatch).' : 'Không xác minh được bản cập nhật (sai hash bundle) — không áp dụng.'); }
-	});
-	/* Waves#183: ask the waiting SW to verify itself against
-	   integrity.json first; never SKIP_WAITING blindly mid-run. */
-	function requestSafeSwUpdate() {
-		if (!appIsIdleForUpdate()) return false;
-		const waiting = swRegistration && swRegistration.waiting;
-		if (!waiting) { location.reload(); return true; }
-		swReloading = true;
-		setUpdateStatus(currentLang === 'en' ? 'Verifying update bundle…' : 'Đang xác minh bundle cập nhật…');
-		try { waiting.postMessage({ type: 'VERIFY_AND_ACTIVATE' }); } catch { swReloading = false; return false; }
-		setTimeout(() => { if (swReloading) { swReloading = false; setUpdateStatus(currentLang === 'en' ? 'Update verification timed out — not applied.' : 'Hết thời gian xác minh bản cập nhật — không áp dụng.'); } }, 8000);
-		return true;
-	}
-	navigator.serviceWorker.addEventListener('controllerchange', () => {
-		if (!swReloading) return;
-		location.reload();
-	});
+	// Web deploy thẳng qua Cloudflare mỗi khi main đổi: KHÔNG còn khái niệm
+	// "phiên bản / cập nhật" trong app, không còn popup cập nhật.
+	// Service Worker chỉ còn để cache vỏ cho trường hợp ngoại tuyến; sw.js
+	// lấy file app theo network-first nên reload sau deploy là bản mới nhất.
+	if (!('serviceWorker' in navigator)) return;
+	if (!(location.protocol === 'https:' || location.hostname === '127.0.0.1' || location.hostname === 'localhost')) return;
 	try {
-		swRegistration = await navigator.serviceWorker.register(new URL('sw.js', document.baseURI).href, {
-			updateViaCache: 'none',
-		});
-		if (swRegistration.waiting && navigator.serviceWorker.controller) {
-			showUpdateBar();
-			scheduleIdleSwUpdate();
-		}
-		swRegistration.addEventListener('updatefound', () => {
-			const worker = swRegistration && swRegistration.installing;
-			if (!worker) return;
-			worker.addEventListener('statechange', () => {
-				if (worker.state === 'installed' && navigator.serviceWorker.controller && !updateDismissed) {
-					showUpdateBar();
-					setUpdateStatus('Đã có bản cập nhật mới — bấm "Cập nhật" để nạp.');
-					scheduleIdleSwUpdate();
-				}
-			});
-		});
-		setUpdateStatus('');
-		showSwVersion();
+		await navigator.serviceWorker.register(new URL('sw.js', document.baseURI).href, { updateViaCache: 'none' });
 	} catch {
-		setUpdateStatus('Không đăng ký được Service Worker (không ảnh hưởng chức năng chính).');
+		/* Service Worker là tùy chọn — app chạy bình thường khi không có nó. */
 	}
-}
-
-if (ui.btnUpdateReload) {
-	ui.btnUpdateReload.addEventListener('click', () => {
-		// Waves#183: verified activation only, and only when idle.
-		if (!appIsIdleForUpdate()) { toast('App đang chạy — đợi chạy xong rồi mới áp dụng bản cập nhật.', true); return; }
-		requestSafeSwUpdate();
-	});
-}
-if (ui.btnUpdateDismiss) {
-	ui.btnUpdateDismiss.addEventListener('click', () => {
-		if (swAutoUpdateTimer) clearTimeout(swAutoUpdateTimer);
-		swAutoUpdateTimer = null;
-		updateDismissed = true;
-		hideUpdateBar();
-		setUpdateStatus('Sẽ cập nhật ở lần mở tiếp theo.');
-	});
-}
-if (ui.btnCheckUpdate) {
-	ui.btnCheckUpdate.addEventListener('click', async () => {
-		ui.btnCheckUpdate.disabled = true;
-		setUpdateStatus('Đang kiểm tra bản mới…');
-		try {
-			if (!swRegistration) {
-				setUpdateStatus('Service Worker chưa sẵn sàng trên trang này.');
-				return;
-			}
-			await swRegistration.update();
-			await new Promise((resolve) => setTimeout(resolve, 700));
-			if (swRegistration.waiting && navigator.serviceWorker.controller) {
-				showUpdateBar();
-				setUpdateStatus('Đã có bản cập nhật mới.');
-			} else {
-				setUpdateStatus('Bạn đang dùng phiên bản mới nhất.');
-			}
-			showSwVersion();
-		} catch (err) {
-			setUpdateStatus('Không kiểm tra được: ' + (err?.message || err));
-		} finally {
-			ui.btnCheckUpdate.disabled = false;
-		}
-	});
 }
 
 /* ---------------- Wave#131: nhịp tim + tự phục hồi engine ---------------- */
@@ -9946,8 +9764,6 @@ api.onState((payload) => {
 	}
 	setState(payload.state, payload);
 	if (payload.state === 'idle' || payload.state === 'error') {
-		// Waves#149: chạy xong → app rảnh → cho phép tự áp dụng bản SW chờ.
-		scheduleIdleSwUpdate();
 		stopHeartbeat();
 		if (payload.state === 'error' && !userStopped) {
 			if (ui.btnRecover) ui.btnRecover.hidden = false;
@@ -9966,8 +9782,7 @@ window.addEventListener('beforeunload', (e) => {
 	}
 });
 
-/* #106/#123: PWA — chỉ cache vỏ ứng dụng, không đụng API Discord.
-   setupServiceWorker() (Wave#123) lo đăng ký, phiên bản và thanh cập nhật. */
+/* PWA — chỉ cache vỏ ứng dụng, không đụng API Discord. Không còn popup cập nhật: deploy Cloudflare mới nhất là bản dùng ngay sau reload. */
 if (ui.skipLink) {
 	ui.skipLink.addEventListener('click', (event) => {
 		event.preventDefault();
@@ -10046,7 +9861,6 @@ window.__aqDiag = {
 		applyLang(cfg.lang === 'en' ? 'en' : 'vi', false);
 		applyLiteMode(cfg.liteMode === true, false);
 		setAutoLock(cfg.autoLockMin, false);
-		if (ui.appVersion) ui.appVersion.textContent = APP_VERSION;
 		setupServiceWorker();
 		renderQueueChip();
 		renderStats();

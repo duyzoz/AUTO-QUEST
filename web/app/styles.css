@@ -164,7 +164,7 @@ body {
      drawer/sidebar ........... 40  (LUÔN cao hơn overlay của chính nó)
      modal (xác nhận) ......... 100-200 (modal-veil 200, [hidden] = display:none)
      toast/pill ............... 100/180 (toast luôn pointer-events: none)
-     update-bar / skip-link .... 320/500 (chỉ hiện khi có cập nhật / khi focus)
+     skip-link .... 320/500 (chỉ hiện khi có cập nhật / khi focus)
      capture/hCaptcha, lock/login veils ... 300+ (400/9000: veil toàn màn
        hình, chặn mọi tương tác khi hiện, [hidden] = display:none)
    QUY TẮC: overlay không bao giờ cao hơn lớp nó phục vụ; overlay và lớp
@@ -5921,34 +5921,6 @@ body {
 	outline-offset: 2px;
 }
 
-.update-bar {
-	position: fixed;
-	top: 12px;
-	left: 50%;
-	transform: translateX(-50%);
-	z-index: 320;
-	display: flex;
-	align-items: center;
-	gap: 10px;
-	max-width: min(560px, calc(100vw - 24px));
-	padding: 9px 11px 9px 14px;
-	border: 1px solid var(--line-strong);
-	border-radius: 9999px;
-	background: var(--ink-850);
-	box-shadow: 0 18px 44px -18px rgba(0, 0, 0, 0.7);
-	animation: kasumi-rise 0.3s var(--ease-out-quint);
-}
-.update-bar-text {
-	font-size: 0.8rem;
-	font-weight: 600;
-	color: var(--fg);
-	white-space: nowrap;
-	overflow: hidden;
-	text-overflow: ellipsis;
-}
-.update-bar-btn { flex-shrink: 0; padding: 6px 14px; font-size: 0.76rem; }
-.update-bar-later { flex-shrink: 0; color: var(--fg-muted); font-size: 0.76rem; padding: 6px 8px; }
-
 .net-badge {
 	display: inline-flex;
 	align-items: center;
@@ -6168,15 +6140,6 @@ body {
 	border-radius: var(--radius-field);
 	background: var(--well);
 }
-.version-label {
-	font-size: 0.66rem;
-	font-weight: 700;
-	letter-spacing: 0.04em;
-	text-transform: uppercase;
-	color: var(--fg-subtle);
-}
-.version-value { font-size: 0.82rem; color: var(--fg); }
-
 .setting-row {
 	display: flex;
 	align-items: center;
@@ -6265,17 +6228,15 @@ body.lite .claim-pill-spin { animation-duration: 1.6s; }
 @media (prefers-reduced-motion: reduce) {
 	.animate-rise,
 	.stats-bar-fill,
-	.update-bar,
 	.claim-pill { animation: none !important; transition: none !important; }
 	.claim-pill-spin { animation-duration: 2s; }
 }
 
 :root[data-theme="light"] .claim-pill,
-:root[data-theme="light"] .update-bar { background: #ffffff; box-shadow: 0 16px 40px -18px rgba(15, 23, 42, 0.4); }
+
 :root[data-theme="light"] .stats-tile,
 :root[data-theme="light"] .stats-bars,
 :root[data-theme="light"] .stats-recent-item,
-:root[data-theme="light"] .version-item { background: rgba(15, 23, 42, 0.035); }
 :root[data-theme="light"] .lock-card { background: #ffffff; box-shadow: 0 30px 80px rgba(15, 23, 42, 0.35); }
 :root[data-theme="light"] .lock-veil { background: rgba(238, 241, 247, 0.8); }
 

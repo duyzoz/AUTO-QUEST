@@ -1,11 +1,12 @@
 'use strict';
 
-/* #106 — Service Worker: chỉ cache VỎ ỨNG DỤNG (cùng origin).
+/* Service Worker: chỉ cache VỎ ỨNG DỤNG (cùng origin).
    Tuyệt đối KHÔNG đụng request Discord/hCaptcha: mọi request khác origin đi thẳng.
-   Chiến lược: stale-while-revalidate cho tài nguyên tĩnh; network-first cho
-   điều hướng (để bản mới lên ngay khi có mạng, offline vẫn mở được vỏ). */
+   Web deploy thẳng qua Cloudflare mỗi khi main đổi nên KHÔNG còn popup cập nhật:
+   SW mới tự kích hoạt ngay (skipWaiting), file app lấy network-first để reload
+   sau deploy là bản mới nhất, cache chỉ là dự phòng khi ngoại tuyến. */
 
-const VERSION = 'autoquest-shell-v15';
+const VERSION = 'autoquest-shell-v16';
 /* Waves#158: cache riêng cho ảnh/video CDN Discord (không đụng API
  * discord.com, không đụng token/code — chỉ GET ảnh/video từ CDN). */
 const CDN_CACHE = 'autoquest-cdn-v1';
@@ -37,94 +38,28 @@ self.addEventListener('install', (event) => {
 			.then((cache) => cache.addAll(SHELL))
 			.catch(() => {
 				/* thiếu file nào đó không được làm chết SW */
-			}),
-		// Wave#123: bản mới CHỜ người dùng bấm "Cập nhật" (postMessage SKIP_WAITING)
-		// thay vì tự nhảy — tránh reload giữa lúc đang cày nhiệm vụ.
+			})
+			.then(() => self.skipWaiting()),
+		// Không còn popup cập nhật: SW mới tự kích hoạt ngay khi cài xong.
+		// Trang đang mở không tự reload giữa lúc đang cày; lần reload sau
+		// deploy sẽ lấy file mới nhờ network-first ở dưới.
 	);
 });
 
 const ALLOWED_ORIGIN = self.location.origin;
 
-/* Waves#183: verify the waiting bundle against integrity.json before
-   activating. Returns SW_VERIFIED + skipWaiting only on a full match;
-   on any fetch/hash mismatch it reports SW_VERIFY_FAILED and does NOT
-   activate, so a corrupt bundle can never be forced in mid-run. */
-async function verifyAndActivate(event) {
-	try {
-		const integRes = await fetch(new URL('integrity.json', self.location.href), { cache: 'no-store' });
-		if (!integRes.ok) throw new Error('integrity fetch failed');
-		const manifest = await integRes.json();
-		const files = (manifest && manifest.files) || {};
-		const targets = ['renderer.js', 'web/engine-bundle.js'];
-		for (const name of targets) {
-			const expected = files[name];
-			if (!expected) continue;
-			// Waves#229: one manifest key can resolve to different URLs in the
-			// dev layout and the web-dist layout (SW served from the app root
-			// in both, but the engine bundle path differs by host setup).
-			// Try each candidate in order and accept ONLY on a hash match;
-			// if every candidate fails, fall through to the fail-safe below
-			// (no activation). A 404 on one candidate is never a pass.
-			const candidates = [name];
-			if (name.startsWith('web/')) candidates.push(name.slice(4));
-			if (!name.includes('/')) candidates.push('web/' + name);
-			let buf = null;
-			let fetched = false;
-			for (const cand of candidates) {
-				const res = await fetch(new URL(cand, self.location.href), { cache: 'no-store' }).catch(() => null);
-				if (res && res.ok) { buf = await res.arrayBuffer(); fetched = true; break; }
-			}
-			if (!fetched || buf === null) throw new Error('bundle fetch failed: ' + name);
-			const digest = await crypto.subtle.digest('SHA-256', buf);
-			let bin = '';
-			const bytes = new Uint8Array(digest);
-			for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
-			const actual = btoa(bin);
-			if (actual !== expected) throw new Error('hash mismatch: ' + name);
-		}
-		try { event.source.postMessage({ type: 'SW_VERIFIED' }); } catch {}
-		self.skipWaiting();
-	} catch (err) {
-		try { event.source.postMessage({ type: 'SW_VERIFY_FAILED', message: String((err && err.message) || err) }); } catch {}
-	}
-}
-
 self.addEventListener('message', (event) => {
-	/* Waves#184: accept only well-formed, same-origin messages. Anything
-	   else (wrong origin, no source, unknown type, non-object payload)
-	   is rejected silently — no state change, no activation. */
+	// Chỉ còn một lệnh duy nhất: xóa cache CDN (dọn ảnh/video Discord đã cache).
+	// Không còn lệnh cập nhật thủ công nào vì không còn khái niệm
+	// phiên bản cập nhật — SW mới tự kích hoạt ở install.
 	const data = event.data;
 	if (!data || typeof data !== 'object' || Array.isArray(data)) return;
-	if (typeof data.type !== 'string') return;
-	const ALLOWED_TYPES = ['SKIP_WAITING', 'GET_VERSION', 'CLEAR_CDN_CACHE', 'VERIFY_AND_ACTIVATE'];
-	if (!ALLOWED_TYPES.includes(data.type)) return;
-	/* Wave#134 (audit): trước đây LỆNH SKIP_WAITING chấp nhận từ mọi nguồn ⇒ bất kỳ
-	   script nào chạy trong trang (kể cả SDK bên thứ ba) đều ép kích hoạt bản SW đang
-	   chờ giữa lúc người dùng đang thao tác. Nay chỉ nhận message từ client thật, đúng
-	   origin của chính app. Nút "Áp dụng bản cập nhật" vẫn chạy vì nó gửi từ page. */
+	if (data.type !== 'CLEAR_CDN_CACHE') return;
 	if (event.origin && event.origin !== ALLOWED_ORIGIN) return;
 	const src = event.source;
 	if (!src || typeof src.postMessage !== 'function') return;
 	if (!String(src.url || '').startsWith(ALLOWED_ORIGIN)) return;
-	if (data.type === 'CLEAR_CDN_CACHE') {
-		caches.delete(CDN_CACHE).then(() => { try { event.source.postMessage({ type: 'CDN_CACHE_CLEARED' }); } catch {} }).catch(() => {});
-		return;
-	}
-	if (data.type === 'VERIFY_AND_ACTIVATE') {
-		verifyAndActivate(event);
-		return;
-	}
-	if (data.type === 'SKIP_WAITING') {
-		self.skipWaiting();
-		return;
-	}
-	if (data.type === 'GET_VERSION') {
-		try {
-			event.source.postMessage({ type: 'SW_VERSION', version: VERSION });
-		} catch {
-			/* ignore */
-		}
-	}
+	caches.delete(CDN_CACHE).then(() => { try { event.source.postMessage({ type: 'CDN_CACHE_CLEARED' }); } catch {} }).catch(() => {});
 });
 
 self.addEventListener('activate', (event) => {
@@ -228,18 +163,17 @@ self.addEventListener('fetch', (event) => {
 		return;
 	}
 
+	// Network-first cho file app: reload sau deploy Cloudflare là bản mới nhất.
+	// Chỉ khi mất mạng mới dùng bản cache (dự phòng ngoại tuyến, không phải "cập nhật").
 	event.respondWith(
-		caches.match(req).then((hit) => {
-			const network = fetch(req)
-				.then((res) => {
-					if (res && res.ok) {
-						const copy = res.clone();
-						caches.open(VERSION).then((c) => c.put(req, copy)).catch(() => {});
-					}
-					return res;
-				})
-				.catch(() => hit);
-			return hit || network;
-		}),
+		fetch(req)
+			.then((res) => {
+				if (res && res.ok) {
+					const copy = res.clone();
+					caches.open(VERSION).then((c) => c.put(req, copy)).catch(() => {});
+				}
+				return res;
+			})
+			.catch(() => caches.match(req)),
 	);
 });
