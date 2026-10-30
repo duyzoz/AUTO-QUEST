@@ -53,7 +53,6 @@ const ui = {
 	themeSystem: el('themeSystem'),
 	btnDrawer: el('btnDrawer'),
 	btnTopbarAccount: el('btnTopbarAccount'),
-	navAccount: el('navAccount'),
 	drawerOverlay: el('drawerOverlay'),
 	sidebar: el('sidebar'),
 	selectAll: el('selectAll'),
@@ -7261,19 +7260,6 @@ if (ui.btnTopbarAccount) ui.btnTopbarAccount.addEventListener('click', () => {
 	if (ui.sidebar && ui.sidebar.classList.contains('open')) closeDrawer({ returnFocus: false });
 	openAccountSheet();
 });
-if (ui.navAccount) ui.navAccount.addEventListener('click', () => {
-	// Mục "Tài khoản" CHỈ dành cho mobile (theo yêu cầu của Ethan):
-	// CSS đã ẩn #navAccount ở ≥1024px nên trên desktop — Chrome hay
-	// bất kỳ trình duyệt nào — mục này không hiện, không bấm được, và
-	// handler này cũng không được phép mở gì ở desktop. Trên desktop,
-	// tài khoản vẫn vào bằng hàng profile ở đáy sidebar (popout cũ).
-	// Chỉ layout mobile (≤1023px) mới: đóng drawer + mở bottom sheet.
-	if (isMobileLayout()) {
-		closeDrawer({ returnFocus: false });
-		openAccountSheet();
-	}
-});
-
 /* ---------------- User Actions ---------------- */
 
 function validate() {

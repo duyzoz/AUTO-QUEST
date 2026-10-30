@@ -840,24 +840,23 @@ check('Waves#242: dvh đặt sau vh cho shell/modal (fallback trước, hiện �
 check('Waves#243/#245: topbar account + bottom sheet tài khoản (mobile), tái dùng handler cũ', () => {
 	const html = read(path.join(APP, 'index.html'));
 	const js = read(path.join(APP, 'renderer.js'));
-	for (const id of ['btnTopbarAccount', 'navAccount', 'accountSheetVeil', 'sheetName', 'sheetBalance', 'btnSheetSwitch', 'btnSheetLogout', 'btnSheetClose']) assert(html.includes('id="' + id + '"'), 'thiếu id HTML: ' + id);
+	for (const id of ['btnTopbarAccount', 'accountSheetVeil', 'sheetName', 'sheetBalance', 'btnSheetSwitch', 'btnSheetLogout', 'btnSheetClose']) assert(html.includes('id="' + id + '"'), 'thiếu id HTML: ' + id);
 	assert(/openAccountSheet\(\)/.test(js) && /closeAccountSheet\(/.test(js), 'thiếu hàm mở/đóng sheet');
 	assert(/openAccSw\(\)/.test(js), 'sheet phải tái dùng openAccSw');
 	assert(/openLogoutModal\(\)/.test(js), 'sheet phải tái dùng openLogoutModal');
 	assert(/isMobileLayout\(\)/.test(js), 'mobile mới dùng sheet thay .up-pop');
 	return 'topbar account + sheet + nav shortcut có đủ';
 });
-check('navAccount CHỈ mobile: desktop (≥1024px, mọi trình duyệt) cấm hiện, handler không mở gì ở desktop', () => {
-	const css = read(path.join(APP, 'styles.css'));
+check('XOA SACH navAccount: khong con code dead cua muc Tai khoan trong sidebar', () => {
+	const html = read(path.join(APP, 'index.html'));
 	const js = read(path.join(APP, 'renderer.js'));
-	const desktop = css.match(/@media \(min-width: 1024px\) \{[\s\S]*?\n\}/);
-	assert(desktop && /#navAccount \{ display: none !important;/.test(desktop[0]), '#navAccount phải display:none ở ≥1024px');
-	const m = js.match(/navAccount\.addEventListener\('click'[\s\S]*?\n\}\);/);
-	assert(m, 'không tìm thấy handler navAccount');
-	const block = m[0];
-	assert(/isMobileLayout\(\)/.test(block) && /openAccountSheet\(\)/.test(block), 'chỉ mobile mới mở sheet');
-	assert(!/upRow\.click\(\)/.test(block) && !/openAccSw\(\)/.test(block), 'handler navAccount không được mở popout/modal ở desktop');
-	return 'navAccount mobile-only: ẩn desktop + handler chỉ mở sheet khi mobile';
+	const css = read(path.join(APP, 'styles.css'));
+	const mobile = read(path.join(APP, 'mobile.css'));
+	assert(!html.includes('navAccount'), 'index.html con navAccount');
+	assert(!js.includes('navAccount'), 'renderer.js con navAccount');
+	assert(!css.includes('navAccount'), 'styles.css con navAccount');
+	assert(!mobile.includes('navAccount'), 'mobile.css con navAccount');
+	return 'khong con navAccount trong HTML/JS/CSS';
 });
 check('Waves#244/#249/#250: drawer sticky profile, chạm 44px, safe-area', () => {
 	const mobile = read(path.join(APP, 'mobile.css'));
