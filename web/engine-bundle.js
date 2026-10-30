@@ -736,6 +736,11 @@ class QuestManager {
             const cfg = quest.raw?.config;
             const v2 = cfg?.task_config_v2?.tasks;
             const v1 = cfg?.task_config?.tasks;
+            const usable = (tasks) => !!tasks && typeof tasks === 'object' && Object.values(tasks).some((e) => e != null && (typeof e !== 'object' || Object.keys(e).length > 0));
+            if (usable(v2))
+                return v2;
+            if (usable(v1))
+                return v1;
             if (v2 && typeof v2 === 'object')
                 return v2;
             if (v1 && typeof v1 === 'object')
@@ -793,9 +798,14 @@ class QuestManager {
         // Discord KHÔNG phải lúc nào cũng trả `user_status.progress` (một số quest
         // chỉ trả `stream_progress_seconds`). Nếu progress rỗng, đọc thẳng
         // `stream_progress_seconds` để tiến độ "Chưa làm" KHÔNG bị hiển thị 0% sai.
-        const sps = Number(quest.userStatus?.stream_progress_seconds);
-        if (Number.isFinite(sps) && sps > 0)
-            return sps;
+        // Waves#144: chỉ áp dụng fallback này cho đúng task stream
+        // (WATCH_STREAM / STREAM_ON_DESKTOP) — task khác mà lấy
+        // stream_progress_seconds thì tiến độ hiển thị sẽ là của task khác.
+        if (name === 'WATCH_STREAM' || name === 'STREAM_ON_DESKTOP') {
+            const sps = Number(quest.userStatus?.stream_progress_seconds);
+            if (Number.isFinite(sps) && sps > 0)
+                return sps;
+        }
         return 0;
     }
     /**
@@ -1105,17 +1115,26 @@ class QuestManager {
             const status = res && res.user_status ? res.user_status : res;
             quest.updateUserStatus(status);
             const claimedAt = quest.userStatus?.claimed_at;
+            // Waves#135 — unified claim truth (see engine-src): 2xx without
+            // claimed_at is not confirmed. Report confirmed:false, return false.
             if (!claimedAt) {
-                console.warn(`[Cảnh báo] Discord trả 2xx cho "${name}" nhưng chưa thấy claimed_at — sẽ xác nhận lại khi quét.`);
+                console.warn(`[Cảnh báo] Discord trả 2xx cho "${name}" nhưng chưa thấy claimed_at — chưa tính là đã nhận, sẽ xác nhận lại khi quét.`);
+                (0, events_1.report)('quest:claim', {
+                    id: QuestManager.getQuestId(quest),
+                    name,
+                    orbs,
+                    rewardName,
+                    confirmed: false,
+                });
+                return false;
             }
             console.log(`ĐÃ NHẬN THƯỞNG: "${name}" -> Nhận: ${rewardName}!`);
-            // Nhận thưởng xong → event riêng 'quest:claim' (UI chuyển tab "Đã làm").
             (0, events_1.report)('quest:claim', {
                 id: QuestManager.getQuestId(quest),
                 name,
                 orbs,
                 rewardName,
-                confirmed: Boolean(claimedAt),
+                confirmed: true,
             });
             return true;
         }
@@ -1136,10 +1155,15 @@ class QuestManager {
         // Một số phiên bản để ở .body / .data → gộp cả 3 cho chắc.
         const rawError = err?.rawError || err?.body || err?.data || {};
         const captchaData = err?.captcha ?? rawError;
-        const isCaptcha = !!rawError.captcha_key ||
-            !!captchaData?.captcha_sitekey ||
-            message.includes('No Description') ||
-            message.toLowerCase().includes('captcha');
+        // Waves#136 — strict captcha classification: message text alone
+        // (including "captcha" or "No Description") NEVER classifies an
+        // error as captcha. Only structured captcha fields do.
+        const sitekey136 = captchaData?.captcha_sitekey || rawError?.captcha_sitekey || '';
+        const sessionId136 = captchaData?.captcha_session_id || rawError?.captcha_session_id || '';
+        const hasCaptchaPayload136 =
+            !!captchaData?.captcha_key || !!captchaData?.captcha_rqdata || !!captchaData?.captcha_rqtoken ||
+            !!rawError?.captcha_key || !!rawError?.captcha_rqdata || !!rawError?.captcha_rqtoken;
+        const isCaptcha = !!sitekey136 || (!!sessionId136 && hasCaptchaPayload136);
         if (isCaptcha) {
             // Trích ĐÚNG các trường Discord trả (xem interface CaptchaDataFromRequest).
             const captcha = {
@@ -1170,14 +1194,16 @@ class QuestManager {
                 });
                 return;
             }
-            // Có cờ captcha nhưng Discord không kèm sitekey → báo để mở Kho quà thủ công.
-            console.log(`Nhiệm vụ "${name}" đã hoàn thành 100% nhưng Discord yêu cầu xác minh (không kèm sitekey).`);
-            (0, events_1.report)('quest:done', {
+            // Waves#136 — structured captcha fields exist but no sitekey:
+            // per-quest BLOCKED state, never a normal "done" event.
+            console.log(`Nhiệm vụ "${name}" bị chặn xác minh: Discord yêu cầu xác minh nhưng không kèm sitekey.`);
+            (0, events_1.report)('quest:blocked', {
                 id: QuestManager.getQuestId(quest),
                 name,
                 orbs,
                 rewardName,
-                note: 'Discord yêu cầu xác minh — mở Kho quà để nhận thủ công',
+                reason: 'Discord yêu cầu xác minh nhưng không cấp sitekey — mở Discord để nhận thủ công.',
+                captcha,
             });
             return;
         }
@@ -1314,11 +1340,39 @@ class QuestManager {
         const maxFuture = 10, speed = 7, interval = 7;
         const enrolledAt = new Date(quest.userStatus?.enrolled_at).getTime();
         let completed = false;
+        // Waves#138 — video loop guard (mirrors engine-src): fail fast on
+        // missing/invalid/far-future enrolled_at instead of looping silently.
+        if (!Number.isFinite(enrolledAt)) {
+            this.failQuest(quest, questName, 'Không xác định được thời điểm nhận nhiệm vụ (enrolled_at thiếu hoặc không hợp lệ) — không thể tính tiến độ video.');
+            return;
+        }
+        if (enrolledAt > Date.now() + 60000) {
+            this.failQuest(quest, questName, 'Thời điểm nhận nhiệm vụ (enrolled_at) ở tương lai — không thể tính tiến độ video, hãy quét lại.');
+            return;
+        }
         console.log(`Đang giả lập xem video nhiệm vụ: "${questName}" (${secondsNeeded} giây)...`);
+        let videoIterations = 0;
+        const maxVideoIterations = Math.ceil(Math.max(secondsNeeded, 0) / speed) + 600;
+        let stallIterations = 0;
+        const maxStallIterations = 60;
         while (true) {
+            videoIterations++;
+            if (videoIterations > maxVideoIterations) {
+                this.failQuest(quest, questName, 'Hết thời gian chờ tiến độ video — vòng lặp đã vượt giới hạn an toàn mà chưa hoàn thành.');
+                return;
+            }
             const maxAllowed = Math.floor((Date.now() - enrolledAt) / 1000) + maxFuture;
             const diff = maxAllowed - secondsDone;
             const timestamp = secondsDone + speed;
+            if (diff < speed) {
+                stallIterations++;
+                if (stallIterations >= maxStallIterations) {
+                    this.failQuest(quest, questName, 'Tiến độ video không tăng trong 420 giây — có thể enrolled_at hoặc giới hạn thời gian của Discord không khớp, đã dừng thay vì treo im.');
+                    return;
+                }
+            } else {
+                stallIterations = 0;
+            }
             if (diff >= speed) {
                 const res = (await this.client.rest.post(`/quests/${quest.id}/video-progress`, {
                     body: {
@@ -1973,7 +2027,13 @@ class Utils extends null {
         myHeaders.append('accept-language', 'en-US');
         myHeaders.append('x-debug-options', 'bugReporterEnabled');
         myHeaders.append('x-discord-locale', 'en-US');
-        myHeaders.append('x-discord-timezone', 'Asia/Saigon');
+        // Waves#140: timezone from the system, not a hardcoded Asia/Saigon.
+        try {
+            myHeaders.append('x-discord-timezone', Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Saigon');
+        }
+        catch {
+            myHeaders.append('x-discord-timezone', 'Asia/Saigon');
+        }
         if (isAndroidRequest) {
             myHeaders = Utils.mergeHeaders(myHeaders, Utils.makeAndroidHeaders(true));
         }
@@ -1992,7 +2052,11 @@ class Utils extends null {
         }
         myHeaders.append('pragma', 'no-cache');
         myHeaders.append('priority', 'u=1, i');
-        myHeaders.append('sec-ch-ua', '"Not)A;Brand";v="8", "Chromium";v="138"');
+        // Waves#140: derive sec-ch-ua from the UA's Chrome major (see TS utils).
+        // A hardcoded 138 while the UA claimed 148 was a drift signal.
+        var chromeMajorMatch = constants_1.Constants.USER_AGENT.match(/Chrome\/(\d+)\./);
+        var chromeMajor = chromeMajorMatch ? chromeMajorMatch[1] : '0';
+        myHeaders.append('sec-ch-ua', '"Not)A;Brand";v="8", "Chromium";v="' + chromeMajor + '"');
         myHeaders.append('sec-ch-ua-mobile', '?0');
         myHeaders.append('sec-ch-ua-platform', '"Windows"');
         myHeaders.append('sec-fetch-dest', 'empty');
@@ -2188,9 +2252,12 @@ function makeClientShim(env, require) {
 
 			var out = await once();
 			if (out.res.status === 429) {
+				// Waves#142 — unified 429 policy: wait the FULL retry_after
+				// Discord gave (no 5s/10s cap, no early retry), then retry
+				// once. An invalid retry_after falls back to 2s. The user
+				// can still Stop the worker at any time to terminate.
 				var wait = Number(out.data && out.data.retry_after);
 				if (!isFinite(wait) || wait < 0) wait = 2;
-				wait = Math.min(wait, 5);
 				await new Promise(function (r) { setTimeout(r, Math.ceil(wait * 1000) + 250); });
 				out = await once();
 			}

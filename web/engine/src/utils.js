@@ -13,7 +13,13 @@ class Utils extends null {
         myHeaders.append('accept-language', 'en-US');
         myHeaders.append('x-debug-options', 'bugReporterEnabled');
         myHeaders.append('x-discord-locale', 'en-US');
-        myHeaders.append('x-discord-timezone', 'Asia/Saigon');
+        // Waves#140: timezone from the system, not a hardcoded Asia/Saigon.
+        try {
+            myHeaders.append('x-discord-timezone', Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Saigon');
+        }
+        catch {
+            myHeaders.append('x-discord-timezone', 'Asia/Saigon');
+        }
         if (isAndroidRequest) {
             myHeaders = Utils.mergeHeaders(myHeaders, Utils.makeAndroidHeaders(true));
         }
@@ -32,7 +38,11 @@ class Utils extends null {
         }
         myHeaders.append('pragma', 'no-cache');
         myHeaders.append('priority', 'u=1, i');
-        myHeaders.append('sec-ch-ua', '"Not)A;Brand";v="8", "Chromium";v="138"');
+        // Waves#140: derive sec-ch-ua from the UA's Chrome major (see TS utils).
+        // A hardcoded 138 while the UA claimed 148 was a drift signal.
+        var chromeMajorMatch = constants_1.Constants.USER_AGENT.match(/Chrome\/(\d+)\./);
+        var chromeMajor = chromeMajorMatch ? chromeMajorMatch[1] : '0';
+        myHeaders.append('sec-ch-ua', '"Not)A;Brand";v="8", "Chromium";v="' + chromeMajor + '"');
         myHeaders.append('sec-ch-ua-mobile', '?0');
         myHeaders.append('sec-ch-ua-platform', '"Windows"');
         myHeaders.append('sec-fetch-dest', 'empty');

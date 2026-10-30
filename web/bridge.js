@@ -422,6 +422,11 @@
 		return run;
 	}
 
+	/** Strip tokens from any account list returned to page scripts. */
+	function stripAccountsForReturn(accounts) {
+		return (accounts || []).map(({ token, ...a }) => a);
+	}
+
 	/** Đọc → sửa → ghi danh sách account, y như mutateAccounts bên main.js. */
 	function mutateAccounts(mutator) {
 		return withConfigLock(async () => {
@@ -434,6 +439,14 @@
 				result.activeIdx >= 0 && result.accounts[result.activeIdx]
 					? result.accounts[result.activeIdx].token
 					: cfg.token || '';
+			// Waves#141: writeConfig still needs the full accounts (with
+			// tokens) internally, but the RETURNED value must never carry
+			// tokens to page scripts. Previously mutateAccounts returned
+			// `result` verbatim, so accountsAdd/accountsRemove/accountsSetActive
+			// all leaked every stored token to any script on the page —
+			// bypassing the tokenReveal() gesture gate entirely. The renderer
+			// already fetches a switched account's token via tokenReveal(),
+			// so nothing legitimate needs the token in this return value.
 			await writeConfig({
 				token: mainToken,
 				remember: cfg.remember,
@@ -447,7 +460,12 @@
 				accounts: result.accounts,
 				activeIdx: result.activeIdx,
 			});
-			return result;
+			// Waves#141: strip top-level token (if any) and per-account tokens.
+			const { token: _returnedToken, ...strippedResult } = result;
+			return {
+				...strippedResult,
+				accounts: stripAccountsForReturn(result.accounts),
+			};
 		});
 	}
 
@@ -855,14 +873,18 @@
 
 			let balance = null;
 			let source = 'wallet';
-			if (walletRes && walletRes.res.ok) {
-				const w = walletRes.data;
-				if (w && typeof w.balance === 'number' && Number.isFinite(w.balance)) balance = w.balance;
-			}
+			// Waves#145: track each source separately so the UI can say
+			// WHICH number failed instead of silently showing 0. A wallet
+			// 200 with a non-numeric balance is NOT a wallet success, and
+			// a claimed-list 200 with a non-array quests field is NOT a
+			// claimed-list success — both used to degrade to balance 0.
+			const walletOk = Boolean(walletRes && walletRes.res.ok && typeof walletRes.data?.balance === 'number' && Number.isFinite(walletRes.data.balance));
+			if (walletOk) balance = walletRes.data.balance;
 
 			let claimedQuests = [];
-			if (claimedRes && claimedRes.res.ok) {
-				claimedQuests = Array.isArray(claimedRes.data?.quests) ? claimedRes.data.quests : [];
+			const claimedOk = Boolean(claimedRes && claimedRes.res.ok && Array.isArray(claimedRes.data?.quests));
+			if (claimedOk) {
+				claimedQuests = claimedRes.data.quests;
 			}
 
 			if (balance === null) {
@@ -884,7 +906,7 @@
 				}
 			}
 
-			if (balance === null || (!walletRes?.res.ok && !claimedRes?.res.ok)) {
+			if (balance === null || (!walletOk && !claimedOk)) {
 				const status = walletRes?.res.status || claimedRes?.res.status || 0;
 				return {
 					ok: false,
@@ -893,7 +915,12 @@
 			}
 
 			let pendingClaim = 0;
-			if (allRes && allRes.res.ok) {
+			// Waves#145: if the quests list fails, pending claim is UNKNOWN,
+			// not 0. Returning pendingClaim 0 here used to make the UI say
+			// "no Orbs awaiting claim" when Discord simply did not answer.
+			const questsOk = Boolean(allRes && allRes.res.ok && Array.isArray(allRes.data?.quests));
+			const pendingUnknown = !questsOk;
+			if (questsOk) {
 				const quests = Array.isArray(allRes.data?.quests) ? allRes.data.quests : [];
 				for (const q of quests) {
 					if (!q || q.preview === true) continue;
@@ -909,7 +936,7 @@
 				}
 			}
 
-			return { ok: true, balance, pendingClaim, source, totalQuests: claimedQuests.length };
+			return { ok: true, balance, pendingClaim, pendingUnknown, source, walletOk, claimedOk, questsOk, partial: source !== 'wallet' || pendingUnknown, totalQuests: claimedQuests.length };
 		} catch (err) {
 			return { ok: false, message: `Không kết nối được Discord: ${err.message}` };
 		}
@@ -969,15 +996,12 @@
 				signal: identity.timeoutSignal(20000),
 			}).then(async (res) => ({ res, data: await res.json().catch(() => null) }));
 
-		let out = await send();
-		if (out.res.status === 429) {
-			let waitSec = Number(out.data?.retry_after);
-			if (!Number.isFinite(waitSec) || waitSec < 0) waitSec = 3;
-			waitSec = Math.min(waitSec, 10);
-			await sleep(Math.ceil(waitSec * 1000) + 250);
-			out = await send();
-		}
-		return out;
+		// Waves#142 — unified 429 policy: do NOT retry here with a capped
+		// wait (the old code capped retry_after at 10s and retried early,
+		// which is exactly how you get a second 429). Return the 429 so
+		// enqueueClaim() can block the NEXT claim for the FULL retry_after,
+		// and the caller (renderer) can schedule a queue resume after it.
+		return await send();
 	}
 
 	/**
@@ -1024,8 +1048,12 @@
 			const out = await task();
 			lastClaimAt = Date.now();
 			if (out && out.res && out.res.status === 429) {
+				// Waves#142: respect the FULL retry_after, never cap it.
+				// If Discord did not give one, block for a safe 5s default
+				// instead of letting the next claim fire immediately.
 				const sec = Number(out.data?.retry_after);
-				if (Number.isFinite(sec) && sec > 0) claimBlockedUntil = Date.now() + sec * 1000;
+				const blockSec = Number.isFinite(sec) && sec > 0 ? sec : 5;
+				claimBlockedUntil = Date.now() + blockSec * 1000;
 			}
 			return out;
 		});
@@ -1033,7 +1061,51 @@
 		return run;
 	}
 
-	async function claimQuest(payload) {
+	/* ══════════ Waves#148: CHẨN ĐOÁN CLAIM — bản ghi claim gần nhất ═══════
+	   Ghi lại MỌI kết quả claim (bridge thủ công + worker engine qua
+	   handleWorkerMessage) để mục "Dữ liệu & chẩn đoán" hiển thị được:
+	   mã HTTP, quest id (đã che), tuổi phiên captcha, kết quả xác minh ví.
+	   KHÔNG BAO GIỜ chứa token, captcha_key, captcha_rqdata, captcha_rqtoken
+	   hay session id đầy đủ — chỉ phần đầu đã che để đối chiếu. */
+	let lastClaimDiag = null;
+	let captchaSessionAt = 0;
+	let captchaSessionMasked = '';
+	function maskDiagId(id) {
+		const s = String(id || '');
+		return s.length > 8 ? s.slice(0, 4) + '…' + s.slice(-4) : s ? '…' : '';
+	}
+	function maskCaptchaSession(sid) {
+		const s = String(sid || '');
+		return s ? s.slice(0, 6) + '…' : '';
+	}
+	function recordClaimDiag(partial) {
+		lastClaimDiag = {
+			at: new Date().toISOString(),
+			source: partial.source || 'bridge',
+			questId: maskDiagId(partial.questId),
+			status: partial.status ?? null,
+			code: partial.code ?? null,
+			confirmed: partial.confirmed ?? null,
+			orbs: partial.orbs ?? null,
+			captcha: !!partial.captcha,
+			captchaSitekey: !!partial.captchaSitekey,
+			verifiedVia: partial.verifiedVia || null,
+			message: maskSecrets(String(partial.message || '')).slice(0, 200),
+		};
+		return lastClaimDiag;
+	}
+	function claimDiagnostics() {
+		// Tuổi phiên captcha tính tại lúc đọc, không phải lúc claim.
+		const age = captchaSessionAt ? Math.max(0, Math.round((Date.now() - captchaSessionAt) / 1000)) : null;
+		return {
+			ok: true,
+			lastClaim: lastClaimDiag ? { ...lastClaimDiag, captchaSessionAgeSec: age } : null,
+			captchaSessionAgeSec: age,
+			captchaSession: captchaSessionMasked || null,
+		};
+	}
+
+	async function claimQuestImpl(payload) {
 		const token = String(payload?.token || '').trim();
 		const quest = payload?.quest || null;
 		const questId = String(payload?.questId || quest?.id || '').trim();
@@ -1099,8 +1171,14 @@
 				};
 			}
 			const captcha = extractCaptchaFromError(res.status, data);
+			if (captcha && !captcha.sitekey) {
+				// Waves#136: structured captcha fields but no sitekey — the
+				// widget cannot be rendered, so do not pretend a captcha
+				// modal can solve this. Report it as blocked per quest.
+				return { ok: false, captchaBlocked: true, captcha, status: res.status, message: 'Discord yêu cầu xác minh nhưng không cấp sitekey — mở Discord để nhận thủ công.' };
+			}
 			if (captcha) {
-				return { ok: false, captchaRequired: true, captcha, message: data?.message || 'Discord yêu cầu xác minh.' };
+				return { ok: false, captchaRequired: true, captcha, status: res.status, message: data?.message || 'Discord yêu cầu xác minh.' };
 			}
 			return {
 				ok: false,
@@ -1114,6 +1192,31 @@
 		} catch (err) {
 			return { ok: false, message: `Không kết nối được Discord: ${err.message}` };
 		}
+	}
+
+	/* Waves#148: wrapper duy nhất của claimQuest — impl trả kết quả gì thì
+	   bản ghi chẩn đoán ghi đúng thế đó, rồi mới trả về renderer. Không sửa
+	   logic claim bên trong impl. */
+	async function claimQuest(payload) {
+		const questId = String(payload?.questId || payload?.quest?.id || '');
+		const res = await claimQuestImpl(payload);
+		if (res && res.captchaRequired) {
+			captchaSessionAt = Date.now();
+			captchaSessionMasked = maskCaptchaSession(res.captcha && res.captcha.sessionId);
+		}
+		recordClaimDiag({
+			source: 'bridge',
+			questId,
+			status: res && typeof res.status === 'number' ? res.status : res && res.ok ? 200 : null,
+			code: res && typeof res.code === 'number' ? res.code : null,
+			confirmed: res && typeof res.confirmed === 'boolean' ? res.confirmed : null,
+			orbs: res && typeof res.orbs === 'number' ? res.orbs : null,
+			captcha: !!(res && (res.captchaRequired || res.captchaBlocked)),
+			captchaSitekey: !!(res && res.captcha && res.captcha.sitekey),
+			verifiedVia: res && res.claimedAt === 'verified' ? 'quests-list' : res && res.claimedAt ? 'response' : res && res.ok ? 'none' : null,
+			message: (res && res.message) || '',
+		});
+		return res;
 	}
 
 	/* ══════════════════════ 8. ENGINE (WEB WORKER) ══════════════════════════ */
@@ -1248,6 +1351,11 @@
 		if (msg.type === 'event') {
 			const evt = msg.event || {};
 			const data = evt.data || {};
+			// Waves#148: claim của worker engine cũng vào chẩn đoán (source worker
+			// — event engine không mang mã HTTP nên status/code để null).
+			if (evt.type === 'quest:claim') {
+				recordClaimDiag({ source: 'worker', questId: data.id, confirmed: typeof data.confirmed === 'boolean' ? data.confirmed : null, orbs: typeof data.orbs === 'number' ? data.orbs : null, message: data.note || '' });
+			}
 			if (evt.type === 'login') setState('running', { username: data.username });
 			if (evt.type === 'fatal') setState('error', { message: data.message });
 			emitTo('event', evt);
@@ -1637,6 +1745,7 @@
 					loopInterval: cfg.loopInterval,
 					autoScroll: cfg.autoScroll,
 					requestsThisSession: requestLog.length,
+					lastClaim: claimDiagnostics().lastClaim,
 				},
 			};
 		} catch (err) {
@@ -2257,7 +2366,10 @@
 			try {
 				return await mutateAccounts(({ accounts, activeIdx }) => {
 					const next = typeof idx === 'number' && idx >= 0 && idx < accounts.length ? idx : 0;
-					return { accounts, activeIdx: next, token: accounts[next] ? accounts[next].token : '' };
+					// Waves#141: do NOT return the token here. The renderer
+					// already calls tokenReveal() (gated on a real user gesture)
+					// after switching accounts; returning it here bypassed that gate.
+					return { accounts, activeIdx: next };
 				});
 			} catch (err) {
 				return { ok: false, message: err.message };
@@ -2300,6 +2412,7 @@
 		authCheck,
 		fetchOrbs,
 		claimQuest,
+		claimDiagnostics,
 
 		debugRawQuests: async () => ({ ok: false, message: 'Không hỗ trợ trên bản web.' }),
 		debugClaimOne: async () => ({ ok: false, message: 'Không hỗ trợ trên bản web.' }),
@@ -2343,6 +2456,11 @@
 		saveLog,
 
 		userTokenImportTxt: importTokenTxt,
+		// Waves#141 audit note (intentional exception, NOT a stored-account
+		// leak): userTokenTake returns a token the user JUST imported via a
+		// file picker in this same session, once, and then clears it. It does
+		// not return any stored account token. The stored-account rule above
+		// (tokenReveal gate only) still applies to all stored accounts.
 		userTokenTake: async () => {
 			if (!pendingUserToken) return { ok: false, message: 'Chưa nạp token tài khoản nào.' };
 			const t = pendingUserToken;

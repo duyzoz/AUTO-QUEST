@@ -1,7 +1,13 @@
 'use strict';
 
-/* Danh tính Discord dùng CHUNG cho bridge và engine trên web.
-   UA/XSP lấy từ chính trình duyệt nên khớp tuyệt đối, không giả lập. */
+/* Waves#140 — SINGLE IDENTITY SOURCE FOR THE WEB APP.
+   This file is the ONLY identity source for web requests: bridge direct
+   fetch (web/bridge.js) and the Worker engine (via the constants shim in
+   web/build-engine.js) both call AQIdentity.headers() / superProperties().
+   engine-src/src/constants.ts and web/engine/src/constants.js are REFERENCE
+   ONLY for the Node/Gateway design — they are NOT used for web requests
+   (the bundle shim replaces them with this file). Do not copy numbers
+   from them into web code, and do not add a second identity source. */
 (function (root) {
 	function b64Utf8(str) {
 		const bytes = new TextEncoder().encode(String(str));
@@ -35,7 +41,10 @@
 	})();
 
 	/* BUILD_NUMBER của Discord web tại thời điểm port (curl discord.com/app).
-	   Không cần luôn mới — REST quest không xác thực build, chỉ cần "trông như client thật". */
+	   PLACEHOLDER — refresh this from a real Discord web client when
+	   updating identity; it is not guaranteed to be the current build.
+	   REST quest does not authenticate the build, it only needs to look
+	   like a real client, but a stale build is still a drift signal. */
 	const WEB_BUILD_NUMBER = 653945;
 
 	function sessionId() {
@@ -99,12 +108,23 @@
 		client_build_number: 5169,
 		client_event_source: null,
 		client_launch_id: SESSION_LAUNCH,
-		launch_signature: '1771754995045142953',
+		// Waves#140: was a constant string shared by every account/session.
+		// Now per-session (SESSION_LAUNCH, generated at page load), so it
+		// cannot link accounts across sessions the way a constant could.
+		launch_signature: SESSION_LAUNCH,
 		client_app_state: 'active',
 		client_heartbeat_session_id: SESSION_HEARTBEAT,
 	};
 
 	const ANDROID_XSP = b64Utf8(JSON.stringify(ANDROID_PROPS));
+
+	// Waves#140: sec-ch-ua derived from the REAL browser Chrome major, so
+	// it can never drift from the User-Agent the way a hardcoded
+	// 'Chromium";v="138"' did while the UA claimed Chrome 148.
+	function secChUa() {
+		const major = chromeMajor && chromeMajor !== '0' ? chromeMajor : '0';
+		return '"Not)A;Brand";v="8", "Chromium";v="' + major + '"';
+	}
 
 	function headers(token, opts) {
 		opts = opts || {};
@@ -141,6 +161,9 @@
 		superProperties: superProperties,
 		androidProperties: function () { return JSON.parse(JSON.stringify(ANDROID_PROPS)); },
 		timeoutSignal: timeoutSignal,
+		secChUa: secChUa,
+		chromeMajor: chromeMajor,
+		webBuildNumber: WEB_BUILD_NUMBER,
 		base64: b64Utf8,
 		installationId: installationId,
 		userAgent: ua,
