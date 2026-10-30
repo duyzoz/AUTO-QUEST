@@ -647,10 +647,10 @@ class QuestManager {
         // Quét toàn bộ nhiệm vụ phụ / excluded_quests để không xót bất kỳ nhiệm vụ nào
         if (fetchExcludedQuests && Array.isArray(response.excluded_quests) && response.excluded_quests.length > 0) {
             console.log(`Tìm thấy ${response.excluded_quests.length} nhiệm vụ phụ/bổ sung. Đang nạp chi tiết để không xót nhiệm vụ...`);
-            for (const quest of response.excluded_quests) {
-                if (quest.id && !questManager.hasQuest(quest.id)) {
-                    await questManager.addExcludedQuest(quest.id);
-                }
+            // Waves#157: parallel excluded fetch, cap 4 per batch.
+            const pending = response.excluded_quests.filter((quest) => quest.id && !questManager.hasQuest(quest.id));
+            for (let i = 0; i < pending.length; i += 4) {
+                await Promise.all(pending.slice(i, i + 4).map((quest) => questManager.addExcludedQuest(quest.id)));
             }
         }
         return questManager;
@@ -933,6 +933,36 @@ class QuestManager {
      * - `rewardKind`: 'orbs' khi có orb_quantity, ngược lại 'item' (avatar decoration...).
      * - `rewardAsset`: asset ảnh/video của phần thưởng (chỉ có với reward dạng vật phẩm).
      */
+    // Waves#153 — defensive code-field scan (session memory only).
+    // No code field is confirmed in this codebase's Discord payloads.
+    // Scans a small whitelist (top level + one level of metadata/details)
+    // and returns value + field name; never logs the value. Empty when
+    // nothing matches, so the UI shows the Discord link, not a fake code.
+    static extractRewardCode(reward) {
+        const KEYS = ['code', 'redeem_code', 'reward_code', 'external_code', 'gift_code', 'voucher_code', 'promo_code', 'promotion_code', 'redemption_code', 'key'];
+        const ok = (v) => typeof v === 'string' && /^[A-Za-z0-9][A-Za-z0-9\-_]{3,127}$/.test(v.trim());
+        const scan = (obj) => {
+            if (!obj || typeof obj !== 'object')
+                return null;
+            for (const k of KEYS) {
+                if (ok(obj[k]))
+                    return { code: String(obj[k]).trim(), source: k };
+            }
+            for (const nest of ['metadata', 'details', 'data']) {
+                const inner = obj[nest];
+                if (inner && typeof inner === 'object') {
+                    for (const k of KEYS) {
+                        if (ok(inner[k]))
+                            return { code: String(inner[k]).trim(), source: `${nest}.${k}` };
+                    }
+                }
+            }
+            return null;
+        };
+        if (!reward)
+            return { code: '', source: '' };
+        return scan(reward) || { code: '', source: '' };
+    }
     static getQuestCardData(quest) {
         const cfg = quest.config;
         const assets = cfg?.assets;
@@ -955,11 +985,17 @@ class QuestManager {
         };
         const rewardAsset = pick(itemReward?.asset, itemReward?.asset_video);
         const rewardIsVideo = /\.mp4$/i.test(rewardAsset);
+        const codeFound = QuestManager.extractRewardCode(itemReward);
+        const rewardType = codeFound.code ? 'code' : orbCount > 0 ? 'orbs' : itemReward ? 'avatar' : 'other';
         return {
             hero: pick(assets?.hero, assets?.quest_bar_hero, assets?.hero_video),
             heroVideo: pick(assets?.hero_video) || null,
             gameTile: pick(assets?.game_tile_dark, assets?.game_tile_light, assets?.game_tile),
+            gameTileDark: pick(assets?.game_tile_dark),
+            gameTileLight: pick(assets?.game_tile_light),
             logotype: pick(assets?.logotype_dark, assets?.logotype_light, assets?.logotype),
+            logotypeDark: pick(assets?.logotype_dark),
+            logotypeLight: pick(assets?.logotype_light),
             publisher: messages?.game_publisher || '',
             gameTitle: messages?.game_title || '',
             // Waves 42 — LOGO CHUẨN THEO TỪNG NHIỆM VỤ.
@@ -976,6 +1012,9 @@ class QuestManager {
             rewardTitle: orbCount > 0 ? `Nhận ${orbCount} Orbs` : `Nhận ${itemName}`,
             rewardAsset,
             rewardIsVideo,
+            rewardType,
+            rewardCode: codeFound.code,
+            rewardCodeSource: codeFound.source,
             rewardName: orbCount > 0 ? `${orbCount} Discord Orbs` : itemName,
             // Waves 32: platform THẬT từ rewards_config (Discord yêu cầu đúng giá trị này
             // khi claim; gửi sai/0 có thể bị từ chối). Gửi kèm lên UI để claim dùng đúng.

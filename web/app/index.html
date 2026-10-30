@@ -11,6 +11,12 @@
 		<meta name="referrer" content="no-referrer" />
 		<title>ZoZ Development</title>
 		<link rel="manifest" href="manifest.webmanifest" />
+		<!-- Waves#156: favicon thật từ logo ZoZ đã có sẵn (trước đây chỉ có
+		     manifest, tab trình duyệt rơi về icon mặc định). -->
+		<link rel="icon" type="image/png" sizes="256x256" href="assets/zoZ-logo-ico.png" />
+		<link rel="apple-touch-icon" href="assets/zoZ-logo-ico.png" />
+		<meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff" />
+		<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0b0e18" />
 		<link rel="stylesheet" href="fonts.css" />
 		<link rel="stylesheet" href="styles.css" />
 		<link rel="stylesheet" href="mobile.css" />
@@ -337,6 +343,25 @@
 									<option value="manual">Cần làm thủ công</option>
 									<option value="urgent">Sắp hết hạn (3 ngày)</option>
 								</select>
+								<!-- Waves#161/#162/#167: chỉ hiện ở tab Đã làm -->
+								<span id="doneTools" hidden>
+									<select id="questDoneRewardFilter" class="custom-select quest-filter" aria-label="Lọc Đã làm theo loại thưởng">
+										<option value="all">Mọi loại thưởng</option>
+										<option value="orbs">Orb</option>
+										<option value="avatar">Avatar</option>
+										<option value="code">Mã code</option>
+										<option value="other">Khác</option>
+									</select>
+									<select id="questDoneSort" class="custom-select quest-filter" aria-label="Sắp xếp Đã làm">
+										<option value="claimed">Mới nhận nhất</option>
+										<option value="orbs">Nhiều Orb nhất</option>
+										<option value="name">Tên A–Z</option>
+									</select>
+									<button class="ghost-btn" id="btnExportDoneCsv" type="button">Xuất CSV</button>
+									<button class="ghost-btn" id="btnExportDoneJson" type="button">Xuất JSON</button>
+									<label class="check small"><input type="checkbox" id="chkExportCodes" /> Kèm code (chỉ phiên này)</label>
+									<button class="ghost-btn" id="btnClearDoneCache" type="button">Xóa cache Đã làm</button>
+								</span>
 								<button class="btn btn-primary quest-claim-all" id="btnClaimAll" type="button" hidden>Nhận tất cả</button>
 								<button class="chip chip-ghost claim-queue-chip" id="claimQueueChip" type="button" hidden
 									title="Tiếp tục nhận các nhiệm vụ đang chờ xác minh">Chờ xác minh: 0</button>
@@ -626,6 +651,7 @@
 									<span class="card-ico tint-emerald">
 										<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1 1 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></svg>
 									</span>
+									<img class="about-logo" src="assets/zoZ-logo.png" alt="ZoZ Development" width="72" height="72" />
 									<h2 class="card-title">Về ZoZ Development</h2>
 								</div>
 							</div>

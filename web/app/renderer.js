@@ -246,6 +246,14 @@ const ui = {
 	questFilter: el('questFilter'),
 	btnClaimAll: el('btnClaimAll'),
 	questFilterCount: el('questFilterCount'),
+	// Waves#161/#162/#167: công cụ riêng tab Đã làm
+	doneTools: el('doneTools'),
+	questDoneRewardFilter: el('questDoneRewardFilter'),
+	questDoneSort: el('questDoneSort'),
+	btnExportDoneCsv: el('btnExportDoneCsv'),
+	btnExportDoneJson: el('btnExportDoneJson'),
+	chkExportCodes: el('chkExportCodes'),
+	btnClearDoneCache: el('btnClearDoneCache'),
 	toast: el('toast'),
 };
 
@@ -589,6 +597,8 @@ function switchTab(tab) {
 	ui.questListActive.hidden = tab !== 'active';
 	ui.questListNew.hidden = tab !== 'new';
 	ui.questListDone.hidden = tab !== 'done';
+	// Waves#161/#162/#167: công cụ Đã làm chỉ hiện ở tab Đã làm.
+	if (ui.doneTools) ui.doneTools.hidden = tab !== 'done';
 	// Wave#111: chuyển tab phải tính lại thanh chọn + nút "Nhận tất cả"
 	// theo bộ lọc hiện tại (không chỉ dựa vào việc lưới có thẻ hay không).
 	renderQuests();
@@ -1184,6 +1194,7 @@ function isQuestFiltering() {
 
 function questMatchesFilter(q) {
 	if (!q || q.flag === 'gone') return false;
+	if (currentTab === 'done' && doneRewardFilter !== 'all' && rewardTypeOf(q) !== doneRewardFilter) return false;
 	if (questFilter === 'orbs' && !(Number(q.orbs) > 0)) return false;
 	if (questFilter === 'manual' && q.automatable !== false) return false;
 	if (questFilter === 'urgent') {
@@ -1274,12 +1285,82 @@ function appIconUrl(id, icon, size) {
 	return `${QCDN}app-icons/${sid}/${hash}.${ext}?size=${size || 128}`;
 }
 
-/** Ảnh logo THẬT của quest (không bao giờ trả logo Orb). '' nếu không có gì. */
+/** Ảnh logo THẬT của quest (không bao giờ trả logo Orb). '' nếu không có gì.
+ * Waves#155: chọn biến thể theo theme hiện tại — Sáng ưu tiên *_light,
+ * Tối ưu tiên *_dark — rồi fallback chéo sang biến thể còn lại, rồi
+ * logotype/game_tile cũ, cuối cùng là icon application. */
 function questLogoUrl(q) {
-	const direct = questAssetUrl(q.logotype) || questAssetUrl(q.gameTile);
-	if (direct) return direct;
+	// Đọc theme từ DOM (an toàn hơn biến let khai báo sau trong file).
+	const light = document.documentElement.dataset.theme === 'light';
+	const logoFor = (dark, lite) => (light ? lite || dark : dark || lite);
+	const chain = [
+		logoFor(q.logotypeDark, q.logotypeLight),
+		logoFor(q.logotypeLight, q.logotypeDark),
+		q.logotype,
+		logoFor(q.gameTileDark, q.gameTileLight),
+		logoFor(q.gameTileLight, q.gameTileDark),
+		q.gameTile,
+	];
+	for (const v of chain) {
+		const url = questAssetUrl(v);
+		if (url) return url;
+	}
 	return appIconUrl(q.appId, q.appIcon);
 }
+
+/* Waves#151/#161/#165/#168 — loại phần thưởng chính, dùng chung cho
+ * tile Đã làm, bộ lọc, badge và diagnostics. 'code' thắng 'orbs' vì một
+ * quest có code là quest code dù nó có kèm Orb hay không; 'avatar' là
+ * rewardKind=item (decoration/effect) có hoặc không có asset. */
+function rewardTypeOf(q) {
+	if (!q) return 'other';
+	if (q.rewardCode) return 'code';
+	if (Number(q.orbs) > 0) return 'orbs';
+	if (q.rewardKind === 'item') return 'avatar';
+	return q.rewardType || 'other';
+}
+function rewardTypeLabel(q) {
+	const en = typeof currentLang !== 'undefined' && currentLang === 'en';
+	const t = rewardTypeOf(q);
+	if (t === 'orbs') return 'Orbs';
+	if (t === 'avatar') return 'Avatar';
+	if (t === 'code') return en ? 'Code' : 'Mã code';
+	return en ? 'Reward' : 'Phần thưởng';
+}
+/* Waves#153 (renderer): quét code trong phản hồi claim (session only).
+ * Cùng whitelist với engine; không ghi log, không lưu cache/export. */
+function extractSessionCode(obj) {
+	if (!obj || typeof obj !== 'object') return '';
+	const KEYS = ['code', 'redeem_code', 'reward_code', 'external_code', 'gift_code', 'voucher_code', 'promo_code', 'promotion_code', 'redemption_code'];
+	const ok = (v) => typeof v === 'string' && /^[A-Za-z0-9][A-Za-z0-9\-_]{3,127}$/.test(v.trim());
+	for (const k of KEYS) if (ok(obj[k])) return String(obj[k]).trim();
+	for (const nest of ['metadata', 'details', 'data', 'reward']) {
+		const inner = obj[nest];
+		if (inner && typeof inner === 'object') {
+			for (const k of KEYS) if (ok(inner[k])) return String(inner[k]).trim();
+		}
+	}
+	return '';
+}
+
+/* Chữ ký đổi của một tile Đã làm: đổi loại/asset/code là phải dựng lại
+ * node, vì mặt trước tile phụ thuộc hoàn toàn vào chúng (#159). */
+function doneRewardSig(q) {
+	return `${q.rewardKind || 'orbs'}|${q.rewardAsset || ''}|${q.rewardCode ? 'code' : ''}`;
+}
+/* Waves#168: đếm ảnh hỏng để diagnostics báo được, không ghi vào log. */
+let assetFailCount = 0;
+const assetFailQuests = new Set();
+function noteAssetFailure(id) {
+	assetFailCount += 1;
+	if (id) assetFailQuests.add(String(id));
+}
+/* Waves#166: thời gian render lưới gần nhất (ms), diagnostics đọc. */
+let lastQuestRenderMs = 0;
+/* Waves#161: bộ lọc + sắp xếp riêng cho tab Đã làm. */
+let doneRewardFilter = 'all';
+let doneSort = 'claimed';
+const questRenderSig = new Map();
 
 /** Gán ảnh/video quest từ đường dẫn tương đối của API. Trả false nếu không có asset. */
 function setQuestImg(img, p) {
@@ -1434,6 +1515,8 @@ function buildQuestCard(q) {
 	node.className = 'qcard';
 	node.dataset.questId = q.id;
 	node.dataset.rewardKind = q.rewardKind || 'orbs';
+	// Waves#165: badge thẻ được tạo ở updateQuestCard (sau khi
+	// innerHTML dựng xong) để không bị template ghi đè.
 
 	// Chỉ nhiệm vụ CHƯA XONG mới chọn để cày; nhiệm vụ đã xong thì đi nhận thưởng.
 	const isDone = q.status === 'claimed' || q.status === 'claimable';
@@ -1588,6 +1671,14 @@ function updateQuestCard(node, q) {
 		: q.running
 			? 'running'
 			: q.flag || q.status;
+	let cardBadgeEl = node.querySelector('.reward-badge-card');
+	if (!cardBadgeEl) {
+		cardBadgeEl = document.createElement('span');
+		cardBadgeEl.className = 'reward-badge reward-badge-card';
+		cardBadgeEl.setAttribute('aria-label', rewardTypeLabel(q));
+		node.appendChild(cardBadgeEl);
+	}
+	if (cardBadgeEl.textContent !== rewardTypeLabel(q)) cardBadgeEl.textContent = rewardTypeLabel(q);
 	const sel = selected.has(q.id) ? '1' : '0';
 	if (node.dataset.selected !== sel) node.dataset.selected = sel;
 
@@ -1768,33 +1859,64 @@ function buildDoneTile(q) {
 	node.className = 'qdone';
 	node.dataset.questId = q.id;
 	node.dataset.rewardKind = q.rewardKind || 'orbs';
+	node.dataset.rewardSig = doneRewardSig(q);
+	node.dataset.rewardType = rewardTypeOf(q);
 
 	const isItem = q.rewardKind === 'item' && !!q.rewardAsset;
+	const isCode = !!q.rewardCode;
 	const orbs = Number(q.orbs) || 0;
 
 	// ---------- TẦNG A: mặt trước (Orb trên, logo nhiệm vụ dưới) ----------
 	const face = document.createElement('div');
 	face.className = 'qdone-face';
 
-	// A1 — logo ORB (trên) + số Orb
-	const orbRow = document.createElement('span');
-	orbRow.className = 'qdone-orbs';
-	const orbIco = document.createElement('img');
-	orbIco.className = 'qdone-orb';
-	orbIco.src = ORB_ICON_SRC;
-	orbIco.alt = '';
-	orbIco.setAttribute('aria-hidden', 'true');
-	orbIco.draggable = false;
-	const orbNum = document.createElement('span');
-	orbNum.className = 'qdone-orb-num';
-	orbNum.textContent = orbs > 0 ? String(orbs) : '—';
-	orbRow.append(orbIco, orbNum);
-	// Waves 46c — KHÔNG ẨN BADGE ORB NỮA (bro: "nhiều cái ko hiện logo orbs").
-	// Trước đây dòng `if (orbs <= 0) orbRow.hidden = true;` giấu cả logo Orb lẫn
-	// số Orb với MỌI nhiệm vụ thưởng vật phẩm (avatar decoration…) → bro thấy
-	// "nhiều cái không hiện logo Orbs". Nay logo Orb LUÔN hiện trên mọi ô;
-	// nhiệm vụ không có Orb thì chỗ số Orb ghi tên phần thưởng ngắn (hoặc "—"),
-	// nên ô nào cũng có logo Orb như bro yêu cầu.
+	// A1 — PHẦN THƯỞNG THẬT (Waves#151). Trước đây mọi ô đều vẽ logo Orb
+	// (xem Waves 46c) kể cả quest thưởng avatar/code. Nay: quest vật phẩm
+	// hiện đúng asset của nó, quest code hiện nhãn CODE, chỉ quest Orb
+	// mới hiện logo Orb. Asset hỏng → ẩn hàng này, logo game vẫn hiện.
+	let topRow;
+	if (isItem) {
+		const media = rewardMediaEl(q);
+		if (media) {
+			media.classList.add('qdone-reward');
+			media.loading = 'eager';
+			if (media.tagName === 'VIDEO') media.preload = 'metadata';
+			media.addEventListener('error', () => {
+				noteAssetFailure(q.id);
+				topRow.hidden = true;
+				showNameFallback();
+			}, { once: true });
+			topRow = document.createElement('span');
+			topRow.className = 'qdone-reward-row';
+			topRow.appendChild(media);
+		} else {
+			topRow = document.createElement('span');
+			topRow.className = 'qdone-reward-row';
+			topRow.hidden = true;
+		}
+	} else if (isCode) {
+		topRow = document.createElement('span');
+		topRow.className = 'qdone-reward-row';
+		const codeTag = document.createElement('span');
+		codeTag.className = 'qdone-code-tag';
+		codeTag.textContent = 'CODE';
+		topRow.appendChild(codeTag);
+	} else {
+		// Quest Orb: logo ORB (trên) + số Orb, như cũ.
+		topRow = document.createElement('span');
+		topRow.className = 'qdone-orbs';
+		const orbIco = document.createElement('img');
+		orbIco.className = 'qdone-orb';
+		orbIco.src = ORB_ICON_SRC;
+		orbIco.alt = '';
+		orbIco.setAttribute('aria-hidden', 'true');
+		orbIco.draggable = false;
+		const orbNum = document.createElement('span');
+		orbNum.className = 'qdone-orb-num';
+		orbNum.textContent = orbs > 0 ? String(orbs) : '—';
+		topRow.append(orbIco, orbNum);
+	}
+	const showNameFallback = () => { if (name && !name.textContent) name.textContent = doneTileGameLabel(q); if (name) name.hidden = !name.textContent; };
 
 	// A2 — logo nhiệm vụ/game (dưới). Waves 46c: LUÔN để trong DOM (chỉ ẩn khi
 	// chưa nạp xong / nạp lỗi) vì nay nó sống CHUNG với chữ tên game.
@@ -1821,7 +1943,12 @@ function buildDoneTile(q) {
 	name.textContent = doneTileGameLabel(q);
 	if (!name.textContent) name.hidden = true;
 
-	face.append(orbRow, logo, name);
+	// Waves#165: nhãn loại thưởng (chữ, không chỉ màu/icon).
+	const badge = document.createElement('span');
+	badge.className = 'reward-badge';
+	badge.textContent = rewardTypeLabel(q);
+	badge.setAttribute('aria-label', rewardTypeLabel(q));
+	face.append(topRow, logo, name, badge);
 
 	// ---------- TẦNG B: mặt sau, hiện NGAY TRONG ô khi rê chuột ----------
 	const info = document.createElement('div');
@@ -1831,6 +1958,12 @@ function buildDoneTile(q) {
 	node.title = ''; // tránh tooltip hệ thống chồng lên hiệu ứng trong ô
 	node.setAttribute('aria-label', doneTileAria(q, orbs));
 	node.append(face, info);
+	// Waves#152: bấm vào ô (chuột + cảm ứng) mở khung chi tiết, không
+	// chỉ hover. Hover cũ vẫn giữ nguyên qua CSS.
+	node.addEventListener('click', () => {
+		const fresh = quests.get(q.id) || q;
+		openDoneDetail(fresh, node);
+	});
 
 	// ---------- Nạp logo nhiệm vụ (leo thang logotype -> game_tile -> icon app) ----------
 	const chain = [
@@ -1849,6 +1982,7 @@ function buildDoneTile(q) {
 		const tryNext = () => {
 			if (i >= chain.length) {
 				// Hết chuỗi mà vẫn không nạp được ảnh nào → bỏ ảnh, dùng chữ.
+				noteAssetFailure(q.id);
 				logo.remove();
 				showName();
 				return;
@@ -1870,20 +2004,160 @@ function buildDoneTile(q) {
 		});
 		logo.addEventListener('error', tryNext);
 		tryNext();
-	} else if (isItem) {
-		const media = rewardMediaEl(q);
-		if (media) {
-			media.classList.add('qdone-logo');
-			face.insertBefore(media, logo);
-			logo.remove();
-		} else {
-			showName();
-		}
 	} else {
+		// Chain rỗng: phần thưởng (nếu có) đã ở hàng trên, còn lại dùng chữ.
 		showName();
 	}
 
 	return node;
+}
+
+/** Waves#152/#169 — khung chi tiết của một ô Đã làm.
+ * Mở bằng bấm (chuột/cảm ứng), đóng bằng nút Đóng, bấm nền mờ, hoặc Esc.
+ * Focus: mở thì focus nút Đóng, Tab bị giữ trong khung, đóng thì trả
+ * focus về đúng ô đã bấm. Mọi chuỗi từ Discord đi qua textContent,
+ * không qua innerHTML. Code (nếu có) chỉ hiện khi người dùng bấm
+ * "Hiện code", và KHÔNG BAO GIỜ được ghi vào log/diagnostics/cache. */
+function openDoneDetail(q, tileNode) {
+	const en = currentLang === 'en';
+	const prevFocus = document.activeElement;
+	const veil = document.createElement('div');
+	veil.className = 'qdone-modal-veil';
+	const dialog = document.createElement('div');
+	dialog.className = 'qdone-modal';
+	dialog.setAttribute('role', 'dialog');
+	dialog.setAttribute('aria-modal', 'true');
+	dialog.setAttribute('aria-label', q.name || q.gameTitle || (en ? 'Claimed quest' : 'Nhiệm vụ đã nhận'));
+	const closeBtn = document.createElement('button');
+	closeBtn.type = 'button';
+	closeBtn.className = 'qdone-modal-close';
+	closeBtn.textContent = '✕';
+	closeBtn.setAttribute('aria-label', en ? 'Close' : 'Đóng');
+	dialog.appendChild(closeBtn);
+	const heroUrl = questAssetUrl(q.hero);
+	if (heroUrl) {
+		const hero = document.createElement('img');
+		hero.className = 'qdone-modal-hero';
+		hero.src = heroUrl;
+		hero.alt = '';
+		hero.loading = 'eager';
+		dialog.appendChild(hero);
+	}
+	const logoUrl = questLogoUrl(q);
+	if (logoUrl) {
+		const logo = document.createElement('img');
+		logo.className = 'qdone-modal-logo';
+		logo.src = logoUrl;
+		logo.alt = '';
+		dialog.appendChild(logo);
+	}
+	const title = document.createElement('h3');
+	title.className = 'qdone-modal-title';
+	title.textContent = q.name || q.gameTitle || (en ? 'Quest' : 'Nhiệm vụ');
+	dialog.appendChild(title);
+	const addRow = (label, value) => {
+		if (!value) return;
+		const row = document.createElement('div');
+		row.className = 'qdone-modal-row';
+		const k = document.createElement('span');
+		k.className = 'qdone-modal-key';
+		k.textContent = label;
+		const v = document.createElement('span');
+		v.className = 'qdone-modal-val';
+		v.textContent = value;
+		row.append(k, v);
+		dialog.appendChild(row);
+	};
+	addRow(en ? 'Game' : 'Game', q.gameTitle || q.publisher || '');
+	addRow(en ? 'Reward' : 'Phần thưởng', q.rewardName || q.rewardTitle || rewardTypeLabel(q));
+	addRow(en ? 'Type' : 'Loại', rewardTypeLabel(q));
+	if (Number(q.orbs) > 0) addRow('Orbs', String(q.orbs));
+	addRow(en ? 'Claimed at' : 'Nhận lúc', fmtClaimTime(q.claimedAt) || '');
+	// Code section: session memory only.
+	const codeWrap = document.createElement('div');
+	codeWrap.className = 'qdone-modal-code';
+	if (q.rewardCode) {
+		const note = document.createElement('p');
+		note.className = 'qdone-modal-note';
+		note.textContent = en
+			? 'This code lives only in this session. It is never saved to disk, logs, or exports unless you choose to export with codes.'
+			: 'Code này chỉ nằm trong phiên này, không lưu xuống máy, không ghi log, không nằm trong file xuất trừ khi bạn bật riêng.';
+		codeWrap.appendChild(note);
+		const masked = document.createElement('code');
+		masked.className = 'qdone-modal-codeval';
+		masked.textContent = '••••••••';
+		codeWrap.appendChild(masked);
+		const showBtn = document.createElement('button');
+		showBtn.type = 'button';
+		showBtn.className = 'ghost-btn';
+		showBtn.textContent = en ? 'Show code' : 'Hiện code';
+		showBtn.addEventListener('click', () => {
+			masked.textContent = q.rewardCode;
+			showBtn.hidden = true;
+		});
+		const copyBtn = document.createElement('button');
+		copyBtn.type = 'button';
+		copyBtn.className = 'ghost-btn';
+		copyBtn.textContent = en ? 'Copy code' : 'Sao chép code';
+		copyBtn.addEventListener('click', async () => {
+			try {
+				await navigator.clipboard.writeText(q.rewardCode);
+				toast(en ? 'Code copied.' : 'Đã sao chép code.');
+			} catch {
+				masked.textContent = q.rewardCode;
+				toast(en ? 'Code shown — copy it manually.' : 'Đã hiện code, bạn sao chép thủ công.', true);
+			}
+		});
+		codeWrap.append(showBtn, copyBtn);
+	} else {
+		const note = document.createElement('p');
+		note.className = 'qdone-modal-note';
+		note.textContent = en
+			? 'Discord did not return a redeemable code for this quest in the app data. Open the quest in Discord to view it — no code is invented here.'
+			: 'Discord không trả code đổi thưởng cho quest này trong dữ liệu app nhận được. Mở quest trong Discord để xem — app không bịa code.';
+		codeWrap.appendChild(note);
+		const link = document.createElement('a');
+		link.className = 'qdone-modal-link';
+		link.href = `https://discord.com/quest-home#${encodeURIComponent(q.id)}`;
+		link.target = '_blank';
+		link.rel = 'noopener';
+		link.textContent = en ? 'Open in Discord' : 'Mở trong Discord';
+		codeWrap.appendChild(link);
+	}
+	dialog.appendChild(codeWrap);
+	veil.appendChild(dialog);
+	document.body.appendChild(veil);
+	const close = () => {
+		document.removeEventListener('keydown', onKey);
+		veil.remove();
+		if (tileNode && typeof tileNode.focus === 'function') tileNode.focus();
+		else if (prevFocus && typeof prevFocus.focus === 'function') prevFocus.focus();
+	};
+	const onKey = (e) => {
+		if (e.key === 'Escape') {
+			e.preventDefault();
+			close();
+			return;
+		}
+		if (e.key !== 'Tab') return;
+		const focusables = Array.from(dialog.querySelectorAll('button, a[href]')).filter((el) => !el.hidden);
+		if (!focusables.length) return;
+		const first = focusables[0];
+		const last = focusables[focusables.length - 1];
+		if (e.shiftKey && document.activeElement === first) {
+			e.preventDefault();
+			last.focus();
+		} else if (!e.shiftKey && document.activeElement === last) {
+			e.preventDefault();
+			first.focus();
+		}
+	};
+	closeBtn.addEventListener('click', close);
+	veil.addEventListener('click', (e) => {
+		if (e.target === veil) close();
+	});
+	document.addEventListener('keydown', onKey);
+	closeBtn.focus();
 }
 
 /** Logo nạp được có phải WORDMARK (chữ dạng ảnh) hay không?
@@ -1918,6 +2192,11 @@ function updateDoneTile(node, q) {
 	// Bản cũ đặt `orbRow.hidden = orbs <= 0` → ô thưởng vật phẩm mất luôn logo.
 	const orbRow = node.querySelector('.qdone-orbs');
 	if (orbRow && orbRow.hidden) orbRow.hidden = false;
+	// Waves#151/#165: đồng bộ loại thưởng + badge khi dữ liệu đổi.
+	if (node.dataset.rewardKind !== (q.rewardKind || 'orbs')) node.dataset.rewardKind = q.rewardKind || 'orbs';
+	if (node.dataset.rewardType !== rewardTypeOf(q)) node.dataset.rewardType = rewardTypeOf(q);
+	const badgeEl = node.querySelector('.reward-badge');
+	if (badgeEl && badgeEl.textContent !== rewardTypeLabel(q)) badgeEl.textContent = rewardTypeLabel(q);
 	// Tên game có thể tới muộn (payload cập nhật) → đồng bộ lại chữ.
 	// Chữ tên game: CHỈ dùng khi KHÔNG có logotype (xem buildDoneTile — Discord
 	// dùng logotype thay chữ). Nếu ảnh logo đang hiện thì giữ chữ ẩn.
@@ -2056,6 +2335,9 @@ const questNodes = new Map(); // id -> { node, kind }
 let needSort = true;
 
 function renderQuests() {
+	const renderT0 = typeof performance !== 'undefined' ? performance.now() : 0;
+	const scrollEl = document.getElementById('appScroll');
+	const scrollTop = scrollEl ? scrollEl.scrollTop : 0;
 	// Waves 33: ẩn hẳn mọi thẻ đã bị Discord gỡ (flag 'gone') — chúng chỉ gây
 	// nhiễu (404 mỗi lần bấm). Dọn cả node đã dựng để không giữ DOM rác.
 	for (const id of questOrder) {
@@ -2086,7 +2368,14 @@ function renderQuests() {
 					: ui.questListActive;
 		const kind = q.status === 'claimed' ? 'done' : 'card';
 		const cached = questNodes.get(id);
-		let node = cached && cached.kind === kind ? cached.node : null;
+		// Waves#151/#159: reward thay đổi là phải dựng lại tile Đã làm.
+		if (cached && cached.kind === 'done' && cached.node.dataset.rewardSig !== doneRewardSig(q)) {
+			cached.node.remove();
+			questNodes.delete(id);
+			needSort = true;
+		}
+		let node = questNodes.get(id);
+		node = node && node.kind === kind ? node.node : null;
 
 		if (cached && cached.kind !== kind) {
 			// Đổi loại thẻ (card ↔ tile) → bỏ node cũ, dựng lại
@@ -2103,8 +2392,15 @@ function renderQuests() {
 			targetList.appendChild(node); // di chuyển node, không dựng lại
 			needSort = true;
 		}
-		if (kind === 'card') updateQuestCard(node, q);
-		else updateDoneTile(node, q);
+		// Waves#159: dữ liệu + bộ lọc không đổi thì không cập nhật lại
+		// node (giữ ảnh đã nạp, giữ vị trí cuộn, tránh nháy toàn lưới).
+		const filterSig = `${questFilter}|${questQuery}|${currentTab}|${doneRewardFilter}|${doneSort}`;
+		const sig = [q.status, q.orbs, q.claimedAt, q.rewardKind, q.rewardAsset, q.rewardCode ? 'code' : '', q.logotype, q.logotypeDark, q.logotypeLight, q.gameTile, q.name, q.gameTitle, q.flag, q.claimPhase, q.claimBusy, q.running, q.secondsDone, q.secondsNeeded, q.task, filterSig].join('|');
+		if (questRenderSig.get(id) !== sig) {
+			questRenderSig.set(id, sig);
+			if (kind === 'card') updateQuestCard(node, q);
+			else updateDoneTile(node, q);
+		}
 
 		// Wave#111: ẩn/hiện theo tìm kiếm + bộ lọc. Badge tab vẫn là TỔNG,
 		// còn đếm riêng số thẻ đang hiện để xử lý trạng thái rỗng đúng.
@@ -2139,6 +2435,24 @@ function renderQuests() {
 		else countActive++;
 	}
 
+	// Waves#161/#166: sắp xếp riêng cho tab Đã làm + đánh dấu lưới lớn
+	// để CSS dùng content-visibility (không render tile ngoài khung nhìn).
+	if (ui.questListDone) {
+		ui.questListDone.classList.toggle('virtual', countDone > 55);
+		if (doneSort !== 'claimed') {
+			const doneNodes = Array.from(ui.questListDone.querySelectorAll('.qdone'));
+			doneNodes.sort((a, b) => {
+				const qa = quests.get(a.dataset.questId) || {};
+				const qb = quests.get(b.dataset.questId) || {};
+				if (doneSort === 'orbs') return (Number(qb.orbs) || 0) - (Number(qa.orbs) || 0);
+				if (doneSort === 'name') return String(qa.name || qa.gameTitle || '').localeCompare(String(qb.name || qb.gameTitle || ''));
+				return String(qb.claimedAt || '').localeCompare(String(qa.claimedAt || ''));
+			});
+			for (const n of doneNodes) ui.questListDone.appendChild(n);
+		}
+	}
+	if (scrollEl && scrollTop) scrollEl.scrollTop = scrollTop;
+	lastQuestRenderMs = renderT0 ? Math.round(performance.now() - renderT0) : 0;
 	ui.countActive.textContent = countActive;
 	ui.countNew.textContent = countNew;
 	ui.countDone.textContent = countDone;
@@ -2337,6 +2651,68 @@ if (ui.questFilter) {
 		renderQuests();
 	});
 }
+/* Waves#161/#162/#167 — công cụ tab Đã làm. */
+function doneQuestsSorted() {
+	const list = questOrder.map((id) => quests.get(id)).filter((q) => q && q.status === 'claimed' && q.flag !== 'gone');
+	list.sort((a, b) => String(b.claimedAt || '').localeCompare(String(a.claimedAt || '')));
+	return list;
+}
+function downloadTextFile(name, text, type) {
+	const blob = new Blob([text], { type });
+	const url = URL.createObjectURL(blob);
+	const a = document.createElement('a');
+	a.href = url;
+	a.download = name;
+	document.body.appendChild(a);
+	a.click();
+	a.remove();
+	setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+function exportDone(includeCodes, asJson) {
+	const list = doneQuestsSorted();
+	if (!list.length) {
+		toast(currentLang === 'en' ? 'No claimed quests to export.' : 'Chưa có nhiệm vụ Đã làm để xuất.');
+		return;
+	}
+	if (includeCodes) toast(currentLang === 'en' ? 'Warning: exported file contains reward codes. Share it only with people you trust.' : 'Cảnh báo: file xuất có chứa mã code — chỉ chia sẻ cho người bạn tin tưởng.', true);
+	const rows = list.map((q) => ({
+		name: q.name || '',
+		game: q.gameTitle || q.publisher || '',
+		rewardType: rewardTypeOf(q),
+		rewardName: q.rewardName || q.rewardTitle || '',
+		orbs: Number(q.orbs) || 0,
+		claimedAt: q.claimedAt || '',
+		...(includeCodes ? { code: q.rewardCode || '' } : {}),
+	}));
+	if (asJson) {
+		downloadTextFile('autoquest-done.json', JSON.stringify(rows, null, 2), 'application/json');
+	} else {
+		const esc = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+		const header = Object.keys(rows[0]);
+		const csv = [header.join(','), ...rows.map((r) => header.map((k) => esc(r[k])).join(','))].join('\n');
+		downloadTextFile('autoquest-done.csv', csv, 'text/csv');
+	}
+	toast(currentLang === 'en' ? `Exported ${rows.length} claimed quests.` : `Đã xuất ${rows.length} nhiệm vụ Đã làm.`);
+}
+if (ui.questDoneRewardFilter) ui.questDoneRewardFilter.addEventListener('change', () => {
+	doneRewardFilter = ui.questDoneRewardFilter.value || 'all';
+	renderQuests();
+});
+if (ui.questDoneSort) ui.questDoneSort.addEventListener('change', () => {
+	doneSort = ui.questDoneSort.value || 'claimed';
+	renderQuests();
+});
+if (ui.btnExportDoneCsv) ui.btnExportDoneCsv.addEventListener('click', () => exportDone(!!(ui.chkExportCodes && ui.chkExportCodes.checked), false));
+if (ui.btnExportDoneJson) ui.btnExportDoneJson.addEventListener('click', () => exportDone(!!(ui.chkExportCodes && ui.chkExportCodes.checked), true));
+if (ui.btnClearDoneCache) ui.btnClearDoneCache.addEventListener('click', () => {
+	// Waves#167: chỉ xóa cache inventory của tài khoản hiện tại, không
+	// đụng token (token nằm ở IndexedDB) và không đụng code phiên.
+	try {
+		delete inventoryStore[accountScope()];
+		localStorage.setItem(INVENTORY_KEY, JSON.stringify(inventoryStore));
+	} catch {}
+	toast(currentLang === 'en' ? 'Done cache cleared. Scan again to reload.' : 'Đã xóa cache Đã làm. Quét lại để nạp mới.');
+});
 if (ui.btnClaimAll) ui.btnClaimAll.addEventListener('click', claimAllMatching);
 
 // Wave#116: chạm/rê tới nút Nhận là bắt đầu tải hCaptcha song song với request
@@ -3001,8 +3377,12 @@ async function runClaim(quest, captchaMeta) {
 
 		if (res && res.ok) {
 			// ✅ Discord đã trao thưởng THẬT
+			// Waves#153: code trong phản hồi claim (nếu có) chỉ vào bộ
+			// nhớ phiên, không vào cache/export/log.
+			const sessionCode = extractSessionCode(res.raw);
 			upsertQuest(id, {
 				status: 'claimed',
+				...(sessionCode ? { rewardCode: sessionCode } : {}),
 				running: false,
 				flag: '',
 				claimBusy: false,
@@ -3165,6 +3545,10 @@ async function claimSequence(ids, source = 'bulk') {
 	let orbs = 0;
 	let attempted = 0;
 	let stopReason = '';
+	// Waves#160: đếm lần thử trong đợt claim này — 'gone' là kết cục
+	// cuối (không retry), 'unconfirmed' quá 2 lần thì bỏ qua để khỏi
+	// quay vòng vô hạn trong cùng một đợt. Captcha/404 không retry.
+	const claimAttempts = new Map();
 	try {
 		for (const id of ids) {
 			if (state !== 'idle') {
@@ -3180,7 +3564,17 @@ async function claimSequence(ids, source = 'bulk') {
 			bulkClaimDone = attempted;
 			pillSetCount(attempted, ids.length);
 			renderQuests();
+			claimAttempts.set(id, (claimAttempts.get(id) || 0) + 1);
 			const out = await runClaim(q);
+			if (out === 'gone') {
+				queueRemove(id);
+				continue;
+			}
+			if (out === 'unconfirmed' && claimAttempts.get(id) >= 2) {
+				queueRemove(id);
+				appendLog(`[Hệ thống] Bỏ qua "${q.name || id}" sau 2 lần chưa xác nhận trong đợt này — quét lại sau.`, 'warn');
+				continue;
+			}
 			if (out === 'claimed') {
 				claimed += 1;
 				orbs += Number(q.orbs) || 0;
@@ -3448,7 +3842,15 @@ async function handleEvent(evt) {
 					// Waves 22: dữ liệu thẻ Discord
 					hero: item.hero || '',
 					gameTile: item.gameTile || '',
+					gameTileDark: item.gameTileDark || '',
+					gameTileLight: item.gameTileLight || '',
 					logotype: item.logotype || '',
+					logotypeDark: item.logotypeDark || '',
+					logotypeLight: item.logotypeLight || '',
+					// Waves#153: session memory ONLY — stripInventoryItem
+					// deliberately drops this so codes never reach disk.
+					rewardCode: item.rewardCode || '',
+					rewardType: item.rewardType || '',
 					// Waves 42: logo dự phòng LUÔN có — icon application (game).
 					appId: item.appId || '',
 					appIcon: item.appIcon || '',
@@ -7247,7 +7649,15 @@ function stripInventoryItem(item) {
 		status: item.status,
 		hero: item.hero || '',
 		gameTile: item.gameTile || '',
+		gameTileDark: item.gameTileDark || '',
+		gameTileLight: item.gameTileLight || '',
 		logotype: item.logotype || '',
+		logotypeDark: item.logotypeDark || '',
+		logotypeLight: item.logotypeLight || '',
+		// Waves#153: the session-only code field is INTENTIONALLY
+		// absent here — the inventory cache lives in localStorage
+		// and must never hold codes.
+		rewardType: item.rewardType || '',
 		appId: item.appId || '',
 		appIcon: item.appIcon || '',
 		publisher: item.publisher || '',
@@ -7880,6 +8290,9 @@ function applyTheme(theme, persist = true) {
 	   gốc của user — chỉ chỉnh lại độ sáng theo nền mới. */
 	if (dnsApplied) applyDisplayNameStyle(dnsApplied);
 	refreshOpenCaptchaTheme();
+	// Waves#155: đổi theme thì vẽ lại tile bằng biến thể asset của
+	// theme mới, không cần quét lại (dữ liệu đã có trong bộ nhớ).
+	refreshQuestLogos();
 	if (persist) {
 		// Lưu lại cùng config (không phá token/loop đang có)
 		api.saveConfig(collectConfig()).catch(() => {});
@@ -7888,6 +8301,18 @@ function applyTheme(theme, persist = true) {
 
 if (ui.themeDark) ui.themeDark.addEventListener('click', () => applyTheme('dark'));
 if (ui.themeLight) ui.themeLight.addEventListener('click', () => applyTheme('light'));
+
+/* Waves#155: dựng lại toàn bộ node quest để questLogoUrl chọn biến
+ * thể _light/_dark theo theme mới. Không gọi lại Discord, không mất
+ * lựa chọn (selected lưu theo id, không theo node). */
+function refreshQuestLogos() {
+	if (!questNodes || questNodes.size === 0) return;
+	for (const [, entry] of questNodes) entry.node.remove();
+	questNodes.clear();
+	questRenderSig.clear();
+	needSort = true;
+	renderQuests();
+}
 
 async function saveTokenDirectly() {
 	const token = cleanTokenClient(ui.token.value);
@@ -7913,6 +8338,12 @@ ui.btnSaveToken.addEventListener('click', saveTokenDirectly);
 ui.btnScan.addEventListener('click', async () => {
 	if (bulkClaimBusy) {
 		toast('Đang nhận thưởng hàng loạt — đợi xong rồi quét lại.', true);
+		return;
+	}
+	// Waves#157: bấm Quét lần nữa trong lúc đang quét thì bỏ qua —
+	// lần quét cũ vẫn chạy, không tạo lần quét chồng chéo (stale scan).
+	if (scanning) {
+		toast('Đang quét — đợi lần quét này xong rồi quét lại.', true);
 		return;
 	}
 	if (!isOnline()) {
@@ -8756,6 +9187,17 @@ async function runDiagnostics() {
 			return;
 		}
 		ui.dataDiagOut.textContent = formatDiagnostics(r.diagnostics);
+		// Waves#166/#167/#168: phần chẩn đoán phía renderer (không qua
+		// bridge, không chứa token/code — chỉ đếm loại và số ảnh hỏng).
+		try {
+			const counts = { orbs: 0, avatar: 0, code: 0, other: 0 };
+			for (const q of quests.values()) counts[rewardTypeOf(q)] = (counts[rewardTypeOf(q)] || 0) + 1;
+			const rec = inventoryStore[accountScope()];
+			const cacheLine = rec
+				? `Inventory cache: ${rec.quests ? rec.quests.length : 0} quests, as of ${rec.at ? new Date(rec.at).toLocaleString() : '—'}`
+				: 'Inventory cache: none';
+			ui.dataDiagOut.textContent += `\n[Rewards]\n  by type: orbs ${counts.orbs} · avatar ${counts.avatar} · code ${counts.code} · other ${counts.other}\n  asset failures: ${assetFailCount} (quests: ${assetFailQuests.size}) · asset variant: ${currentTheme} (${currentTheme === 'light' ? 'logotype_light/game_tile_light first' : 'logotype_dark/game_tile_dark first'})\n  render quests: ${lastQuestRenderMs} ms\n  ${cacheLine}\n`;
+		} catch {}
 		setDataStatus(dataSay('Đã chạy chẩn đoán.', 'Diagnostics complete.'));
 	} catch (err) {
 		ui.dataDiagOut.textContent = dataSay('Lỗi chẩn đoán: ', 'Diagnostics error: ') + (err?.message || err);

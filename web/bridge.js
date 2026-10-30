@@ -851,7 +851,10 @@
 
 	/* ══════════════════════ 6. SỐ DƯ ORB ══════════════════════════ */
 
-	async function fetchOrbs(rawToken) {
+	// Waves#157: dedupe concurrent fetchOrbs calls — scan + balance
+	// refresh used to fire the same 3 Discord requests twice at once.
+	let fetchOrbsInFlight = null;
+	async function fetchOrbsFresh(rawToken) {
 		const clean = cleanToken(rawToken);
 		if (!clean) return { ok: false, message: 'Chưa có token.' };
 		try {
@@ -939,6 +942,17 @@
 			return { ok: true, balance, pendingClaim, pendingUnknown, source, walletOk, claimedOk, questsOk, partial: source !== 'wallet' || pendingUnknown, totalQuests: claimedQuests.length };
 		} catch (err) {
 			return { ok: false, message: `Không kết nối được Discord: ${err.message}` };
+		}
+	}
+
+	async function fetchOrbs(rawToken) {
+		if (fetchOrbsInFlight) return fetchOrbsInFlight;
+		const p = fetchOrbsFresh(rawToken);
+		fetchOrbsInFlight = p;
+		try {
+			return await p;
+		} finally {
+			if (fetchOrbsInFlight === p) fetchOrbsInFlight = null;
 		}
 	}
 

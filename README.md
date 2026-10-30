@@ -6,7 +6,7 @@
 
 ![Theme](https://img.shields.io/badge/Theme-Dark%20Strong%20Vesper-e0af68)
 
-![Waves](https://img.shields.io/badge/Waves%23-150%20%C2%B7%20Active-e0af68)
+![Waves](https://img.shields.io/badge/Waves%23-170%20%C2%B7%20Active-e0af68)
 
 ![License](https://img.shields.io/badge/License-MIT-3b82f6)
 
@@ -31,6 +31,23 @@
 > - **hCaptcha không bị bỏ qua.** Khi Discord yêu cầu xác minh, app mở widget thật để bạn
 >   tự giải — app không bao giờ tự vượt hay chuyển captcha sang người khác.
 > - Kiểm tra nhanh: `npm test` (self-test cấu trúc, CSP, ID, cú pháp JS, rà token rò rỉ).
+
+> ## Phần thưởng ở tab Đã làm (Waves #151–#170)
+>
+> - Tab **Đã làm** hiện đúng phần thưởng: quest Orb hiện logo Orb, quest
+>   vật phẩm (avatar/effect) hiện ảnh/video của chính phần thưởng đó, quest
+>   có code hiện nhãn Code. Ảnh thưởng hỏng thì rơi về logo game, không
+>   rơi về logo Orb sai loại. Bấm vào một ô để mở khung chi tiết (tên,
+>   loại thưởng, số Orb, ngày nhận, ảnh hero/logotype).
+> - **Code đổi thưởng chỉ nằm trong bộ nhớ phiên.** App quét một danh
+>   sách hẹp các field code có thể có trong dữ liệu quest/claim; nếu
+>   Discord không trả field code nào, khung chi tiết hiện link mở quest
+>   trong Discord và không bịa code. Code không lưu localStorage, không
+>   vào backup, log hay diagnostics; file xuất Đã làm chỉ kèm code khi
+>   người dùng bật riêng và đã thấy cảnh báo.
+> - **Ảnh theo theme:** chế độ Sáng ưu tiên asset `*_light`, chế độ Tối
+>   ưu tiên `*_dark`, có fallback chéo; đổi theme vẽ lại tile mà không
+>   cần quét lại. Favicon và icon PWA dùng logo ZoZ (`assets/zoZ-logo-ico.png`).
 
 > ## 🤖 LƯU Ý CHO AI AGENT (BẮT BUỘC ĐỌC TRƯỚC KHI VIẾT/SỬA CODE)
 >

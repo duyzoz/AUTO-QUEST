@@ -13,7 +13,7 @@
 		"build:static": "node web/build-static.js",
 		"build": "node web/build-static.js",
 		"integrity": "node web/make-integrity.js --dev",
-		"test": "node web/test/self-test.js && node web/test/mock-claim.test.js",
+		"test": "node web/test/self-test.js && node web/test/mock-claim.test.js && node web/test/mock-reward.test.js",
 		"verify": "node web/test/self-test.js && node web/make-integrity.js --dev",
 		"check:bundle": "node web/test/check-bundle.js",
 		"build:all": "node web/build-engine.js && node web/build-static.js"

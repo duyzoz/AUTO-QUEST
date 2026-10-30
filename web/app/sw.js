@@ -6,6 +6,10 @@
    điều hướng (để bản mới lên ngay khi có mạng, offline vẫn mở được vỏ). */
 
 const VERSION = 'autoquest-shell-v15';
+/* Waves#158: cache riêng cho ảnh/video CDN Discord (không đụng API
+ * discord.com, không đụng token/code — chỉ GET ảnh/video từ CDN). */
+const CDN_CACHE = 'autoquest-cdn-v1';
+const CDN_MAX_ENTRIES = 200;
 const SHELL = [
 	'./',
 	'index.html',
@@ -67,7 +71,7 @@ self.addEventListener('activate', (event) => {
 	event.waitUntil(
 		caches
 			.keys()
-			.then((keys) => Promise.all(keys.filter((k) => k !== VERSION).map((k) => caches.delete(k))))
+			.then((keys) => Promise.all(keys.filter((k) => k !== VERSION && k !== CDN_CACHE).map((k) => caches.delete(k))))
 			.then(() => self.clients.claim()),
 	);
 });
@@ -80,6 +84,35 @@ self.addEventListener('fetch', (event) => {
 	try {
 		url = new URL(req.url);
 	} catch {
+		return;
+	}
+	// Waves#158: ảnh/video từ CDN Discord → stale-while-revalidate,
+	// tối đa 200 mục. API discord.com KHÔNG qua đây (không cache
+	// phản hồi có thể chứa token/code). hCaptcha cũng đi thẳng.
+	if (
+		(url.hostname === 'cdn.discordapp.com' ||
+			url.hostname.endsWith('.cdn.discordapp.com') ||
+			url.hostname === 'cdn.discord.com') &&
+		(req.destination === 'image' || req.destination === 'video' || /\.(png|jpe?g|gif|webp|avif|mp4)(\?|$)/i.test(url.pathname))
+	) {
+		event.respondWith(
+			caches.open(CDN_CACHE).then(async (cache) => {
+				const hit = await cache.match(req);
+				const network = fetch(req)
+					.then(async (res) => {
+						if (res && res.ok) {
+							cache.put(req, res.clone()).catch(() => {});
+							const keys = await cache.keys().catch(() => []);
+							if (keys.length > CDN_MAX_ENTRIES) {
+								await Promise.all(keys.slice(0, keys.length - CDN_MAX_ENTRIES).map((k) => cache.delete(k))).catch(() => {});
+							}
+						}
+						return res;
+					})
+					.catch(() => hit);
+				return hit || network;
+			}),
+		);
 		return;
 	}
 	// Chỉ xử lý cùng origin — Discord/hCaptcha/cdn đi thẳng ra mạng.

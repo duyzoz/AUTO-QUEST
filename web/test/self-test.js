@@ -419,6 +419,52 @@ check('Bridge phơi window.autoquest + các hàm cốt lõi', () => {
 	return 'đủ hàm cốt lõi';
 });
 
+/* ── Waves#151-#170 ─────────────────────────────────────────────────── */
+check('Waves#151: tile Đã làm dùng asset thưởng thật, không Orb mặc định', () => {
+	const r = read(path.join(APP, 'renderer.js'));
+	assert(/rewardMediaEl\(q\)/.test(r), 'buildDoneTile không gọi rewardMediaEl');
+	assert(!/orbIco\.src = ORB_ICON_SRC;[\s\S]{0,200}isItem/.test(r), 'kiểm tra thứ tự Orb/item không rõ');
+	return 'Done tile có nhánh asset';
+});
+check('Waves#154/#163: chế độ Sáng không còn nền xanh #f2f5fb, chữ hover đủ tối', () => {
+	const css = read(path.join(APP, 'styles.css'));
+	assert(!css.includes('#f2f5fb'), 'styles.css còn #f2f5fb');
+	assert(/\[data-theme="light"\] \.qdone-info-title/.test(css), 'thiếu override chữ hover ở Sáng');
+	assert(/\[data-theme="light"\] \.qcard-reward-art \{[^}]*background: #ffffff/.test(css), 'thiếu nền trắng cho đĩa thưởng ở Sáng');
+	return 'nền Sáng đã sửa';
+});
+check('Waves#155: questLogoUrl chọn biến thể theo theme', () => {
+	const r = read(path.join(APP, 'renderer.js'));
+	assert(/logotypeDark/.test(r) && /logotypeLight/.test(r), 'thiếu biến thể logotype');
+	assert(/currentTheme === 'light'/.test(r), 'questLogoUrl không đọc theme');
+	return 'biến thể theo theme có mặt';
+});
+check('Waves#156: favicon ZoZ + theme-color', () => {
+	const html = read(path.join(APP, 'index.html'));
+	assert(/rel="icon"[^>]*zoZ-logo-ico\.png/.test(html), 'thiếu <link rel="icon"> ZoZ');
+	assert(/rel="apple-touch-icon"[^>]*zoZ-logo-ico\.png/.test(html), 'thiếu apple-touch-icon');
+	assert(/name="theme-color"[^>]*prefers-color-scheme: light/.test(html), 'thiếu theme-color Sáng');
+	assert(fs.existsSync(path.join(APP, 'assets', 'zoZ-logo-ico.png')), 'thiếu file zoZ-logo-ico.png');
+	return 'favicon ZoZ có mặt';
+});
+check('Waves#153: code KHÔNG nằm trong cache inventory / export mặc định', () => {
+	const r = read(path.join(APP, 'renderer.js'));
+	// stripInventoryItem là hàm duy nhất được phép định nghĩa cache;
+	// nó không được chứa rewardCode.
+	const m = r.match(/function stripInventoryItem\(item\) \{[\s\S]*?\n\}/);
+	assert(m, 'không tìm thấy stripInventoryItem');
+	assert(!/rewardCode/.test(m[0]), 'stripInventoryItem vẫn chứa rewardCode');
+	assert(/rewardCode: item\.rewardCode/.test(r), 'upsert phiên chưa nhận rewardCode');
+	return 'code chỉ ở bộ nhớ phiên';
+});
+check('Waves#158: SW cache CDN có giới hạn, không cache API discord.com', () => {
+	const sw = read(path.join(APP, 'sw.js'));
+	assert(/autoquest-cdn-v1/.test(sw), 'thiếu cache CDN');
+	assert(/CDN_MAX_ENTRIES/.test(sw), 'thiếu giới hạn mục cache');
+	assert(/cdn\.discordapp\.com/.test(sw), 'thiếu host CDN');
+	return 'SW CDN cache có mặt';
+});
+
 /* ── In kết quả ────────────────────────────────────────────────────────── */
 for (const r of results) {
 	const tag = r.ok ? 'PASS' : 'FAIL';
