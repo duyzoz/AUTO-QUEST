@@ -12,6 +12,7 @@ export type QuestEventType =
 	| 'quest:done'
 	| 'quest:claim'
 	| 'quest:captcha'
+	| 'quest:blocked'
 	| 'quest:skip'
 	| 'quest:error'
 	| 'quest:redeem'
