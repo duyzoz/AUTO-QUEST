@@ -5228,6 +5228,14 @@ body {
 	white-space: nowrap;
 }
 .qcard-act svg { width: 13px; height: 13px; flex: 0 0 auto; }
+.qcard-diag {
+	padding: 0 12px 12px;
+	font-size: 0.72rem;
+	line-height: 16px;
+	color: var(--fg-muted);
+	overflow-wrap: anywhere;
+}
+.qcard-diag:empty { display: none; }
 
 /* Trạng thái: CHƯA LÀM — khoá, không bấm được */
 .qcard-act[data-act="todo"] {

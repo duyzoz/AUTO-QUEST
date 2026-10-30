@@ -934,6 +934,25 @@ check('Waves#268: docs mobile QA không chứa log waves, README không bị s�
 	return 'docs MOBILE-QA không log waves';
 });
 
+check('Wave chẩn đoán claim: thẻ ghi nhánh C/D + nguồn token + thời gian, không đổi hành vi', () => {
+	const js = read(path.join(APP, 'renderer.js'));
+	const css = read(path.join(APP, 'styles.css'));
+	assert(/CLAIM_DIAG_BRANCH/.test(js) && /'captcha-still-required'/.test(js) && /'grant-403-10008'/.test(js), 'thiếu map nhánh C/D');
+	assert(/onCaptchaSolved\(captchaToken, source = 'callback'\)/.test(js), 'onCaptchaSolved phải nhận source');
+	assert(/onCaptchaSolved\(token, 'auto-poll'\)/.test(js), 'đường tự động quét phải ghi source auto-poll');
+	assert(/onCaptchaSolved\(token, 'manual'\)/.test(js), 'đường bấm thủ công phải ghi source manual');
+	assert(/openedAt: Date\.now\(\)/.test(js), 'mở hộp captcha phải ghi openedAt để tính thời gian');
+	assert(/claimBranch: 'captcha-still-required'/.test(js), 'nhánh C phải ghi claimBranch');
+	assert(/claimBranch: 'grant-403-10008'/.test(js), 'nhánh D phải ghi claimBranch');
+	assert(/appendClaimDiag\(quest, 'captcha-still-required'\)/.test(js) && /appendClaimDiag\(quest, 'grant-403-10008'\)/.test(js), 'hai nhánh phải ghi log chẩn đoán');
+	assert(!/lastCaptchaSubmit[^;]*captchaToken/.test(js) && !/claimDiagToken/.test(js), 'chẩn đoán không được lưu token');
+	assert(js.includes('qcard-diag') && /diag: node\.querySelector\('.qcard-diag'\)/.test(js), 'thẻ quest phải có dòng chẩn đoán và cache nó');
+	const m = css.match(/\.qcard-diag \{[^}]*\}/);
+	assert(m && /var\(--fg-muted\)/.test(m[0]) && !/#[0-9a-fA-F]{3,8}/.test(m[0]), 'dòng chẩn đoán phải dùng token màu, không màu thô');
+	assert(/\.qcard-diag:empty \{ display: none; \}/.test(css), 'dòng chẩn đoán trống phải ẩn');
+	return 'nhánh C/D + nguồn token + thời gian trên thẻ/log, không token';
+});
+
 /* ── In kết quả ────────────────────────────────────────────────────────── */
 for (const r of results) {
 	const tag = r.ok ? 'PASS' : 'FAIL';

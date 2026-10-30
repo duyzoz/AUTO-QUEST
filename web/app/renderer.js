@@ -1664,6 +1664,7 @@ function buildQuestCard(q) {
 		<div class="qcard-foot">
 			<button type="button" class="qcard-act" data-act="todo" disabled></button>
 		</div>
+		<div class="qcard-diag"></div>
 	`;
 
 	updateQuestCard(node, q);
@@ -1690,6 +1691,32 @@ const ACT_ICON = {
 	// để nhận (captcha chạy native ở đó). Cùng khuôn nút, chỉ khác nhãn/hành vi.
 	open: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>',
 };
+
+const CLAIM_DIAG_BRANCH = {
+	'captcha-still-required': { vi: 'Discord vẫn đòi captcha sau khi gửi token', en: 'Discord still demanded captcha after the token' },
+	'grant-403-10008': { vi: 'Discord nhận xác minh nhưng trao thưởng lỗi 403 · 10008', en: 'Discord accepted verification but the reward grant failed (403 · 10008)' },
+};
+const CLAIM_DIAG_SOURCE = {
+	'callback': { vi: 'callback hCaptcha', en: 'hCaptcha callback' },
+	'auto-poll': { vi: 'tự động quét', en: 'auto-poll' },
+	'manual': { vi: 'bấm thủ công', en: 'manual submit' },
+};
+// Wave chẩn đoán claim (không đổi hành vi): chỉ dựng nhãn chẩn đoán từ
+// nhánh + nguồn token + thời gian, không chứa token hay code thưởng.
+function formatClaimDiag(q, en) {
+	const branch = CLAIM_DIAG_BRANCH[q.claimBranch];
+	if (!branch) return '';
+	const source = CLAIM_DIAG_SOURCE[q.claimDiagSource] || { vi: 'không rõ', en: 'unknown' };
+	const delay = Number.isFinite(q.claimDiagDelayMs) ? ` · ${Math.round(q.claimDiagDelayMs)}ms` : '';
+	return en
+		? `Claim diagnosis: ${branch.en} · token via ${source.en}${delay} from modal open to submit`
+		: `Chẩn đoán claim: ${branch.vi} · nguồn token: ${source.vi}${delay} từ lúc mở hộp tới lúc gửi`;
+}
+function appendClaimDiag(quest, branch) {
+	const src = lastCaptchaSubmit ? lastCaptchaSubmit.source : '';
+	const delay = lastCaptchaSubmit && Number.isFinite(lastCaptchaSubmit.delayMs) ? Math.round(lastCaptchaSubmit.delayMs) : null;
+	appendLog(`[Chẩn đoán claim] "${quest.name || ''}": nhánh=${branch} · nguồn token=${src || 'không rõ'}${delay == null ? '' : ` · ${delay}ms từ lúc mở hộp tới lúc gửi`}`, 'system');
+}
 
 function updateQuestFoot(node, q) {
 	const r = node._r || {};
@@ -1738,6 +1765,11 @@ function updateQuestFoot(node, q) {
 		btn.innerHTML = `${ACT_ICON[act] || ''}<span>${escapeHtml(label)}</span>`;
 	}
 	if (btn.title !== label) btn.title = label;
+	const diagEl = r.diag;
+	if (diagEl) {
+		const diagText = formatClaimDiag(q, en);
+		if (diagEl.textContent !== diagText) diagEl.textContent = diagText;
+	}
 	node.classList.add('has-foot');
 }
 
@@ -1759,6 +1791,7 @@ function updateQuestCard(node, q) {
 			pct: node.querySelector('.qcard-pct'),
 			check: node.querySelector('input[data-quest-check]'),
 			act: node.querySelector('.qcard-act'),
+			diag: node.querySelector('.qcard-diag'),
 		});
 
 	node.dataset.status = q.stopFlag
@@ -3099,6 +3132,7 @@ function pruneQuestsMissing(list) {
    ============================================================ */
 
 let captchaCtx = null; // { quest, captcha, widgetId }
+let lastCaptchaSubmit = null; // Chẩn đoán claim: { source, delayMs } — KHÔNG chứa token.
 let hcaptchaLoading = null;
 let captchaWarmStarted = false;
 let captchaPreconnected = false;
@@ -3307,6 +3341,7 @@ async function openCaptchaModal(quest, captcha) {
 		quest,
 		captcha,
 		widgetId: null,
+		openedAt: Date.now(),
 		theme: document.documentElement.dataset.theme === 'light' ? 'light' : 'dark',
 	};
 	if (!ui.captchaModal) return;
@@ -3481,10 +3516,11 @@ async function openCaptchaModal(quest, captcha) {
 }
 
 /** Người dùng giải xong captcha → tự gọi lại claim kèm captcha_key (2A). */
-async function onCaptchaSolved(captchaToken) {
+async function onCaptchaSolved(captchaToken, source = 'callback') {
 	if (!captchaCtx || !captchaToken) return;
 	if (captchaCtx.submitted) return; // Waves 38: chỉ gửi 1 lần (auto + callback không đua)
 	captchaCtx.submitted = true;
+	lastCaptchaSubmit = { source, delayMs: captchaCtx.openedAt ? Date.now() - captchaCtx.openedAt : null };
 	if (captchaCtx.autoTimer) {
 		clearInterval(captchaCtx.autoTimer);
 		captchaCtx.autoTimer = null;
@@ -3564,7 +3600,7 @@ function startCaptchaAutoSubmit() {
 		}
 		if (token) {
 			appendLog('[Hệ thống] hCaptcha đã trả kết quả — tự động gửi (không cần bấm).', 'system');
-			onCaptchaSolved(token);
+			onCaptchaSolved(token, 'auto-poll');
 			return;
 		}
 		if (waited >= MAX_MS) {
@@ -3593,7 +3629,7 @@ function onCaptchaRetryClick() {
 		setCaptchaError('Chưa có kết quả xác minh. App đang tự chạy — đợi chút, hoặc giải ô thử thách nếu có.');
 		return;
 	}
-	onCaptchaSolved(token);
+	onCaptchaSolved(token, 'manual');
 }
 
 /**
@@ -3617,6 +3653,9 @@ async function runClaim(quest, captchaMeta) {
 		claimBusy: true,
 		claimError: '',
 		claimOpenDiscord: false,
+		claimBranch: '',
+		claimDiagSource: '',
+		claimDiagDelayMs: null,
 		claimPhase:
 			currentLang === 'en'
 				? captchaMeta
@@ -3682,6 +3721,9 @@ async function runClaim(quest, captchaMeta) {
 				claimBusy: false,
 				claimError: '',
 				claimOpenDiscord: false,
+				claimBranch: '',
+				claimDiagSource: '',
+				claimDiagDelayMs: null,
 				claimPhase: '',
 			});
 			sessionClaimCount += 1;
@@ -3717,7 +3759,8 @@ async function runClaim(quest, captchaMeta) {
 					'tự cho qua (token "passive") nên Discord không công nhận. Hãy mở Discord chính chủ ' +
 					'để nhận nhiệm vụ này.';
 				// Waves 40 (B): đổi nút thành "Mở Discord để nhận" (logic-only, UI giữ nguyên).
-				upsertQuest(id, { claimError: msg, claimOpenDiscord: true });
+				upsertQuest(id, { claimError: msg, claimOpenDiscord: true, claimBranch: 'captcha-still-required', claimDiagSource: lastCaptchaSubmit ? lastCaptchaSubmit.source : '', claimDiagDelayMs: lastCaptchaSubmit ? lastCaptchaSubmit.delayMs : null });
+				appendClaimDiag(quest, 'captcha-still-required');
 				appendLog(`[Cảnh báo] "${quest.name || ''}": Discord giữ nguyên yêu cầu xác minh — dừng vòng lặp.`, 'warn');
 				appendLog('[Hệ thống] hCaptcha trả token passive (P1_/pd:0) không có lời giải thử thách, nên Discord từ chối. Không phải lỗi token.', 'system');
 				toast('Discord chưa công nhận xác minh — hãy mở Discord để nhận nhiệm vụ này.', true);
@@ -3778,7 +3821,8 @@ async function runClaim(quest, captchaMeta) {
 			const msg =
 				'Discord đã nhận kết quả xác minh nhưng không thể trao thưởng (403 · 10008). ' +
 				'Phiên hCaptcha trong app chưa được coi là "đã giải". Hãy mở Discord chính chủ cho nhiệm vụ này.';
-			upsertQuest(id, { claimBusy: false, claimPhase: '', claimError: msg, claimOpenDiscord: true });
+			upsertQuest(id, { claimBusy: false, claimPhase: '', claimError: msg, claimOpenDiscord: true, claimBranch: 'grant-403-10008', claimDiagSource: lastCaptchaSubmit ? lastCaptchaSubmit.source : '', claimDiagDelayMs: lastCaptchaSubmit ? lastCaptchaSubmit.delayMs : null });
+			appendClaimDiag(quest, 'grant-403-10008');
 			appendLog(`[Cảnh báo] "${quest.name || ''}": Discord trả 403 · 10008 (đã qua captcha, lỗi trao thưởng).`, 'warn');
 			toast('Discord chưa trao thưởng — hãy mở Discord để nhận nhiệm vụ này.', true);
 			queueRemove(id);
@@ -4346,6 +4390,9 @@ async function handleEvent(evt) {
 					claimPhase: '',
 					claimError: d.reason || d.message || 'Discord yêu cầu xác minh nhưng không cấp đủ dữ liệu — mở Discord để nhận thủ công.',
 					claimOpenDiscord: true,
+					claimBranch: '',
+					claimDiagSource: '',
+					claimDiagDelayMs: null,
 					orbs: d.orbs || q.orbs || 0,
 				});
 				appendLog(`[Cảnh báo] "${d.name || key}": ${d.reason || 'bị chặn xác minh.'}`, 'warn');
