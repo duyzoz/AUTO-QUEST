@@ -30,6 +30,12 @@
 			"sizes": "256x256",
 			"type": "image/png",
 			"purpose": "any"
+		},
+		{
+			"src": "assets/zoZ-logo-round.png",
+			"sizes": "256x256",
+			"type": "image/png",
+			"purpose": "maskable"
 		}
 	]
 }

@@ -1959,6 +1959,19 @@
 			if (!obj || obj.format !== BACKUP_FORMAT) {
 				return { ok: false, message: 'Đây không phải file sao lưu AUTO-QUEST.' };
 			}
+			// Waves#220: reject truncated/malformed envelopes before any
+				// crypto work — a missing data/iv/salt must fail here with a
+				// clear message, never throw deep inside decrypt and never
+				// touch stored data (pendingBackup stays null until success).
+			if (typeof obj.data !== 'string' || !obj.data) {
+				return { ok: false, message: 'File sao lưu thiếu phần dữ liệu mã hoá.' };
+			}
+			if (!obj.cipher || typeof obj.cipher.iv !== 'string' || !obj.cipher.iv) {
+				return { ok: false, message: 'File sao lưu thiếu IV mã hoá.' };
+			}
+			if (!obj.kdf || typeof obj.kdf.salt !== 'string' || !obj.kdf.salt) {
+				return { ok: false, message: 'File sao lưu thiếu salt KDF.' };
+			}
 			const version = Number(obj.version);
 			if (version !== 1 && version !== BACKUP_VERSION) {
 				return { ok: false, message: `Phiên bản sao lưu không hỗ trợ (${obj.version}).` };

@@ -17,9 +17,10 @@
 		<meta name="referrer" content="no-referrer" />
 		<title>ZoZ Development</title>
 		<link rel="manifest" href="manifest.webmanifest" />
-		<!-- Waves#156: favicon thật từ logo ZoZ đã có sẵn (trước đây chỉ có
-		     manifest, tab trình duyệt rơi về icon mặc định). -->
-		<link rel="icon" type="image/png" sizes="256x256" href="assets/zoZ-logo-ico.png" />
+		<!-- Favicon: logo ZoZ bo tròn, nền trong suốt ở 4 góc — tab trình
+		     duyệt hiện hình tròn thay vì hình vuông. Apple touch icon giữ
+		     bản vuông gốc vì iOS tự bo góc và nền trong suốt sẽ thành đen. -->
+		<link rel="icon" type="image/png" sizes="256x256" href="assets/zoZ-logo-round.png" />
 		<link rel="apple-touch-icon" href="assets/zoZ-logo-ico.png" />
 		<meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff" />
 		<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0b0e18" />
@@ -373,6 +374,7 @@
 								<button class="chip chip-ghost claim-queue-chip" id="claimQueueChip" type="button" hidden
 									title="Tiếp tục nhận các nhiệm vụ đang chờ xác minh">Chờ xác minh: 0</button>
 								<span class="quest-filter-count mono" id="questFilterCount" hidden></span>
+								<div class="search-history" id="searchHistory" hidden></div>
 								<button class="ghost-btn quest-adv-toggle" id="btnAdvancedFilters" type="button" aria-expanded="false" aria-controls="questAdvanced">Bộ lọc nâng cao <span id="advancedFilterCount"></span></button>
 								<div class="quest-advanced" id="questAdvanced" hidden>
 									<div class="quest-adv-group">
@@ -416,6 +418,8 @@
 									<span id="selectAllLabel">Chọn tất cả</span>
 								</label>
 								<span class="selected-info"><span id="selectedLabel">Đã chọn:</span> <strong id="selectedCount">0</strong> <span class="selected-orbs mono" id="selectedOrbs"></span></span>
+								<label class="check small"><select id="gameSelect" class="custom-select" aria-label="Chọn theo game"><option value="">Chọn theo game…</option></select></label>
+								<button class="ghost-btn" id="btnSelectGame" type="button">Chọn game này</button>
 							</div>
 
 							<!-- 3 tab: Chưa làm · Chưa nhận · Đã làm — lưới 3 thẻ / dòng -->
@@ -482,6 +486,11 @@
 							</div>
 							<div id="statsHistoryTable" class="stats-history"></div>
 							<p class="qstate-text" id="statsForecast"></p>
+							<div class="stats-actions">
+								<label class="check small">Mục tiêu Orb <input type="number" id="orbGoalInput" class="custom-select" min="0" step="100" inputmode="numeric" aria-label="Mục tiêu Orb" /></label>
+								<button class="ghost-btn" id="btnOrbGoalSave" type="button">Lưu mục tiêu</button>
+							</div>
+							<p class="qstate-text" id="orbGoalProgress"></p>
 
 							<div class="stats-recent-head">
 								<h3 class="stats-subtitle">Nhận thưởng gần đây</h3>
@@ -625,10 +634,18 @@
 									<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
 									<span>Tối</span>
 								</button>
+								<button class="theme-opt" id="themeSystem" data-theme="system" role="radio" aria-checked="false">
+									<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="13" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/></svg>
+									<span>Theo hệ thống</span>
+								</button>
 								<button class="theme-opt" id="themeLight" data-theme="light" role="radio" aria-checked="false">
 									<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
 									<span>Sáng</span>
 								</button>
+							</div>
+							<div class="setting-row">
+								<span class="setting-label">Phím tắt</span>
+								<span class="setting-hint">Q: Quét nhiệm vụ · /: Tìm kiếm · Esc: Đóng modal/drawer</span>
 							</div>
 							<div class="setting-row">
 								<span class="setting-label">Ngôn ngữ giao diện</span>

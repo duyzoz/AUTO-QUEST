@@ -5280,7 +5280,7 @@ body {
 .qcard.has-foot { height: 158px; }
 
 /* --- Modal hCaptcha --- */
-.capture-veil { z-index: 260; }
+.capture-veil { z-index: 300; } /* Waves#230: vào thang veil (toast 200 < capture 300 < lock 400); login 9000 và qdone-modal 1000 giữ nguyên vì phải ở trên mọi modal — xem .brain */
 .capture-card {
 	width: min(440px, 100%);
 	text-align: left;
@@ -6088,6 +6088,10 @@ body {
 .stats-recent-time { flex-shrink: 0; font-size: 0.66rem; color: var(--fg-subtle); }
 .stats-recent-orbs { flex-shrink: 0; font-size: 0.72rem; font-weight: 700; color: var(--emerald); }
 .stats-empty { margin-top: 10px; }
+/* Waves#234: lịch sử tìm kiếm — chip nhỏ, dùng token sẵn có, không token. */
+.search-history { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 2px 2px 10px; }
+.search-history[hidden] { display: none; }
+.stats-recent-day { font-size: 0.72rem; font-weight: 700; color: var(--fg-muted); padding: 8px 2px 2px; }
 
 .version-grid {
 	display: grid;
@@ -6122,6 +6126,7 @@ body {
 	flex-wrap: wrap;
 }
 .setting-label { font-size: 0.82rem; font-weight: 600; color: var(--fg-muted); }
+.setting-hint { font-size: 0.82rem; color: var(--fg-muted); }
 .setting-select { min-width: 150px; }
 
 .lock-veil {

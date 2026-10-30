@@ -50,12 +50,15 @@ const ui = {
 	// Waves 28: chế độ Sáng/Tối
 	themeDark: el('themeDark'),
 	themeLight: el('themeLight'),
+	themeSystem: el('themeSystem'),
 	btnDrawer: el('btnDrawer'),
 	drawerOverlay: el('drawerOverlay'),
 	sidebar: el('sidebar'),
 	selectAll: el('selectAll'),
 	selectAllLabel: el('selectAllLabel'),
 	selectTools: el('selectTools'),
+	gameSelect: el('gameSelect'),
+	btnSelectGame: el('btnSelectGame'),
 	selectedLabel: el('selectedLabel'),
 	selectedCount: el('selectedCount'),
 	selectedOrbs: el('selectedOrbs'),
@@ -156,6 +159,9 @@ const ui = {
 	statsAvg: el('statsAvg'),
 	statsBars: el('statsBars'),
 	statsRecent: el('statsRecent'),
+	orbGoalInput: el('orbGoalInput'),
+	btnOrbGoalSave: el('btnOrbGoalSave'),
+	orbGoalProgress: el('orbGoalProgress'),
 	statsEmpty: el('statsEmpty'),
 	btnStatsCsv: el('btnStatsCsv'),
 	btnStatsClear: el('btnStatsClear'),
@@ -242,6 +248,7 @@ const ui = {
 	// Wave#111: tìm kiếm · lọc · nhận tất cả
 	questTools: el('questTools'),
 	questSearch: el('questSearch'),
+	searchHistory: el('searchHistory'),
 	btnQuestSearchClear: el('btnQuestSearchClear'),
 	questFilter: el('questFilter'),
 	btnClaimAll: el('btnClaimAll'),
@@ -1398,12 +1405,18 @@ let doneDateTo = '';
 let doneIncludeUndated = true;
 let doneWindowEnd = 80;
 let lastDoneVisibleCount = 0;
+let activeWindowEnd = 80;
+let newWindowEnd = 80;
+let lastActiveVisibleCount = 0;
+let lastNewVisibleCount = 0;
 let platformFilter = 'all';
 let taskFilter = 'all';
 let expiringOnly = false;
 let groupGames = false;
 let expandedGroups = new Set();
 let scanPartialErrors = [];
+let partialRetryAttempt = 0;
+let prevScanQuestIds = new Set();
 let last429 = null;
 const NOTES_KEY = 'autoquest.notes.v1';
 let questNotesStore = loadJsonLocal(NOTES_KEY, {});
@@ -1415,6 +1428,20 @@ function questNoteFor(id) { const s = questNotesStore[notesScope()] || {}; retur
 function setQuestNote(id, text) { const sc = notesScope(); if (!questNotesStore[sc]) questNotesStore[sc] = {}; questNotesStore[sc][String(id)] = String(text || '').slice(0, 500); saveJsonLocal(NOTES_KEY, questNotesStore); }
 function setGlobal429(scope, seconds) { last429 = { scope: String(scope || ''), seconds: Number(seconds) || 0, until: Date.now() + (Number(seconds) || 0) * 1000 }; }
 function forecastOrbs() { let orbs = 0; let secs = 0; for (const q of quests.values()) { if (q.status !== 'todo' || q.flag === 'gone') continue; const need = Number(q.secondsNeeded) || 0; const done = Number(q.secondsDone) || 0; if (need > 0) { orbs += Number(q.orbs) || 0; secs += Math.max(0, need - done); } } return { orbs, minutes: Math.round(secs / 60) }; }
+// Waves#223: đếm ngược trực tiếp cho quest sắp hết hạn (trong 7 ngày).
+// Quá 7 ngày thì chỉ hiện ngày (đủ rõ); đã hết hạn thì không đếm.
+function formatExpiryCountdown(expiresAt) {
+	const t = expiresAt ? Date.parse(expiresAt) : NaN;
+	if (!Number.isFinite(t)) return '';
+	const d = t - Date.now();
+	if (d <= 0) return '';
+	if (d > 7 * 86400000) return '';
+	const days = Math.floor(d / 86400000);
+	if (days >= 1) return `Còn ${days} ngày`;
+	const hours = Math.floor(d / 3600000);
+	if (hours >= 1) return `Còn ${hours}g ${Math.floor((d % 3600000) / 60000)}p`;
+	return `Còn ${Math.max(1, Math.floor(d / 60000))}p`;
+}
 function isExpiringSoon(q, days) { const t = q.expiresAt ? Date.parse(q.expiresAt) : NaN; if (!Number.isFinite(t)) return false; const d = t - Date.now(); return d >= 0 && d <= days * 86400000; }
 function groupGameKey(q) { return String(q.gameTitle || q.application || q.name || 'Khác'); }
 function clearClipboardAfter(ms) { try { if (navigator.clipboard && navigator.clipboard.writeText) setTimeout(() => { try { navigator.clipboard.writeText(''); } catch {} }, ms); } catch {} }
@@ -1813,8 +1840,9 @@ function updateQuestCard(node, q) {
 	}
 	const pubText = q.publisher || q.application || q.gameTitle || 'Discord';
 	if (r.pub.textContent !== pubText) r.pub.textContent = pubText;
+	const countdown = formatExpiryCountdown(q.expiresAt);
 	const endText = q.expiresAt
-		? `${en ? 'Ends' : 'Kết thúc vào'} ${fmtShortDate(q.expiresAt)}`
+		? `${en ? 'Ends' : 'Kết thúc vào'} ${fmtShortDate(q.expiresAt)}${countdown ? ` · ${countdown}` : ''}`
 		: '';
 	if (r.end.textContent !== endText) r.end.textContent = endText;
 
@@ -2197,6 +2225,34 @@ function openDoneDetail(q, tileNode) {
 		codeWrap.appendChild(link);
 	}
 	dialog.appendChild(codeWrap);
+	// Waves#237: thẻ chia sẻ — chỉ tên, game, phần thưởng, ngày nhận.
+	// KHÔNG bao giờ vẽ token hay code đổi thưởng (kể cả khi q.rewardCode có).
+	const shareBtn = document.createElement('button');
+	shareBtn.type = 'button';
+	shareBtn.className = 'ghost-btn';
+	shareBtn.textContent = en ? 'Export share card' : 'Xuất thẻ chia sẻ';
+	shareBtn.addEventListener('click', () => {
+		try {
+			const cv = document.createElement('canvas'); cv.width = 800; cv.height = 420;
+			const ctx = cv.getContext('2d');
+			ctx.fillStyle = '#0b0e18'; ctx.fillRect(0, 0, 800, 420);
+			ctx.fillStyle = '#5865f2'; ctx.fillRect(0, 0, 800, 8);
+			ctx.fillStyle = '#ffffff'; ctx.font = '700 40px system-ui, sans-serif';
+			const wrap = (s, w) => { const words = String(s || '').split(/\s+/); const lines = []; let cur = ''; for (const word of words) { const test = cur ? cur + ' ' + word : word; if (ctx.measureText(test).width > w && cur) { lines.push(cur); cur = word; } else cur = test; } if (cur) lines.push(cur); return lines.slice(0, 2); };
+			const lines = wrap(q.name || q.gameTitle || 'Quest', 720);
+			lines.forEach((ln, i) => ctx.fillText(ln, 40, 90 + i * 48));
+			ctx.fillStyle = '#9aa3b8'; ctx.font = '400 26px system-ui, sans-serif';
+			ctx.fillText(q.gameTitle || q.publisher || '', 40, 90 + lines.length * 48 + 20);
+			ctx.fillStyle = '#f5c518'; ctx.font = '700 30px system-ui, sans-serif';
+			ctx.fillText(q.rewardName || q.rewardTitle || rewardTypeLabel(q), 40, 300);
+			ctx.fillStyle = '#9aa3b8'; ctx.font = '400 24px system-ui, sans-serif';
+			ctx.fillText(fmtClaimTime(q.claimedAt) || '', 40, 345);
+			ctx.fillStyle = '#5865f2'; ctx.font = '700 22px system-ui, sans-serif';
+			ctx.fillText('AUTO-QUEST · ZoZ Community', 40, 390);
+			cv.toBlob((blob) => { if (!blob) return; const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `quest-${String(q.id || 'done')}.png`; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 5000); toast(en ? 'Share card downloaded.' : 'Đã tải thẻ chia sẻ.'); }, 'image/png');
+		} catch { toast(en ? 'Could not export the share card.' : 'Không xuất được thẻ chia sẻ.', true); }
+	});
+	dialog.appendChild(shareBtn);
 	veil.appendChild(dialog);
 	document.body.appendChild(veil);
 	const close = () => {
@@ -2329,7 +2385,7 @@ function doneTileInfoHtml(q, orbs) {
 
 	// (2) Logotype thật của game. Ảnh hỏng → JS gỡ và bật (2b) chữ tên game.
 	const logo = logoUrl
-		? `<img class="qdone-info-logo" src="${escapeHtml(logoUrl)}" alt="" aria-hidden="true" draggable="false" loading="eager" decoding="async" />`
+		? `<img class="qdone-info-logo" src="${escapeHtml(logoUrl)}" alt="" aria-hidden="true" draggable="false" loading="lazy" decoding="async" />`
 		: '';
 	const gameText = `<span class="qdone-info-game"${logoUrl ? ' hidden' : ''}>${escapeHtml(gameName)}</span>`;
 
@@ -2428,6 +2484,17 @@ function renderQuests() {
 	lastDoneVisibleCount = doneVisibleOrder.length;
 	const doneWindowing = currentTab === 'done' && doneVisibleOrder.length > 55;
 	let doneWindowIdx = 0;
+	// Waves#225: cùng cơ chế windowing cho tab Chưa làm / Chưa nhận khi
+	// danh sách dài — chỉ gắn DOM trong cửa sổ, giữ nguyên đếm và lựa chọn
+	// (node vẫn nằm trong questNodes, render sau gắn lại khi vào cửa sổ).
+	const activeVisibleOrder = questOrder.filter((id) => { const qq = quests.get(id); return qq && qq.status !== 'claimed' && qq.status !== 'claimable' && qq.flag !== 'gone' && questMatchesFilter(qq); });
+	const newVisibleOrder = questOrder.filter((id) => { const qq = quests.get(id); return qq && qq.status === 'claimable' && qq.flag !== 'gone' && questMatchesFilter(qq); });
+	lastActiveVisibleCount = activeVisibleOrder.length;
+	lastNewVisibleCount = newVisibleOrder.length;
+	const activeWindowing = currentTab === 'active' && activeVisibleOrder.length > 55;
+	const newWindowing = currentTab === 'new' && newVisibleOrder.length > 55;
+	let activeWindowIdx = 0;
+	let newWindowIdx = 0;
 	// Đảm bảo mọi quest có node, gắn vào đúng tab
 	let visActive = 0;
 	let visNew = 0;
@@ -2487,6 +2554,23 @@ function renderQuests() {
 			if (node.parentElement) node.remove();
 			if (matches) { visTotal += 1; visDone += 1; }
 			continue;
+		}
+		if (kind === 'card' && matches) {
+			if (q.status === 'claimable') {
+				newWindowIdx += 1;
+				if (currentTab === 'new' && newWindowing && newWindowIdx > newWindowEnd) {
+					if (node.parentElement) node.remove();
+					visTotal += 1; visNew += 1;
+					continue;
+				}
+			} else {
+				activeWindowIdx += 1;
+				if (currentTab === 'active' && activeWindowing && activeWindowIdx > activeWindowEnd) {
+					if (node.parentElement) node.remove();
+					visTotal += 1; visActive += 1;
+					continue;
+				}
+			}
 		}
 		if (node.hidden === matches) node.hidden = !matches;
 		if (matches) {
@@ -2573,6 +2657,17 @@ function renderQuests() {
 	// state của tiến trình — tránh cảnh nút bị khoá trong khi quest vẫn cày.
 	setBusyFlags();
 }
+
+// Waves#223: tick mỗi phút để đếm ngược hết hạn chạy theo thời gian thật.
+// Chỉ render lại khi có quest hết hạn trong 7 ngày và tab đang hiện —
+// renderQuests đã diff theo signature nên tick này rẻ, không nháy lưới.
+setInterval(() => {
+	if (document.hidden) return;
+	try {
+		const any = Array.from(quests.values()).some((q) => !!formatExpiryCountdown(q.expiresAt));
+		if (any) renderQuests();
+	} catch {}
+}, 60000);
 
 /** Waves 27: sau khi nạp xong, cho toàn bộ thẻ "trôi vào + mờ dần lên".
  *  Dùng animation CSS rẻ (GPU) + stagger nhẹ để mượt, máy yếu vẫn ổn. */
@@ -2682,7 +2777,30 @@ function updateSelectionUi() {
 		if (q) selOrbs += q.orbs || 0;
 	}
 	ui.selectedOrbs.textContent = selected.size > 0 ? `(+${selOrbs} Orbs)` : '';
+	try { refreshGameSelect(); } catch {}
 }
+
+// Waves#231: chọn tất cả quest của một game trong tab Chưa làm, không
+// chọn game khác, và chỉ chọn quest đang khớp bộ lọc + chọn được.
+function gameLabelOf(q) { return String(q.gameTitle || q.publisher || q.name || '').trim(); }
+function refreshGameSelect() {
+	if (!ui.gameSelect) return;
+	const prev = ui.gameSelect.value;
+	const games = new Map();
+	for (const id of questOrder) { const q = quests.get(id); if (!q || !canSelectQuest(q) || !questMatchesFilter(q)) continue; const g = gameLabelOf(q); if (g) games.set(g, true); }
+	const opts = ['<option value="">Chọn theo game…</option>'] + Array.from(games.keys()).sort().map((g) => `<option value="${escapeHtml(g)}">${escapeHtml(g)}</option>`);
+	ui.gameSelect.innerHTML = opts.join('');
+	if (prev && games.has(prev)) ui.gameSelect.value = prev;
+}
+if (ui.btnSelectGame) ui.btnSelectGame.addEventListener('click', () => {
+	const g = ui.gameSelect ? ui.gameSelect.value : '';
+	if (!g) return;
+	let n = 0;
+	for (const id of questOrder) { const q = quests.get(id); if (!q || !canSelectQuest(q) || !questMatchesFilter(q) || gameLabelOf(q) !== g) continue; if (!selected.has(id)) { selected.add(id); n++; } }
+	renderQuests();
+	updateSelectionUi();
+	if (n) toast(`Đã chọn ${n} nhiệm vụ của ${g}.`);
+});
 
 /* ---------------- Selection handlers ---------------- */
 
@@ -2723,6 +2841,33 @@ function clearQuestSearch() {
 	renderQuests();
 }
 
+// Waves#234: lịch sử tìm kiếm — chỉ lưu cục bộ (localStorage), tối đa 10
+// từ khóa gần nhất, không chứa token, không gửi đi đâu, xóa được.
+const SEARCH_HISTORY_KEY = 'autoquest.searchHistory.v1';
+function loadSearchHistory() { try { const v = JSON.parse(localStorage.getItem(SEARCH_HISTORY_KEY) || '[]'); return Array.isArray(v) ? v.filter((x) => typeof x === 'string') : []; } catch { return []; } }
+function saveSearchTerm(term) {
+	const t = String(term || '').trim();
+	if (t.length < 2) return;
+	const h = loadSearchHistory().filter((x) => x !== t);
+	h.unshift(t);
+	try { localStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(h.slice(0, 10))); } catch {}
+}
+function renderSearchHistory() {
+	if (!ui.searchHistory) return;
+	const h = loadSearchHistory();
+	ui.searchHistory.hidden = !h.length;
+	ui.searchHistory.innerHTML = '';
+	for (const term of h) {
+		const b = document.createElement('button');
+		b.type = 'button'; b.className = 'ghost-btn'; b.textContent = term;
+		b.addEventListener('click', () => { if (!ui.questSearch) return; ui.questSearch.value = term; questQuery = term; if (ui.btnQuestSearchClear) ui.btnQuestSearchClear.hidden = false; renderQuests(); });
+		ui.searchHistory.appendChild(b);
+	}
+	const clr = document.createElement('button');
+	clr.type = 'button'; clr.className = 'ghost-btn'; clr.textContent = currentLang === 'en' ? 'Clear history' : 'Xóa lịch sử';
+	clr.addEventListener('click', () => { try { localStorage.removeItem(SEARCH_HISTORY_KEY); } catch {} renderSearchHistory(); });
+	ui.searchHistory.appendChild(clr);
+}
 if (ui.questSearch) {
 	ui.questSearch.addEventListener('input', () => {
 		const v = ui.questSearch.value;
@@ -2731,6 +2876,8 @@ if (ui.questSearch) {
 		clearTimeout(questSearchTimer);
 		questSearchTimer = setTimeout(() => {
 			questQuery = ui.questSearch.value.trim();
+			saveSearchTerm(questQuery);
+			renderSearchHistory();
 			renderQuests();
 		}, 120);
 	});
@@ -2738,6 +2885,8 @@ if (ui.questSearch) {
 		if (e.key === 'Enter') {
 			clearTimeout(questSearchTimer);
 			questQuery = ui.questSearch.value.trim();
+			saveSearchTerm(questQuery);
+			renderSearchHistory();
 			renderQuests();
 		} else if (e.key === 'Escape' && ui.questSearch.value) {
 			e.preventDefault();
@@ -2822,6 +2971,13 @@ if (ui.btnClearCdnCache) ui.btnClearCdnCache.addEventListener('click', async () 
 	catch { toast('Không gửi được lệnh xóa cache CDN.', true); }
 });
 if (ui.btnExportDoneCsv) ui.btnExportDoneCsv.addEventListener('click', () => exportDone(!!(ui.chkExportCodes && ui.chkExportCodes.checked), false));
+// Waves#232: lưu mục tiêu Orb (chỉ dữ liệu local, không token).
+if (ui.btnOrbGoalSave) ui.btnOrbGoalSave.addEventListener('click', () => {
+	const v = Math.max(0, Math.min(1000000000, parseInt(ui.orbGoalInput ? ui.orbGoalInput.value : '', 10) || 0));
+	saveJsonLocal('autoquest.orbGoal.v1', v);
+	renderStats();
+	toast(v > 0 ? `Đã lưu mục tiêu ${v} Orbs.` : 'Đã xóa mục tiêu Orb.');
+});
 if (ui.btnExportDoneJson) ui.btnExportDoneJson.addEventListener('click', () => exportDone(!!(ui.chkExportCodes && ui.chkExportCodes.checked), true));
 if (ui.btnClearDoneCache) ui.btnClearDoneCache.addEventListener('click', () => {
 	// Waves#167: chỉ xóa cache inventory của tài khoản hiện tại, không
@@ -2834,7 +2990,13 @@ if (ui.btnClearDoneCache) ui.btnClearDoneCache.addEventListener('click', () => {
 });
 if (ui.btnClaimAll) ui.btnClaimAll.addEventListener('click', claimAllMatching);
 /* Waves#202: đếm bộ lọc nâng cao đang bật + bật/tắt khối lọc nâng cao. */
-function countActiveAdvancedFilters() { let n = 0; if (platformFilter !== 'all') n++; if (taskFilter !== 'all') n++; if (expiringOnly) n++; if (doneDateFrom || doneDateTo) n++; if (!doneIncludeUndated) n++; if (groupGames) n++; return n; }
+// Waves#218: pure counter for the advanced-filter badge. Every advanced
+// filter must be counted here exactly once: platform, task, expiring-soon,
+// date range (from OR to counts once), undated excluded, group-by-game.
+// countActiveAdvancedFilters() is only a thin delegate over this function
+// so the badge can never drift from the real filter state.
+function countAdvancedFiltersState(s) { let n = 0; if (s.platformFilter !== 'all') n++; if (s.taskFilter !== 'all') n++; if (s.expiringOnly) n++; if (s.doneDateFrom || s.doneDateTo) n++; if (!s.doneIncludeUndated) n++; if (s.groupGames) n++; return n; }
+function countActiveAdvancedFilters() { return countAdvancedFiltersState({ platformFilter, taskFilter, expiringOnly, doneDateFrom, doneDateTo, doneIncludeUndated, groupGames }); }
 function updateAdvancedFilterCount() { const n = countActiveAdvancedFilters(); if (ui.advancedFilterCount) ui.advancedFilterCount.textContent = n > 0 ? `(${n})` : ''; }
 if (ui.btnAdvancedFilters) ui.btnAdvancedFilters.addEventListener('click', () => { if (!ui.questAdvanced) return; const willShow = ui.questAdvanced.hidden; ui.questAdvanced.hidden = !willShow; ui.btnAdvancedFilters.setAttribute('aria-expanded', String(willShow)); });
 
@@ -4065,6 +4227,19 @@ async function handleEvent(evt) {
 			if (state === 'scanning') setState('idle');
 			// Waves#186/#194: báo phần quét lỗi + thông báo khi có nhiệm vụ chờ nhận.
 			try {
+				if (!scanPartialErrors.length) partialRetryAttempt = 0;
+				// Waves#238: quest mới = id có trong lần quét này nhưng không có
+				// trong lần quét trước. Lần quét đầu tiên (chưa có lần trước)
+				// thì không báo, tránh toast "mới" cho toàn bộ danh sách.
+				if (prevScanQuestIds.size > 0) {
+					const fresh = questOrder.filter((id) => !prevScanQuestIds.has(id));
+					if (fresh.length) {
+						const freshNames = fresh.map((id) => { const qq = quests.get(id); return (qq && (qq.name || qq.gameTitle)) || id; }).slice(0, 5).join(', ');
+						appendLog(`[Mới] Có ${fresh.length} quest mới so với lần quét trước (${freshNames}${fresh.length > 5 ? '…' : ''}).`, 'system');
+						toast(`Có ${fresh.length} quest mới.`, false);
+					}
+				}
+				prevScanQuestIds = new Set(questOrder);
 				if (scanPartialErrors.length) {
 					const names = scanPartialErrors.map((x) => x.name || x.id).slice(0, 5).join(', ');
 					appendLog(`[Cảnh báo] Quét chưa đủ: ${scanPartialErrors.length} nhiệm vụ chưa quét được (${names}${scanPartialErrors.length > 5 ? '…' : ''}). Bấm Quét lại để thử lại phần này — danh sách hiện tại KHÔNG được coi là đầy đủ.`, 'warn');
@@ -4691,6 +4866,8 @@ function resetQuestSessionForSwitch() {
 		// ghi chú/yêu thích đã lưu theo scope, không đụng token IndexedDB).
 		claimQueue = [];
 		scanPartialErrors = [];
+		partialRetryAttempt = 0;
+		prevScanQuestIds.clear();
 		last429 = null;
 		try { if (typeof api.clearClaimDiagnostics === 'function') api.clearClaimDiagnostics(); } catch {}
 		try { if (ui.claimQueueChip) ui.claimQueueChip.hidden = true; } catch {}
@@ -7479,7 +7656,18 @@ function renderStats() {
 	if (ui.statsRecent) {
 		ui.statsRecent.innerHTML = '';
 		const recent = entries.slice(-10).reverse();
+		// Waves#233: dòng thời gian — nhóm các lần nhận gần nhất theo ngày,
+		// mới nhất trước, mỗi ngày một tiêu đề riêng.
+		let lastDay = '';
 		for (const row of recent) {
+			const day = dayKey(row.at);
+			if (day !== lastDay) {
+				lastDay = day;
+				const head = document.createElement('li');
+				head.className = 'stats-recent-day';
+				head.textContent = day;
+				ui.statsRecent.appendChild(head);
+			}
 			const li = document.createElement('li');
 			li.className = 'stats-recent-item';
 			const name = document.createElement('span');
@@ -7512,6 +7700,13 @@ function renderStats() {
 			ui.statsHistoryTable.innerHTML = rows ? `<table class="stats-table"><thead><tr><th>Ngày</th><th>Orbs</th><th>Nhiệm vụ</th></tr></thead><tbody>${rows}</tbody></table>` : '<p class="qstate-text">Không có dữ liệu trong khoảng ngày đã chọn.</p>';
 		}
 		if (ui.statsForecast) { const fc = forecastOrbs(); ui.statsForecast.textContent = `Dự báo (chỉ là ước tính, không phải số thật từ Discord): khoảng ${fc.orbs} Orbs từ các nhiệm vụ đang làm dở, cần ~${fc.minutes} phút nếu làm liên tục.`; }
+		// Waves#232: mục tiêu Orb — chỉ tính từ lịch sử nhận cục bộ, ghi rõ
+		// là dữ liệu local, KHÔNG phải số dư Discord. Không chứa token.
+		try {
+			const goal = Number(loadJsonLocal('autoquest.orbGoal.v1', 0)) || 0;
+			if (ui.orbGoalInput && document.activeElement !== ui.orbGoalInput) ui.orbGoalInput.value = goal > 0 ? String(goal) : '';
+			if (ui.orbGoalProgress) ui.orbGoalProgress.textContent = goal > 0 ? `Mục tiêu Orb (dữ liệu local): ${totalOrbs} / ${goal} (${Math.min(100, Math.round((totalOrbs / goal) * 100))}%) — không phải số dư Discord.` : 'Chưa đặt mục tiêu Orb. Đặt một con số ở trên để theo dõi tiến độ từ lịch sử nhận cục bộ.';
+		} catch {}
 	} catch {}
 }
 
@@ -7921,10 +8116,13 @@ window.addEventListener('online', () => {
 	if (appScroll) {
 	let doneScrollTimer = null;
 	appScroll.addEventListener('scroll', () => {
-		if (currentTab !== 'done' || lastDoneVisibleCount <= 55) return;
 		if (doneScrollTimer) clearTimeout(doneScrollTimer);
 		doneScrollTimer = setTimeout(() => {
-			if (appScroll.scrollTop + appScroll.clientHeight > appScroll.scrollHeight - 600 && doneWindowEnd < lastDoneVisibleCount) { doneWindowEnd += 80; renderQuests(); }
+			if (appScroll.scrollTop + appScroll.clientHeight <= appScroll.scrollHeight - 600) return;
+			// Waves#225: mở rộng cửa sổ của đúng tab đang xem.
+			if (currentTab === 'done' && doneWindowEnd < lastDoneVisibleCount) { doneWindowEnd += 80; renderQuests(); }
+			else if (currentTab === 'active' && activeWindowEnd < lastActiveVisibleCount) { activeWindowEnd += 80; renderQuests(); }
+			else if (currentTab === 'new' && newWindowEnd < lastNewVisibleCount) { newWindowEnd += 80; renderQuests(); }
 		}, 120);
 	}, { passive: true });
 }
@@ -8398,6 +8596,18 @@ async function recoverRun(auto = false) {
 }
 if (ui.btnRecover) ui.btnRecover.addEventListener('click', () => recoverRun(false));
 
+// Waves#235: phím tắt toàn cục — Q quét, / focus ô tìm kiếm, Esc đã có
+// sẵn ở modal/drawer. TẮT khi đang gõ trong input/textarea/select/token
+// field hoặc khi có modal đang mở, để không quét nhầm lúc gõ.
+document.addEventListener('keydown', (e) => {
+	if (e.metaKey || e.ctrlKey || e.altKey) return;
+	const t = e.target;
+	if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable)) return;
+	if (document.querySelector('.qdone-modal')) return;
+	if (e.key === 'q' || e.key === 'Q') { if (ui.btnScan && !ui.btnScan.disabled) ui.btnScan.click(); }
+	else if (e.key === '/') { e.preventDefault(); try { switchPage('quest'); } catch {} if (ui.questSearch) ui.questSearch.focus(); }
+});
+
 /* ---------------- Wave#125: bẫy focus + phím tắt modal ---------------- */
 
 function visibleModal() {
@@ -8494,13 +8704,23 @@ updateNetBadge();
 
 /* ---------------- Waves 28: Chế độ Sáng / Tối ---------------- */
 let currentTheme = 'dark';
+// Waves#236: chế độ "Theo hệ thống" chỉ lưu ở renderer (localStorage),
+// KHÔNG đưa vào bridge config — bridge chuẩn hóa theme chỉ light/dark và
+// sẽ lột bỏ giá trị 'system' nếu lưu qua config. Khi OS đổi theme,
+// matchMedia listener đổi theo mà không cần bấm lại.
+let themeMode = 'dark';
+try { const m = localStorage.getItem('autoquest.themeMode.v1'); if (m === 'system' || m === 'light' || m === 'dark') themeMode = m; } catch {}
+function resolveTheme(mode) { return mode === 'system' ? (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark') : (mode === 'light' ? 'light' : 'dark'); }
 
 function applyTheme(theme, persist = true) {
-	currentTheme = theme === 'light' ? 'light' : 'dark';
+	if (theme === 'system' || theme === 'light' || theme === 'dark') themeMode = theme;
+	currentTheme = resolveTheme(themeMode);
 	document.documentElement.dataset.theme = currentTheme;
 	const isLight = currentTheme === 'light';
-	if (ui.themeDark) ui.themeDark.setAttribute('aria-checked', String(!isLight));
-	if (ui.themeLight) ui.themeLight.setAttribute('aria-checked', String(isLight));
+	if (ui.themeDark) ui.themeDark.setAttribute('aria-checked', String(themeMode === 'dark'));
+	if (ui.themeLight) ui.themeLight.setAttribute('aria-checked', String(themeMode === 'light'));
+	if (ui.themeSystem) ui.themeSystem.setAttribute('aria-checked', String(themeMode === 'system'));
+	try { localStorage.setItem('autoquest.themeMode.v1', themeMode); } catch {}
 	/* Wave#134: mực trên bảng tên PHẢI tính lại ngay khi đổi theme — nó phụ thuộc
 	   nền thật (--card) vừa đổi, không phụ thuộc theme lúc renderProfile chạy. */
 	refreshNameplateInk();
@@ -8521,6 +8741,8 @@ function applyTheme(theme, persist = true) {
 
 if (ui.themeDark) ui.themeDark.addEventListener('click', () => applyTheme('dark'));
 if (ui.themeLight) ui.themeLight.addEventListener('click', () => applyTheme('light'));
+if (ui.themeSystem) ui.themeSystem.addEventListener('click', () => applyTheme('system'));
+if (window.matchMedia) window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', () => { if (themeMode === 'system') applyTheme('system', false); });
 
 /* Waves#155: dựng lại toàn bộ node quest để questLogoUrl chọn biến
  * thể _light/_dark theo theme mới. Không gọi lại Discord, không mất
@@ -8578,6 +8800,21 @@ ui.btnScan.addEventListener('click', async () => {
 	if (!validate()) return;
 	// Wave#116: quét xong thường sẽ claim — nạp sẵn hCaptcha ngay từ đây.
 	warmUpCaptcha();
+	// Waves#238: chụp lại id của lần quét trước TRƯỚC khi danh sách bị xóa,
+	// để scan:complete so sánh và báo quest mới xuất hiện.
+	prevScanQuestIds = new Set(questOrder);
+	// Waves#222: lần quét ngay sau một lần quét thiếu — thử lại có chờ
+	// (backoff giới hạn 1s/2s/3s/4s, tối đa 4 lần rồi quay về 1s). Lưu ý thật:
+	// Discord chỉ có endpoint quét bulk, không có endpoint quét riêng một
+	// quest id, nên "thử lại phần lỗi" ở đây là quét bulk lại sau backoff
+	// và báo rõ những id lỗi lần trước — không thể chỉ quét riêng id lỗi.
+	if (scanPartialErrors.length) {
+		partialRetryAttempt = Math.min(partialRetryAttempt + 1, 4);
+		const waitMs = partialRetryAttempt * 1000;
+		const names = scanPartialErrors.map((x) => x.name || x.id).slice(0, 5).join(', ');
+		appendLog(`[Thử lại] Quét thiếu lần trước (${scanPartialErrors.length} nhiệm vụ: ${names}) — chờ ${waitMs / 1000}s rồi quét lại (lần ${partialRetryAttempt}).`, 'warn');
+		await new Promise((r) => setTimeout(r, waitMs));
+	}
 
 	// Waves 27: vào TRẠNG THÁI QUÉT NGAY — không chờ saveConfig/start.
 	// Wave#96 (bro: "ấn quét nhiệm vụ phải nạp luôn nhé, hơi chậm đấy"):
@@ -9748,7 +9985,7 @@ window.__aqDiag = {
 		// Wave#88: nạp cache tài khoản đã lưu (cho popup "Đổi tài khoản").
 		await loadAccountsCache();
 		// Waves 28: áp chế độ Sáng/Tối đã lưu TRƯỚC khi vẽ (tránh nháy sáng/tối)
-		applyTheme(cfg.theme === 'light' ? 'light' : 'dark', false);
+		applyTheme(themeMode === 'system' ? 'system' : (cfg.theme === 'light' ? 'light' : 'dark'), false);
 		// Waves #126/#129/#127: ngôn ngữ, chế độ nhẹ, tự khoá — áp trước khi vẽ.
 		applyLang(cfg.lang === 'en' ? 'en' : 'vi', false);
 		applyLiteMode(cfg.liteMode === true, false);

@@ -441,11 +441,12 @@ check('Waves#155: questLogoUrl chọn biến thể theo theme', () => {
 });
 check('Waves#156: favicon ZoZ + theme-color', () => {
 	const html = read(path.join(APP, 'index.html'));
-	assert(/rel="icon"[^>]*zoZ-logo-ico\.png/.test(html), 'thiếu <link rel="icon"> ZoZ');
+	assert(/rel="icon"[^>]*zoZ-logo-round\.png/.test(html), 'thiếu <link rel="icon"> ZoZ bo tròn');
 	assert(/rel="apple-touch-icon"[^>]*zoZ-logo-ico\.png/.test(html), 'thiếu apple-touch-icon');
 	assert(/name="theme-color"[^>]*prefers-color-scheme: light/.test(html), 'thiếu theme-color Sáng');
 	assert(fs.existsSync(path.join(APP, 'assets', 'zoZ-logo-ico.png')), 'thiếu file zoZ-logo-ico.png');
-	return 'favicon ZoZ có mặt';
+	assert(fs.existsSync(path.join(APP, 'assets', 'zoZ-logo-round.png')), 'thiếu file zoZ-logo-round.png');
+	return 'favicon ZoZ bo tròn có mặt';
 });
 check('Waves#153: code KHÔNG nằm trong cache inventory / export mặc định', () => {
 	const r = read(path.join(APP, 'renderer.js'));
@@ -567,7 +568,10 @@ check('Waves#212: file skill UI/UX có mặt, nguyên vẹn, README trỏ tới 
 	const skill = read(path.join(__dirname, '..', '..', 'skills', 'ui-ux', 'SKILL-UI-UX.md'));
 	assert(skill.includes('ĐỌC TRƯỚC TIÊN') && skill.includes('shadcn-ui/lint') && skill.includes('ui-ux-pro-max') && skill.includes('chrome-devtools-mcp'), 'file skill thiếu nội dung tổng hợp');
 	const readme = read(path.join(__dirname, '..', '..', 'README.md'));
-	assert(readme.includes('skills/ui-ux/SKILL-UI-UX.md') && readme.includes('Waves #201'), 'README phải trỏ tới skill + waves 201');
+	assert(readme.includes('skills/ui-ux/SKILL-UI-UX.md'), 'README phải trỏ tới skill');
+	// Quy tắc từ 2026-10-30: README chính không chứa log waves hay mục nội bộ.
+	assert(!/Waves #\d/.test(readme), 'README chính không được chứa danh sách waves');
+	assert(!readme.includes('Log AI Agent') && !readme.includes('LƯU Ý CHO AI AGENT'), 'README chính không được chứa mục nội bộ');
 	return 'skill + README pointer có mặt';
 });
 check('Waves#177: backup — export 200k vòng, import giữ sàn cũ, mật khẩu mới tối thiểu 12', () => {
@@ -581,6 +585,233 @@ check('Waves#177: backup — export 200k vòng, import giữ sàn cũ, mật kh�
 check('Waves#198: kích thước bundle báo cáo được (renderer/styles/engine-bundle tồn tại)', () => {
 	const sizes = [['renderer.js', path.join(APP, 'renderer.js')], ['styles.css', path.join(APP, 'styles.css')], ['engine-bundle.js', path.join(WEB, 'engine-bundle.js')]].map(([n, f]) => `${n}=${(fs.statSync(f).size / 1024).toFixed(0)}KB`).join(' ');
 	return sizes + ' (không tách code: PWA offline vẫn cần shell nguyên khối)';
+});
+
+
+check('Waves#215: smoke checklist + rounded favicon link (visual checks listed, not claimed)', () => {
+	const list = read(path.join(__dirname, 'SMOKE-CHECKLIST.md'));
+	for (const need of ['375px', 'drawer', 'Bộ lọc nâng cao', 'zoZ-logo-round', 'light', 'dark', 'CHƯA XÁC MINH']) assert(list.includes(need), 'smoke checklist thiếu: ' + need);
+	const html = read(INDEX);
+	assert(/rel="icon"[^>]*zoZ-logo-round\.png/.test(html), 'favicon phải là logo tròn');
+	return 'checklist liệt kê đủ trạng thái cần chụp màn hình thật';
+});
+check('Waves#216: CI workflow chạy đủ bước theo đúng thứ tự', () => {
+	const ci = read(path.join(ROOT, '.github', 'workflows', 'web-ci.yml'));
+	const steps = ['build:engine', 'npm test', 'check:bundle', 'check:integrity', 'sizes', 'build:static'];
+	let last = -1;
+	for (const s of steps) { const i = ci.indexOf(s); assert(i > last, 'CI thiếu hoặc sai thứ tự bước: ' + s); last = i; }
+	return 'CI: build:engine -> test -> bundle -> integrity -> sizes -> build:static';
+});
+check('Waves#217: drawer regression — thứ tự đóng, Esc, pointer-events, z-index, trong .shell', () => {
+	const html = read(INDEX);
+	const shellAt = html.indexOf('class="shell"');
+	const overlayAt = html.indexOf('drawer-overlay');
+	const asideAt = html.indexOf('<aside');
+	assert(shellAt >= 0 && overlayAt > shellAt && asideAt > overlayAt, 'overlay phải nằm trong .shell, trước <aside>');
+	const r = read(path.join(APP, 'renderer.js'));
+	assert(/closeDrawer\(\{ returnFocus: false \}\)/.test(r), 'switchPage phải đóng drawer sau khi đổi trang, không trả focus');
+	assert(/closeDrawer\(\{ returnFocus: true \}\)/.test(r), 'bấm overlay chỉ đóng drawer, trả focus');
+	const css = read(path.join(APP, 'styles.css')) + read(path.join(APP, 'mobile.css'));
+	const oz = Number((css.match(/\.drawer-overlay \{[^}]*z-index: (\d+)/) || [])[1]);
+	const sz = Number((css.match(/\.sidebar \{[^}]*z-index: (\d+)/) || [])[1]);
+	assert(Number.isFinite(oz) && Number.isFinite(sz) && oz < sz, `overlay z (${oz}) phải nhỏ hơn sidebar z (${sz})`);
+	assert(/\.drawer-overlay \{[^}]*pointer-events: none/.test(css) && /\.drawer-overlay\.show \{[^}]*pointer-events: auto/.test(css), 'overlay mặc định phải pointer-events: none, chỉ .show mới auto');
+	return `overlay z=${oz} < sidebar z=${sz}, trong .shell`;
+});
+check('Waves#218: bộ đếm bộ lọc nâng cao — 6 đầu vào, mỗi đầu đúng một lần', () => {
+	const r = read(path.join(APP, 'renderer.js'));
+	const m = r.match(/function countAdvancedFiltersState\(s\) \{[^}]*\}/);
+	assert(m, 'thiếu hàm thuần countAdvancedFiltersState');
+	const sandbox = { countAdvancedFiltersState: null };
+	vm.createContext(sandbox);
+	vm.runInContext(m[0] + '\nthis.__f = countAdvancedFiltersState;', sandbox);
+	const f = sandbox.__f;
+	const base = { platformFilter: 'all', taskFilter: 'all', expiringOnly: false, doneDateFrom: '', doneDateTo: '', doneIncludeUndated: true, groupGames: false };
+	assert(f(base) === 0, 'không lọc nào -> 0');
+	assert(f({ ...base, platformFilter: '0' }) === 1, 'chỉ platform -> 1');
+	assert(f({ ...base, taskFilter: 'WATCH_VIDEO' }) === 1, 'chỉ task -> 1');
+	assert(f({ ...base, expiringOnly: true }) === 1, 'chỉ expiring -> 1');
+	assert(f({ ...base, doneDateFrom: '2026-01-01', doneDateTo: '2026-01-31' }) === 1, 'cả khoảng ngày vẫn chỉ 1');
+	assert(f({ ...base, doneIncludeUndated: false }) === 1, 'chỉ undated-excluded -> 1');
+	assert(f({ ...base, groupGames: true }) === 1, 'chỉ group -> 1');
+	assert(f({ platformFilter: '0', taskFilter: 'WATCH_VIDEO', expiringOnly: true, doneDateFrom: '2026-01-01', doneDateTo: '', doneIncludeUndated: false, groupGames: true }) === 6, 'đủ 6 lọc -> 6');
+	assert(/function countActiveAdvancedFilters\(\) \{ return countAdvancedFiltersState/.test(r), 'bộ đếm UI phải ủy quyền cho hàm thuần');
+	assert(/function syncQuestTools\([^)]*\) \{[\s\S]{0,300}updateAdvancedFilterCount/.test(r), 'syncQuestTools phải cập nhật số đếm');
+	return 'count thuần: 0/1/1/1/1/1/1/6 đúng';
+});
+check('Waves#219: manifest có icon maskable logo tròn 256, icon any cũ còn, apple-touch-icon vẫn vuông', () => {
+	const mf = JSON.parse(read(path.join(APP, 'manifest.webmanifest')));
+	const mask = mf.icons.find((i) => i.purpose === 'maskable');
+	assert(mask && mask.src === 'assets/zoZ-logo-round.png' && mask.sizes === '256x256', 'thiếu icon maskable logo tròn 256');
+	assert(mf.icons.some((i) => (i.purpose || 'any') === 'any'), 'icon any cũ phải còn');
+	assert(fs.existsSync(path.join(APP, 'assets', 'zoZ-logo-round.png')), 'file logo tròn thiếu');
+	const html = read(INDEX);
+	assert(/apple-touch-icon[^>]*zoZ-logo-ico\.png/.test(html), 'apple-touch-icon phải giữ bản vuông gốc');
+	return 'maskable 256 tròn + any cũ + apple-touch vuông';
+});
+check('Waves#220: backup import — thiếu data/iv/salt, quá 2MB, sai mật khẩu đều lỗi rõ, không ghi đè', () => {
+	const b = read(path.join(WEB, 'bridge.js'));
+	assert(/File sao lưu thiếu phần dữ liệu mã hoá/.test(b), 'thiếu guard data');
+	assert(/File sao lưu thiếu IV mã hoá/.test(b), 'thiếu guard iv');
+	assert(/File sao lưu thiếu salt KDF/.test(b), 'thiếu guard salt');
+	assert(/2 \* 1024 \* 1024/.test(b) || /2097152/.test(b), 'thiếu cap 2MB');
+	assert(/Sai mật khẩu hoặc file sao lưu bị hỏng/.test(b), 'thiếu thông báo sai mật khẩu');
+	assert(/pendingBackup = null/.test(b), 'failed pick phải reset pendingBackup, không ghi đè dữ liệu cũ');
+	return 'guard data/iv/salt + 2MB + sai mật khẩu + pending null';
+});
+check('Waves#221: SW offline — trang offline có nút Thử lại, không phải text 503 trần', () => {
+	const sw = read(path.join(APP, 'sw.js'));
+	assert(/Thử lại/.test(sw) && /text\/html/.test(sw), 'fallback offline phải là HTML có nút Thử lại');
+	assert(/caches\.match\('index\.html'\)/.test(sw), 'shell cache phải được thử trước fallback offline');
+	return 'offline HTML + retry, shell cache trước';
+});
+check('Waves#222: thử lại quét thiếu có backoff giới hạn, reset khi quét đủ', () => {
+	const r = read(path.join(APP, 'renderer.js'));
+	assert(/partialRetryAttempt = Math\.min\(partialRetryAttempt \+ 1, 4\)/.test(r), 'backoff phải giới hạn 4 lần');
+	assert(/partialRetryAttempt \* 1000/.test(r), 'chờ theo lần thử (1s/2s/3s/4s)');
+	assert(/if \(!scanPartialErrors\.length\) partialRetryAttempt = 0/.test(r), 'quét đủ phải reset số lần thử');
+	return 'backoff 1-4s, reset khi đủ';
+});
+check('Waves#223: đếm ngược hết hạn trực tiếp, tick 60s', () => {
+	const r = read(path.join(APP, 'renderer.js'));
+	const m = r.match(/function formatExpiryCountdown\(expiresAt\) \{[\s\S]*?\n\}/);
+	assert(m, 'thiếu formatExpiryCountdown');
+	const sandbox = { Date };
+	vm.createContext(sandbox);
+	vm.runInContext(m[0] + '\nthis.__f = formatExpiryCountdown;', sandbox);
+	const f = sandbox.__f;
+	const now = Date.now();
+	assert(f(new Date(now + 90 * 60000 + 30000).toISOString()) === 'Còn 1g 30p', '90 phút rưỡi phải là 1g 30p');
+	assert(f(new Date(now + 30 * 60000 + 30000).toISOString()) === 'Còn 30p', '30 phút rưỡi phải là 30p');
+	assert(f(new Date(now + 3 * 86400000 + 12 * 3600000).toISOString()) === 'Còn 3 ngày', '3 ngày rưỡi phải là 3 ngày');
+	assert(f(new Date(now - 1000).toISOString()) === '', 'đã hết hạn không đếm');
+	assert(f(new Date(now + 10 * 86400000).toISOString()) === '', 'quá 7 ngày chỉ hiện ngày');
+	assert(/setInterval\(\(\) => \{[\s\S]{0,300}formatExpiryCountdown/.test(r) && /}, 60000\)/.test(r), 'thiếu tick 60s');
+	assert(/formatExpiryCountdown\(q\.expiresAt\)/.test(r), 'thẻ quest phải dùng countdown');
+	return 'countdown 1g30p/30p/3 ngày + tick 60s';
+});
+check('Waves#224: đổi tài khoản không chạm ghi chú (phạm vi theo tài khoản)', () => {
+	const r = read(path.join(APP, 'renderer.js'));
+	const fn = r.match(/function resetQuestSessionForSwitch\(\) \{[\s\S]*?\n\}/);
+	assert(fn, 'thiếu resetQuestSessionForSwitch');
+	assert(!/questNotesStore\s*=/.test(fn[0]), 'reset đổi tài khoản không được ghi đè notesStore');
+	assert(/notesScope\(\)/.test(r) && /accountScope\(\)/.test(r), 'ghi chú phải theo phạm vi tài khoản');
+	assert(/partialRetryAttempt = 0/.test(fn[0]) || /prevScanQuestIds\.clear\(\)/.test(fn[0]), 'reset phải xóa trạng thái quét thử lại/mới');
+	return 'notes theo accountScope, reset không chạm notes';
+});
+check('Waves#225: windowing cho Chưa làm/Chưa nhận như Đã làm', () => {
+	const r = read(path.join(APP, 'renderer.js'));
+	assert(/let activeWindowEnd = 80/.test(r) && /let newWindowEnd = 80/.test(r), 'thiếu cửa sổ active/new');
+	assert(/activeWindowing/.test(r) && /newWindowing/.test(r), 'thiếu điều kiện windowing active/new');
+	assert(/currentTab === 'active' && activeWindowEnd < lastActiveVisibleCount/.test(r), 'scroll phải mở rộng cửa sổ active');
+	assert(/currentTab === 'new' && newWindowEnd < lastNewVisibleCount/.test(r), 'scroll phải mở rộng cửa sổ new');
+	return 'active/new window 80, mở rộng khi cuộn đáy';
+});
+check('Waves#226: ảnh logo info Đã làm lazy, ảnh thưởng đã lazy', () => {
+	const r = read(path.join(APP, 'renderer.js'));
+	const logo = r.match(/qdone-info-logo[^`]*`/);
+	assert(logo && /loading="lazy"/.test(logo[0]), 'logo info Đã làm phải loading=lazy');
+	assert(/loading="lazy" decoding="async"/.test(r), 'ảnh thưởng phải lazy + async decode');
+	return 'done info logo lazy';
+});
+check('Waves#227/#228: .brain ghi quyết định đo lường + quy trình build number, không bịa số', () => {
+	const brain = read(path.join(ROOT, '.brain', '2026-10-30.md'));
+	assert(/#227/.test(brain) && /không tách/.test(brain), '.brain thiếu quyết định #227');
+	assert(/#228/.test(brain) && /WEB_BUILD_NUMBER/.test(brain), '.brain thiếu quy trình #228');
+	assert(/653945/.test(read(path.join(WEB, 'identity.js'))), 'placeholder build number hiện tại phải giữ nguyên');
+	return '.brain có #227/#228, placeholder không đổi';
+});
+check('Waves#229: SW verify thử nhiều đường dẫn, fail-safe khi mọi đường dẫn lỗi', () => {
+	const sw = read(path.join(APP, 'sw.js'));
+	assert(/candidates/.test(sw) && /name\.slice\(4\)/.test(sw), 'verify phải thử đường dẫn thay thế cho layout web-dist');
+	assert(/bundle fetch failed/.test(sw), 'mọi candidate lỗi phải fail, không activate');
+	assert(/VERIFY_AND_ACTIVATE/.test(sw), 'giữ kênh VERIFY_AND_ACTIVATE');
+	return 'candidates + fail-safe';
+});
+check('Waves#230: veil vào thang — capture 300 < lock 400, modal/login giữ đỉnh', () => {
+	const css = read(path.join(APP, 'styles.css'));
+	const cap = Number((css.match(/\.capture-veil \{[^}]*z-index: (\d+)/) || [])[1]);
+	const lock = Number((css.match(/\.lock-veil \{[^}]*z-index: (\d+)/) || [])[1]);
+	const modal = Number((css.match(/\.qdone-modal-veil \{[^}]*z-index: (\d+)/) || [])[1]);
+	const login = Number((css.match(/\.login-veil \{[^}]*z-index: (\d+)/) || [])[1]);
+	assert(cap === 300 && lock === 400 && modal === 1000 && login === 9000, `thang veil sai: capture=${cap} lock=${lock} modal=${modal} login=${login}`);
+	return 'capture 300 < lock 400 < modal 1000 < login 9000';
+});
+check('Waves#231: chọn theo game — chỉ quest lọc được + chọn được, không lẫn game khác', () => {
+	const html = read(INDEX);
+	const r = read(path.join(APP, 'renderer.js'));
+	assert(html.includes('id="gameSelect"') && html.includes('id="btnSelectGame"'), 'thiếu control chọn theo game');
+	assert(/function refreshGameSelect/.test(r) && /gameLabelOf\(q\) !== g/.test(r), 'handler phải lọc đúng game');
+	assert(/canSelectQuest\(q\) && questMatchesFilter\(q\)/.test(r), 'chọn theo game phải tôn trọng filter + trạng thái chọn được');
+	return 'gameSelect + handler lọc đúng game';
+});
+check('Waves#232: mục tiêu Orb local, ghi rõ không phải số dư Discord', () => {
+	const html = read(INDEX);
+	const r = read(path.join(APP, 'renderer.js'));
+	assert(html.includes('id="orbGoalInput"') && html.includes('id="btnOrbGoalSave"') && html.includes('id="orbGoalProgress"'), 'thiếu UI mục tiêu Orb');
+	assert(/autoquest\.orbGoal\.v1/.test(r), 'mục tiêu phải lưu localStorage riêng');
+	assert(/không phải số dư Discord/.test(r), 'tiến độ phải ghi rõ không phải số dư Discord');
+	return 'goal local + nhãn không phải số dư';
+});
+check('Waves#233: timeline nhận thưởng nhóm theo ngày ở Stats', () => {
+	const r = read(path.join(APP, 'renderer.js'));
+	const css = read(path.join(APP, 'styles.css'));
+	assert(/stats-recent-day/.test(r) && /dayKey\(row\.at\)/.test(r), 'recent phải nhóm theo dayKey');
+	assert(/\.stats-recent-day \{[^}]*font-weight: 700/.test(css), 'thiếu style tiêu đề ngày timeline');
+	return 'timeline nhóm theo ngày';
+});
+check('Waves#234: lịch sử tìm kiếm local, tối đa 10, xóa được, không token', () => {
+	const r = read(path.join(APP, 'renderer.js'));
+	const html = read(INDEX);
+	assert(html.includes('id="searchHistory"'), 'thiếu vùng lịch sử tìm kiếm');
+	assert(/autoquest\.searchHistory\.v1/.test(r) && /slice\(0, 10\)/.test(r), 'lịch sử phải local + tối đa 10');
+	assert(/localStorage\.removeItem\(SEARCH_HISTORY_KEY\)/.test(r), 'phải xóa được lịch sử');
+	return 'search history local 10 + clear';
+});
+check('Waves#235: phím tắt Q / / + tắt khi gõ, tài liệu ở Settings', () => {
+	const r = read(path.join(APP, 'renderer.js'));
+	const html = read(INDEX);
+	assert(/e\.key === 'q'/.test(r) && /e\.key === '\/'/.test(r), 'thiếu phím tắt Q và /');
+	assert(/t\.tagName === 'INPUT'/.test(r) && /qdone-modal/.test(r), 'phím tắt phải tắt khi gõ hoặc modal mở');
+	assert(/Phím tắt/.test(html) && /Q: Quét nhiệm vụ/.test(html), 'Settings phải ghi phím tắt');
+	return 'Q scan, / search, guard input/modal, doc Settings';
+});
+check('Waves#236: theme Theo hệ thống — localStorage riêng, theo OS, không qua bridge', () => {
+	const html = read(INDEX);
+	const r = read(path.join(APP, 'renderer.js'));
+	assert(html.includes('id="themeSystem"'), 'thiếu nút Theo hệ thống');
+	assert(/autoquest\.themeMode\.v1/.test(r) && /prefers-color-scheme: light/.test(r), 'phải lưu mode riêng + matchMedia');
+	assert(/addEventListener\('change'/.test(r) && /themeMode === 'system'/.test(r), 'OS đổi theme phải đổi theo khi mode system');
+	return 'system theme local, matchMedia change';
+});
+check('Waves#237: thẻ chia sẻ — canvas PNG, không token, không code', () => {
+	const r = read(path.join(APP, 'renderer.js'));
+	const seg = r.slice(r.indexOf("const shareBtn"), r.indexOf("const shareBtn") + 2400);
+	assert(/Export share card/.test(seg) && /createElement\('canvas'\)/.test(seg), 'thiếu nút + canvas thẻ chia sẻ');
+	assert(!/rewardCode/.test(seg), 'thẻ chia sẻ không được chạm rewardCode');
+	assert(/quest-/.test(seg) && /AUTO-QUEST/.test(seg), 'thẻ phải có tên file + nhãn app');
+	return 'share card canvas, không code';
+});
+check('Waves#238: thông báo quest mới sau quét, riêng khỏi tổng kết quét', () => {
+	const r = read(path.join(APP, 'renderer.js'));
+	assert(/prevScanQuestIds = new Set\(questOrder\)/.test(r), 'phải chụp id lần quét trước trước khi xóa');
+	assert(/Có \$\{fresh\.length\} quest mới/.test(r), 'phải báo "Có N quest mới"');
+	assert(/prevScanQuestIds\.size > 0/.test(r), 'lần quét đầu không được báo mới cho toàn bộ');
+	return 'new-quest notice riêng';
+});
+check('Waves#239: .brain/INDEX.md liệt kê đủ file .brain', () => {
+	const idx = read(path.join(ROOT, '.brain', 'INDEX.md'));
+	const files = fs.readdirSync(path.join(ROOT, '.brain')).filter((f) => /^\d{4}-\d{2}-\d{2}\.(md|txt)$/.test(f));
+	assert(files.length > 0, 'không tìm thấy file .brain theo ngày');
+	for (const f of files) assert(idx.includes(f), '.brain/INDEX.md thiếu: ' + f);
+	return 'INDEX liệt kê ' + files.length + ' file dated';
+});
+check('Waves#240: docs/DEPLOY.md đồng bộ đường dẫn, không chứa log waves', () => {
+	const d = read(path.join(ROOT, 'docs', 'DEPLOY.md'));
+	assert(!/Waves #\d/.test(d) && !/Waves#\d/.test(d), 'DEPLOY không được chứa log waves');
+	assert(/maskable/.test(d), 'DEPLOY phải nhắc icon maskable PWA');
+	assert(/web\/app\/index\.html/.test(d) || /web-dist/.test(d), 'DEPLOY phải nhắc đường dẫn hiện tại');
+	return 'DEPLOY đồng bộ, không log waves';
 });
 
 /* ── In kết quả ────────────────────────────────────────────────────────── */

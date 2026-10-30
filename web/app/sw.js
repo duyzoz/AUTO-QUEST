@@ -26,6 +26,7 @@ const SHELL = [
 	'assets/orb-logo-big.png',
 	'assets/zoZ-logo.png',
 	'assets/zoZ-logo-ico.png',
+	'assets/zoZ-logo-round.png',
 	'manifest.webmanifest',
 ];
 
@@ -58,9 +59,22 @@ async function verifyAndActivate(event) {
 		for (const name of targets) {
 			const expected = files[name];
 			if (!expected) continue;
-			const res = await fetch(new URL(name, self.location.href), { cache: 'no-store' });
-			if (!res.ok) throw new Error('bundle fetch failed: ' + name);
-			const buf = await res.arrayBuffer();
+			// Waves#229: one manifest key can resolve to different URLs in the
+			// dev layout and the web-dist layout (SW served from the app root
+			// in both, but the engine bundle path differs by host setup).
+			// Try each candidate in order and accept ONLY on a hash match;
+			// if every candidate fails, fall through to the fail-safe below
+			// (no activation). A 404 on one candidate is never a pass.
+			const candidates = [name];
+			if (name.startsWith('web/')) candidates.push(name.slice(4));
+			if (!name.includes('/')) candidates.push('web/' + name);
+			let buf = null;
+			let fetched = false;
+			for (const cand of candidates) {
+				const res = await fetch(new URL(cand, self.location.href), { cache: 'no-store' }).catch(() => null);
+				if (res && res.ok) { buf = await res.arrayBuffer(); fetched = true; break; }
+			}
+			if (!fetched || buf === null) throw new Error('bundle fetch failed: ' + name);
 			const digest = await crypto.subtle.digest('SHA-256', buf);
 			let bin = '';
 			const bytes = new Uint8Array(digest);
@@ -201,9 +215,12 @@ self.addEventListener('fetch', (event) => {
 					caches.match('index.html').then(
 						(hit) =>
 							hit ||
-							new Response('Auto Quest cần mạng để tải lần đầu.', {
+							// Waves#221: no cache and no network — a real offline
+							// page with a retry button, never a blank page or
+							// a plain-text 503. Contains no token or quest data.
+							new Response('<!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Auto Quest — Ngoại tuyến</title><style>body{font-family:system-ui,sans-serif;background:#0b0e18;color:#e6e8f0;display:grid;place-items:center;min-height:100vh;margin:0;padding:24px;text-align:center}button{margin-top:16px;padding:12px 20px;border-radius:10px;border:1px solid #3a4157;background:#1a2138;color:#fff;font-size:16px;cursor:pointer}</style></head><body><main><h1>Bạn đang ngoại tuyến</h1><p>Auto Quest cần mạng để tải lần đầu. Kiểm tra kết nối rồi thử lại.</p><button onclick="location.reload()">Thử lại</button></main></body></html>', {
 								status: 503,
-								headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+								headers: { 'Content-Type': 'text/html; charset=utf-8' },
 							}),
 					),
 				),

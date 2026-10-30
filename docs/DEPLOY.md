@@ -1,4 +1,3 @@
-> **Waves#200 — kiến trúc hiện tại (Web PWA v2.0.0):** UI `web/app/` (`index.html`, `renderer.js`, `styles.css`, `sw.js`), adapter `web/bridge.js` (token IndexedDB AES-GCM), danh tính duy nhất `web/identity.js` (build number là placeholder, một điểm cập nhật), engine web `web/engine/` + `web/engine-bundle.js` (sinh bởi `npm run build:engine`, không sửa tay), `engine-src/` TypeScript chỉ là tham khảo. Tài liệu lịch sử thời Electron đã được đánh dấu ARCHIVED, không xóa.
 
 # 🚀 Triển khai AUTO-QUEST (bản thuần Web)
 
@@ -32,7 +31,7 @@ web-dist/
 ├── index.html
 ├── renderer.js · styles.css · mobile.css · fonts.css
 ├── manifest.webmanifest · sw.js · icon.png
-├── assets/
+├── assets/ (zoZ-logo-round.png = icon maskable PWA 256, zoZ-logo-ico.png = favicon/apple-touch-icon)
 └── web/
     ├── identity.js · display-name-style.js · bridge.js
     ├── engine-worker.js · engine-bundle.js
@@ -259,7 +258,8 @@ Nhớ mở firewall 443 và gia hạn chứng chỉ (certbot).
 
 1. Mở `https://<domain>/` → app hiển thị, không lỗi console.
 2. DevTools → **Application → Service Workers**: trạng thái *activated*.
-3. **Application → Manifest**: tên + icon đọc được (cài PWA được).
+3. **Application → Manifest**: tên + icon đọc được (cài PWA được), trong đó có icon **maskable** logo tròn 256 (`assets/zoZ-logo-round.png`).
+3b. Tắt mạng rồi mở lại app từ cache: phải thấy **trang offline có nút "Thử lại"**, không phải trang trắng.
 4. **Network**: không có request nào chứa token tới domain của bạn.
 5. Dán token → quét thử → chạy một nhiệm vụ ngắn.
 6. `npm test` ở máy để chạy self-test tĩnh trước khi deploy.
