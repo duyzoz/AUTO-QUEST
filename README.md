@@ -1,6 +1,7 @@
 <div align="center">
 
 <img src="web/app/assets/zoZ-logo-round.png" alt="ZoZ Community" width="128" height="128" />
+<img src="web/app/assets/orb-logo-big.png" alt="Discord Orbs" width="128" height="128" />
 
 # AUTO-QUEST
 
@@ -10,16 +11,36 @@
 ![Platform](https://img.shields.io/badge/Platform-Web%20PWA-10b981)
 ![Theme](https://img.shields.io/badge/Theme-Dark%20%7C%20Light-e0af68)
 ![License](https://img.shields.io/badge/License-MIT-3b82f6)
+![Discord Quests](https://img.shields.io/badge/Discord-Quests-5865F2)
+![Discord Orbs](https://img.shields.io/badge/Rewards-Orbs-e0af68)
+![No Backend](https://img.shields.io/badge/Backend-Kh%C3%B4ng%20c%E1%BA%A7n-10b981)
+![Token AES-GCM](https://img.shields.io/badge/Token-AES--GCM%20256-ff9e64)
 [![GitHub stars](https://img.shields.io/github/stars/duyzoz/AUTO-QUEST?color=e0af68&label=Stars)](https://github.com/duyzoz/AUTO-QUEST/stargazers)
 [![GitHub forks](https://img.shields.io/github/forks/duyzoz/AUTO-QUEST?color=10b981&label=Forks)](https://github.com/duyzoz/AUTO-QUEST/network/members)
 
 **Không cần cài đặt. Không cần máy chủ trung gian. Mở trình duyệt là dùng được.**
 
+> 🔮 **Quét nhiệm vụ thật từ Discord → chọn nhiệm vụ bạn muốn → cày đúng nhịp → nhận Orbs và phần thưởng thật.**
+
 </div>
 
 ---
 
-## AUTO-QUEST là gì
+## 📑 Mục lục
+
+- [🎮 AUTO-QUEST là gì](#-auto-quest-là-gì)
+- [✨ Điểm nhấn](#-điểm-nhấn)
+- [👀 Xem nhanh](#-xem-nhanh)
+- [🗺️ Sơ đồ tư duy dự án](#-sơ-đồ-tư-duy-dự-án)
+- [🔄 Luồng hoạt động](#-luồng-hoạt-động)
+- [🏛️ Kiến trúc](#-kiến-trúc)
+- [🚀 Bắt đầu nhanh](#-bắt-đầu-nhanh)
+- [🔒 Bảo mật — nói thẳng, không phóng đại](#-bảo-mật--nói-thẳng-không-phóng-đại)
+- [📜 Giấy phép & miễn trừ trách nhiệm](#-giấy-phép--miễn-trừ-trách-nhiệm)
+
+---
+
+## 🎮 AUTO-QUEST là gì
 
 AUTO-QUEST là một ứng dụng web (PWA) giúp bạn quản lý toàn bộ hành trình
 Discord Quests từ một màn hình duy nhất: xem danh sách nhiệm vụ thật từ
@@ -34,22 +55,33 @@ chung nào.
 
 ---
 
-## Điểm nhấn
+## ✨ Điểm nhấn
 
-| | |
-|---|---|
-| **Quét trước, chạy sau** | Quét lấy danh sách thật từ Discord, xem rõ từng nhiệm vụ, rồi mới chọn và chạy. Không có nhiệm vụ nào tự chạy khi bạn chưa chọn. |
-| **Không tự nhận nhiệm vụ** | Ứng dụng tuyệt đối không tự enroll. Nhiệm vụ ở trạng thái "Chưa nhận" chỉ hiển thị đúng trạng thái đó cho tới khi bạn nhận trong Discord. |
-| **Phần thưởng hiển thị đúng** | Tab Đã làm hiện đúng phần thưởng thật: Orb hiện Orb, vật phẩm (avatar, hiệu ứng) hiện ảnh/video của chính phần thưởng đó, mã đổi thưởng hiện nhãn riêng. Ảnh hỏng sẽ rơi về logo game, không bao giờ rơi về Orb sai loại. |
-| **Chi tiết đầy đủ** | Bấm vào một nhiệm vụ đã làm để xem tên, game, loại thưởng, số Orb, ngày nhận và ảnh hero/logotype trong cùng một khung chi tiết. |
-| **Mã đổi thưởng an toàn** | Mã (nếu Discord trả về) chỉ nằm trong bộ nhớ của phiên làm việc, hiện khi bạn bấm xem, không lưu vào localStorage, backup, log hay chẩn đoán. Nếu Discord không trả mã, khung chi tiết sẽ dẫn bạn tới trang quest trong Discord thay vì bịa ra một mã. |
-| **Giao diện Sáng / Tối** | Hai theme hoàn chỉnh, ảnh nhiệm vụ tự chọn biến thể sáng hoặc tối phù hợp, đổi theme là vẽ lại ngay mà không cần quét lại. |
-| **Mobile hoàn chỉnh** | Drawer điều hướng, nút bấm đủ lớn, toolbar gọn với bộ lọc nâng cao thu gọn được — dùng tốt trên điện thoại, không chỉ trên desktop. |
-| **Nhật ký gọn, số liệu thật** | Số dư lấy từ ví thật của Discord. Số Orb đã nhận chỉ tính khi Discord xác nhận, không cộng ảo khi quét lại. |
+| | Tính năng | Mô tả |
+|---|---|---|
+| 🔍 | **Quét trước, chạy sau** | Quét lấy danh sách thật từ Discord, xem rõ từng nhiệm vụ, rồi mới chọn và chạy. Không có nhiệm vụ nào tự chạy khi bạn chưa chọn. |
+| 🚫 | **Không tự nhận nhiệm vụ** | Ứng dụng tuyệt đối không tự enroll. Nhiệm vụ ở trạng thái "Chưa nhận" chỉ hiển thị đúng trạng thái đó cho tới khi bạn nhận trong Discord. |
+| 🎁 | **Phần thưởng hiển thị đúng** | Tab Đã làm hiện đúng phần thưởng thật: Orb hiện Orb, vật phẩm (avatar, hiệu ứng) hiện ảnh/video của chính phần thưởng đó, mã đổi thưởng hiện nhãn riêng. Ảnh hỏng sẽ rơi về logo game, không bao giờ rơi về Orb sai loại. |
+| 📋 | **Chi tiết đầy đủ** | Bấm vào một nhiệm vụ đã làm để xem tên, game, loại thưởng, số Orb, ngày nhận và ảnh hero/logotype trong cùng một khung chi tiết. |
+| 🔐 | **Mã đổi thưởng an toàn** | Mã (nếu Discord trả về) chỉ nằm trong bộ nhớ của phiên làm việc, hiện khi bạn bấm xem, không lưu vào localStorage, backup, log hay chẩn đoán. Nếu Discord không trả mã, khung chi tiết sẽ dẫn bạn tới trang quest trong Discord thay vì bịa ra một mã. |
+| 🎨 | **Giao diện Sáng / Tối** | Hai theme hoàn chỉnh, ảnh nhiệm vụ tự chọn biến thể sáng hoặc tối phù hợp, đổi theme là vẽ lại ngay mà không cần quét lại. |
+| 📱 | **Mobile hoàn chỉnh** | Drawer điều hướng, nút bấm đủ lớn, toolbar gọn với bộ lọc nâng cao thu gọn được — dùng tốt trên điện thoại, không chỉ trên desktop. |
+| 📊 | **Nhật ký gọn, số liệu thật** | Số dư lấy từ ví thật của Discord. Số Orb đã nhận chỉ tính khi Discord xác nhận, không cộng ảo khi quét lại. |
 
 ---
 
-## Sơ đồ tư duy dự án
+## 👀 Xem nhanh
+
+| | |
+|---|---|
+| <img src="web/app/assets/zoZ-logo-round.png" alt="ZoZ Community" width="96" height="96" /> | **ZoZ Development** — logo dự án, dùng làm favicon bo tròn trên web. |
+| <img src="web/app/assets/orb-logo.png" alt="Discord Orbs" width="96" height="96" /> | **Discord Orbs** — phần thưởng thật khi hoàn thành nhiệm vụ, đổi được đồ trong Shop và credit Nitro. Logo Orbs thuộc bản quyền Discord Inc. |
+
+> 📸 Ảnh chụp giao diện thật của ứng dụng sẽ được bổ sung vào mục này sau khi bản web mới deploy xong.
+
+---
+
+## 🗺️ Sơ đồ tư duy dự án
 
 ```mermaid
 mindmap
@@ -82,7 +114,7 @@ mindmap
 
 ---
 
-## Luồng hoạt động
+## 🔄 Luồng hoạt động
 
 ```mermaid
 flowchart TD
@@ -97,15 +129,23 @@ flowchart TD
     I --> J["Nhận thưởng<br/>Chỉ tính khi Discord xác nhận"]
     H -->|"Không"| J
     J --> D
+
+    classDef discord fill:#5865F2,stroke:#ffffff,color:#ffffff
+    classDef orb fill:#e0af68,stroke:#7c5a10,color:#1a1200
+    classDef done fill:#10b981,stroke:#064e3b,color:#ffffff
+    class A,B,C discord
+    class G,J orb
+    class D done
 ```
 
+> [!IMPORTANT]
 > **Nguyên tắc vàng:** ứng dụng không tự nhận nhiệm vụ và không tự nhận
 > thưởng thay bạn khi bạn chưa ra lệnh. Mọi hành động quan trọng đều bắt
 > đầu từ một thao tác rõ ràng của bạn.
 
 ---
 
-## Kiến trúc
+## 🏛️ Kiến trúc
 
 ```mermaid
 flowchart LR
@@ -144,7 +184,7 @@ toolbar gọn với bộ lọc nâng cao, và checklist kiểm tra ở 375px, 76
 
 ---
 
-## Bắt đầu nhanh
+## 🚀 Bắt đầu nhanh
 
 ```bash
 # Windows: nhấp đúp
@@ -159,6 +199,7 @@ Mở **http://127.0.0.1:4173** (không mở bằng `file://` — Service Worker 
 Web Crypto cần nguồn HTTP(S)). Dán token Discord của bạn ở mục Cài Đặt,
 bấm **Quét nhiệm vụ**, chọn nhiệm vụ rồi bấm **Auto ORBs**.
 
+> [!WARNING]
 > Token là thông tin nhạy cảm của riêng bạn. Chỉ dán vào ứng dụng này,
 > không gửi cho bất kỳ ai, không dán vào trang web lạ. Ứng dụng không
 > bao giờ gửi token của bạn tới máy chủ của dự án.
@@ -190,7 +231,7 @@ nhất là Web PWA 2.0.0.
 
 ---
 
-## Bảo mật — nói thẳng, không phóng đại
+## 🔒 Bảo mật — nói thẳng, không phóng đại
 
 - **Token chỉ nằm trong trình duyệt:** IndexedDB, mã hoá AES-GCM 256,
   IV mới mỗi lần ghi, khoá thiết bị không export được. Không có nhánh
@@ -212,7 +253,7 @@ nhất là Web PWA 2.0.0.
 
 ---
 
-## Giấy phép & miễn trừ trách nhiệm
+## 📜 Giấy phép & miễn trừ trách nhiệm
 
 Phát hành theo **[MIT License](LICENSE)** — tự do dùng, sửa, chia sẻ,
 kể cả thương mại, miễn giữ nguyên dòng bản quyền.
@@ -226,7 +267,7 @@ Bản quyền © 2026 **duyzoz / NgDuy (ZoZ Community)**.
 
 ---
 
-## Nhật ký thay đổi
+## 🗒️ Nhật ký thay đổi
 
 Nhật ký thay đổi theo ngày, bao gồm lịch sử phát triển đầy đủ của dự
 án, nằm trong thư mục [`.brain/`](.brain/) — README này cố tình giữ gọn
@@ -234,7 +275,7 @@ Nhật ký thay đổi theo ngày, bao gồm lịch sử phát triển đầy đ
 
 ---
 
-## Star History
+## ⭐ Star History
 
 [![Star History Chart](https://api.star-history.com/svg?repos=duyzoz/AUTO-QUEST&type=Date)](https://star-history.com/#duyzoz/AUTO-QUEST&Date)
 
