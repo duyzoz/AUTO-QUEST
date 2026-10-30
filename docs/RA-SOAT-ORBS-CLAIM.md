@@ -1,3 +1,13 @@
+> **ARCHIVED — tài liệu lịch sử, không còn mô tả code hiện tại.**
+> Nội dung dưới đây là ảnh chụp ngày 2026-10-28 (thời Electron / trước khi port web xong).
+> Các file `electron/*`, `mobile/*`, `build-ipa/*`, `web-poc/*` đã bị xoá khỏi repo.
+> Kiến trúc hiện tại (Web PWA v2.0.0): UI `web/app/` (`index.html`, `renderer.js`, `styles.css`),
+> adapter `web/bridge.js` (hợp đồng `window.autoquest`, token IndexedDB AES-GCM),
+> danh tính duy nhất `web/identity.js`, engine web `web/engine/` + file sinh ra
+> `web/engine-bundle.js` (đừng sửa tay — chạy `npm run build:engine`), và
+> `engine-src/` TypeScript chỉ còn là thiết kế tham khảo, không được biên dịch vào bundle.
+> Tài liệu triển khai hiện tại: `docs/DEPLOY.md`. Lịch sử được giữ nguyên, không xoá.
+
 # RÀ SOÁT TOÀN DỰ ÁN + PHÂN TÍCH LỖI NHẬN ORBS → WAVES#101+
 
 > **ĐỌC `docs/AGENT-BRIEF.md` TRƯỚC FILE NÀY** — đó là luật chơi + backlog + decision log.
