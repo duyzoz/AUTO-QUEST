@@ -19,7 +19,7 @@ bao giờ đi qua máy chủ của bạn.
 ## 2. Build bản tĩnh
 
 ```bash
-npm run build:engine   # chỉ khi sửa engine-src/ (TS) — sinh web/engine-bundle.js
+npm run build:engine   # đóng gói lại web/engine/ (JS) thành web/engine-bundle.js — engine-src/ (TS) chỉ là thiết kế tham khảo, không được biên dịch vào bundle
 npm run build:static   # đóng gói ra web-dist/
 ```
 

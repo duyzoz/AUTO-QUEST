@@ -263,6 +263,78 @@ check('getConfig()/accountsList() không trả token plaintext', () => {
 	return 'mask + strip OK';
 });
 
+check('Waves#141: accounts* không trả token (chỉ tokenReveal có cổng mới được)', () => {
+	const bridge = read(path.join(WEB, 'bridge.js'));
+	assert(/stripAccountsForReturn/.test(bridge), 'thiếu stripAccountsForReturn() trong mutateAccounts');
+	assert(!/token:\s*accounts\[next\]\s*\?\s*accounts\[next\]\.token/.test(bridge), 'accountsSetActive vẫn trả token trực tiếp, bypass cổng tokenReveal');
+	assert(/return\s*\{[^}]*accounts:\s*stripAccountsForReturn/.test(bridge), 'mutateAccounts không trả danh sách đã strip token');
+	return 'accounts* trả metadata đã strip, token chỉ qua tokenReveal';
+});
+
+check('Waves#140: danh tính không còn hardcode lệch (sec-ch-ua 138 / launch_signature cố định)', () => {
+	const identity = read(path.join(WEB, 'identity.js'));
+	assert(!identity.includes('1771754995045142953'), 'identity.js vẫn chứa launch_signature cố định');
+	const tsUtils = read(path.join(ROOT, 'engine-src', 'src', 'utils.ts'));
+	assert(!/Chromium";v="138"/.test(tsUtils), 'engine-src utils vẫn hardcode sec-ch-ua Chromium 138');
+	const webUtils = read(path.join(WEB, 'engine', 'src', 'utils.js'));
+	assert(!/Chromium";v="138"/.test(webUtils), 'web/engine utils vẫn hardcode sec-ch-ua Chromium 138');
+	return 'sec-ch-ua suy từ UA thật, launch_signature theo phiên';
+});
+
+check('Waves#143: không nội suy Discord-sourced string thô vào innerHTML + asset URL chỉ host Discord', () => {
+	const r = read(path.join(APP, 'renderer.js'));
+	// (a) Không có innerHTML template nào nội suy trực tiếp trường Discord
+	// (q.name / q.gameTitle / q.publisher / q.rewardName / quest.name …)
+	// mà không qua escapeHtml / helper đã escape (logBodyHtml,
+	// doneTileInfoHtml, emptyMsg). Các trường này trong code hiện tại đều
+	// đi qua textContent hoặc escapeHtml — check này bắt hồi quy.
+	const bad = [];
+	for (const m of r.matchAll(/innerHTML\s*=\s*`([\s\S]*?)`;/g)) {
+		const tpl = m[1];
+		for (const im of tpl.matchAll(/\$\{([^}]*)\}/g)) {
+			const expr = im[1];
+			if (/\b(q|quest)\.(name|gameTitle|publisher|rewardName|rewardTitle|application)\b/.test(expr) && !/escapeHtml/.test(expr)) bad.push(expr.trim());
+		}
+	}
+	assert(bad.length === 0, 'innerHTML nội suy thô trường Discord: ' + bad.join(' | '));
+	// (b) questAssetUrl / badgeIconUrl phải whitelist host Discord.
+	assert(/isDiscordHost/.test(r), 'thiếu isDiscordHost() whitelist');
+	assert(/questAssetUrl[\s\S]{0,800}isDiscordHost/.test(r), 'questAssetUrl không kiểm tra host Discord');
+	assert(/badgeIconUrl[\s\S]{0,800}isDiscordHost/.test(r), 'badgeIconUrl không kiểm tra host Discord');
+	return 'innerHTML đã audit (69 uses + 1 insertAdjacentHTML), asset URL whitelist Discord host';
+});
+
+check('Waves#146: hàng đợi claim lưu localStorage không chứa token', () => {
+	const r = read(path.join(APP, 'renderer.js'));
+	const m = r.match(/queueStore\[scope\]\.push\(\{[^}]*\}\)/);
+	assert(m, 'không tìm thấy queueAddMany push()');
+	assert(!/token/.test(m[0]), 'hàng đợi claim lưu token: ' + m[0]);
+	assert(/QUEUE_TTL_MS/.test(r) && /queuePrune/.test(r), 'thiếu TTL/prune cho hàng đợi');
+	assert(/queueRestoreNotified/.test(r), 'thiếu thông báo khôi phục/mất hàng đợi sau reload');
+	return 'queue rows chỉ id/name/orbs/at, có TTL + thông báo khôi phục';
+});
+
+check('Waves#148: chẩn đoán claim có mặt, không chứa secret', () => {
+	const bridge = read(path.join(WEB, 'bridge.js'));
+	assert(/claimDiagnostics/.test(bridge), 'bridge thiếu claimDiagnostics()');
+	assert(/lastClaim/.test(bridge), 'appDiagnostics thiếu lastClaim');
+	assert(!/captcha_key|captcha_rqdata|captcha_rqtoken/.test(bridge.match(/function recordClaimDiag[\s\S]*?\n\t\}/)[0]), 'recordClaimDiag chứa trường captcha secret');
+	assert(/maskDiagId|maskCaptchaSession/.test(bridge), 'thiếu che quest id / captcha session trong chẩn đoán');
+	const r = read(path.join(APP, 'renderer.js'));
+	assert(/Last claim/.test(r) && /Claim gần nhất/.test(r), 'formatDiagnostics thiếu mục Claim gần nhất');
+	return 'claimDiagnostics + lastClaim trong diagnostics, secret đã che';
+});
+
+check('Waves#149: tự áp dụng SW chỉ khi app rảnh, không reload giữa lúc chạy', () => {
+	const r = read(path.join(APP, 'renderer.js'));
+	assert(/scheduleIdleSwUpdate/.test(r), 'thiếu scheduleIdleSwUpdate()');
+	assert(/appIsIdleForUpdate/.test(r), 'thiếu appIsIdleForUpdate()');
+	const guard = r.match(/function appIsIdleForUpdate[\s\S]*?\n\}/)[0];
+	assert(/state === 'idle'/.test(guard) && /bulkClaimBusy/.test(guard) && /scanning/.test(guard) && /captchaModal/.test(guard), 'guard idle thiếu state/bulkClaimBusy/scanning/captcha');
+	assert(/swAutoUpdateTimer/.test(r), 'thiếu timer ân hạn / huỷ khi bấm Để sau');
+	return 'SW auto-activate gated on idle + 10s grace + dismiss cancel';
+});
+
 check('escapeHtml chỉ còn MỘT định nghĩa và escape cả nháy đơn', () => {
 	const r = read(path.join(APP, 'renderer.js'));
 	const defs = (r.match(/function escapeHtml\s*\(/g) || []).length;

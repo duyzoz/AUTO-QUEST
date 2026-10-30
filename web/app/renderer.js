@@ -261,7 +261,6 @@ const STATE_TEXT = {
 let state = 'idle';
 let currentTab = 'active';
 let logText = '';
-let sessionOrbsBonus = 0;
 
 /* Quest store: khóa theo quest id ổn định (từ Discord API). */
 const quests = new Map(); // id -> quest object
@@ -1232,10 +1231,27 @@ function questMatchesFilter(q) {
    Nhờ vậy KHÔNG còn dò đuôi file, không còn 4 request hỏng mỗi ảnh. */
 const QCDN = 'https://cdn.discordapp.com/';
 
+/* Waves#143 (innerHTML/URL audit): asset URL đến từ API Discord (bên thứ 3
+   kiểm soát một phần) ⇒ KHÔNG trả nguyên URL https bất kỳ — chỉ chấp nhận
+   host Discord (cdn.discordapp.com / discord.com và subdomain). URL tuyệt
+   đối tới host khác, protocol-relative (//evil) và path chứa '..' đều bị
+   loại, vì chúng có thể biến thẻ <img>/<video> thành tracker hoặc tải nội
+   dung ngoài CSP. Đường dẫn tương đối chỉ được ghép vào QCDN. */
+function isDiscordHost(host) {
+	const h = String(host || '').toLowerCase();
+	return h === 'discordapp.com' || h.endsWith('.discordapp.com') || h === 'discord.com' || h.endsWith('.discord.com');
+}
 function questAssetUrl(p) {
 	const s = String(p ?? '').trim();
 	if (!s || s.toUpperCase() === 'PLACEHOLDER') return '';
-	if (/^https?:\/\//i.test(s)) return s;
+	if (/^https?:\/\//i.test(s)) {
+		try {
+			const u = new URL(s);
+			if (isDiscordHost(u.hostname)) return s;
+		} catch {}
+		return '';
+	}
+	if (s.startsWith('//') || s.includes('\\') || /(^|\/)\.\.(\/|$)/.test(s)) return '';
 	return QCDN + s.replace(/^\/+/, '');
 }
 
@@ -3006,6 +3022,15 @@ async function runClaim(quest, captchaMeta) {
 			return 'claimed';
 		}
 
+		if (res && res.captchaBlocked) {
+			const msg = res.message || 'Discord yêu cầu xác minh nhưng không cấp sitekey — mở Discord để nhận thủ công.';
+			upsertQuest(id, { claimBusy: false, claimPhase: '', claimError: msg, claimOpenDiscord: true });
+			appendLog(`[Cảnh báo] "${quest.name || ''}": ${msg}`, 'warn');
+			toast(msg, true);
+			queueRemove(id);
+			return 'error';
+		}
+
 		if (res && res.captchaRequired) {
 			upsertQuest(id, { claimBusy: false, claimPhase: '' });
 			// Waves 37: CHỐNG LẶP VÔ TẬN. Nếu đã gửi token xác minh mà Discord VẪN
@@ -3045,9 +3070,11 @@ async function runClaim(quest, captchaMeta) {
 			return 'gone';
 		}
 
-		// ⏳ 429 — Discord giới hạn tốc độ. Main đã tự chờ & thử lại 1 lần;
-		// tới đây nghĩa là vẫn bị chặn → báo rõ và cho bấm lại.
+		// ⏳ 429 — Discord giới hạn tốc độ. Waves#142: bridge không còn
+		// thử lại sớm với chờ bị chặn tối đa; claimSequence sẽ tự tiếp tục
+		// hàng đợi sau khi hết retry_after (xem stopReason 'rate').
 		if (res && res.rateLimited) {
+			if (Number.isFinite(Number(res.retryAfter)) && Number(res.retryAfter) > 0) lastClaimRateLimitSec = Number(res.retryAfter);
 			const wait = res.retryAfter ? `${Math.ceil(res.retryAfter)}s` : 'vài giây';
 			const msg = res.message || `Discord đang giới hạn tốc độ — thử lại sau ${wait}.`;
 			upsertQuest(id, { claimBusy: false, claimPhase: '', claimError: msg });
@@ -3115,6 +3142,10 @@ function claimableMatchingIds() {
 		return q && q.flag !== 'gone' && q.status === 'claimable' && !q.claimBusy && questMatchesFilter(q);
 	});
 }
+
+// Waves#142: last 429 retry_after (seconds) seen by runClaim, used by
+// claimSequence to schedule a bulk-queue resume after the block expires.
+let lastClaimRateLimitSec = 0;
 
 async function claimSequence(ids, source = 'bulk') {
 	bulkClaimBusy = true;
@@ -3206,8 +3237,17 @@ async function claimSequence(ids, source = 'bulk') {
 			true,
 		);
 	} else if (stopReason === 'rate') {
-		appendLog('[Cảnh báo] Đã dừng nhận hàng loạt: Discord giới hạn tốc độ. Thử lại sau ít phút.', 'warn');
-		toast('Đã dừng: Discord giới hạn tốc độ — thử lại sau ít phút.', true);
+		// Waves#142: do NOT silently drop the queue on a rate block. Keep
+		// queue position (queueRows are unchanged) and auto-resume after
+		// the full retry_after (+1s). continueClaimQueue() itself re-checks
+		// idle/online/token/captcha state, and bridge enqueueClaim() will
+		// still wait out any remaining block, so this cannot fire early.
+		const resumeMs = ((Number.isFinite(lastClaimRateLimitSec) && lastClaimRateLimitSec > 0 ? lastClaimRateLimitSec : 30) * 1000) + 1000;
+		appendLog(`[Cảnh báo] Đã dừng nhận hàng loạt: Discord giới hạn tốc độ. Sẽ tự nhận tiếp sau ${Math.ceil(resumeMs / 1000)}s.`, 'warn');
+		toast(`Đã dừng: Discord giới hạn tốc độ — sẽ tự nhận tiếp sau ${Math.ceil(resumeMs / 1000)}s.`, true);
+		setTimeout(() => {
+			if (queueRows().length) continueClaimQueue();
+		}, resumeMs);
 	} else if (stopReason === 'engine') {
 		appendLog('[Hệ thống] Đã dừng nhận hàng loạt vì tiến trình cày vừa khởi động.', 'warn');
 	} else {
@@ -3437,7 +3477,28 @@ async function handleEvent(evt) {
 			// Wave#128: giữ bản lưu ngoại tuyến theo tài khoản (không token).
 			saveInventoryCache(list);
 			// Wave#118: hàng đợi chỉ giữ mục còn nhận được / chưa quá hạn.
-			queuePrune();
+			// Waves#146: lần quét đầu tiên sau khi tải lại trang — báo rõ
+			// hàng đợi đã khôi phục hay đã mất, và hướng dẫn bấm chip để
+			// nhận tiếp. KHÔNG tự claim (cần người dùng bấm, captcha an toàn).
+			const pruned = queuePrune();
+			if (!queueRestoreNotified) {
+				queueRestoreNotified = true;
+				const en = currentLang === 'en';
+				if (pruned.after > 0) {
+					const msg = en
+						? `Restored claim queue from before reload: ${pruned.after} quest(s) still awaiting claim — tap “Pending verification” to continue.`
+						: `Đã khôi phục hàng đợi nhận thưởng từ trước khi tải lại trang: ${pruned.after} nhiệm vụ vẫn chờ nhận — bấm chip “Chờ xác minh” để nhận tiếp.`;
+					appendLog(`[Hệ thống] ${msg}`, 'system');
+					toast(msg);
+				}
+				if (pruned.dropped > 0) {
+					const msg = en
+						? `Claim queue lost: ${pruned.dropped} item(s) expired or no longer claimable — rescan and re-select the claimable list.`
+						: `Hàng đợi đã mất: ${pruned.dropped} mục đã hết hạn hoặc không còn nhận được — quét lại và chọn lại danh sách chờ nhận.`;
+					appendLog(`[Cảnh báo] ${msg}`, 'warn');
+					toast(msg, true);
+				}
+			}
 			renderQueueChip();
 			renderQuests();
 			// Hiệu ứng "trôi vào + mờ dần lên" cho toàn bộ thẻ vừa nạp.
@@ -3510,11 +3571,17 @@ async function handleEvent(evt) {
 				flag: '',
 				secondsDone: q.secondsNeeded || q.secondsDone,
 				orbs: earned,
+				// Waves#136: if a note arrives with a done event, keep it on
+				// this quest too, not only in a one-time global log line.
+				...(d.note ? { claimError: String(d.note) } : {}),
 			});
 			if (first) {
-				sessionOrbsBonus += earned;
-				if (earned > 0) toast(`Hoàn thành "${d.name || q.name}" (+${earned} Orbs)`);
-				else toast(`Hoàn thành "${d.name || q.name}"`);
+				// Waves#135/#137: "done" means the task finished, NOT that the
+				// reward was claimed. Do not toast "+Orbs" as if received, and
+				// do not add to any session total here — only a confirmed
+				// quest:claim event counts Orbs.
+				if (earned > 0) toast(`Hoàn thành "${d.name || q.name}" — phần thưởng ${earned} Orbs, chưa nhận.`);
+				else toast(`Hoàn thành "${d.name || q.name}" — chờ nhận thưởng.`);
 			}
 			// Discord chặn claim bằng captcha → báo 1 lần, đừng để bro tưởng app lỗi.
 			if (d.note && !claimNoteShown) {
@@ -3523,6 +3590,29 @@ async function handleEvent(evt) {
 					'Có nhiệm vụ cần mở Discord bấm Nhận thủ công (Discord yêu cầu captcha).',
 					'warn',
 				);
+			}
+			break;
+		}
+
+		case 'quest:blocked': {
+			// Waves#136: a quest blocked by verification (e.g. captcha
+			// required but no sitekey). Keep it "claimable" with its OWN
+			// reason on its card — never a one-time global note.
+			{
+				const key = d.id || d.name;
+				const q = quests.get(key) || {};
+				upsertQuest(key, {
+					name: d.name || q.name,
+					status: 'claimable',
+					running: false,
+					flag: '',
+					claimBusy: false,
+					claimPhase: '',
+					claimError: d.reason || d.message || 'Discord yêu cầu xác minh nhưng không cấp đủ dữ liệu — mở Discord để nhận thủ công.',
+					claimOpenDiscord: true,
+					orbs: d.orbs || q.orbs || 0,
+				});
+				appendLog(`[Cảnh báo] "${d.name || key}": ${d.reason || 'bị chặn xác minh.'}`, 'warn');
 			}
 			break;
 		}
@@ -3588,7 +3678,9 @@ async function handleEvent(evt) {
 			// Waves 27: KHÔNG sổ từng dòng vào nhật ký nữa (gây rác + lag) — chỉ
 			// toast ngắn + đếm tổng. Nhật ký chỉ giữ dòng tổng kết khi phiên kết thúc.
 			if (d.id) {
-				if (d.confirmed === false) {
+				// Waves#135: only confirmed===true counts as claimed. An event
+				// with confirmed false OR missing must stay "claimable".
+				if (d.confirmed !== true) {
 					// Wave#102: engine nhận 2xx nhưng chưa thấy claimed_at.
 					upsertQuest(d.id, {
 						status: 'claimable',
@@ -3613,17 +3705,22 @@ async function handleEvent(evt) {
 				if (d.rewardName) toast(`Đã nhận: ${d.rewardName}`);
 				notifySystem('Đã nhận Orbs', `${d.rewardName || ''} · ${d.name || ''}`.trim());
 			} else if (typeof d.count === 'number') {
-				sessionClaimCount += d.count;
-				sessionClaimOrbs += d.orbs || 0;
+				// Waves#137: the aggregate count from claimAllClaimable is
+				// informational only. Per-quest quest:claim events (above) are
+				// the single source of truth for session totals; counting the
+				// aggregate too would double-count the same claims.
+				appendLog(
+					`[Hệ thống] Nhận hàng loạt (tổng hợp): ${d.count} nhiệm vụ, ${d.orbs || 0} Orbs — đã tính theo từng nhiệm vụ.`,
+					'system',
+				);
 			}
 			break;
 		}
 
 		case 'quest:redeem':
-			// Nhận thưởng thật (claim API) — orbs đã cộng qua quest:done.
-			// Waves 27: gom đếm, không sổ từng dòng rác vào nhật ký.
-			sessionClaimCount += 1;
-			sessionClaimOrbs += d.orbs || 0;
+			// Waves#137: legacy event, never emitted by the current engine.
+			// It must NOT count Orbs — quest:claim (per quest, confirmed)
+			// is the single source of truth. Counting here would double-count.
 			break;
 
 		case 'quest:skip':
@@ -3645,7 +3742,7 @@ async function handleEvent(evt) {
 		case 'orbs:balance':
 			// Số ORB KHẢ DỤNG thật từ account (ví Discord) — bot push trong phiên chạy.
 			if (typeof d.balance === 'number') {
-				setSideBalance(d.balance, d.pendingClaim || 0, d.source);
+				setSideBalance(d.balance, d.pendingClaim || 0, d.source, d.pendingUnknown);
 			}
 			break;
 
@@ -4020,7 +4117,6 @@ function resetQuestSessionForSwitch() {
 		scanBuffer.length = 0;
 		sessionClaimCount = 0;
 		sessionClaimOrbs = 0;
-		sessionOrbsBonus = 0;
 		claimNoteShown = false;
 		logText = '';
 		// 2) DOM: bỏ sạch thẻ ở CẢ 3 tab (Chưa làm / Chưa nhận / Đã làm)
@@ -5419,9 +5515,21 @@ function parseFrameLayerFilename(name) {
 /** Vẽ hàng huy hiệu Discord (badges) từ /users/@me — icon từ CDN badge-icons. */
 /* Waves 19: badge icon có thể là URL đầy đủ (Discord chuyển Staff/Mod/Nitro sang
  * discord.com/assets/*.svg) hoặc là hash cũ trên badge-icons CDN → resolver 2 dạng. */
+/* Waves#143: badge icon cũng qua cùng luật host Discord; tên icon không
+   phải URL chỉ được là [A-Za-z0-9_-]+ để không lọt '../' hay query lạ vào
+   đường dẫn CDN. */
 function badgeIconUrl(icon) {
 	if (!icon) return '';
-	return /^https?:\/\//i.test(icon) ? icon : `${CDN}/badge-icons/${icon}.png?size=64`;
+	const s = String(icon).trim();
+	if (/^https?:\/\//i.test(s)) {
+		try {
+			const u = new URL(s);
+			if (isDiscordHost(u.hostname)) return s;
+		} catch {}
+		return '';
+	}
+	if (!/^[A-Za-z0-9_-]+$/.test(s)) return '';
+	return `${CDN}/badge-icons/${s}.png?size=64`;
 }
 
 function renderBadges(holder, badges, premiumType) {
@@ -5724,17 +5832,30 @@ function linearGradientFromHex(hex) {
  * Waves 21: cập nhật card SỐ DƯ KHẢ DỤNG + hiệu ứng nảy số & lướt sáng 1 lượt.
  * source: 'wallet' = ví thật Discord (chính xác), 'claimed-list' = fallback cộng dồn lịch sử.
  */
-function balanceHintText(pendingClaim, source) {
+/* Waves#145: the hint must ALWAYS name the source and never imply 0 is
+   certain. In particular: a claimed-list balance is a fallback sum, not the
+   wallet, and a failed quests list means pending claim is UNKNOWN, not 0. */
+function balanceHintText(pendingClaim, source, pendingUnknown) {
 	const en = currentLang === 'en';
+	const fallbackNote = source === 'claimed-list'
+		? en
+			? ' · balance from claimed list (wallet unavailable)'
+			: ' · số dư từ danh sách đã claim (ví không lấy được)'
+		: '';
+	if (pendingUnknown) {
+		return en
+			? `Pending claim: not enough data (quests list failed)${fallbackNote}`
+			: `Chờ nhận: chưa đủ dữ liệu (không lấy được danh sách nhiệm vụ)${fallbackNote}`;
+	}
 	if (pendingClaim > 0) {
 		return en
-			? `+${pendingClaim} Orbs completed, awaiting claim`
-			: `+${pendingClaim} Orbs hoàn thành, chờ nhận thưởng`;
+			? `+${pendingClaim} Orbs completed, awaiting claim${fallbackNote}`
+			: `+${pendingClaim} Orbs hoàn thành, chờ nhận thưởng${fallbackNote}`;
 	}
 	if (source === 'claimed-list') {
 		return en
-			? 'Total available Orbs from claimed quests on this account.'
-			: 'Tổng Orb khả dụng từ mission đã claim trên account.';
+			? 'Total available Orbs from claimed quests on this account (wallet unavailable).'
+			: 'Tổng Orb khả dụng từ mission đã claim trên account (ví không lấy được).';
 	}
 	return en
 		? 'Available Orb balance in your Discord wallet.'
@@ -5745,14 +5866,16 @@ function updateBalanceHint() {
 	if (!ui.sideBalance || !ui.orbPending) return;
 	const pending = Number(ui.sideBalance.dataset.pending) || 0;
 	const source = ui.sideBalance.dataset.source || 'wallet';
-	ui.orbPending.textContent = balanceHintText(pending, source);
+	const pendingUnknown = ui.sideBalance.dataset.pendingUnknown === '1';
+	ui.orbPending.textContent = balanceHintText(pending, source, pendingUnknown);
 }
 
-function setSideBalance(balance, pendingClaim, source) {
+function setSideBalance(balance, pendingClaim, source, pendingUnknown) {
 	if (!ui.sideBalance || !ui.orbBalance) return;
 	ui.orbBalance.textContent = String(balance);
 	ui.sideBalance.dataset.pending = String(Number(pendingClaim) || 0);
-	ui.orbPending.textContent = balanceHintText(Number(pendingClaim) || 0, source);
+	ui.sideBalance.dataset.pendingUnknown = pendingUnknown ? '1' : '';
+	ui.orbPending.textContent = balanceHintText(Number(pendingClaim) || 0, source, pendingUnknown);
 	ui.sideBalance.dataset.state = 'live';
 	ui.sideBalance.dataset.source = source || 'wallet';
 
@@ -5776,10 +5899,10 @@ function setSideBalance(balance, pendingClaim, source) {
 	appendLog(
 		currentLang === 'en'
 			? `[System] Available Orbs (${srcLabel}): ${balance}${
-					pendingClaim > 0 ? ` · ${pendingClaim} Orbs awaiting claim` : ''
+					pendingUnknown ? ' · Pending claim: not enough data' : pendingClaim > 0 ? ` · ${pendingClaim} Orbs awaiting claim` : ''
 				}`
 			: `[Hệ thống] Số Orb khả dụng (${srcLabel}): ${balance}${
-					pendingClaim > 0 ? ` · Còn ${pendingClaim} Orbs chờ claim` : ''
+					pendingUnknown ? ' · Chờ nhận: chưa đủ dữ liệu' : pendingClaim > 0 ? ` · Còn ${pendingClaim} Orbs chờ claim` : ''
 				}`,
 		'system',
 	);
@@ -5794,7 +5917,7 @@ async function fetchOrbBalance(token) {
 	try {
 		const res = await api.fetchOrbs(token);
 		if (res && res.ok && typeof res.balance === 'number') {
-			setSideBalance(res.balance, res.pendingClaim || 0, res.source);
+			setSideBalance(res.balance, res.pendingClaim || 0, res.source, res.pendingUnknown);
 		} else {
 			ui.orbBalance.textContent = '—';
 			ui.orbPending.textContent = res?.message || 'Không lấy được số dư Orb từ Discord.';
@@ -6571,10 +6694,14 @@ function queueRemove(id) {
 
 /** Bỏ mục quá hạn / không còn nhận được. Mục chưa có trong danh sách hiện tại
  *  được GIỮ LẠI (có thể chỉ là chưa quét), tránh xoá oan sau khi reload. */
+/* Waves#146: queuePrune trả về số mục trước/sau để lần quét đầu tiên sau
+   khi tải lại trang có thể BÁO RÕ cho người dùng: khôi phục được bao nhiêu,
+   mất bao nhiêu (hết hạn 30 phút / không còn claimable) — thay vì im lặng
+   làm mất hàng đợi hoặc để chip 'Chờ xác minh' tự hiểu. */
 function queuePrune() {
 	const scope = accountScope();
 	const rows = queueStore[scope];
-	if (!Array.isArray(rows) || !rows.length) return;
+	if (!Array.isArray(rows) || !rows.length) return { before: 0, after: 0, dropped: 0 };
 	const now = Date.now();
 	const next = rows.filter((row) => {
 		if (!row || !row.id) return false;
@@ -6587,7 +6714,9 @@ function queuePrune() {
 		queueStore[scope] = next;
 		queuePersist();
 	}
+	return { before: rows.length, after: next.length, dropped: rows.length - next.length };
 }
+let queueRestoreNotified = false;
 
 function renderQueueChip() {
 	if (!ui.claimQueueChip) return;
@@ -7358,6 +7487,7 @@ if (ui.btnWipeData) {
 let swRegistration = null;
 let swReloading = false;
 let updateDismissed = false;
+let swAutoUpdateTimer = null;
 
 function setUpdateStatus(text) {
 	if (!ui.updateStatus) return;
@@ -7373,6 +7503,47 @@ function showUpdateBar() {
 
 function hideUpdateBar() {
 	if (ui.updateBar) ui.updateBar.hidden = true;
+}
+
+/* Waves#149: app có được coi là RẢNH để tự áp dụng bản SW đang chờ không.
+   Chặn tuyệt đối khi đang chạy/quét/nhận hàng loạt/captcha mở — không bao
+   giờ reload giữa lúc đang cày (lỗi cũ của Wave#123 là tự nhảy). */
+function appIsIdleForUpdate() {
+	return state === 'idle' && !bulkClaimBusy && !scanning && !(ui.captchaModal && !ui.captchaModal.hidden) && !swReloading;
+}
+
+/* Waves#149: tự kích hoạt bản SW đang chờ KHI APP RẢNH (sau khi chạy xong
+   hoặc đã idle), với 10 giây ân hạn + thanh cập nhật hiển thị rõ để người
+   dùng kịp bấm "Để sau". Hết ân hạn mà vẫn rảnh thì mới gửi SKIP_WAITING
+   (controllerchange sẽ reload — lúc đó không còn gì đang chạy). */
+function scheduleIdleSwUpdate() {
+	if (swAutoUpdateTimer) clearTimeout(swAutoUpdateTimer);
+	swAutoUpdateTimer = null;
+	if (!swRegistration || !swRegistration.waiting || !navigator.serviceWorker.controller) return;
+	if (updateDismissed) return;
+	if (!appIsIdleForUpdate()) return;
+	showUpdateBar();
+	setUpdateStatus(
+		currentLang === 'en'
+			? 'Update will apply automatically in 10s while the app is idle — press “Later” to postpone.'
+			: 'Bản cập nhật sẽ tự áp dụng sau 10 giây khi app rảnh — bấm “Để sau” để hoãn.',
+	);
+	swAutoUpdateTimer = setTimeout(() => {
+		swAutoUpdateTimer = null;
+		if (!appIsIdleForUpdate()) return;
+		const waiting = swRegistration && swRegistration.waiting;
+		if (!waiting) return;
+		swReloading = true;
+		setUpdateStatus(currentLang === 'en' ? 'Applying update…' : 'Đang áp dụng bản cập nhật…');
+		try {
+			waiting.postMessage({ type: 'SKIP_WAITING' });
+		} catch {
+			/* ignore */
+		}
+		setTimeout(() => {
+			if (swReloading) location.reload();
+		}, 2600);
+	}, 10000);
 }
 
 async function showSwVersion() {
@@ -7416,7 +7587,10 @@ async function setupServiceWorker() {
 		swRegistration = await navigator.serviceWorker.register(new URL('sw.js', document.baseURI).href, {
 			updateViaCache: 'none',
 		});
-		if (swRegistration.waiting && navigator.serviceWorker.controller) showUpdateBar();
+		if (swRegistration.waiting && navigator.serviceWorker.controller) {
+			showUpdateBar();
+			scheduleIdleSwUpdate();
+		}
 		swRegistration.addEventListener('updatefound', () => {
 			const worker = swRegistration && swRegistration.installing;
 			if (!worker) return;
@@ -7424,6 +7598,7 @@ async function setupServiceWorker() {
 				if (worker.state === 'installed' && navigator.serviceWorker.controller && !updateDismissed) {
 					showUpdateBar();
 					setUpdateStatus('Đã có bản cập nhật mới — bấm "Cập nhật" để nạp.');
+					scheduleIdleSwUpdate();
 				}
 			});
 		});
@@ -7455,6 +7630,8 @@ if (ui.btnUpdateReload) {
 }
 if (ui.btnUpdateDismiss) {
 	ui.btnUpdateDismiss.addEventListener('click', () => {
+		if (swAutoUpdateTimer) clearTimeout(swAutoUpdateTimer);
+		swAutoUpdateTimer = null;
 		updateDismissed = true;
 		hideUpdateBar();
 		setUpdateStatus('Sẽ cập nhật ở lần mở tiếp theo.');
@@ -7759,7 +7936,6 @@ ui.btnScan.addEventListener('click', async () => {
 	doneSeen.clear();
 	ui.console.innerHTML = '';
 	logText = '';
-	sessionOrbsBonus = 0;
 	sessionClaimCount = 0;
 	sessionClaimOrbs = 0;
 	// Waves 27: buffer RAM — quest nhận trong lúc nạp KHÔNG render ngay, gom vào
@@ -8539,6 +8715,19 @@ function formatDiagnostics(d) {
 		`  ${en ? 'Config' : 'Cấu hình'}       : ${en ? 'loop' : 'treo'} ${yes(d.loopMode)} · ${d.loopInterval} ${en ? 'min' : 'phút'} · theme ${d.theme} · autoScroll ${yes(d.autoScroll)}`,
 	);
 	L.push('');
+	L.push(en ? '[Last claim]' : '[Claim gần nhất]');
+	if (d.lastClaim) {
+		const c = d.lastClaim;
+		L.push(`  ${en ? 'At' : 'Lúc'}           : ${c.at || '—'} · ${en ? 'via' : 'qua'} ${c.source}`);
+		L.push(`  ${en ? 'Quest' : 'Nhiệm vụ'}        : ${c.questId || '—'} · HTTP ${c.status == null ? '—' : c.status}${c.code != null ? ` · code ${c.code}` : ''}`);
+		L.push(`  ${en ? 'Confirmed' : 'Đã xác nhận'}   : ${c.confirmed == null ? '—' : c.confirmed ? (en ? 'yes' : 'có') : (en ? 'NO — Orbs not counted' : 'KHÔNG — chưa tính Orb')} · orbs ${c.orbs == null ? '—' : c.orbs}`);
+		L.push(`  ${en ? 'Verified via' : 'Xác minh qua'}  : ${c.verifiedVia || '—'}`);
+		L.push(`  ${en ? 'Captcha' : 'Captcha'}      : ${c.captcha ? (en ? 'yes' : 'có') : (en ? 'no' : 'không')}${c.captchaSitekey ? ' · sitekey: yes' : ''}${c.captchaSessionAgeSec != null ? ` · ${en ? 'session age' : 'tuổi phiên'} ${c.captchaSessionAgeSec}s` : ''}`);
+		if (c.message) L.push(`  ${en ? 'Message' : 'Thông báo'}     : ${c.message}`);
+	} else {
+		L.push(`  ${en ? 'No claim yet this session.' : 'Chưa có claim nào trong phiên này.'}`);
+	}
+	L.push('');
 	L.push(
 		en
 			? '(Diagnostics never include tokens. Tokens live only in the browser IndexedDB.)'
@@ -8793,6 +8982,8 @@ api.onState((payload) => {
 	}
 	setState(payload.state, payload);
 	if (payload.state === 'idle' || payload.state === 'error') {
+		// Waves#149: chạy xong → app rảnh → cho phép tự áp dụng bản SW chờ.
+		scheduleIdleSwUpdate();
 		stopHeartbeat();
 		if (payload.state === 'error' && !userStopped) {
 			if (ui.btnRecover) ui.btnRecover.hidden = false;

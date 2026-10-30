@@ -150,11 +150,22 @@ export class QuestManager implements Iterable<Quest> {
 	 * Waves 20: gộp tasks từ task_config_v2 (mới) và task_config (cũ).
 	 * Nhiều quest chỉ trả một trong hai → thiếu fallback là bỏ sót quest.
 	 */
+	/**
+	 * Waves#144: v2 tồn tại nhưng RỖNG / KHÔNG ĐẦY ĐỦ thì phải fallback sang
+	 * v1, không được chọn v2 rồi chạy với task trống (target 900 đoán mò,
+	 * progress sai task). "Đầy đủ" = có ít nhất một entry task không rỗng
+	 * (object có key, hoặc giá trị không-null không phải object). Nếu cả hai
+	 * đều không đầy đủ thì giữ v2 (nếu là object) để giữ hành vi cũ.
+	 */
 	public static getTasks(quest: Quest): Record<string, any> | null {
 		try {
 			const cfg = quest.raw?.config as any;
 			const v2 = cfg?.task_config_v2?.tasks;
 			const v1 = cfg?.task_config?.tasks;
+			const usable = (tasks: any): boolean =>
+				!!tasks && typeof tasks === 'object' && Object.values(tasks).some((e: any) => e != null && (typeof e !== 'object' || Object.keys(e).length > 0));
+			if (usable(v2)) return v2 as Record<string, any>;
+			if (usable(v1)) return v1 as Record<string, any>;
 			if (v2 && typeof v2 === 'object') return v2 as Record<string, any>;
 			if (v1 && typeof v1 === 'object') return v1 as Record<string, any>;
 			return null;
@@ -211,8 +222,14 @@ export class QuestManager implements Iterable<Quest> {
 		// Discord KHÔNG phải lúc nào cũng trả `user_status.progress` (một số quest
 		// chỉ trả `stream_progress_seconds`). Nếu progress rỗng, đọc thẳng
 		// `stream_progress_seconds` để tiến độ "Chưa làm" KHÔNG bị hiển thị 0% sai.
-		const sps = Number(quest.userStatus?.stream_progress_seconds);
-		if (Number.isFinite(sps) && sps > 0) return sps;
+		// Waves#144: chỉ áp dụng fallback này cho đúng task stream
+		// (WATCH_STREAM / STREAM_ON_DESKTOP) — task khác (video, desktop…)
+		// mà lấy stream_progress_seconds thì tiến độ hiển thị sẽ là của task
+		// khác, không phải task đang được chọn theo ưu tiên.
+		if (name === 'WATCH_STREAM' || name === 'STREAM_ON_DESKTOP') {
+			const sps = Number(quest.userStatus?.stream_progress_seconds);
+			if (Number.isFinite(sps) && sps > 0) return sps;
+		}
 
 		return 0;
 	}
@@ -581,21 +598,32 @@ export class QuestManager implements Iterable<Quest> {
 			const status = res && res.user_status ? res.user_status : res;
 			quest.updateUserStatus(status);
 			const claimedAt = quest.userStatus?.claimed_at;
+			// Waves#135 — unified claim truth: a 2xx without claimed_at is NOT
+			// a confirmed claim. Report confirmed:false and return false so
+			// callers (claimAllClaimable, finishQuest) never count its Orbs.
+			// The UI keeps the quest "claimable" until a later scan confirms it.
 			if (!claimedAt) {
 				console.warn(
-					`[Cảnh báo] Discord trả 2xx cho "${name}" nhưng chưa thấy claimed_at — sẽ xác nhận lại khi quét.`,
+					`[Cảnh báo] Discord trả 2xx cho "${name}" nhưng chưa thấy claimed_at — chưa tính là đã nhận, sẽ xác nhận lại khi quét.`,
 				);
+				report('quest:claim', {
+					id: QuestManager.getQuestId(quest),
+					name,
+					orbs,
+					rewardName,
+					confirmed: false,
+				});
+				return false;
 			}
 			console.log(
 				`ĐÃ NHẬN THƯỞNG: "${name}" -> Nhận: ${rewardName}!`,
 			);
-			// Nhận thưởng xong → event riêng 'quest:claim' (UI chuyển tab "Đã làm").
 			report('quest:claim', {
 				id: QuestManager.getQuestId(quest),
 				name,
 				orbs,
 				rewardName,
-				confirmed: Boolean(claimedAt),
+				confirmed: true,
 			});
 			return true;
 		} catch (err: any) {
@@ -623,11 +651,20 @@ export class QuestManager implements Iterable<Quest> {
 		const rawError = err?.rawError || err?.body || err?.data || {};
 		const captchaData = err?.captcha ?? rawError;
 
-		const isCaptcha =
-			!!rawError.captcha_key ||
-			!!captchaData?.captcha_sitekey ||
-			message.includes('No Description') ||
-			message.toLowerCase().includes('captcha');
+		// Waves#136 — strict captcha classification: message text alone
+		// (including "captcha" or "No Description") NEVER classifies an
+		// error as captcha. Only Discord's structured captcha fields do:
+		// a sitekey, or a session id combined with a captcha key/rqdata/rqtoken.
+		const sitekey = captchaData?.captcha_sitekey || rawError?.captcha_sitekey || '';
+		const sessionId = captchaData?.captcha_session_id || rawError?.captcha_session_id || '';
+		const hasCaptchaPayload =
+			!!captchaData?.captcha_key ||
+			!!captchaData?.captcha_rqdata ||
+			!!captchaData?.captcha_rqtoken ||
+			!!rawError?.captcha_key ||
+			!!rawError?.captcha_rqdata ||
+			!!rawError?.captcha_rqtoken;
+		const isCaptcha = !!sitekey || (!!sessionId && hasCaptchaPayload);
 
 		if (isCaptcha) {
 			// Trích ĐÚNG các trường Discord trả (xem interface CaptchaDataFromRequest).
@@ -668,16 +705,20 @@ export class QuestManager implements Iterable<Quest> {
 				return;
 			}
 
-			// Có cờ captcha nhưng Discord không kèm sitekey → báo để mở Kho quà thủ công.
+			// Waves#136 — structured captcha fields exist but no sitekey:
+			// this is a per-quest BLOCKED state, never a normal "done" event.
+			// The UI shows the reason on this quest's card, not a one-time
+			// global note, so other blocked quests are not hidden.
 			console.log(
-				`Nhiệm vụ "${name}" đã hoàn thành 100% nhưng Discord yêu cầu xác minh (không kèm sitekey).`,
+				`Nhiệm vụ "${name}" bị chặn xác minh: Discord yêu cầu xác minh nhưng không kèm sitekey.`,
 			);
-			report('quest:done', {
+			report('quest:blocked', {
 				id: QuestManager.getQuestId(quest),
 				name,
 				orbs,
 				rewardName,
-				note: 'Discord yêu cầu xác minh — mở Kho quà để nhận thủ công',
+				reason: 'Discord yêu cầu xác minh nhưng không cấp sitekey — mở Discord để nhận thủ công.',
+				captcha,
 			});
 			return;
 		}
@@ -886,15 +927,50 @@ export class QuestManager implements Iterable<Quest> {
 		).getTime();
 		let completed = false;
 
+		// Waves#138 — video loop guard: a missing, invalid, or far-future
+		// enrolled_at used to make maxAllowed NaN/negative, so this loop
+		// waited forever with no request, no progress, and no error.
+		// Fail fast with a clear error instead of looping silently.
+		if (!Number.isFinite(enrolledAt)) {
+			this.failQuest(quest, questName, 'Không xác định được thời điểm nhận nhiệm vụ (enrolled_at thiếu hoặc không hợp lệ) — không thể tính tiến độ video.');
+			return;
+		}
+		if (enrolledAt > Date.now() + 60_000) {
+			this.failQuest(quest, questName, 'Thời điểm nhận nhiệm vụ (enrolled_at) ở tương lai — không thể tính tiến độ video, hãy quét lại.');
+			return;
+		}
+
 		console.log(
 			`Đang giả lập xem video nhiệm vụ: "${questName}" (${secondsNeeded} giây)...`,
 		);
 
+		// Absolute bound for the loop: enough iterations to finish the
+		// video plus a stall allowance, then fail instead of looping forever.
+		// Each iteration waits `interval` seconds; a stall is an iteration
+		// that made no progress because Discord's time cap had not caught up.
+		let videoIterations = 0;
+		const maxVideoIterations = Math.ceil(Math.max(secondsNeeded, 0) / speed) + 600;
+		let stallIterations = 0;
+		const maxStallIterations = 60; // 60 x 7s = 420s without any progress
 		while (true) {
+			videoIterations++;
+			if (videoIterations > maxVideoIterations) {
+				this.failQuest(quest, questName, 'Hết thời gian chờ tiến độ video — vòng lặp đã vượt giới hạn an toàn mà chưa hoàn thành.');
+				return;
+			}
 			const maxAllowed =
 				Math.floor((Date.now() - enrolledAt) / 1000) + maxFuture;
 			const diff = maxAllowed - secondsDone;
 			const timestamp = secondsDone + speed;
+			if (diff < speed) {
+				stallIterations++;
+				if (stallIterations >= maxStallIterations) {
+					this.failQuest(quest, questName, 'Tiến độ video không tăng trong 420 giây — có thể enrolled_at hoặc giới hạn thời gian của Discord không khớp, đã dừng thay vì treo im.');
+					return;
+				}
+			} else {
+				stallIterations = 0;
+			}
 			if (diff >= speed) {
 				const res = (await this.client.rest.post(
 					`/quests/${quest.id}/video-progress`,
