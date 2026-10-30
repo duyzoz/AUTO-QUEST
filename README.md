@@ -6,7 +6,7 @@
 
 ![Theme](https://img.shields.io/badge/Theme-Dark%20Strong%20Vesper-e0af68)
 
-![Waves](https://img.shields.io/badge/Waves%23-133%20%C2%B7%20Active-e0af68)
+![Waves](https://img.shields.io/badge/Waves%23-150%20%C2%B7%20Active-e0af68)
 
 ![License](https://img.shields.io/badge/License-MIT-3b82f6)
 
@@ -290,11 +290,12 @@ Vào **[Releases](https://github.com/duyzoz/AUTO-QUEST/releases)** → chọn **
 - Mở `.dmg` → kéo **Auto Quest** vào **Applications**.
 - Lần đầu mở nếu bị chặn: **Chuột phải → Open** (hoặc `System Settings → Privacy & Security → Open Anyway`) — bản này chưa ký số (unsigned).
 
-### 🌐 Web (đang xây — hướng duy nhất từ 28/10/2026)
+### 🌐 Web (PWA v2.0.0 — hướng duy nhất, đã hoàn thành port)
 
-Bản iOS/TrollStore **đã được gỡ bỏ** khỏi dự án. Hướng phát triển tiếp theo là **bản web (PWA)** dùng
-chung `core/ui` với app desktop — xem [`docs/AGENT-BRIEF.md`](docs/AGENT-BRIEF.md) Track B (#109–#116)
-và bản chạy thử [`web-poc/index.html`](web-poc/index.html).
+Bản iOS/TrollStore **đã được gỡ bỏ** khỏi dự án, bản desktop Electron 1.0.0 và bản chạy thử
+`web-poc/index.html` cũng đã bị xoá khỏi repo (chỉ còn trong lịch sử git). App hiện tại là
+**Web PWA thuần**: chạy `npm start` rồi mở **http://127.0.0.1:4173** — xem [`docs/DEPLOY.md`](docs/DEPLOY.md).
+Các tài liệu phân tích thời Electron đã được đánh dấu ARCHIVED ở đầu file.
 
 ---
 

@@ -12,7 +12,21 @@
  *   node:crypto       → crypto.randomUUID
  *   undici            → fetch của trình duyệt
  *
- * Chạy: ELECTRON_RUN_AS_NODE=1 <Qoder.exe> web/build-engine.js
+ * Chạy: node web/build-engine.js
+ *
+ * Waves#139 — SOURCE OF TRUTH (đọc trước khi sửa engine):
+ *   1. web/engine/bot.js + web/engine/src/*.js  = MÃ NGUỒN WEB THẬT.
+ *      Đây là thứ được đóng gói vào bundle và chạy trong Web Worker.
+ *   2. web/engine-bundle.js = FILE SINH RA, KHÔNG SỬA TAY. Luôn chạy
+ *      `npm run build:engine` (hoặc `npm run check:bundle` để kiểm tra)
+ *      sau khi sửa (1), rồi mới commit bundle mới.
+ *   3. engine-src/*.ts = BẢN THAM CHIẾU THIẾT KẾ (Node/Gateway). Nó KHÔNG
+ *      được biên dịch vào bundle này. Sửa TS mà không sửa (1) + build lại
+ *      thì bản web vẫn chạy code cũ — đó là lỗi đã từng xảy ra.
+ *   4. web/engine/src/client.js và constants.js (Node/Gateway) KHÔNG nằm
+ *      trong REAL_MODULES: client được thay bằng shim fetch, constants
+ *      được thay bằng AQIdentity trong bundle. Đừng sửa chúng rồi tưởng
+ *      bản web sẽ đổi theo.
  */
 
 const fs = require('node:fs');
@@ -115,9 +129,12 @@ function makeClientShim(env, require) {
 
 			var out = await once();
 			if (out.res.status === 429) {
+				// Waves#142 — unified 429 policy: wait the FULL retry_after
+				// Discord gave (no 5s/10s cap, no early retry), then retry
+				// once. An invalid retry_after falls back to 2s. The user
+				// can still Stop the worker at any time to terminate.
 				var wait = Number(out.data && out.data.retry_after);
 				if (!isFinite(wait) || wait < 0) wait = 2;
-				wait = Math.min(wait, 5);
 				await new Promise(function (r) { setTimeout(r, Math.ceil(wait * 1000) + 250); });
 				out = await once();
 			}

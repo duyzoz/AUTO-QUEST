@@ -17,7 +17,14 @@ export class Utils extends null {
 		myHeaders.append('accept-language', 'en-US');
 		myHeaders.append('x-debug-options', 'bugReporterEnabled');
 		myHeaders.append('x-discord-locale', 'en-US');
-		myHeaders.append('x-discord-timezone', 'Asia/Saigon');
+		// Waves#140: timezone from the system, not a hardcoded Asia/Saigon.
+		// The web identity already uses the browser timezone; the Node
+		// reference layer should follow the same rule.
+		try {
+			myHeaders.append('x-discord-timezone', Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Saigon');
+		} catch {
+			myHeaders.append('x-discord-timezone', 'Asia/Saigon');
+		}
 		if (isAndroidRequest) {
 			myHeaders = Utils.mergeHeaders(
 				myHeaders,
@@ -45,9 +52,15 @@ export class Utils extends null {
 		}
 		myHeaders.append('pragma', 'no-cache');
 		myHeaders.append('priority', 'u=1, i');
+		// Waves#140: sec-ch-ua must match the Chrome major in USER_AGENT
+		// (148 at the time of writing). A hardcoded 138 while the UA
+		// claimed 148 is exactly the kind of drift Discord risk-scoring
+		// can notice. Derive it; do not hardcode a new number here.
+		const chromeMajor =
+			Constants.USER_AGENT.match(/Chrome\/(\d+)\./)?.[1] ?? '0';
 		myHeaders.append(
 			'sec-ch-ua',
-			'"Not)A;Brand";v="8", "Chromium";v="138"',
+			'"Not)A;Brand";v="8", "Chromium";v="' + chromeMajor + '"',
 		);
 		myHeaders.append('sec-ch-ua-mobile', '?0');
 		myHeaders.append('sec-ch-ua-platform', '"Windows"');

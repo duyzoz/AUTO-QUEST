@@ -1,5 +1,9 @@
 import { randomUUID } from 'node:crypto';
 
+// Waves#140 — REFERENCE ONLY. These numbers are NOT used for web requests:
+// the web bundle replaces this module with web/identity.js (AQIdentity).
+// Treat client_version / build numbers here as placeholders to be refreshed
+// from a real client; do not copy them into web code.
 export class Constants extends null {
 	static readonly USER_AGENT =
 		'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) discord/1.0.9259 Chrome/148.0.7778.280 Electron/42.11.4 Safari/537.36';
@@ -44,7 +48,9 @@ export class Constants extends null {
 		client_build_number: 5169,
 		client_event_source: null,
 		client_launch_id: randomUUID(),
-		launch_signature: '1771754995045142953',
+		// Waves#140: was a constant shared by every account/session;
+		// now generated per process run, like the other session ids.
+		launch_signature: randomUUID(),
 		client_app_state: 'active',
 		client_heartbeat_session_id: randomUUID(),
 	};
