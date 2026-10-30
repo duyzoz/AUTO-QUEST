@@ -7262,28 +7262,15 @@ if (ui.btnTopbarAccount) ui.btnTopbarAccount.addEventListener('click', () => {
 	openAccountSheet();
 });
 if (ui.navAccount) ui.navAccount.addEventListener('click', () => {
+	// Mục "Tài khoản" CHỈ dành cho mobile (theo yêu cầu của Ethan):
+	// CSS đã ẩn #navAccount ở ≥1024px nên trên desktop — Chrome hay
+	// bất kỳ trình duyệt nào — mục này không hiện, không bấm được, và
+	// handler này cũng không được phép mở gì ở desktop. Trên desktop,
+	// tài khoản vẫn vào bằng hàng profile ở đáy sidebar (popout cũ).
+	// Chỉ layout mobile (≤1023px) mới: đóng drawer + mở bottom sheet.
 	if (isMobileLayout()) {
 		closeDrawer({ returnFocus: false });
 		openAccountSheet();
-	} else if (ui.upRow) {
-		// BUGFIX (sau Waves #241-#268): trước đây nhánh desktop chỉ
-		// scroll tới hàng profile + focus nó — hàng đó trên desktop đã
-		// hiện sẵn ở đáy sidebar nên bấm "Tài khoản" trông như chết hẳn:
-		// không mở popout, không mở modal, không đổi trang (không có
-		// trang 'account' nào trong switchPage cả). Nay bấm "Tài khoản"
-		// phải MỞ đúng khung tài khoản như bấm hàng profile: guest thì
-		// mở popup Đổi tài khoản, đã đăng nhập thì mở popout profile
-		// (dùng lại handler của upRow để giữ đúng logic đo lại khung
-		// khi panel vừa hiện). Popout đã mở sẵn thì giữ nguyên, không
-		// đóng ngược lại.
-		try { ui.upRow.scrollIntoView({ block: 'nearest' }); } catch {}
-		if (ui.dprofile && ui.dprofile.dataset.state === 'guest') {
-			openAccSw();
-		} else if (ui.upPop && ui.upPop.hidden) {
-			ui.upRow.click();
-		} else if (ui.upPop) {
-			try { const b = ui.upPop.querySelector('button'); if (b) b.focus(); } catch {}
-		}
 	}
 });
 

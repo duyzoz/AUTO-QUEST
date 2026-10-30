@@ -4397,6 +4397,13 @@ body {
 }
 @media (min-width: 1024px) {
 	.topbar { display: none !important; }
+	/* Mục "Tài khoản" CHỈ dành cho mobile (theo yêu cầu của Ethan):
+	   trên desktop — Chrome hay bất kỳ trình duyệt nào — cấm hiện.
+	   Trên desktop, tài khoản vẫn vào bằng hàng profile ở đáy sidebar
+	   (popout cũ), không cần mục nav này. Ẩn bằng CSS theo breakpoint
+	   layout (≥1024px), không dò tên trình duyệt vì dò UA không đáng tin
+	   và dễ bị giả mạo. */
+	#navAccount { display: none !important; }
 }
 
 /* ---------- Accessibility: giảm chuyển động ----------

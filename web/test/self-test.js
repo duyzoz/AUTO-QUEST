@@ -847,16 +847,17 @@ check('Waves#243/#245: topbar account + bottom sheet tài khoản (mobile), tái
 	assert(/isMobileLayout\(\)/.test(js), 'mobile mới dùng sheet thay .up-pop');
 	return 'topbar account + sheet + nav shortcut có đủ';
 });
-check('BUGFIX navAccount desktop: bấm "Tài khoản" phải MỞ khung tài khoản, không chỉ scroll+focus', () => {
+check('navAccount CHỈ mobile: desktop (≥1024px, mọi trình duyệt) cấm hiện, handler không mở gì ở desktop', () => {
+	const css = read(path.join(APP, 'styles.css'));
 	const js = read(path.join(APP, 'renderer.js'));
+	const desktop = css.match(/@media \(min-width: 1024px\) \{[\s\S]*?\n\}/);
+	assert(desktop && /#navAccount \{ display: none !important;/.test(desktop[0]), '#navAccount phải display:none ở ≥1024px');
 	const m = js.match(/navAccount\.addEventListener\('click'[\s\S]*?\n\}\);/);
 	assert(m, 'không tìm thấy handler navAccount');
 	const block = m[0];
-	assert(/openAccountSheet\(\)/.test(block), 'nhánh mobile phải mở sheet');
-	assert(/openAccSw\(\)/.test(block), 'nhánh desktop guest phải mở popup Đổi tài khoản');
-	assert(/upRow\.click\(\)/.test(block), 'nhánh desktop đã đăng nhập phải mở popout qua upRow');
-	assert(!/scrollIntoView\(\{ block: 'nearest' \}\); ui\.upRow\.focus\(\)/.test(block), 'không được chỉ scroll+focus rồi dừng (đó chính là lỗi chết nút)');
-	return 'navAccount mở sheet/popout/modal theo trạng thái';
+	assert(/isMobileLayout\(\)/.test(block) && /openAccountSheet\(\)/.test(block), 'chỉ mobile mới mở sheet');
+	assert(!/upRow\.click\(\)/.test(block) && !/openAccSw\(\)/.test(block), 'handler navAccount không được mở popout/modal ở desktop');
+	return 'navAccount mobile-only: ẩn desktop + handler chỉ mở sheet khi mobile';
 });
 check('Waves#244/#249/#250: drawer sticky profile, chạm 44px, safe-area', () => {
 	const mobile = read(path.join(APP, 'mobile.css'));
