@@ -53,6 +53,8 @@ const ui = {
 	themeSystem: el('themeSystem'),
 	btnDrawer: el('btnDrawer'),
 	btnTopbarAccount: el('btnTopbarAccount'),
+	// Motion + sound (Phase 1): nút tắt/bật âm thanh ở topbar.
+	btnSound: el('btnSound'),
 	drawerOverlay: el('drawerOverlay'),
 	sidebar: el('sidebar'),
 	selectAll: el('selectAll'),
@@ -528,6 +530,83 @@ function notifySystem(title, body) {
 	}
 }
 
+
+/* ---------------- Motion + sound (Phase 1) — âm thanh tự tổng hợp ----------------
+   Nguyên tắc học từ web tham khảo, làm lại bằng đồ của mình, không copy file nhạc:
+   - KHÔNG có file nhạc nào. Mọi tiếng đều là sóng Oscillator của WebAudio,
+     tạo ngay lúc bấm — click ngắn, claim thành công là 2-3 nốt tăng dần, lỗi là nốt trầm.
+   - Mặc định TẮT. Chỉ khi user bấm nút loa thì mới bật, và AudioContext chỉ được
+     tạo sau tương tác đầu tiên của user (trình duyệt chặn autoplay trước đó).
+   - Chỉ là lớp UI: không đụng luồng quét/cày/claim, không lưu token/code, chỉ lưu
+     cờ bật/tắt (localStorage, key aq-sound-enabled) để lần sau khỏi bật lại.
+   - Tôn trọng prefers-reduced-motion ở CSS; tiếng thì tắt hẳn bằng nút loa. */
+const SOUND_KEY = 'aq-sound-enabled';
+let soundEnabled = false;
+try { soundEnabled = localStorage.getItem(SOUND_KEY) === '1'; } catch { /* storage chặn — mặc định tắt */ }
+let aqAudioCtx = null;
+function ensureAudioCtx() {
+	if (!soundEnabled) return null;
+	try {
+		if (!aqAudioCtx) aqAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+		if (aqAudioCtx.state === 'suspended') aqAudioCtx.resume();
+		return aqAudioCtx;
+	} catch { return null; }
+}
+function playTone(freq, dur, type, gain, delay) {
+	const ctx = ensureAudioCtx();
+	if (!ctx) return;
+	try {
+		const t0 = ctx.currentTime + (delay || 0);
+		const osc = ctx.createOscillator();
+		const g = ctx.createGain();
+		osc.type = type || 'sine';
+		osc.frequency.setValueAtTime(freq, t0);
+		g.gain.setValueAtTime(0.0001, t0);
+		g.gain.exponentialRampToValueAtTime(gain || 0.06, t0 + 0.01);
+		g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+		osc.connect(g);
+		g.connect(ctx.destination);
+		osc.start(t0);
+		osc.stop(t0 + dur + 0.05);
+	} catch { /* âm thanh là tùy chọn — lỗi thì im lặng */ }
+}
+function playClick() { if (soundEnabled) playTone(880, 0.06, 'triangle', 0.05, 0); }
+function playSuccess() {
+	if (!soundEnabled) return;
+	playTone(660, 0.12, 'sine', 0.07, 0);
+	playTone(880, 0.12, 'sine', 0.07, 0.07);
+	playTone(1320, 0.16, 'sine', 0.07, 0.14);
+}
+function playError() { if (soundEnabled) playTone(180, 0.14, 'sine', 0.06, 0); }
+function refreshSoundButton() {
+	if (!ui.btnSound) return;
+	ui.btnSound.classList.toggle('is-muted', !soundEnabled);
+	ui.btnSound.setAttribute('aria-pressed', soundEnabled ? 'true' : 'false');
+	ui.btnSound.setAttribute('aria-label', soundEnabled ? 'Tắt âm thanh' : 'Bật âm thanh');
+	ui.btnSound.setAttribute('title', soundEnabled ? 'Âm thanh: bật' : 'Âm thanh: tắt');
+}
+function setSoundEnabled(on) {
+	soundEnabled = !!on;
+	try { localStorage.setItem(SOUND_KEY, soundEnabled ? '1' : '0'); } catch { /* ignore */ }
+	refreshSoundButton();
+}
+if (ui.btnSound) {
+	ui.btnSound.addEventListener('click', () => {
+		const willEnable = !soundEnabled;
+		if (!willEnable) playClick();
+		setSoundEnabled(willEnable);
+		if (willEnable) playClick();
+	});
+}
+refreshSoundButton();
+/* Click chung cho mọi nút (đã lọc nút bị khóa): tiếng click chỉ kêu khi âm thanh đang bật,
+   nên không cần sửa từng handler — và không đổi hành vi nào của nút. */
+document.addEventListener('click', (ev) => {
+	const btn = ev.target && ev.target.closest ? ev.target.closest('button') : null;
+	if (!btn || btn.disabled || btn.id === 'btnSound') return;
+	playClick();
+});
+
 function toast(message, isError = false) {
 	ui.toast.textContent = message;
 	ui.toast.classList.toggle('error', isError);
@@ -549,7 +628,7 @@ function toast(message, isError = false) {
 			}
 		}
 	}
-	if (isError) notifySystem('Auto Quest — lỗi', message);
+	if (isError) { playError(); notifySystem('Auto Quest — lỗi', message); }
 }
 
 /* ---------------- State Management ---------------- */
@@ -3628,6 +3707,7 @@ async function runClaim(quest, captchaMeta) {
 			recordClaim(quest.name, res.orbs || quest.orbs || 0, id);
 			appendLog(`[OK] Đã nhận "${quest.name || ''}" (+${res.orbs || quest.orbs || 0} Orbs) — Discord xác nhận.`, 'ok');
 			toast(`Đã nhận ${res.orbs || quest.orbs || 0} Orbs · "${quest.name || ''}"`);
+			playSuccess();
 			notifySystem('Đã nhận Orbs', `+${res.orbs || quest.orbs || 0} Orbs · ${quest.name || ''}`);
 			// Số dư nhảy THẬT: đọc lại ví từ Discord (không tự cộng số ảo)
 			fetchOrbBalance(token);
@@ -3888,6 +3968,7 @@ async function claimSequence(ids, source = 'bulk') {
 		appendLog(`[Hệ thống] Nhận hàng loạt xong: ${bits.join(' · ')}.`, claimed > 0 ? 'ok' : 'warn');
 		if (claimed > 0) {
 			toast(`Đã nhận ${claimed} nhiệm vụ${orbs > 0 ? ` (+${orbs} Orbs)` : ''}.`);
+			playSuccess();
 			notifySystem('Nhận hàng loạt', `Đã nhận ${claimed} nhiệm vụ${orbs > 0 ? ` (+${orbs} Orbs)` : ''}`);
 		} else if (attempted > 0) {
 			toast('Không nhận được nhiệm vụ nào — xem nhật ký để biết lý do.', true);

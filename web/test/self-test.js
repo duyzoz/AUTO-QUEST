@@ -337,6 +337,36 @@ check('Xóa sạch tính năng cập nhật: không popup, không nút, không p
 	return 'không còn popup/nút/phiên bản cập nhật; SW v16 tự kích hoạt, network-first';
 });
 
+check('Overhaul Phase 2-4 (CSS only): khung profile ngoài, khung ảnh quest, nav/thống kê, không đụng Discord', () => {
+	const css = read(path.join(APP, 'styles.css'));
+	const html = read(path.join(APP, 'index.html'));
+	assert(/\.nav-item:hover:not\(\.active\) \{ transform: translateX\(2px\)/.test(css), 'thiếu nav trượt khi hover');
+	assert(/\.stat-card:hover \{ transform: translateY\(-2px\)/.test(css), 'thiếu thẻ thống kê nổi khi hover');
+	assert(/\.qcard-banner \{ background: var\(--well\)/.test(css), 'khung banner quest phải nền token, không gradient tối');
+	assert(/\.qcard:hover \.qcard-banner img \{ transform: scale\(1\.04\)/.test(css), 'thiếu zoom ảnh banner khi hover');
+	assert(/\.profile-hero \{ border-color: var\(--line-strong\)/.test(css), 'khung profile hero phải viền token mạnh + bóng');
+	assert(html.includes('id="heroProfile"') && html.includes('id="phAvatarwrap"'), 'thẻ profile hero giữa phải còn nguyên');
+	assert(/@keyframes dns-prism-scroll/.test(css) && /@keyframes dns-pop-main/.test(css), 'keyframes Discord của profile phải còn nguyên');
+	assert(/\.up-row[\s\S]{0,500}border: none/.test(css), 'up-row sidebar profile phải giữ không viền (lệnh Wave#87)');
+	return 'Phase 2-4 CSS-only: nav/stat/quest/profile-frame, Discord effects intact';
+});
+
+check('Motion + sound Phase 1: token chuyển động, nút bấm, WebAudio tự tổng hợp, mặc định tắt', () => {
+	const css = read(path.join(APP, 'styles.css'));
+	const r = read(path.join(APP, 'renderer.js'));
+	const html = read(path.join(APP, 'index.html'));
+	assert(/--motion-fast: 150ms/.test(css) && /--motion-base: 220ms/.test(css), 'thiếu token motion');
+	assert(/\.btn:hover:not\(:disabled\) \{ transform: translateY\(-1px\)/.test(css), 'thiếu hover nhích nút');
+	assert(/\.qcard:hover \{ transform: translateY\(-2px\)/.test(css), 'thiếu hover nổi thẻ quest');
+	assert(/prefers-reduced-motion: reduce[\s\S]{0,600}aqPageIn/.test(css) || /prefers-reduced-motion[\s\S]*?\.page\.active[^}]*animation: none/.test(css), 'thiếu reduced-motion cho hiệu ứng mới');
+	assert(html.includes('id="btnSound"'), 'thiếu nút loa topbar');
+	assert(/function playClick/.test(r) && /function playSuccess/.test(r) && /function playError/.test(r), 'thiếu bộ tiếng WebAudio');
+	assert(/AudioContext/.test(r) && !/\.mp3|\.wav|\.ogg/.test(r), 'âm thanh phải là WebAudio, không dùng file nhạc');
+	assert(/aq-sound-enabled/.test(r), 'thiếu cờ lưu bật/tắt âm thanh');
+	assert(/soundEnabled = false/.test(r) || /let soundEnabled = false/.test(r), 'âm thanh phải mặc định TẮT');
+	return 'motion token + press/hover + WebAudio synth, mặc định tắt, có reduced-motion';
+});
+
 check('escapeHtml chỉ còn MỘT định nghĩa và escape cả nháy đơn', () => {
 	const r = read(path.join(APP, 'renderer.js'));
 	const defs = (r.match(/function escapeHtml\s*\(/g) || []).length;

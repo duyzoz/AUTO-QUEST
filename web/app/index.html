@@ -47,6 +47,11 @@
 			</button>
 			<span class="topbar-brand">ZoZ Community</span>
 			<span class="topbar-spacer" aria-hidden="true"></span>
+			<!-- Motion + sound (Phase 1): nút tắt/bật âm thanh, mặc định TẮT.
+			     Âm thanh chỉ tổng hợp bằng WebAudio, không dùng file nhạc của ai. -->
+			<button type="button" class="topbar-btn is-muted" id="btnSound" aria-label="Bật âm thanh" aria-pressed="false" title="Âm thanh: tắt">
+				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20" aria-hidden="true"><path d="M11 5 6 9H2v6h4l5 4V5z" fill="currentColor" stroke="none"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9.4 9.4 0 0 1 0 13"/><line class="sound-slash" x1="2" y1="2" x2="22" y2="22"/></svg>
+			</button>
 			<button type="button" class="topbar-btn topbar-account" id="btnTopbarAccount" aria-label="Tài khoản" aria-haspopup="dialog" aria-expanded="false">
 				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.5-6 8-6s8 2 8 6"/></svg>
 			</button>

@@ -6359,3 +6359,90 @@ body.lite .claim-pill-spin { animation-duration: 1.6s; }
 /* Waves#263: kicker #8ea1ff trên nền trắng light chỉ ~2.5:1 — light dùng
    token brand-bright (đã ~6.5:1 trên trắng), dark giữ nguyên. */
 [data-theme="light"] .qcard-kicker { color: var(--brand-bright); }
+
+/* ============================================================
+   MOTION + SOUND (Phase 1) — cải tổ UI/UX, chỉ đổi cách nhìn/cách kêu.
+   Luật áp dụng (SKILL-UI-UX): chỉ dùng token, không màu thô mới, không
+   spacing lẻ, không class chưa định nghĩa, tôn trọng prefers-reduced-motion
+   (hiệu ứng trang trí tắt, tín hiệu tiến trình giữ nguyên), nút >= 44px
+   không đổi, trạng thái phân biệt bằng text + icon + màu (tiếng chỉ phụ thêm).
+   Chỉ animate transform/opacity/box-shadow — không animate width/height/margin
+   để tránh giật layout, đặc biệt trên máy yếu.
+   ============================================================ */
+:root {
+	--motion-fast: 150ms;
+	--motion-base: 220ms;
+	--motion-slow: 340ms;
+}
+/* Nút: hover nhích lên 1px, bấm lún xuống + thu bóng — cảm giác "nhấn vật lý".
+   Quy tắc cũ .btn:active scale(0.98) được giữ ý, chỉ thêm translateY để rõ hơn. */
+.btn { transition: background var(--motion-fast) ease, transform var(--motion-fast) var(--ease-out-quint), box-shadow var(--motion-fast) ease; }
+.btn:hover:not(:disabled) { transform: translateY(-1px); }
+.btn:active:not(:disabled) { transform: translateY(1px) scale(0.98); box-shadow: none; }
+/* Nav + topbar: cùng cảm giác bấm, không đổi bố cục hay kích thước. */
+.nav-item:active, .topbar-btn:active { transform: scale(0.97); }
+/* Thẻ quest: hover nổi lên 2px + bóng token (không dùng màu thô mới). */
+.qcard { transition: border-color var(--motion-fast) ease, box-shadow var(--motion-base) ease, transform var(--motion-base) var(--ease-out-quint); }
+.qcard:hover { transform: translateY(-2px); box-shadow: 0 12px 24px -12px var(--orb-shadow); }
+.qdone { transition: border-color var(--motion-fast) ease, box-shadow var(--motion-base) ease, transform var(--motion-base) var(--ease-out-quint); }
+.qdone:hover { transform: translateY(-2px); }
+/* Chuyển trang/tab: fade + trượt nhẹ khi trang được kích hoạt. */
+@keyframes aqPageIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.page.active { animation: aqPageIn var(--motion-base) var(--ease-out-quint) both; }
+/* Modal + toast: nảy nhẹ khi xuất hiện, không đổi logic đóng/mở. */
+@keyframes aqPopIn { from { opacity: 0; transform: translateY(8px) scale(0.98); } to { opacity: 1; transform: none; } }
+.modal-card { animation: aqPopIn var(--motion-base) var(--ease-out-quint) both; }
+.toast.show { animation: aqPopIn var(--motion-fast) var(--ease-out-quint) both; }
+/* Nút loa: khi tắt tiếng thì hiện gạch chéo trên icon; khi bật thì ẩn gạch. */
+#btnSound:not(.is-muted) .sound-slash { display: none; }
+#btnSound.is-muted { opacity: 0.75; }
+/* Reduced motion: tắt hết hiệu ứng trang trí của đợt này, giữ tín hiệu tiến trình
+   (spinner/loader/sweep cũ không nằm trong danh sách này nên không bị ảnh hưởng). */
+@media (prefers-reduced-motion: reduce) {
+	.btn, .qcard, .qdone, .nav-item, .topbar-btn { transition: none; }
+	.btn:hover:not(:disabled), .qcard:hover, .qdone:hover { transform: none; }
+	.page.active, .modal-card, .toast.show { animation: none; }
+}
+
+/* ============================================================
+   OVERHAUL Phase 2-4 — CSS ONLY, logic giữ nguyên 100%.
+   Học từ landing/interior đã xem (nguyên tắc, không copy nội dung/
+   thương hiệu/file của họ): một hành động chính rõ ràng mỗi thẻ,
+   trạng thái trống thành câu trong khung, tiến trình dễ quét, khung
+   ảnh trên nền token trung tính, khung profile ngoài nổi rõ hơn.
+   CỐ TÌNH KHÔNG ĐỤNG: .up-row (Wave#87 đã lệnh bỏ viền), mọi phần
+   trong của .profile-hero (banner, avatar, decoration, nameplate,
+   clan — dữ liệu/hiệu ứng Discord thật), keyframes dns-* của Discord,
+   chuỗi fallback ảnh, và toàn bộ JS logic quét/cày/claim.
+   Chỉ animate transform/opacity/box-shadow; hover ảnh chỉ khi có chuột
+   thật (hover:hover) để không kẹt hover trên cảm ứng.
+   ============================================================ */
+/* Phase 2 — Shell/nav/pages: nav trượt nhẹ khi hover, thẻ thống kê nổi lên. */
+.nav-item { transition: background var(--motion-fast) ease, color var(--motion-fast) ease, transform var(--motion-fast) var(--ease-out-quint); }
+.nav-item:hover:not(.active) { transform: translateX(2px); }
+.topbar { border-bottom: 1px solid var(--line); }
+.stat-card { transition: border-color var(--motion-base) ease, background var(--motion-base) ease, transform var(--motion-base) var(--ease-out-quint), box-shadow var(--motion-base) ease; }
+.stat-card:hover { transform: translateY(-2px); box-shadow: 0 12px 24px -12px var(--orb-shadow); }
+#pageSettings .config-card:hover { border-color: var(--brown-line-strong); }
+/* Phase 3 — Quest: khung banner nền token (không còn mảng gradient tối khi
+   ảnh chưa về — luật §5), ảnh banner/logo zoom nhẹ khi hover, nút hành động
+   chính lún xuống khi bấm, trạng thái trống thành khung có câu chữ. */
+.qcard-banner { background: var(--well); }
+.qcard-banner img { transition: transform var(--motion-slow) var(--ease-out-quint); }
+.qcard-reward-art { box-shadow: 0 4px 12px -4px var(--orb-shadow); }
+.qcard-act:active { transform: translateY(1px); }
+.qdone .qmedia { transition: transform var(--motion-slow) var(--ease-out-quint); }
+.qstate.is-empty, .stats-empty { background: var(--well); border: 1px dashed var(--line-strong); border-radius: var(--radius-card); padding: 16px; color: var(--fg-muted); }
+@media (hover: hover) {
+	.qcard:hover .qcard-banner img { transform: scale(1.04); }
+	.qdone:hover .qmedia { transform: scale(1.04); }
+}
+/* Phase 4 — Khung profile hero CHÍNH GIỮA: chỉ đổi KHUNG NGOÀI (viền + bóng),
+   không đụng banner/avatar/decoration/nameplate/clan hay ::before của nó. */
+.profile-hero { border-color: var(--line-strong); box-shadow: 0 20px 40px -20px var(--orb-shadow); }
+/* Reduced motion cho đợt 2-4 (nối tiếp block Phase 1, không tắt tín hiệu tiến trình). */
+@media (prefers-reduced-motion: reduce) {
+	.nav-item, .stat-card, .qcard-banner img, .qdone .qmedia, .qcard-act { transition: none; }
+	.nav-item:hover:not(.active), .stat-card:hover { transform: none; }
+	.qcard:hover .qcard-banner img, .qdone:hover .qmedia { transform: none; }
+}
