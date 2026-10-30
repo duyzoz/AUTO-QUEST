@@ -40,12 +40,20 @@
 		try { return Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'; } catch (e) { return 'UTC'; }
 	})();
 
-	/* BUILD_NUMBER của Discord web tại thời điểm port (curl discord.com/app).
+	/* Waves#175 — SINGLE UPDATE POINT for the Discord web build number.
+	   BUILD_NUMBER của Discord web tại thời điểm port (curl discord.com/app).
 	   PLACEHOLDER — refresh this from a real Discord web client when
 	   updating identity; it is not guaranteed to be the current build.
-	   REST quest does not authenticate the build, it only needs to look
-	   like a real client, but a stale build is still a drift signal. */
+	   Do NOT invent a new number here: leave 653945 until a real client
+	   value is observed, and update ONLY this one constant (plus the
+	   date below) — every consumer reads it from AQIdentity.
+	   Staleness: if this build date is older than 180 days, the app
+	   diagnostics surface a warning (see buildNumberStale()). */
 	const WEB_BUILD_NUMBER = 653945;
+	const WEB_BUILD_DATE = '2026-10-29';
+	function buildNumberStale() {
+		try { return Date.now() - Date.parse(WEB_BUILD_DATE) > 180 * 86400000; } catch { return true; }
+	}
 
 	function sessionId() {
 		try { return crypto.randomUUID(); } catch (e) {
@@ -164,6 +172,8 @@
 		secChUa: secChUa,
 		chromeMajor: chromeMajor,
 		webBuildNumber: WEB_BUILD_NUMBER,
+		webBuildDate: WEB_BUILD_DATE,
+		buildNumberStale: buildNumberStale,
 		base64: b64Utf8,
 		installationId: installationId,
 		userAgent: ua,

@@ -44,8 +44,46 @@ self.addEventListener('install', (event) => {
 
 const ALLOWED_ORIGIN = self.location.origin;
 
+/* Waves#183: verify the waiting bundle against integrity.json before
+   activating. Returns SW_VERIFIED + skipWaiting only on a full match;
+   on any fetch/hash mismatch it reports SW_VERIFY_FAILED and does NOT
+   activate, so a corrupt bundle can never be forced in mid-run. */
+async function verifyAndActivate(event) {
+	try {
+		const integRes = await fetch(new URL('integrity.json', self.location.href), { cache: 'no-store' });
+		if (!integRes.ok) throw new Error('integrity fetch failed');
+		const manifest = await integRes.json();
+		const files = (manifest && manifest.files) || {};
+		const targets = ['renderer.js', 'web/engine-bundle.js'];
+		for (const name of targets) {
+			const expected = files[name];
+			if (!expected) continue;
+			const res = await fetch(new URL(name, self.location.href), { cache: 'no-store' });
+			if (!res.ok) throw new Error('bundle fetch failed: ' + name);
+			const buf = await res.arrayBuffer();
+			const digest = await crypto.subtle.digest('SHA-256', buf);
+			let bin = '';
+			const bytes = new Uint8Array(digest);
+			for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+			const actual = btoa(bin);
+			if (actual !== expected) throw new Error('hash mismatch: ' + name);
+		}
+		try { event.source.postMessage({ type: 'SW_VERIFIED' }); } catch {}
+		self.skipWaiting();
+	} catch (err) {
+		try { event.source.postMessage({ type: 'SW_VERIFY_FAILED', message: String((err && err.message) || err) }); } catch {}
+	}
+}
+
 self.addEventListener('message', (event) => {
-	const data = event.data || {};
+	/* Waves#184: accept only well-formed, same-origin messages. Anything
+	   else (wrong origin, no source, unknown type, non-object payload)
+	   is rejected silently — no state change, no activation. */
+	const data = event.data;
+	if (!data || typeof data !== 'object' || Array.isArray(data)) return;
+	if (typeof data.type !== 'string') return;
+	const ALLOWED_TYPES = ['SKIP_WAITING', 'GET_VERSION', 'CLEAR_CDN_CACHE', 'VERIFY_AND_ACTIVATE'];
+	if (!ALLOWED_TYPES.includes(data.type)) return;
 	/* Wave#134 (audit): trước đây LỆNH SKIP_WAITING chấp nhận từ mọi nguồn ⇒ bất kỳ
 	   script nào chạy trong trang (kể cả SDK bên thứ ba) đều ép kích hoạt bản SW đang
 	   chờ giữa lúc người dùng đang thao tác. Nay chỉ nhận message từ client thật, đúng
@@ -54,6 +92,14 @@ self.addEventListener('message', (event) => {
 	const src = event.source;
 	if (!src || typeof src.postMessage !== 'function') return;
 	if (!String(src.url || '').startsWith(ALLOWED_ORIGIN)) return;
+	if (data.type === 'CLEAR_CDN_CACHE') {
+		caches.delete(CDN_CACHE).then(() => { try { event.source.postMessage({ type: 'CDN_CACHE_CLEARED' }); } catch {} }).catch(() => {});
+		return;
+	}
+	if (data.type === 'VERIFY_AND_ACTIVATE') {
+		verifyAndActivate(event);
+		return;
+	}
 	if (data.type === 'SKIP_WAITING') {
 		self.skipWaiting();
 		return;
@@ -100,11 +146,20 @@ self.addEventListener('fetch', (event) => {
 				const hit = await cache.match(req);
 				const network = fetch(req)
 					.then(async (res) => {
+						/* Waves#179: validate before caching — only real images/
+						   videos, <= 20 MB, 2xx. Odd responses are returned
+						   to the page but NEVER cached permanently. */
 						if (res && res.ok) {
-							cache.put(req, res.clone()).catch(() => {});
-							const keys = await cache.keys().catch(() => []);
-							if (keys.length > CDN_MAX_ENTRIES) {
-								await Promise.all(keys.slice(0, keys.length - CDN_MAX_ENTRIES).map((k) => cache.delete(k))).catch(() => {});
+							const ct = (res.headers.get('content-type') || '').toLowerCase();
+							const len = Number(res.headers.get('content-length'));
+							const okType = ct.startsWith('image/') || ct.startsWith('video/');
+							const okSize = !Number.isFinite(len) || len <= 20 * 1024 * 1024;
+							if (okType && okSize) {
+								cache.put(req, res.clone()).catch(() => {});
+								const keys = await cache.keys().catch(() => []);
+								if (keys.length > CDN_MAX_ENTRIES) {
+									await Promise.all(keys.slice(0, keys.length - CDN_MAX_ENTRIES).map((k) => cache.delete(k))).catch(() => {});
+								}
 							}
 						}
 						return res;

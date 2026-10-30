@@ -874,6 +874,7 @@
 				}).then(async (r) => ({ res: r, data: await r.json().catch(() => null) })).catch(() => null),
 			]);
 
+			for (const pair of [['wallet', walletRes], ['claimed-list', claimedRes], ['quests', allRes]]) { if (pair[1] && pair[1].res && pair[1].res.status === 429) note429(pair[0], pair[1].data); }
 			let balance = null;
 			let source = 'wallet';
 			// Waves#145: track each source separately so the UI can say
@@ -1062,6 +1063,7 @@
 			const out = await task();
 			lastClaimAt = Date.now();
 			if (out && out.res && out.res.status === 429) {
+				note429('claim', out.data);
 				// Waves#142: respect the FULL retry_after, never cap it.
 				// If Discord did not give one, block for a safe 5s default
 				// instead of letting the next claim fire immediately.
@@ -1082,6 +1084,16 @@
 	   KHÔNG BAO GIỜ chứa token, captcha_key, captcha_rqdata, captcha_rqtoken
 	   hay session id đầy đủ — chỉ phần đầu đã che để đối chiếu. */
 	let lastClaimDiag = null;
+	/* Waves#181: chính sách 429 toàn cục — ghi lại lần 429 gần nhất
+	   (phạm vi + retry_after) để UI hiển thị thời gian chờ, không retry
+	   hung hăng. Scan/wallet/claimed-list/claim đều ghi vào đây. */
+	let last429Diag = null;
+	function note429(scope, data) {
+		const sec = Number(data && data.retry_after);
+		last429Diag = { scope: String(scope || ''), seconds: Number.isFinite(sec) && sec > 0 ? sec : 5, at: new Date().toISOString() };
+		return last429Diag;
+	}
+	function clearClaimDiagnostics() { lastClaimDiag = null; last429Diag = null; }
 	let captchaSessionAt = 0;
 	let captchaSessionMasked = '';
 	function maskDiagId(id) {
@@ -1116,6 +1128,7 @@
 			lastClaim: lastClaimDiag ? { ...lastClaimDiag, captchaSessionAgeSec: age } : null,
 			captchaSessionAgeSec: age,
 			captchaSession: captchaSessionMasked || null,
+			last429: last429Diag,
 		};
 	}
 
@@ -1768,6 +1781,12 @@
 	}
 
 	/* ── #109: sao lưu mã hoá — PBKDF2-SHA256 200k + AES-256-GCM ──
+	   Waves#177 audit: export uses 200,000 iterations, import cap 2 MB,
+	   v2 SHA-256 checksum, version check. Import keeps the 10,000 floor
+	   so OLD backups still open; a file below 200,000 iterations is
+	   flagged (preview.kdfIterations) instead of rejected, and the UI
+	   warns to re-export it. Wrong password / corrupt files fail with a
+	   clear message and never crash (all decrypt paths are try/caught).
 	   File sao lưu chứa token nhưng đã mã hoá; mật khẩu KHÔNG được lưu ở đâu cả.
 	   `pendingBackup` chỉ sống trong RAM của tab, xoá ngay sau khi áp dụng/huỷ. */
 	const BACKUP_FORMAT = 'autoquest-backup';
@@ -1999,6 +2018,7 @@
 					hasToken: !!token,
 					version,
 					checksumOk,
+					kdfIterations: iterations,
 					hasExtras: Object.keys(extras).length > 0,
 					names: accounts.slice(0, 5).map((a) => a.username || a.id || '—'),
 				},
@@ -2427,6 +2447,7 @@
 		fetchOrbs,
 		claimQuest,
 		claimDiagnostics,
+		clearClaimDiagnostics,
 
 		debugRawQuests: async () => ({ ok: false, message: 'Không hỗ trợ trên bản web.' }),
 		debugClaimOne: async () => ({ ok: false, message: 'Không hỗ trợ trên bản web.' }),

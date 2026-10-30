@@ -465,6 +465,61 @@ check('Waves#158: SW cache CDN có giới hạn, không cache API discord.com', 
 	return 'SW CDN cache có mặt';
 });
 
+/* Waves#171-#200 checks (static only, no network, no token). */
+check('Waves#185: mọi host fetch trong bridge/engine đều nằm trong CSP whitelist', () => {
+	const cspMeta = read(INDEX).match(/http-equiv="Content-Security-Policy"\s+content="([^"]+)"/);
+	assert(cspMeta, 'không tìm thấy CSP');
+	const csp = cspMeta[1];
+	const allowed = new Set();
+	for (const m of csp.matchAll(/https:\/\/\*?\.?([a-z0-9.-]+)/g)) allowed.add(m[1]);
+	allowed.add('discord.com');
+	const hosts = new Set();
+	for (const file of [path.join(WEB, 'bridge.js'), path.join(WEB, 'engine-bundle.js')]) {
+		const src = read(file);
+		for (const m of src.matchAll(/https:\/\/([a-z0-9.-]+)/g)) hosts.add(m[1]);
+	}
+	const bad = [...hosts].filter((h) => ![...allowed].some((a) => h === a || h.endsWith('.' + a) || a.endsWith(h)));
+	assert(bad.length === 0, 'host ngoài CSP whitelist: ' + bad.join(', '));
+	return 'hosts: ' + [...hosts].sort().join(', ');
+});
+check('Waves#179: SW cache CDN kiểm tra content-type + kích thước, có lệnh xóa cache', () => {
+	const sw = read(path.join(APP, 'sw.js'));
+	assert(/content-type/.test(sw) && /20 \* 1024 \* 1024/.test(sw), 'thiếu kiểm tra content-type/kích thước CDN');
+	assert(/CLEAR_CDN_CACHE/.test(sw), 'thiếu lệnh CLEAR_CDN_CACHE');
+	return 'CDN validation + clear control có mặt';
+});
+check('Waves#184: SW postMessage chỉ nhận type trong allowlist, từ chối message sai dạng', () => {
+	const sw = read(path.join(APP, 'sw.js'));
+	assert(/ALLOWED_TYPES/.test(sw) && /VERIFY_AND_ACTIVATE/.test(sw), 'thiếu allowlist message');
+	assert(/typeof data\.type !== 'string'/.test(sw), 'thiếu kiểm tra dạng message');
+	return 'SW message allowlist có mặt';
+});
+check('Waves#175: build number chỉ có một điểm cập nhật (identity.js) + cảnh báo hết hạn', () => {
+	const id = read(path.join(WEB, 'identity.js'));
+	assert(/WEB_BUILD_DATE/.test(id) && /buildNumberStale/.test(id), 'thiếu ngày build / cảnh báo hết hạn');
+	assert(!/653945/.test(read(path.join(APP, 'renderer.js'))), 'renderer không được hardcode build number riêng');
+	return 'single update point: web/identity.js';
+});
+check('Waves#171-#173/#189-#197: UI mới có id trong HTML + hàm renderer tương ứng', () => {
+	const html = read(INDEX);
+	for (const id of ['doneDateFrom', 'doneDateTo', 'questPlatformFilter', 'questTaskFilter', 'chkExpiringSoon', 'chkFavOnly', 'chkMockMode', 'chkGroupGames', 'statsDateFrom', 'statsDateTo', 'btnExportConfigFile', 'btnImportConfigFile', 'btnClearCdnCache']) assert(html.includes(`id="${id}"`), 'thiếu id HTML: ' + id);
+	const r = read(path.join(APP, 'renderer.js'));
+	for (const fn of ['doneWindowEnd', 'loadMockQuests', 'exportConfigFile', 'importConfigFile', 'forecastOrbs', 'isExpiringSoon', 'groupGameKey', 'copySecretWithTimeout', 'setGlobal429']) assert(r.includes(fn), 'thiếu hàm renderer: ' + fn);
+	return 'ids + hàm waves 171-200 có mặt';
+});
+check('Waves#177: backup — export 200k vòng, import giữ sàn cũ, mật khẩu mới tối thiểu 12', () => {
+	const b = read(path.join(WEB, 'bridge.js'));
+	assert(/BACKUP_ITERATIONS = 200000/.test(b), 'export không còn 200k vòng');
+	assert(/iterations >= 10000/.test(b), 'import phải giữ sàn cũ để bản sao lưu cũ vẫn mở');
+	const r = read(path.join(APP, 'renderer.js'));
+	assert(/pass\.length < 12/.test(r), 'mật khẩu xuất mới chưa nâng lên 12');
+	return 'backup audit: 200k export · 2MB cap · sàn import cũ giữ nguyên';
+});
+check('Waves#198: kích thước bundle báo cáo được (renderer/styles/engine-bundle tồn tại)', () => {
+	const sizes = [['renderer.js', path.join(APP, 'renderer.js')], ['styles.css', path.join(APP, 'styles.css')], ['engine-bundle.js', path.join(WEB, 'engine-bundle.js')]].map(([n, f]) => `${n}=${(fs.statSync(f).size / 1024).toFixed(0)}KB`).join(' ');
+	return sizes + ' (không tách code: PWA offline vẫn cần shell nguyên khối)';
+});
+
 /* ── In kết quả ────────────────────────────────────────────────────────── */
 for (const r of results) {
 	const tag = r.ok ? 'PASS' : 'FAIL';

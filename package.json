@@ -16,6 +16,8 @@
 		"test": "node web/test/self-test.js && node web/test/mock-claim.test.js && node web/test/mock-reward.test.js",
 		"verify": "node web/test/self-test.js && node web/make-integrity.js --dev",
 		"check:bundle": "node web/test/check-bundle.js",
+		"check:integrity": "node web/test/check-integrity.js",
+		"sizes": "node web/test/bundle-sizes.js",
 		"build:all": "node web/build-engine.js && node web/build-static.js"
 	}
 }

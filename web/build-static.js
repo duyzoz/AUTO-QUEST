@@ -51,9 +51,12 @@ for (const f of [
 }
 copyDir(path.join(WEB, 'fonts'), path.join(OUT, 'web', 'fonts'));
 
+/* Waves#182: build cũng làm mới integrity dev (không chỉ dev-only) —
+   nếu build-static chạy mà integrity dev cũ, CI check:integrity sẽ bắt. */
 /* Wave#127: manifest băm SHA-256 cho bản đóng gói (ghi đè bản dev nếu có). */
 const integrity = require('./make-integrity');
 const manifest = integrity.distManifest();
+try { integrity.devManifest(); } catch { /* dev integrity best-effort trong build tĩnh */ }
 
 /* Wave#134 (audit): web-dist/_headers — Cloudflare Pages / Direct Upload đọc file
    này và gắn security headers cho MỌI response. Lý do tồn tại: server.js chỉ là

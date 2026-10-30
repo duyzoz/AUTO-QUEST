@@ -1392,6 +1392,7 @@ class QuestManager {
         console.log(`Đang giả lập xem video nhiệm vụ: "${questName}" (${secondsNeeded} giây)...`);
         let videoIterations = 0;
         const maxVideoIterations = Math.ceil(Math.max(secondsNeeded, 0) / speed) + 600;
+        let lastMilestone = -1; // Waves#187: milestone logging only, no per-tick spam.
         let stallIterations = 0;
         const maxStallIterations = 60;
         while (true) {
@@ -1421,6 +1422,12 @@ class QuestManager {
                 completed = res.completed_at != null;
                 quest.updateUserStatus(res);
                 secondsDone = Math.min(secondsNeeded, timestamp);
+                /* Waves#187: log milestones 25/50/75/100% only. Stop during
+                   a video quest already terminates the worker cleanly
+                   (bridge stopEngine); no in-loop flag is needed here. */
+                const pct = secondsNeeded > 0 ? Math.floor((secondsDone / secondsNeeded) * 100) : 0;
+                const mile = pct >= 100 ? 100 : pct >= 75 ? 75 : pct >= 50 ? 50 : pct >= 25 ? 25 : -1;
+                if (mile !== lastMilestone && mile >= 0) { lastMilestone = mile; console.log(`Video "${questName}": ${mile}% (${secondsDone}/${secondsNeeded}s)`); }
                 (0, events_1.report)('quest:progress', {
                     id: QuestManager.getQuestId(quest),
                     name: questName,

@@ -1001,6 +1001,7 @@ export class QuestManager implements Iterable<Quest> {
 		// that made no progress because Discord's time cap had not caught up.
 		let videoIterations = 0;
 		const maxVideoIterations = Math.ceil(Math.max(secondsNeeded, 0) / speed) + 600;
+		let lastMilestone = -1; // Waves#187
 		let stallIterations = 0;
 		const maxStallIterations = 60; // 60 x 7s = 420s without any progress
 		while (true) {
@@ -1037,6 +1038,11 @@ export class QuestManager implements Iterable<Quest> {
 				completed = res.completed_at != null;
 				quest.updateUserStatus(res);
 				secondsDone = Math.min(secondsNeeded, timestamp);
+				/* Waves#187 (TS reference mirror): milestone logging only.
+				   Stop terminates the worker cleanly in the web runtime. */
+				const pct = secondsNeeded > 0 ? Math.floor((secondsDone / secondsNeeded) * 100) : 0;
+				const mile = pct >= 100 ? 100 : pct >= 75 ? 75 : pct >= 50 ? 50 : pct >= 25 ? 25 : -1;
+				if (mile !== lastMilestone && mile >= 0) { lastMilestone = mile; console.log(`Video "${questName}": ${mile}% (${secondsDone}/${secondsNeeded}s)`); }
 				report('quest:progress', {
 					id: QuestManager.getQuestId(quest),
 					name: questName,

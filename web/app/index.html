@@ -4,6 +4,12 @@
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 		<meta name="theme-color" content="#0b0e18" />
+		<!-- Waves#176 CSP audit: style-src keeps 'unsafe-inline' ONLY because
+		     (1) hCaptcha injects its own inline styles and breaks without it,
+		     (2) renderer sets dynamic runtime styles (Discord banner/avatar
+		     URLs, theme CSS variables, ring offsets) that cannot live in a
+		     static CSS file. No style="..." attributes exist in this HTML.
+		     script-src stays strict (no unsafe-inline/unsafe-eval). -->
 		<meta
 			http-equiv="Content-Security-Policy"
 			content="default-src 'none'; script-src 'self' https://js.hcaptcha.com https://newassets.hcaptcha.com https://hcaptcha.com; worker-src 'self' blob: https://js.hcaptcha.com https://newassets.hcaptcha.com https://hcaptcha.com; style-src 'self' 'unsafe-inline' https://*.hcaptcha.com; frame-src https://*.hcaptcha.com https://newassets.hcaptcha.com; child-src blob: https://*.hcaptcha.com https://newassets.hcaptcha.com; connect-src 'self' https://discord.com https://*.discord.com https://cdn.discordapp.com https://*.discordsays.com https://*.hcaptcha.com https://hcaptcha.com https://newassets.hcaptcha.com; img-src 'self' https://cdn.discordapp.com https://discord.com https://*.discord.com https://*.hcaptcha.com data: blob:; media-src https://cdn.discordapp.com https://discord.com https://*.discord.com; font-src 'self' data: https://*.hcaptcha.com; manifest-src 'self'; base-uri 'self'; object-src 'none'; form-action 'none'; upgrade-insecure-requests;"
@@ -361,7 +367,28 @@
 									<button class="ghost-btn" id="btnExportDoneJson" type="button">Xuất JSON</button>
 									<label class="check small"><input type="checkbox" id="chkExportCodes" /> Kèm code (chỉ phiên này)</label>
 									<button class="ghost-btn" id="btnClearDoneCache" type="button">Xóa cache Đã làm</button>
+									<label class="check small">Từ <input type="date" id="doneDateFrom" class="custom-select" /></label>
+									<label class="check small">Đến <input type="date" id="doneDateTo" class="custom-select" /></label>
+									<label class="check small"><input type="checkbox" id="chkDoneUndated" checked /> Kèm chưa rõ ngày nhận</label>
+									<label class="check small"><input type="checkbox" id="chkGroupGames" /> Nhóm theo game</label>
 								</span>
+								<select id="questPlatformFilter" class="custom-select quest-filter" aria-label="Lọc theo nền tảng">
+									<option value="all">Mọi nền tảng</option>
+									<option value="0">Desktop</option>
+									<option value="1">Console</option>
+									<option value="2">Mobile</option>
+								</select>
+								<select id="questTaskFilter" class="custom-select quest-filter" aria-label="Lọc theo loại nhiệm vụ">
+									<option value="all">Mọi loại nhiệm vụ</option>
+									<option value="WATCH_VIDEO">Video</option>
+									<option value="WATCH_STREAM">Stream</option>
+									<option value="PLAY_ON_DESKTOP">Desktop</option>
+									<option value="PLAY_ON_CONSOLE">Console</option>
+									<option value="PLAY_ON_MOBILE">Mobile</option>
+								</select>
+								<label class="check small"><input type="checkbox" id="chkExpiringSoon" /> Sắp hết hạn (3 ngày)</label>
+								<label class="check small"><input type="checkbox" id="chkFavOnly" /> Chỉ yêu thích</label>
+								<label class="check small"><input type="checkbox" id="chkMockMode" /> Chế độ thử (mock)</label>
 								<button class="btn btn-primary quest-claim-all" id="btnClaimAll" type="button" hidden>Nhận tất cả</button>
 								<button class="chip chip-ghost claim-queue-chip" id="claimQueueChip" type="button" hidden
 									title="Tiếp tục nhận các nhiệm vụ đang chờ xác minh">Chờ xác minh: 0</button>
@@ -432,6 +459,14 @@
 
 							<h3 class="stats-subtitle">7 ngày gần nhất</h3>
 							<div class="stats-bars" id="statsBars" role="img" aria-label="Biểu đồ Orb theo ngày"></div>
+							<h3 class="stats-subtitle">Lịch sử Orb theo ngày (ước tính từ lịch sử nhận thưởng cục bộ)</h3>
+							<div class="stats-actions">
+								<label class="check small">Từ <input type="date" id="statsDateFrom" class="custom-select" /></label>
+								<label class="check small">Đến <input type="date" id="statsDateTo" class="custom-select" /></label>
+								<button class="ghost-btn" id="btnStatsHistoryCsv" type="button">Xuất CSV theo ngày</button>
+							</div>
+							<div id="statsHistoryTable" class="stats-history"></div>
+							<p class="qstate-text" id="statsForecast"></p>
 
 							<div class="stats-recent-head">
 								<h3 class="stats-subtitle">Nhận thưởng gần đây</h3>
@@ -739,6 +774,10 @@
 					<div class="aq-data-actions">
 						<button class="btn btn-ghost" id="btnRunDiagnostics" type="button">Chạy chẩn đoán</button>
 						<button class="btn btn-ghost" id="btnExportCfg" type="button">Xuất cấu hình (không token)</button>
+						<button class="btn btn-ghost" id="btnExportConfigFile" type="button">Xuất file cấu hình (không token/code)</button>
+						<button class="btn btn-ghost" id="btnImportConfigFile" type="button">Nhập file cấu hình</button>
+						<input type="file" id="fileImportConfig" accept="application/json,.json" hidden />
+						<button class="btn btn-ghost" id="btnClearCdnCache" type="button">Xóa cache ảnh CDN</button>
 					</div>
 					<pre class="aq-data-pre mono" id="dataDiagOut" hidden></pre>
 				</section>

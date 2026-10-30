@@ -1,3 +1,5 @@
+> **Waves#200 — kiến trúc hiện tại (Web PWA v2.0.0):** UI `web/app/` (`index.html`, `renderer.js`, `styles.css`, `sw.js`), adapter `web/bridge.js` (token IndexedDB AES-GCM), danh tính duy nhất `web/identity.js` (build number là placeholder, một điểm cập nhật), engine web `web/engine/` + `web/engine-bundle.js` (sinh bởi `npm run build:engine`, không sửa tay), `engine-src/` TypeScript chỉ là tham khảo. Tài liệu lịch sử thời Electron đã được đánh dấu ARCHIVED, không xóa.
+
 # 🚀 Triển khai AUTO-QUEST (bản thuần Web)
 
 App là **trang tĩnh thuần HTML/CSS/JS** — không backend, không Electron, không proxy.

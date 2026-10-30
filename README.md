@@ -6,7 +6,7 @@
 
 ![Theme](https://img.shields.io/badge/Theme-Dark%20Strong%20Vesper-e0af68)
 
-![Waves](https://img.shields.io/badge/Waves%23-170%20%C2%B7%20Active-e0af68)
+![Waves](https://img.shields.io/badge/Waves%23-200%20%C2%B7%20Active-e0af68)
 
 ![License](https://img.shields.io/badge/License-MIT-3b82f6)
 
@@ -48,6 +48,17 @@
 > - **Ảnh theo theme:** chế độ Sáng ưu tiên asset `*_light`, chế độ Tối
 >   ưu tiên `*_dark`, có fallback chéo; đổi theme vẽ lại tile mà không
 >   cần quét lại. Favicon và icon PWA dùng logo ZoZ (`assets/zoZ-logo-ico.png`).
+
+> ## Waves #171–#200 — bảo mật, độ tin cậy, tính năng
+>
+> - Hủy quét cũ khi quét lại / bấm Dừng (AbortController ý tưởng: generation guard + dừng worker, kết quả quét cũ không ghi đè kết quả mới); lọc Đã làm theo ngày nhận (kèm tùy chọn giữ quest chưa rõ ngày); windowing thật cho lưới Đã làm >55 ô (chỉ gắn DOM trong cửa sổ + đệm, cuộn để mở rộng).
+> - CI chạy `npm test`, `check:bundle`, `check:integrity`, báo kích thước bundle; build làm mới `integrity.json`; Service Worker xác minh bundle với `integrity.json` trước khi kích hoạt và chỉ khi app rảnh; message SW chỉ nhận type trong allowlist; cache CDN kiểm tra content-type/kích thước và có nút xóa.
+> - Chính sách 429 thống nhất (ghi lại phạm vi + `retry_after`, không retry hung hăng); quét thiếu báo rõ phần chưa quét; video chỉ log mốc 25/50/75/100%; captcha hết hạn giữa đợt nhận chỉ dừng quest đó, giữ vị trí hàng đợi.
+> - Cảnh báo hết hạn 1/3 ngày (không tự chạy quest chưa chọn); dự báo Orb (ước tính, ghi rõ); ghi chú + yêu thích lưu cục bộ; lọc nền tảng/loại nhiệm vụ; lịch sử Orb theo ngày + CSV; thông báo khi có quest chờ nhận (không tự nhận); chế độ thử mock (dữ liệu giả, không gửi lên Discord); nhóm theo game; export/import cấu hình không token/code.
+> - CSP: `style-src 'unsafe-inline'` được giữ có lý do (hCaptcha + style động theo dữ liệu Discord) — xem chú thích ở CSP trong `web/app/index.html`; script-src vẫn đóng unsafe-inline/unsafe-eval.
+> - Backup: xuất mới cần mật khẩu ≥12 ký tự, PBKDF2 200.000 vòng, cap 2 MB; bản sao lưu cũ vẫn mở (sàn import 10.000 vòng giữ nguyên), file KDF yếu được cảnh báo để xuất lại.
+> - Số đo bundle hiện tại: renderer ~410 KB, styles ~215 KB, engine bundle ~114 KB — không tách code khỏi trang chính vì PWA offline cần shell nguyên khối.
+
 
 > ## 🤖 LƯU Ý CHO AI AGENT (BẮT BUỘC ĐỌC TRƯỚC KHI VIẾT/SỬA CODE)
 >
@@ -283,7 +294,9 @@ flowchart LR
 > 🎁 Bản phát hành chỉ có **2 loại file cho Windows**: `.setup.exe` (bộ cài) và `.portable.exe` (bản chạy trực tiếp).
 > Ngoài ra có thêm bản **Linux** (`.AppImage` / `.deb`) và **macOS** (`.dmg` / `.zip`).
 
-### 🖥️ Windows Desktop
+> **ARCHIVED — Waves#200:** các mục tải desktop 1.0.0 dưới đây (Windows/Linux/macOS) chỉ còn giá trị lịch sử. Hướng duy nhất hiện tại là Web PWA v2.0.0 (mục 🌐 Web bên dưới). Nội dung gốc được giữ nguyên, không xóa lịch sử.
+
+### 🖥️ Windows Desktop (đã lưu trữ — bản 1.0.0)
 
 Vào **[Releases](https://github.com/duyzoz/AUTO-QUEST/releases)** → chọn **1 trong 2**:
 

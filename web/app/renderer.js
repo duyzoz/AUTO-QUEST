@@ -250,6 +250,24 @@ const ui = {
 	doneTools: el('doneTools'),
 	questDoneRewardFilter: el('questDoneRewardFilter'),
 	questDoneSort: el('questDoneSort'),
+	questPlatformFilter: el('questPlatformFilter'),
+	questTaskFilter: el('questTaskFilter'),
+	chkExpiringSoon: el('chkExpiringSoon'),
+	chkFavOnly: el('chkFavOnly'),
+	chkMockMode: el('chkMockMode'),
+	doneDateFrom: el('doneDateFrom'),
+	doneDateTo: el('doneDateTo'),
+	chkDoneUndated: el('chkDoneUndated'),
+	chkGroupGames: el('chkGroupGames'),
+	statsDateFrom: el('statsDateFrom'),
+	statsDateTo: el('statsDateTo'),
+	btnStatsHistoryCsv: el('btnStatsHistoryCsv'),
+	btnExportConfigFile: el('btnExportConfigFile'),
+	btnImportConfigFile: el('btnImportConfigFile'),
+	fileImportConfig: el('fileImportConfig'),
+	btnClearCdnCache: el('btnClearCdnCache'),
+	statsHistoryTable: el('statsHistoryTable'),
+	statsForecast: el('statsForecast'),
 	btnExportDoneCsv: el('btnExportDoneCsv'),
 	btnExportDoneJson: el('btnExportDoneJson'),
 	chkExportCodes: el('chkExportCodes'),
@@ -1195,6 +1213,14 @@ function isQuestFiltering() {
 function questMatchesFilter(q) {
 	if (!q || q.flag === 'gone') return false;
 	if (currentTab === 'done' && doneRewardFilter !== 'all' && rewardTypeOf(q) !== doneRewardFilter) return false;
+	if (currentTab === 'done' && (doneDateFrom || doneDateTo)) {
+		if (!q.claimedAt) { if (!doneIncludeUndated) return false; }
+		else { const d = String(q.claimedAt).slice(0, 10); if (doneDateFrom && d < doneDateFrom) return false; if (doneDateTo && d > doneDateTo) return false; }
+	}
+	if (platformFilter !== 'all' && String(q.platform ?? '') !== String(platformFilter)) return false;
+	if (taskFilter !== 'all' && String(q.task || '') !== String(taskFilter) && !String(taskLabel(q.task) || '').toLowerCase().includes(String(taskFilter).toLowerCase())) return false;
+	if (expiringOnly && !isExpiringSoon(q, 3)) return false;
+	if (favOnly && !questFavFor(q.id)) return false;
 	if (questFilter === 'orbs' && !(Number(q.orbs) > 0)) return false;
 	if (questFilter === 'manual' && q.automatable !== false) return false;
 	if (questFilter === 'urgent') {
@@ -1360,6 +1386,36 @@ let lastQuestRenderMs = 0;
 /* Waves#161: bộ lọc + sắp xếp riêng cho tab Đã làm. */
 let doneRewardFilter = 'all';
 let doneSort = 'claimed';
+/* Waves#171-#200: trạng thái bổ sung, không chứa token/code. */
+let scanGeneration = 0;
+let scanStartGen = 0;
+let doneDateFrom = '';
+let doneDateTo = '';
+let doneIncludeUndated = true;
+let doneWindowEnd = 80;
+let lastDoneVisibleCount = 0;
+let platformFilter = 'all';
+let taskFilter = 'all';
+let expiringOnly = false;
+let favOnly = false;
+let groupGames = false;
+let expandedGroups = new Set();
+let mockMode = false;
+let scanPartialErrors = [];
+let last429 = null;
+const NOTES_KEY = 'autoquest.notes.v1';
+let questNotesStore = loadJsonLocal(NOTES_KEY, {});
+function notesScope() { try { return accountScope(); } catch { return 'default'; } }
+function questNoteFor(id) { const s = questNotesStore[notesScope()] || {}; return s[id] || ''; }
+function questFavFor(id) { const s = questNotesStore[notesScope()] || {}; return Array.isArray(s.__fav) && s.__fav.includes(String(id)); }
+function setQuestNote(id, text) { const sc = notesScope(); if (!questNotesStore[sc]) questNotesStore[sc] = {}; questNotesStore[sc][String(id)] = String(text || '').slice(0, 500); saveJsonLocal(NOTES_KEY, questNotesStore); }
+function toggleQuestFav(id) { const sc = notesScope(); if (!questNotesStore[sc]) questNotesStore[sc] = {}; const f = Array.isArray(questNotesStore[sc].__fav) ? questNotesStore[sc].__fav : []; const k = String(id); const i = f.indexOf(k); if (i >= 0) f.splice(i, 1); else f.push(k); questNotesStore[sc].__fav = f; saveJsonLocal(NOTES_KEY, questNotesStore); return i < 0; }
+function setGlobal429(scope, seconds) { last429 = { scope: String(scope || ''), seconds: Number(seconds) || 0, until: Date.now() + (Number(seconds) || 0) * 1000 }; }
+function forecastOrbs() { let orbs = 0; let secs = 0; for (const q of quests.values()) { if (q.status !== 'todo' || q.flag === 'gone') continue; const need = Number(q.secondsNeeded) || 0; const done = Number(q.secondsDone) || 0; if (need > 0) { orbs += Number(q.orbs) || 0; secs += Math.max(0, need - done); } } return { orbs, minutes: Math.round(secs / 60) }; }
+function isExpiringSoon(q, days) { const t = q.expiresAt ? Date.parse(q.expiresAt) : NaN; if (!Number.isFinite(t)) return false; const d = t - Date.now(); return d >= 0 && d <= days * 86400000; }
+function groupGameKey(q) { return String(q.gameTitle || q.application || q.name || 'Khác'); }
+function clearClipboardAfter(ms) { try { if (navigator.clipboard && navigator.clipboard.writeText) setTimeout(() => { try { navigator.clipboard.writeText(''); } catch {} }, ms); } catch {} }
+function copySecretWithTimeout(text, ms) { return (async () => { try { await navigator.clipboard.writeText(String(text || '')); } catch { return false; } clearClipboardAfter(ms || 30000); return true; })(); }
 const questRenderSig = new Map();
 
 /** Gán ảnh/video quest từ đường dẫn tương đối của API. Trả false nếu không có asset. */
@@ -1568,6 +1624,7 @@ function buildQuestCard(q) {
 		<!-- Waves 31: hàng nút trạng thái — Chưa làm (khoá) / Nhận (bấm được) / Đã nhận -->
 		<div class="qcard-foot">
 			<button type="button" class="qcard-act" data-act="todo" disabled></button>
+		<button type="button" class="qcard-fav" data-act="fav" aria-label="Yêu thích">☆</button>
 		</div>
 	`;
 
@@ -2073,6 +2130,22 @@ function openDoneDetail(q, tileNode) {
 	addRow(en ? 'Type' : 'Loại', rewardTypeLabel(q));
 	if (Number(q.orbs) > 0) addRow('Orbs', String(q.orbs));
 	addRow(en ? 'Claimed at' : 'Nhận lúc', fmtClaimTime(q.claimedAt) || '');
+	// Waves#191: ghi chú + yêu thích, lưu cục bộ theo tài khoản, không gửi đi đâu.
+	try {
+		const favBtn = document.createElement('button');
+		favBtn.type = 'button'; favBtn.className = 'ghost-btn';
+		favBtn.textContent = questFavFor(q.id) ? '★ Bỏ yêu thích' : '☆ Yêu thích';
+		favBtn.addEventListener('click', () => { const on = toggleQuestFav(q.id); favBtn.textContent = on ? '★ Bỏ yêu thích' : '☆ Yêu thích'; });
+		dialog.appendChild(favBtn);
+		const noteLabel = document.createElement('label');
+		noteLabel.className = 'qdone-modal-note';
+		noteLabel.textContent = en ? 'Note (local only, never sent anywhere):' : 'Ghi chú (chỉ lưu cục bộ, không gửi đi đâu):';
+		const noteInput = document.createElement('input');
+		noteInput.type = 'text'; noteInput.className = 'qdone-modal-input'; noteInput.maxLength = 500;
+		noteInput.value = questNoteFor(q.id);
+		noteInput.addEventListener('change', () => setQuestNote(q.id, noteInput.value));
+		dialog.append(noteLabel, noteInput);
+	} catch {}
 	// Code section: session memory only.
 	const codeWrap = document.createElement('div');
 	codeWrap.className = 'qdone-modal-code';
@@ -2101,7 +2174,8 @@ function openDoneDetail(q, tileNode) {
 		copyBtn.textContent = en ? 'Copy code' : 'Sao chép code';
 		copyBtn.addEventListener('click', async () => {
 			try {
-				await navigator.clipboard.writeText(q.rewardCode);
+				const ok = await copySecretWithTimeout(q.rewardCode, 30000);
+				if (!ok) throw new Error('clipboard');
 				toast(en ? 'Code copied.' : 'Đã sao chép code.');
 			} catch {
 				masked.textContent = q.rewardCode;
@@ -2351,6 +2425,11 @@ function renderQuests() {
 		}
 	}
 
+	// Waves#173: windowing thật cho tab Đã làm — chỉ gắn DOM trong cửa sổ.
+	const doneVisibleOrder = questOrder.filter((id) => { const qq = quests.get(id); return qq && qq.status === 'claimed' && qq.flag !== 'gone' && questMatchesFilter(qq); });
+	lastDoneVisibleCount = doneVisibleOrder.length;
+	const doneWindowing = currentTab === 'done' && doneVisibleOrder.length > 55;
+	let doneWindowIdx = 0;
 	// Đảm bảo mọi quest có node, gắn vào đúng tab
 	let visActive = 0;
 	let visNew = 0;
@@ -2405,6 +2484,12 @@ function renderQuests() {
 		// Wave#111: ẩn/hiện theo tìm kiếm + bộ lọc. Badge tab vẫn là TỔNG,
 		// còn đếm riêng số thẻ đang hiện để xử lý trạng thái rỗng đúng.
 		const matches = questMatchesFilter(q);
+		if (kind === 'done' && matches) doneWindowIdx += 1;
+		if (kind === 'done' && currentTab === 'done' && doneWindowing && doneWindowIdx > doneWindowEnd) {
+			if (node.parentElement) node.remove();
+			if (matches) { visTotal += 1; visDone += 1; }
+			continue;
+		}
 		if (node.hidden === matches) node.hidden = !matches;
 		if (matches) {
 			visTotal++;
@@ -2451,6 +2536,24 @@ function renderQuests() {
 			for (const n of doneNodes) ui.questListDone.appendChild(n);
 		}
 	}
+	// Waves#196: nhóm theo game ở tab Chưa làm — header nhóm + thu gọn.
+	try {
+		for (const h of Array.from(document.querySelectorAll('.qgroup-head'))) h.remove();
+		if (groupGames && currentTab === 'active' && ui.questListActive) {
+			const groups = new Map();
+			for (const id of questOrder) { const qq = quests.get(id); if (!qq || qq.flag === 'gone' || qq.status === 'claimed' || qq.status === 'claimable') continue; if (!questMatchesFilter(qq)) continue; const k = groupGameKey(qq); if (!groups.has(k)) groups.set(k, []); groups.get(k).push(id); }
+			for (const [k, ids] of groups) {
+				if (ids.length < 2) continue;
+				const first = questNodes.get(ids[0]); if (!first || !first.node.parentElement) continue;
+				const head = document.createElement('div');
+				head.className = 'qgroup-head';
+				head.dataset.group = k;
+				head.textContent = `${k} · ${ids.length} nhiệm vụ · ${expandedGroups.has(k) ? 'Thu gọn' : 'Mở rộng'}`;
+				first.node.parentElement.insertBefore(head, first.node);
+				if (!expandedGroups.has(k)) { for (let i = 1; i < ids.length; i++) { const n = questNodes.get(ids[i]); if (n) n.node.hidden = true; } }
+			}
+		}
+	} catch {}
 	if (scrollEl && scrollTop) scrollEl.scrollTop = scrollTop;
 	lastQuestRenderMs = renderT0 ? Math.round(performance.now() - renderT0) : 0;
 	ui.countActive.textContent = countActive;
@@ -2701,6 +2804,25 @@ if (ui.questDoneRewardFilter) ui.questDoneRewardFilter.addEventListener('change'
 if (ui.questDoneSort) ui.questDoneSort.addEventListener('change', () => {
 	doneSort = ui.questDoneSort.value || 'claimed';
 	renderQuests();
+});
+if (ui.questPlatformFilter) ui.questPlatformFilter.addEventListener('change', () => { platformFilter = ui.questPlatformFilter.value || 'all'; renderQuests(); });
+if (ui.questTaskFilter) ui.questTaskFilter.addEventListener('change', () => { taskFilter = ui.questTaskFilter.value || 'all'; renderQuests(); });
+if (ui.chkExpiringSoon) ui.chkExpiringSoon.addEventListener('change', () => { expiringOnly = ui.chkExpiringSoon.checked; renderQuests(); });
+if (ui.chkFavOnly) ui.chkFavOnly.addEventListener('change', () => { favOnly = ui.chkFavOnly.checked; renderQuests(); });
+if (ui.chkGroupGames) ui.chkGroupGames.addEventListener('change', () => { groupGames = ui.chkGroupGames.checked; renderQuests(); });
+if (ui.doneDateFrom) ui.doneDateFrom.addEventListener('change', () => { doneDateFrom = ui.doneDateFrom.value || ''; doneWindowEnd = 80; renderQuests(); });
+if (ui.doneDateTo) ui.doneDateTo.addEventListener('change', () => { doneDateTo = ui.doneDateTo.value || ''; doneWindowEnd = 80; renderQuests(); });
+if (ui.chkDoneUndated) ui.chkDoneUndated.addEventListener('change', () => { doneIncludeUndated = ui.chkDoneUndated.checked; renderQuests(); });
+if (ui.chkMockMode) ui.chkMockMode.addEventListener('change', () => { mockMode = ui.chkMockMode.checked; if (mockMode) { loadMockQuests(); } toast(mockMode ? 'Chế độ thử (mock) đang bật — dữ liệu giả, không gửi gì lên Discord.' : 'Đã tắt chế độ thử (mock).', !mockMode); renderQuests(); });
+if (ui.statsDateFrom) ui.statsDateFrom.addEventListener('change', () => renderStats());
+if (ui.statsDateTo) ui.statsDateTo.addEventListener('change', () => renderStats());
+if (ui.btnStatsHistoryCsv) ui.btnStatsHistoryCsv.addEventListener('click', () => exportStatsHistoryCsv());
+if (ui.btnExportConfigFile) ui.btnExportConfigFile.addEventListener('click', () => exportConfigFile());
+if (ui.btnImportConfigFile) ui.btnImportConfigFile.addEventListener('click', () => { if (ui.fileImportConfig) ui.fileImportConfig.click(); });
+if (ui.fileImportConfig) ui.fileImportConfig.addEventListener('change', async () => { const f = ui.fileImportConfig.files && ui.fileImportConfig.files[0]; if (!f) return; try { importConfigFile(await f.text()); } catch { toast('Không đọc được file cấu hình.', true); } ui.fileImportConfig.value = ''; });
+if (ui.btnClearCdnCache) ui.btnClearCdnCache.addEventListener('click', async () => {
+	try { if (navigator.serviceWorker && navigator.serviceWorker.controller) navigator.serviceWorker.controller.postMessage({ type: 'CLEAR_CDN_CACHE' }); toast('Đã gửi lệnh xóa cache ảnh CDN cho Service Worker.'); }
+	catch { toast('Không gửi được lệnh xóa cache CDN.', true); }
 });
 if (ui.btnExportDoneCsv) ui.btnExportDoneCsv.addEventListener('click', () => exportDone(!!(ui.chkExportCodes && ui.chkExportCodes.checked), false));
 if (ui.btnExportDoneJson) ui.btnExportDoneJson.addEventListener('click', () => exportDone(!!(ui.chkExportCodes && ui.chkExportCodes.checked), true));
@@ -3454,6 +3576,7 @@ async function runClaim(quest, captchaMeta) {
 		// thử lại sớm với chờ bị chặn tối đa; claimSequence sẽ tự tiếp tục
 		// hàng đợi sau khi hết retry_after (xem stopReason 'rate').
 		if (res && res.rateLimited) {
+			setGlobal429('claim', res.retryAfter);
 			if (Number.isFinite(Number(res.retryAfter)) && Number(res.retryAfter) > 0) lastClaimRateLimitSec = Number(res.retryAfter);
 			const wait = res.retryAfter ? `${Math.ceil(res.retryAfter)}s` : 'vài giây';
 			const msg = res.message || `Discord đang giới hạn tốc độ — thử lại sau ${wait}.`;
@@ -3603,6 +3726,9 @@ async function claimSequence(ids, source = 'bulk') {
 	}
 
 	if (stopReason === 'captcha') {
+		// Waves#188: captcha hết hạn giữa đợt nhận chỉ dừng quest đó; hàng đợi
+		// giữ nguyên vị trí (queueRows không bị xóa), giải lại xong
+		// onCaptchaSolved tự tiếp tục hàng đợi — không khởi động lại toàn bộ.
 		const left = queueRows().length;
 		appendLog(
 			left > 0
@@ -3719,6 +3845,13 @@ function onQuestActClick(e) {
 			});
 		return;
 	}
+	if (act === 'fav') {
+		e.preventDefault(); e.stopPropagation();
+		const on = toggleQuestFav(quest.id);
+		try { const btn = e.target.closest('[data-act="fav"]'); if (btn) btn.textContent = on ? '★' : '☆'; } catch {}
+		if (favOnly) renderQuests();
+		return;
+	}
 	if (act === 'claim' || act === 'retry') {
 		e.preventDefault();
 		e.stopPropagation();
@@ -3745,6 +3878,13 @@ function onQuestActClick(e) {
 ui.questListActive.addEventListener('click', onQuestActClick);
 ui.questListNew.addEventListener('click', onQuestActClick);
 ui.questListDone.addEventListener('click', onQuestActClick);
+if (ui.questListActive) ui.questListActive.addEventListener('click', (e) => {
+	const head = e.target.closest ? e.target.closest('.qgroup-head') : null;
+	if (!head) return;
+	const k = head.dataset.group;
+	if (expandedGroups.has(k)) expandedGroups.delete(k); else expandedGroups.add(k);
+	renderQuests();
+});
 
 /* Nút trong modal captcha */
 if (ui.btnCaptchaCancel) ui.btnCaptchaCancel.addEventListener('click', closeCaptchaModal);
@@ -3779,6 +3919,7 @@ async function handleEvent(evt) {
 			break;
 
 		case 'scan:start':
+			scanStartGen = scanGeneration;
 			// Wave#103: mỗi lượt quét phải bắt đầu từ buffer RỖNG. Trước đây nếu
 			// lượt trước dở dang (mất kết nối) buffer còn sót → lượt sau trộn quest
 			// cũ với mới, đếm sai và có thể hồi sinh quest đã biến mất.
@@ -3802,6 +3943,7 @@ async function handleEvent(evt) {
 		}
 
 		case 'quest:inventory': {
+			if (scanStartGen && scanStartGen !== scanGeneration) { scanBuffer.length = 0; break; }
 			// Waves 27: đổ TOÀN BỘ quest từ RAM ra 1 lượt + hiệu ứng trôi + mờ dần.
 			// Danh sách quét THẬT từ Discord API. KHÔNG cộng orbs, KHÔNG tự nhận.
 			const rawList =
@@ -3927,6 +4069,20 @@ async function handleEvent(evt) {
 			// trôi + mờ dần 620ms. Bỏ ngay sẽ làm nó biến mất giật cục.
 			setScanning(false, questOrder.length);
 			if (state === 'scanning') setState('idle');
+			// Waves#186/#194: báo phần quét lỗi + thông báo khi có nhiệm vụ chờ nhận.
+			try {
+				if (scanPartialErrors.length) {
+					const names = scanPartialErrors.map((x) => x.name || x.id).slice(0, 5).join(', ');
+					appendLog(`[Cảnh báo] Quét chưa đủ: ${scanPartialErrors.length} nhiệm vụ chưa quét được (${names}${scanPartialErrors.length > 5 ? '…' : ''}). Bấm Quét lại để thử lại phần này — danh sách hiện tại KHÔNG được coi là đầy đủ.`, 'warn');
+					toast(`Quét chưa đủ: ${scanPartialErrors.length} nhiệm vụ chưa quét được — quét lại để thử lại phần này.`, true);
+				}
+				const exp1 = Array.from(quests.values()).filter((qq) => isExpiringSoon(qq, 1) && qq.status !== 'claimed').length;
+				const exp3 = Array.from(quests.values()).filter((qq) => isExpiringSoon(qq, 3) && qq.status !== 'claimed').length;
+				if (exp1 > 0) appendLog(`[Cảnh báo] ${exp1} nhiệm vụ hết hạn trong 1 ngày — không tự chạy, bạn chọn tay nếu muốn làm.`, 'warn');
+				else if (exp3 > 0) appendLog(`[Hệ thống] ${exp3} nhiệm vụ hết hạn trong 3 ngày — lọc "Sắp hết hạn (3 ngày)" để xem.`, 'system');
+				const claimable = Array.from(quests.values()).filter((qq) => qq.status === 'claimable').length;
+				if (claimable > 0) notifySystem('Có nhiệm vụ chờ nhận', `${claimable} nhiệm vụ đã xong và chờ nhận thưởng — app không tự nhận, bạn bấm Nhận khi sẵn sàng.`);
+			} catch {}
 			break;
 
 		case 'quest:start':
@@ -4131,6 +4287,8 @@ async function handleEvent(evt) {
 			break;
 
 		case 'quest:error':
+			// Waves#186: ghi lại nhiệm vụ quét lỗi để scan:complete báo rõ phần thiếu.
+			try { if (scanning && d && (d.id || d.name)) scanPartialErrors.push({ id: String(d.id || ''), name: String(d.name || ''), message: String(d.message || d.reason || '') }); } catch {}
 			upsertQuest(d.id || d.name, { running: false, flag: 'error' });
 			break;
 
@@ -4535,6 +4693,13 @@ function resetQuestSessionForSwitch() {
 		}
 		if (ui.questCounter) ui.questCounter.textContent = '0';
 		if (ui.stateActive) ui.stateActive.textContent = STATE_TEXT.idle;
+		// Waves#180: dọn sạch dữ liệu phiên của tài khoản cũ (không đụng
+		// ghi chú/yêu thích đã lưu theo scope, không đụng token IndexedDB).
+		claimQueue = [];
+		scanPartialErrors = [];
+		last429 = null;
+		try { if (typeof api.clearClaimDiagnostics === 'function') api.clearClaimDiagnostics(); } catch {}
+		try { if (ui.claimQueueChip) ui.claimQueueChip.hidden = true; } catch {}
 	} catch {
 		/* best-effort: reload ngay sau đó sẽ dọn sạch mọi thứ còn sót */
 	}
@@ -6714,6 +6879,8 @@ if (ui.btnTokenEye) {
 		tokenVisibleCfg = !tokenVisibleCfg;
 		if (ui.btnTokenEyeText) ui.btnTokenEyeText.textContent = tokenVisibleCfg ? 'Ẩn' : 'Hiện';
 		syncCfgToken();
+		// Waves#178: token đã hiện không được nằm trên màn hình vô thời hạn.
+		if (tokenVisibleCfg) setTimeout(() => { if (tokenVisibleCfg) { tokenVisibleCfg = false; if (ui.btnTokenEyeText) ui.btnTokenEyeText.textContent = 'Hiện'; syncCfgToken(); } }, 60000);
 	});
 }
 if (ui.btnTokenCopy) {
@@ -6725,7 +6892,8 @@ if (ui.btnTokenCopy) {
 		}
 		try {
 			await api.writeClipboard(t);
-			toast('Đã copy token Discord.');
+			clearClipboardAfter(30000);
+			toast('Đã copy token Discord. Clipboard sẽ tự xóa sau 30 giây nếu trình duyệt cho phép.');
 		} catch {
 			toast('Không copy được token.', true);
 		}
@@ -7199,6 +7367,48 @@ function shortWeekday(ts) {
 	return (currentLang === 'en' ? namesEn : namesVi)[new Date(ts).getDay()];
 }
 
+/* Waves#195: dữ liệu mock rõ ràng, chỉ ở RAM, không bao giờ gửi lên Discord. */
+function loadMockQuests() {
+	const now = Date.now();
+	const mocks = [
+		{ id: 'mock-done-orb', name: '[MOCK] Quest Orb đã nhận', status: 'claimed', orbs: 40, claimedAt: new Date(now - 86400000).toISOString(), rewardKind: 'orbs', gameTitle: 'Mock Game', task: 'WATCH_VIDEO', platform: 0 },
+		{ id: 'mock-done-avatar', name: '[MOCK] Quest Avatar đã nhận', status: 'claimed', orbs: 0, claimedAt: new Date(now - 2 * 86400000).toISOString(), rewardKind: 'item', rewardName: 'Avatar mock', gameTitle: 'Mock Game', task: 'PLAY_ON_DESKTOP', platform: 0 },
+		{ id: 'mock-claimable', name: '[MOCK] Quest chờ nhận (429/captcha UI)', status: 'claimable', orbs: 25, rewardKind: 'orbs', gameTitle: 'Mock Game', task: 'WATCH_VIDEO', platform: 0 },
+		{ id: 'mock-todo', name: '[MOCK] Quest chưa làm', status: 'todo', orbs: 15, secondsNeeded: 300, secondsDone: 60, rewardKind: 'orbs', gameTitle: 'Mock Game', task: 'WATCH_VIDEO', platform: 0 },
+	];
+	for (const m of mocks) upsertQuest(m.id, m, { defer: true });
+	scheduleRender();
+}
+/* Waves#197: export/import cấu hình, không bao giờ chứa token/code. */
+function exportConfigFile() {
+	const payload = { version: 1, exportedAt: new Date().toISOString(), filters: { questFilter, platformFilter, taskFilter, doneRewardFilter, doneSort }, notes: questNotesStore, theme: currentTheme };
+	const text = JSON.stringify(payload, null, 2);
+	if (/token|rewardCode|"code"\s*:/i.test(text)) { toast('File cấu hình chứa trường nhạy cảm — đã chặn xuất.', true); return; }
+	downloadTextFile('autoquest-config.json', text, 'application/json');
+	toast('Đã xuất cấu hình (không chứa token/code).');
+}
+function importConfigFile(text) {
+	let data;
+	try { data = JSON.parse(String(text || '')); } catch { toast('File cấu hình không hợp lệ.', true); return; }
+	const s = JSON.stringify(data);
+	if (/token|rewardCode/i.test(s)) { toast('File cấu hình chứa token/code — đã từ chối nhập.', true); return; }
+	if (data.filters) { questFilter = data.filters.questFilter || questFilter; platformFilter = data.filters.platformFilter || platformFilter; taskFilter = data.filters.taskFilter || taskFilter; doneRewardFilter = data.filters.doneRewardFilter || doneRewardFilter; doneSort = data.filters.doneSort || doneSort; }
+	if (data.notes && typeof data.notes === 'object') { questNotesStore = data.notes; saveJsonLocal(NOTES_KEY, questNotesStore); }
+	renderQuests();
+	toast('Đã nhập cấu hình.');
+}
+function exportStatsHistoryCsv() {
+	const entries = statsEntries();
+	const from = ui.statsDateFrom ? ui.statsDateFrom.value : '';
+	const to = ui.statsDateTo ? ui.statsDateTo.value : '';
+	const dayMap = new Map();
+	for (const row of entries) { const k = dayKey(row.at); if (from && k < from) continue; if (to && k > to) continue; const d = dayMap.get(k) || { orbs: 0, claims: 0 }; d.orbs += Number(row.orbs) || 0; d.claims += 1; dayMap.set(k, d); }
+	if (!dayMap.size) { toast('Không có dữ liệu trong khoảng ngày đã chọn.', true); return; }
+	const esc = (v) => `"${String(v).replace(/"/g, '""')}"`;
+	const lines = ['Ngày,Orbs,Số nhiệm vụ'];
+	for (const k of Array.from(dayMap.keys()).sort()) lines.push([esc(k), String(dayMap.get(k).orbs), String(dayMap.get(k).claims)].join(','));
+	downloadTextFile(`autoquest-orb-history-${dayKey(Date.now())}.csv`, '\uFEFF' + lines.join('\r\n'), 'text/csv;charset=utf-8');
+}
 function renderStats() {
 	if (!ui.pageStats) return;
 	const entries = statsEntries();
@@ -7298,6 +7508,18 @@ function renderStats() {
 		}
 	}
 	if (ui.statsEmpty) ui.statsEmpty.hidden = entries.length > 0;
+	// Waves#193: bảng Orb theo ngày + khoảng ngày; Waves#190: dự báo (ước tính).
+	try {
+		const from = ui.statsDateFrom ? ui.statsDateFrom.value : '';
+		const to = ui.statsDateTo ? ui.statsDateTo.value : '';
+		if (ui.statsHistoryTable) {
+			const dayMap2 = new Map();
+			for (const row of entries) { const k = dayKey(row.at); if (from && k < from) continue; if (to && k > to) continue; const d = dayMap2.get(k) || { orbs: 0, claims: 0 }; d.orbs += Number(row.orbs) || 0; d.claims += 1; dayMap2.set(k, d); }
+			const rows = Array.from(dayMap2.keys()).sort().reverse().slice(0, 60).map((k) => `<tr><td>${escapeHtml(k)}</td><td class="mono">${dayMap2.get(k).orbs}</td><td class="mono">${dayMap2.get(k).claims}</td></tr>`).join('');
+			ui.statsHistoryTable.innerHTML = rows ? `<table class="stats-table"><thead><tr><th>Ngày</th><th>Orbs</th><th>Nhiệm vụ</th></tr></thead><tbody>${rows}</tbody></table>` : '<p class="qstate-text">Không có dữ liệu trong khoảng ngày đã chọn.</p>';
+		}
+		if (ui.statsForecast) { const fc = forecastOrbs(); ui.statsForecast.textContent = `Dự báo (chỉ là ước tính, không phải số thật từ Discord): khoảng ${fc.orbs} Orbs từ các nhiệm vụ đang làm dở, cần ~${fc.minutes} phút nếu làm liên tục.`; }
+	} catch {}
 }
 
 function exportStatsCsv() {
@@ -7703,7 +7925,18 @@ function hydrateOfflineInventory() {
 }
 
 window.addEventListener('online', () => {
-	updateNetBadge();
+	if (appScroll) {
+	let doneScrollTimer = null;
+	appScroll.addEventListener('scroll', () => {
+		if (currentTab !== 'done' || lastDoneVisibleCount <= 55) return;
+		if (doneScrollTimer) clearTimeout(doneScrollTimer);
+		doneScrollTimer = setTimeout(() => {
+			if (appScroll.scrollTop + appScroll.clientHeight > appScroll.scrollHeight - 600 && doneWindowEnd < lastDoneVisibleCount) { doneWindowEnd += 80; renderQuests(); }
+		}, 120);
+	}, { passive: true });
+}
+
+updateNetBadge();
 	toast(currentLang === 'en' ? 'Back online.' : 'Đã có mạng trở lại.');
 	appendLog(
 		currentLang === 'en' ? '[System] Network restored.' : '[Hệ thống] Đã có mạng trở lại.',
@@ -7943,16 +8176,7 @@ function scheduleIdleSwUpdate() {
 		if (!appIsIdleForUpdate()) return;
 		const waiting = swRegistration && swRegistration.waiting;
 		if (!waiting) return;
-		swReloading = true;
-		setUpdateStatus(currentLang === 'en' ? 'Applying update…' : 'Đang áp dụng bản cập nhật…');
-		try {
-			waiting.postMessage({ type: 'SKIP_WAITING' });
-		} catch {
-			/* ignore */
-		}
-		setTimeout(() => {
-			if (swReloading) location.reload();
-		}, 2600);
+		requestSafeSwUpdate();
 	}, 10000);
 }
 
@@ -7988,7 +8212,22 @@ async function setupServiceWorker() {
 	navigator.serviceWorker.addEventListener('message', (event) => {
 		const data = event.data || {};
 		if (data.type === 'SW_VERSION' && ui.swVersion) ui.swVersion.textContent = data.version || '—';
+		// Waves#183: only the SW's own verification may arm a reload.
+		if (data.type === 'SW_VERIFIED') { swReloading = true; setUpdateStatus(currentLang === 'en' ? 'Update verified — applying…' : 'Đã xác minh bản cập nhật — đang áp dụng…'); setTimeout(() => { if (swReloading) location.reload(); }, 800); }
+		if (data.type === 'SW_VERIFY_FAILED') { swReloading = false; setUpdateStatus(currentLang === 'en' ? 'Update verification failed — not applied (bundle hash mismatch).' : 'Không xác minh được bản cập nhật (sai hash bundle) — không áp dụng.'); }
 	});
+	/* Waves#183: ask the waiting SW to verify itself against
+	   integrity.json first; never SKIP_WAITING blindly mid-run. */
+	function requestSafeSwUpdate() {
+		if (!appIsIdleForUpdate()) return false;
+		const waiting = swRegistration && swRegistration.waiting;
+		if (!waiting) { location.reload(); return true; }
+		swReloading = true;
+		setUpdateStatus(currentLang === 'en' ? 'Verifying update bundle…' : 'Đang xác minh bundle cập nhật…');
+		try { waiting.postMessage({ type: 'VERIFY_AND_ACTIVATE' }); } catch { swReloading = false; return false; }
+		setTimeout(() => { if (swReloading) { swReloading = false; setUpdateStatus(currentLang === 'en' ? 'Update verification timed out — not applied.' : 'Hết thời gian xác minh bản cập nhật — không áp dụng.'); } }, 8000);
+		return true;
+	}
 	navigator.serviceWorker.addEventListener('controllerchange', () => {
 		if (!swReloading) return;
 		location.reload();
@@ -8021,21 +8260,9 @@ async function setupServiceWorker() {
 
 if (ui.btnUpdateReload) {
 	ui.btnUpdateReload.addEventListener('click', () => {
-		const waiting = swRegistration && swRegistration.waiting;
-		if (!waiting) {
-			location.reload();
-			return;
-		}
-		swReloading = true;
-		setUpdateStatus('Đang áp dụng bản cập nhật…');
-		try {
-			waiting.postMessage({ type: 'SKIP_WAITING' });
-		} catch {
-			/* ignore */
-		}
-		setTimeout(() => {
-			if (swReloading) location.reload();
-		}, 2600);
+		// Waves#183: verified activation only, and only when idle.
+		if (!appIsIdleForUpdate()) { toast('App đang chạy — đợi chạy xong rồi mới áp dụng bản cập nhật.', true); return; }
+		requestSafeSwUpdate();
 	});
 }
 if (ui.btnUpdateDismiss) {
@@ -8340,12 +8567,17 @@ ui.btnScan.addEventListener('click', async () => {
 		toast('Đang nhận thưởng hàng loạt — đợi xong rồi quét lại.', true);
 		return;
 	}
-	// Waves#157: bấm Quét lần nữa trong lúc đang quét thì bỏ qua —
-	// lần quét cũ vẫn chạy, không tạo lần quét chồng chéo (stale scan).
+	// Waves#171: bấm Quét lần nữa trong lúc đang quét thì HỦY quét cũ
+	// (dừng worker) và bắt đầu quét mới; kết quả quét cũ bị chặn ở
+	// scan:start / quest:inventory bằng scanGeneration.
 	if (scanning) {
-		toast('Đang quét — đợi lần quét này xong rồi quét lại.', true);
-		return;
+		scanGeneration += 1;
+		try { api.stop(); } catch {}
+		setScanning(false);
+		setState('idle');
+		toast('Đã hủy quét cũ — đang quét lại.', false);
 	}
+	scanGeneration += 1;
 	if (!isOnline()) {
 		toast('Đang ngoại tuyến — cần mạng để quét nhiệm vụ.', true);
 		return;
@@ -8442,6 +8674,7 @@ ui.btnStart.addEventListener('click', () => {
 });
 
 ui.btnStop.addEventListener('click', () => {
+	scanGeneration += 1;
 	ui.btnStop.disabled = true; // chống double-click ngay lập tức
 	userStopped = true;
 	stopHeartbeat();
@@ -9197,6 +9430,8 @@ async function runDiagnostics() {
 				? `Inventory cache: ${rec.quests ? rec.quests.length : 0} quests, as of ${rec.at ? new Date(rec.at).toLocaleString() : '—'}`
 				: 'Inventory cache: none';
 			ui.dataDiagOut.textContent += `\n[Rewards]\n  by type: orbs ${counts.orbs} · avatar ${counts.avatar} · code ${counts.code} · other ${counts.other}\n  asset failures: ${assetFailCount} (quests: ${assetFailQuests.size}) · asset variant: ${currentTheme} (${currentTheme === 'light' ? 'logotype_light/game_tile_light first' : 'logotype_dark/game_tile_dark first'})\n  render quests: ${lastQuestRenderMs} ms\n  ${cacheLine}\n`;
+			try { const fc = forecastOrbs(); const claimable = Array.from(quests.values()).filter((qq) => qq.status === 'claimable').length; ui.dataDiagOut.textContent += `[Waves#171-#200]\n  forecast (estimate only): ${fc.orbs} Orbs · ~${fc.minutes} min remaining · claimable: ${claimable} · done window: ${doneWindowEnd} / ${lastDoneVisibleCount} · last 429: ${last429 ? last429.scope + ' ' + last429.seconds + 's' : 'none'} · partial scan errors: ${scanPartialErrors.length} · mock mode: ${mockMode ? 'ON (mock data, never sent to Discord)' : 'off'} · build number: ${typeof AQIdentity !== 'undefined' ? AQIdentity.webBuildNumber : '—'} (placeholder, see #175) · bundle sizes: see [Bundle] below\n`; } catch {}
+			try { if (typeof document !== 'undefined') { const sz = (id) => { const el = document.querySelector(id); return el ? 'present' : 'missing'; }; ui.dataDiagOut.textContent += `[Bundle]\n  renderer.js / styles.css are loaded from the app shell; exact byte sizes are reported by the build step (npm run build:static) and by the diagnostics bundle check in self-test, not by guessing in the browser.\n`; } } catch {}
 		} catch {}
 		setDataStatus(dataSay('Đã chạy chẩn đoán.', 'Diagnostics complete.'));
 	} catch (err) {
@@ -9209,9 +9444,9 @@ async function runDiagnostics() {
 
 async function doBackupExport() {
 	const pass = ui.dataPassword ? ui.dataPassword.value : '';
-	if (pass.length < 8) {
+	if (pass.length < 12) {
 		setDataStatus(
-			dataSay('Mật khẩu sao lưu cần ít nhất 8 ký tự.', 'Backup password must be at least 8 characters.'),
+			dataSay('Waves#177: mật khẩu sao lưu mới cần ít nhất 12 ký tự (bản sao lưu cũ vẫn mở bình thường).', 'Waves#177: new backup passwords need at least 12 characters (old backups still open normally).'),
 			true,
 		);
 		if (ui.dataPassword) ui.dataPassword.focus();
@@ -9298,6 +9533,7 @@ async function doBackupPick() {
 				);
 			}
 			if (p.hasExtras) bits.push(en ? 'includes history & queue' : 'kèm lịch sử & hàng đợi');
+			if (Number(p.kdfIterations) > 0 && Number(p.kdfIterations) < 200000) bits.push(en ? `WARNING: weak KDF (${p.kdfIterations} iterations) — re-export after restore` : `CẢNH BÁO: KDF yếu (${p.kdfIterations} vòng) — khôi phục xong nên xuất lại bản mới`);
 			ui.dataImportMeta.textContent = bits.join(' · ') + names;
 		}
 		if (ui.dataImportPreview) ui.dataImportPreview.hidden = false;

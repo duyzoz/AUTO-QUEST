@@ -6292,3 +6292,11 @@ body.lite .claim-pill-spin { animation-duration: 1.6s; }
 	z-index: 2;
 	background: var(--card, rgba(255, 255, 255, 0.92));
 }
+
+/* Waves#171-#200 */
+.qgroup-head { grid-column: 1 / -1; font-weight: 700; font-size: 0.85rem; padding: 8px 10px; border-radius: 8px; background: var(--card, rgba(255,255,255,0.06)); cursor: pointer; }
+.qcard-fav { margin-left: auto; background: transparent; border: none; color: inherit; font-size: 1rem; cursor: pointer; }
+.stats-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+.stats-table th, .stats-table td { padding: 6px 8px; border-bottom: 1px solid var(--line, rgba(15,23,42,0.1)); text-align: left; }
+.stats-history { margin: 10px 0; }
+.qdone-modal-input { width: 100%; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--line-strong, rgba(15,23,42,0.2)); background: transparent; color: inherit; margin-bottom: 10px; }
