@@ -430,7 +430,7 @@ check('Waves#154/#163: chế độ Sáng không còn nền xanh #f2f5fb, chữ h
 	const css = read(path.join(APP, 'styles.css'));
 	assert(!css.includes('#f2f5fb'), 'styles.css còn #f2f5fb');
 	assert(/\[data-theme="light"\] \.qdone-info-title/.test(css), 'thiếu override chữ hover ở Sáng');
-	assert(/\[data-theme="light"\] \.qcard-reward-art \{[^}]*background: #ffffff/.test(css), 'thiếu nền trắng cho đĩa thưởng ở Sáng');
+	assert(/\[data-theme="light"\] \.qcard-reward-art \{[^}]*(background: #ffffff|background: var\(--card\))/.test(css) && /\[data-theme="light"\][\s\S]{0,2000}?--card: #ffffff/.test(css), 'thiếu nền trắng cho đĩa thưởng ở Sáng (token --card ở Sáng phải là #ffffff)');
 	return 'nền Sáng đã sửa';
 });
 check('Waves#155: questLogoUrl chọn biến thể theo theme', () => {
@@ -500,12 +500,75 @@ check('Waves#175: build number chỉ có một điểm cập nhật (identity.js
 	assert(!/653945/.test(read(path.join(APP, 'renderer.js'))), 'renderer không được hardcode build number riêng');
 	return 'single update point: web/identity.js';
 });
-check('Waves#171-#173/#189-#197: UI mới có id trong HTML + hàm renderer tương ứng', () => {
+check('Waves#171-#173/#189-#197: UI mới có id trong HTML + hàm renderer tương ứng (đã trừ favorites/mock bị xóa ở #203/#204)', () => {
 	const html = read(INDEX);
-	for (const id of ['doneDateFrom', 'doneDateTo', 'questPlatformFilter', 'questTaskFilter', 'chkExpiringSoon', 'chkFavOnly', 'chkMockMode', 'chkGroupGames', 'statsDateFrom', 'statsDateTo', 'btnExportConfigFile', 'btnImportConfigFile', 'btnClearCdnCache']) assert(html.includes(`id="${id}"`), 'thiếu id HTML: ' + id);
+	for (const id of ['doneDateFrom', 'doneDateTo', 'questPlatformFilter', 'questTaskFilter', 'chkExpiringSoon', 'chkGroupGames', 'statsDateFrom', 'statsDateTo', 'btnExportConfigFile', 'btnImportConfigFile', 'btnClearCdnCache']) assert(html.includes(`id="${id}"`), 'thiếu id HTML: ' + id);
 	const r = read(path.join(APP, 'renderer.js'));
-	for (const fn of ['doneWindowEnd', 'loadMockQuests', 'exportConfigFile', 'importConfigFile', 'forecastOrbs', 'isExpiringSoon', 'groupGameKey', 'copySecretWithTimeout', 'setGlobal429']) assert(r.includes(fn), 'thiếu hàm renderer: ' + fn);
+	for (const fn of ['doneWindowEnd', 'exportConfigFile', 'importConfigFile', 'forecastOrbs', 'isExpiringSoon', 'groupGameKey', 'copySecretWithTimeout', 'setGlobal429']) assert(r.includes(fn), 'thiếu hàm renderer: ' + fn);
 	return 'ids + hàm waves 171-200 có mặt';
+});
+check('Waves#201: drawer overlay trong .shell, z-index dưới sidebar, không chặn bấm khi ẩn', () => {
+	const html = read(INDEX);
+	const shellAt = html.indexOf('<div class="shell">');
+	const overlayAt = html.indexOf('id="drawerOverlay"');
+	const asideAt = html.indexOf('<aside class="sidebar"');
+	assert(shellAt >= 0 && overlayAt > shellAt && asideAt > overlayAt, 'overlay phải nằm trong .shell, trước sidebar');
+	const css = read(path.join(APP, 'styles.css'));
+	const ov = css.match(/\.drawer-overlay \{[^}]*z-index: (\d+)/);
+	const sb = css.match(/\.sidebar \{[^}]*z-index: (\d+)/);
+	assert(ov && sb && Number(ov[1]) < Number(sb[1]), 'overlay z-index phải nhỏ hơn sidebar');
+	assert(/\.drawer-overlay \{[^}]*pointer-events: none/.test(css), 'overlay ẩn phải pointer-events: none');
+	const r = read(path.join(APP, 'renderer.js'));
+	assert(r.includes('ui.navQuest.focus()'), 'mở drawer phải focus vào nav đầu tiên');
+	assert(/closeDrawer\(\{ returnFocus: false \}\)/.test(r), 'chọn trang phải đóng drawer sau, không cướp focus');
+	assert(/key === 'Escape'/.test(r) && /closeDrawer\(\{ returnFocus: true \}\)/.test(r), 'Esc phải đóng drawer và trả focus');
+	assert(/body\.drawer-open \.main-wrap \{ overflow: hidden/.test(css), 'drawer mở phải khóa cuộn nền');
+	return 'overlay trong shell, overlay z < sidebar z, focus/Esc/scroll-lock có mặt';
+});
+check('Waves#202: toolbar Đã làm — hàng chính + Bộ lọc nâng cao thu gọn, hiện số filter', () => {
+	const html = read(INDEX);
+	for (const id of ['btnAdvancedFilters', 'questAdvanced', 'doneToolsAdvanced', 'doneExportAdvanced', 'advancedFilterCount']) assert(html.includes(`id="${id}"`), 'thiếu id HTML: ' + id);
+	assert(html.includes('aria-expanded="false"') && html.includes('aria-controls="questAdvanced"'), 'nút nâng cao phải có aria-expanded/controls');
+	const r = read(path.join(APP, 'renderer.js'));
+	assert(/countActiveAdvancedFilters/.test(r) && /updateAdvancedFilterCount/.test(r), 'thiếu đếm filter nâng cao');
+	assert(r.includes('ui.doneToolsAdvanced.hidden = tab'), 'nhóm nâng cao Đã làm phải ẩn ngoài tab Đã làm');
+	const css = read(path.join(APP, 'mobile.css'));
+	assert(/\.quest-advanced \{/.test(css) && /\.quest-advanced\[hidden\]/.test(css), 'thiếu CSS khối nâng cao');
+	return 'hàng chính + nâng cao thu gọn + đếm filter có mặt';
+});
+check('Waves#203/#204: yêu thích và mock UI đã xóa sạch, ghi chú giữ nguyên', () => {
+	const html = read(INDEX);
+	const r = read(path.join(APP, 'renderer.js'));
+	for (const bad of ['chkFavOnly', 'chkMockMode', 'loadMockQuests', 'qcard-fav', "data-act=\"fav\"", 'toggleQuestFav', 'questFavFor']) {
+		assert(!html.includes(bad) && !r.includes(bad), 'còn tham chiếu UI chết: ' + bad);
+	}
+	assert(/questNoteFor/.test(r) && /setQuestNote/.test(r), 'ghi chú chữ phải còn nguyên');
+	assert(/delete s\.__fav/.test(r), 'migration phải bỏ __fav cũ khi nạp');
+	assert(!/mock-done-orb/.test(r), 'quest mock [MOCK] phải xóa khỏi renderer');
+	return 'không còn UI favorites/mock chết; notes + migration __fav có mặt';
+});
+check('Waves#205: logo/ảnh thưởng chỉ dùng nền token trung tính, không gradient tối', () => {
+	const css = read(path.join(APP, 'styles.css'));
+	const art = css.match(/\.qcard-reward-art \{[^}]*\}/);
+	assert(art && /background: var\(--well\)/.test(art[0]), 'ảnh thưởng phải nền var(--well)');
+	const artRule = css.match(/\.qcard-reward-art \{[^}]*\}/); assert(artRule && !/radial-gradient/.test(artRule[0]), 'gradient tối cũ của ảnh thưởng phải xóa');
+	assert(/\.brand-logo-wrap \{[^}]*background: var\(--well\)/.test(css), 'logo sidebar phải nền token trung tính');
+	return 'reward-art + brand-logo-wrap dùng token trung tính';
+});
+check('Waves#206/#207: thang z-index + mobile 375 (min-width, ảnh không tràn)', () => {
+	const css = read(path.join(APP, 'styles.css'));
+	assert(/THANG Z-INDEX DUY NHẤT/.test(css), 'thiếu comment thang z-index');
+	const m = read(path.join(APP, 'mobile.css'));
+	assert(/\.main-wrap,\s*\.content \{\s*min-width: 0/.test(m), 'thiếu min-width: 0 chống cuộn ngang');
+	assert(/\.content img \{\s*max-width: 100%/.test(m), 'thiếu max-width ảnh ở màn hẹp');
+	return 'thang z-index + guard mobile có mặt';
+});
+check('Waves#212: file skill UI/UX có mặt, nguyên vẹn, README trỏ tới nó', () => {
+	const skill = read(path.join(__dirname, '..', '..', 'skills', 'ui-ux', 'SKILL-UI-UX.md'));
+	assert(skill.includes('ĐỌC TRƯỚC TIÊN') && skill.includes('shadcn-ui/lint') && skill.includes('ui-ux-pro-max') && skill.includes('chrome-devtools-mcp'), 'file skill thiếu nội dung tổng hợp');
+	const readme = read(path.join(__dirname, '..', '..', 'README.md'));
+	assert(readme.includes('skills/ui-ux/SKILL-UI-UX.md') && readme.includes('Waves #201'), 'README phải trỏ tới skill + waves 201');
+	return 'skill + README pointer có mặt';
 });
 check('Waves#177: backup — export 200k vòng, import giữ sàn cũ, mật khẩu mới tối thiểu 12', () => {
 	const b = read(path.join(WEB, 'bridge.js'));

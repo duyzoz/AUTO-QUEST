@@ -156,7 +156,24 @@ body {
 
 /* ============================================================
    SHELL: SIDEBAR 256px (kasumu) + MAIN
-   ============================================================ */
+   ============================================================
+   Waves#201/#206 — THANG Z-INDEX DUY NHẤT (đọc trước khi thêm lớp phủ):
+     nền/bg-layers ............ 0   (pointer-events: none)
+     nội dung chính/main-wrap . 10
+     drawer overlay ........... 30  (chỉ khi .show mới pointer-events: auto)
+     drawer/sidebar ........... 40  (LUÔN cao hơn overlay của chính nó)
+     modal (xác nhận) ......... 100-200 (modal-veil 200, [hidden] = display:none)
+     toast/pill ............... 100/180 (toast luôn pointer-events: none)
+     update-bar / skip-link .... 320/500 (chỉ hiện khi có cập nhật / khi focus)
+     capture/hCaptcha, lock/login veils ... 300+ (400/9000: veil toàn màn
+       hình, chặn mọi tương tác khi hiện, [hidden] = display:none)
+   QUY TẮC: overlay không bao giờ cao hơn lớp nó phục vụ; overlay và lớp
+   đó phải cùng stacking context (vì vậy drawer-overlay nằm TRONG .shell);
+   phần tử ẩn phải có pointer-events: none hoặc display:none, không chỉ
+   opacity: 0. Audit #206: các veil/modal/toast còn lại đều thỏa quy tắc
+   này khi ẩn (display:none hoặc pointer-events: none), chỉ drawer-overlay
+   là từng vi phạm (nằm ngoài .shell, z-index 35 > stacking context của
+   shell) và đã sửa ở #201. */
 .shell {
 	position: relative;
 	z-index: 10;
@@ -212,9 +229,10 @@ body {
 	height: 34px;
 	flex: 0 0 34px;
 	border-radius: 50%;
-	/* viền vòng mảnh, TRUNG TÍNH (không xanh) */
+	/* viền vòng mảnh, TRUNG TÍNH (không xanh) — Waves#205: nền token trung
+	   tính, không dùng nền tối riêng làm logo trông như có lớp chìm. */
 	border: 1px solid var(--line-strong);
-	background: var(--ink-800);
+	background: var(--well);
 	overflow: hidden;
 }
 .brand-logo {
@@ -397,7 +415,7 @@ body {
 .drawer-overlay {
 	position: fixed;
 	inset: 0;
-	z-index: 35;
+	z-index: 30;
 	background: rgba(0, 0, 0, 0.55);
 	opacity: 0;
 	pointer-events: none;
@@ -3661,8 +3679,9 @@ body {
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	/* Waves 27: nền tối mờ, KHÔNG khung vuông thô. Orb nằm gọn trong đĩa tròn. */
-	background: radial-gradient(120% 120% at 30% 20%, rgba(59, 43, 122, 0.55) 0%, rgba(20, 21, 34, 0.75) 72%);
+	/* Waves#205: nền TRUNG TÍNH bằng token — bỏ gradient tối/tím cũ, vì ở
+	   light mode nó lộ thành "lớp xanh chìm" sau ảnh thưởng. */
+	background: var(--well);
 	border: 1px solid var(--tint-08);
 }
 .qcard-reward-art img { width: 100%; height: 100%; object-fit: cover; }
@@ -4345,6 +4364,11 @@ body {
 		box-shadow: 0 0 40px rgba(0, 0, 0, 0.5);
 	}
 	.sidebar.open { transform: translateX(0); }
+	body.drawer-open .main-wrap { overflow: hidden; }
+	/* Waves#211: giảm chuyển động — drawer mở/đóng ngay, không trượt. */
+	@media (prefers-reduced-motion: reduce) {
+		.sidebar, .drawer-overlay { transition: none; }
+	}
 	.drawer-overlay.show { opacity: 1; pointer-events: auto; }
 	.main-wrap {
 		margin-left: 0;
@@ -4851,7 +4875,7 @@ body {
 [data-theme="light"] .up-row:hover { border-color: var(--line-strong); }
 /* Wave#96: vòng logo ở theme Sáng — nền trắng, viền xám đậm vừa đủ thấy. */
 [data-theme="light"] .brand-logo-wrap {
-	background: #ffffff;
+	background: var(--card);
 	border-color: rgba(15, 23, 42, 0.22);
 }
 [data-theme="light"] .up-sub { color: var(--fg-subtle); }
@@ -4891,7 +4915,7 @@ body {
 [data-theme="light"] .qcard-desc { color: var(--fg-muted); }
 [data-theme="light"] .qdone { background: #ffffff; border-color: var(--line); }
 [data-theme="light"] .qcard-pct { background: #ffffff; color: var(--fg); border-color: var(--line-strong); }
-[data-theme="light"] .qcard-reward-art { color: var(--brand); background: #ffffff; border-color: var(--line-strong); }
+[data-theme="light"] .qcard-reward-art { color: var(--brand); background: var(--card); border-color: var(--line-strong); }
 /* Waves#154/#163: ở Sáng, chữ hover của ô Đã làm trước đây hardcode
  * trắng (#f3f5fa) trên nền ô trắng → chìm hẳn. Đổi sang mực tối. */
 [data-theme="light"] .qdone-info-title, [data-theme="light"] .qdone-info-game { color: #131722; }
@@ -6295,7 +6319,6 @@ body.lite .claim-pill-spin { animation-duration: 1.6s; }
 
 /* Waves#171-#200 */
 .qgroup-head { grid-column: 1 / -1; font-weight: 700; font-size: 0.85rem; padding: 8px 10px; border-radius: 8px; background: var(--card, rgba(255,255,255,0.06)); cursor: pointer; }
-.qcard-fav { margin-left: auto; background: transparent; border: none; color: inherit; font-size: 1rem; cursor: pointer; }
 .stats-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
 .stats-table th, .stats-table td { padding: 6px 8px; border-bottom: 1px solid var(--line, rgba(15,23,42,0.1)); text-align: left; }
 .stats-history { margin: 10px 0; }

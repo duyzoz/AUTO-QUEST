@@ -14,6 +14,14 @@
 
 /* iOS: input <16px làm trang tự zoom khi focus → chặn bằng 16px ở màn hẹp. */
 @media (max-width: 1023px) {
+	/* Waves#207: chặn cuộn ngang — flex/grid con không được vượt viewport. */
+	.main-wrap,
+	.content {
+		min-width: 0;
+	}
+	.content img {
+		max-width: 100%;
+	}
 	input,
 	textarea,
 	select {
@@ -370,6 +378,48 @@
 .quest-claim-all[hidden] {
 	display: none;
 }
+/* Waves#202 — "Bộ lọc nâng cao": khối thu gọn chứa mọi điều khiển ngoài
+   hàng chính. Mỗi nhóm là một flex block riêng (min-width: 0) nên label
+   và input không bao giờ chồng nhau; chiều cao thống nhất 36px với nút
+   (mobile: min-height 44px từ rule chung bên dưới). Chỉ dùng token. */
+.quest-advanced {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+	flex: 1 1 100%;
+	min-width: 0;
+	padding: 12px;
+	border: 1px solid var(--line);
+	border-radius: var(--radius-field);
+	background: var(--well);
+}
+.quest-advanced[hidden] {
+	display: none;
+}
+.quest-adv-group {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+	min-width: 0;
+	flex: 1 1 220px;
+}
+.quest-adv-title {
+	font-size: 0.72rem;
+	font-weight: 700;
+	color: var(--fg-muted);
+	white-space: nowrap;
+}
+.quest-adv-toggle {
+	height: 36px;
+}
+.quest-advanced .check {
+	min-height: 36px;
+}
+.quest-advanced input[type="date"] {
+	height: 36px;
+}
 /* Thẻ bị bộ lọc ẩn phải biến mất THẬT — thuộc tính hidden có thể bị
    `display: flex/grid` của thẻ đè lên nếu không ép. */
 .qcard[hidden],
@@ -383,6 +433,17 @@
 	}
 	.quest-search {
 		flex: 1 1 100%;
+	}
+	/* Waves#202/#207: khối nâng cao thành 1 cột, mỗi nhóm giãn đủ rộng. */
+	.quest-advanced {
+		flex-direction: column;
+		align-items: stretch;
+	}
+	.quest-adv-group {
+		flex: 1 1 auto;
+	}
+	.quest-adv-group .quest-filter {
+		flex: 1 1 auto;
 	}
 	.quest-filter {
 		flex: 1 1 auto;

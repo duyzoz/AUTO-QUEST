@@ -6,7 +6,7 @@
 
 ![Theme](https://img.shields.io/badge/Theme-Dark%20Strong%20Vesper-e0af68)
 
-![Waves](https://img.shields.io/badge/Waves%23-200%20%C2%B7%20Active-e0af68)
+![Waves](https://img.shields.io/badge/Waves%23-214%20%C2%B7%20Active-e0af68)
 
 ![License](https://img.shields.io/badge/License-MIT-3b82f6)
 
@@ -58,6 +58,31 @@
 > - CSP: `style-src 'unsafe-inline'` được giữ có lý do (hCaptcha + style động theo dữ liệu Discord) — xem chú thích ở CSP trong `web/app/index.html`; script-src vẫn đóng unsafe-inline/unsafe-eval.
 > - Backup: xuất mới cần mật khẩu ≥12 ký tự, PBKDF2 200.000 vòng, cap 2 MB; bản sao lưu cũ vẫn mở (sàn import 10.000 vòng giữ nguyên), file KDF yếu được cảnh báo để xuất lại.
 > - Số đo bundle hiện tại: renderer ~410 KB, styles ~215 KB, engine bundle ~114 KB — không tách code khỏi trang chính vì PWA offline cần shell nguyên khối.
+
+> ## Waves #201–#214 — UI/UX (đọc skill trước khi sửa UI)
+>
+> - **Luật UI/UX bắt buộc:** mọi thay đổi giao diện phải đọc trước file
+>   [`skills/ui-ux/SKILL-UI-UX.md`](skills/ui-ux/SKILL-UI-UX.md) (tổng hợp từ
+>   shadcn-ui/lint, ui-ux-pro-max-skill và chrome-devtools-mcp, đã dịch sang
+>   vanilla JS + CSS token của repo) và làm đủ checklist §9 của file đó.
+> - **Drawer mobile đã sửa:** overlay nay nằm trong `.shell`, z-index thấp hơn
+>   sidebar (30 < 40), ẩn thì không chặn bấm; bấm nav chuyển trang trước rồi
+>   mới đóng drawer, bấm overlay chỉ đóng drawer, Esc đóng drawer và trả focus
+>   về nút mở menu.
+> - **Toolbar Đã làm đã gọn:** hàng chính tối đa 4 nhóm, còn lại nằm trong
+>   "Bộ lọc nâng cao" thu gọn được, hiển thị số filter đang bật; mỗi label +
+>   input là một khối riêng, không còn chồng nhau.
+> - **Đã xóa:** tính năng yêu thích nhiệm vụ (nút sao, filter "Chỉ yêu thích")
+>   và chế độ thử mock trong app — xóa sạch UI, handler và test liên quan.
+>   Ghi chú chữ của nhiệm vụ vẫn giữ nguyên; dữ liệu yêu thích cũ (`__fav`)
+>   được bỏ khi nạp, không ảnh hưởng ghi chú. File test mock của repo
+>   (mock-claim / mock-reward) vẫn giữ vì đó là hạ tầng test, không phải UI.
+> - **Logo/ảnh thưởng:** chỉ dùng nền token trung tính, không còn gradient
+>   tối/tím sau ảnh thưởng và logo, ở cả 2 theme; chuỗi fallback ảnh vẫn giữ
+>   (asset thật → logo game → icon app, không rơi về Orb sai loại).
+> - **Mobile 375px:** không cuộn ngang, nút ≥44px, input ≥16px, safe-area đủ,
+>   drawer mở khóa cuộn nền; chữ dài/chip/badge reflow được, trạng thái phân
+>   biệt bằng chữ + icon + màu, hiệu ứng trang trí tắt khi giảm chuyển động.
 
 
 > ## 🤖 LƯU Ý CHO AI AGENT (BẮT BUỘC ĐỌC TRƯỚC KHI VIẾT/SỬA CODE)

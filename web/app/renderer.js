@@ -253,8 +253,11 @@ const ui = {
 	questPlatformFilter: el('questPlatformFilter'),
 	questTaskFilter: el('questTaskFilter'),
 	chkExpiringSoon: el('chkExpiringSoon'),
-	chkFavOnly: el('chkFavOnly'),
-	chkMockMode: el('chkMockMode'),
+	btnAdvancedFilters: el('btnAdvancedFilters'),
+	advancedFilterCount: el('advancedFilterCount'),
+	questAdvanced: el('questAdvanced'),
+	doneToolsAdvanced: el('doneToolsAdvanced'),
+	doneExportAdvanced: el('doneExportAdvanced'),
 	doneDateFrom: el('doneDateFrom'),
 	doneDateTo: el('doneDateTo'),
 	chkDoneUndated: el('chkDoneUndated'),
@@ -617,6 +620,8 @@ function switchTab(tab) {
 	ui.questListDone.hidden = tab !== 'done';
 	// Waves#161/#162/#167: công cụ Đã làm chỉ hiện ở tab Đã làm.
 	if (ui.doneTools) ui.doneTools.hidden = tab !== 'done';
+	if (ui.doneToolsAdvanced) ui.doneToolsAdvanced.hidden = tab !== 'done';
+	if (ui.doneExportAdvanced) ui.doneExportAdvanced.hidden = tab !== 'done';
 	// Wave#111: chuyển tab phải tính lại thanh chọn + nút "Nhận tất cả"
 	// theo bộ lọc hiện tại (không chỉ dựa vào việc lưới có thẻ hay không).
 	renderQuests();
@@ -1220,7 +1225,6 @@ function questMatchesFilter(q) {
 	if (platformFilter !== 'all' && String(q.platform ?? '') !== String(platformFilter)) return false;
 	if (taskFilter !== 'all' && String(q.task || '') !== String(taskFilter) && !String(taskLabel(q.task) || '').toLowerCase().includes(String(taskFilter).toLowerCase())) return false;
 	if (expiringOnly && !isExpiringSoon(q, 3)) return false;
-	if (favOnly && !questFavFor(q.id)) return false;
 	if (questFilter === 'orbs' && !(Number(q.orbs) > 0)) return false;
 	if (questFilter === 'manual' && q.automatable !== false) return false;
 	if (questFilter === 'urgent') {
@@ -1397,19 +1401,18 @@ let lastDoneVisibleCount = 0;
 let platformFilter = 'all';
 let taskFilter = 'all';
 let expiringOnly = false;
-let favOnly = false;
 let groupGames = false;
 let expandedGroups = new Set();
-let mockMode = false;
 let scanPartialErrors = [];
 let last429 = null;
 const NOTES_KEY = 'autoquest.notes.v1';
 let questNotesStore = loadJsonLocal(NOTES_KEY, {});
+/* Waves#203: yêu thích đã xóa — khi nạp, chỉ bỏ trường __fav cũ, giữ nguyên
+   mọi ghi chú chữ của user. Không còn hàm đọc/ghi yêu thích nào nữa. */
+try { let dropped = false; for (const sc of Object.keys(questNotesStore || {})) { const s = questNotesStore[sc]; if (s && typeof s === 'object' && '__fav' in s) { delete s.__fav; dropped = true; } } if (dropped) saveJsonLocal(NOTES_KEY, questNotesStore); } catch {}
 function notesScope() { try { return accountScope(); } catch { return 'default'; } }
 function questNoteFor(id) { const s = questNotesStore[notesScope()] || {}; return s[id] || ''; }
-function questFavFor(id) { const s = questNotesStore[notesScope()] || {}; return Array.isArray(s.__fav) && s.__fav.includes(String(id)); }
 function setQuestNote(id, text) { const sc = notesScope(); if (!questNotesStore[sc]) questNotesStore[sc] = {}; questNotesStore[sc][String(id)] = String(text || '').slice(0, 500); saveJsonLocal(NOTES_KEY, questNotesStore); }
-function toggleQuestFav(id) { const sc = notesScope(); if (!questNotesStore[sc]) questNotesStore[sc] = {}; const f = Array.isArray(questNotesStore[sc].__fav) ? questNotesStore[sc].__fav : []; const k = String(id); const i = f.indexOf(k); if (i >= 0) f.splice(i, 1); else f.push(k); questNotesStore[sc].__fav = f; saveJsonLocal(NOTES_KEY, questNotesStore); return i < 0; }
 function setGlobal429(scope, seconds) { last429 = { scope: String(scope || ''), seconds: Number(seconds) || 0, until: Date.now() + (Number(seconds) || 0) * 1000 }; }
 function forecastOrbs() { let orbs = 0; let secs = 0; for (const q of quests.values()) { if (q.status !== 'todo' || q.flag === 'gone') continue; const need = Number(q.secondsNeeded) || 0; const done = Number(q.secondsDone) || 0; if (need > 0) { orbs += Number(q.orbs) || 0; secs += Math.max(0, need - done); } } return { orbs, minutes: Math.round(secs / 60) }; }
 function isExpiringSoon(q, days) { const t = q.expiresAt ? Date.parse(q.expiresAt) : NaN; if (!Number.isFinite(t)) return false; const d = t - Date.now(); return d >= 0 && d <= days * 86400000; }
@@ -1624,7 +1627,6 @@ function buildQuestCard(q) {
 		<!-- Waves 31: hàng nút trạng thái — Chưa làm (khoá) / Nhận (bấm được) / Đã nhận -->
 		<div class="qcard-foot">
 			<button type="button" class="qcard-act" data-act="todo" disabled></button>
-		<button type="button" class="qcard-fav" data-act="fav" aria-label="Yêu thích">☆</button>
 		</div>
 	`;
 
@@ -2130,13 +2132,9 @@ function openDoneDetail(q, tileNode) {
 	addRow(en ? 'Type' : 'Loại', rewardTypeLabel(q));
 	if (Number(q.orbs) > 0) addRow('Orbs', String(q.orbs));
 	addRow(en ? 'Claimed at' : 'Nhận lúc', fmtClaimTime(q.claimedAt) || '');
-	// Waves#191: ghi chú + yêu thích, lưu cục bộ theo tài khoản, không gửi đi đâu.
+	// Waves#191: ghi chú (chỉ chữ), lưu cục bộ theo tài khoản, không gửi đi đâu.
+	// Waves#203: nút yêu thích đã xóa khỏi modal này cùng toàn bộ tính năng.
 	try {
-		const favBtn = document.createElement('button');
-		favBtn.type = 'button'; favBtn.className = 'ghost-btn';
-		favBtn.textContent = questFavFor(q.id) ? '★ Bỏ yêu thích' : '☆ Yêu thích';
-		favBtn.addEventListener('click', () => { const on = toggleQuestFav(q.id); favBtn.textContent = on ? '★ Bỏ yêu thích' : '☆ Yêu thích'; });
-		dialog.appendChild(favBtn);
 		const noteLabel = document.createElement('label');
 		noteLabel.className = 'qdone-modal-note';
 		noteLabel.textContent = en ? 'Note (local only, never sent anywhere):' : 'Ghi chú (chỉ lưu cục bộ, không gửi đi đâu):';
@@ -2644,6 +2642,7 @@ function visibleSelectableIds() {
 
 /* Wave#111: đồng bộ hàng công cụ (số khớp bộ lọc + nút "Nhận tất cả"). */
 function syncQuestTools(visNew, visTotal, countAll) {
+	updateAdvancedFilterCount();
 	if (ui.questFilterCount) {
 		const filtering = isQuestFiltering();
 		ui.questFilterCount.hidden = !filtering;
@@ -2808,12 +2807,10 @@ if (ui.questDoneSort) ui.questDoneSort.addEventListener('change', () => {
 if (ui.questPlatformFilter) ui.questPlatformFilter.addEventListener('change', () => { platformFilter = ui.questPlatformFilter.value || 'all'; renderQuests(); });
 if (ui.questTaskFilter) ui.questTaskFilter.addEventListener('change', () => { taskFilter = ui.questTaskFilter.value || 'all'; renderQuests(); });
 if (ui.chkExpiringSoon) ui.chkExpiringSoon.addEventListener('change', () => { expiringOnly = ui.chkExpiringSoon.checked; renderQuests(); });
-if (ui.chkFavOnly) ui.chkFavOnly.addEventListener('change', () => { favOnly = ui.chkFavOnly.checked; renderQuests(); });
 if (ui.chkGroupGames) ui.chkGroupGames.addEventListener('change', () => { groupGames = ui.chkGroupGames.checked; renderQuests(); });
 if (ui.doneDateFrom) ui.doneDateFrom.addEventListener('change', () => { doneDateFrom = ui.doneDateFrom.value || ''; doneWindowEnd = 80; renderQuests(); });
 if (ui.doneDateTo) ui.doneDateTo.addEventListener('change', () => { doneDateTo = ui.doneDateTo.value || ''; doneWindowEnd = 80; renderQuests(); });
 if (ui.chkDoneUndated) ui.chkDoneUndated.addEventListener('change', () => { doneIncludeUndated = ui.chkDoneUndated.checked; renderQuests(); });
-if (ui.chkMockMode) ui.chkMockMode.addEventListener('change', () => { mockMode = ui.chkMockMode.checked; if (mockMode) { loadMockQuests(); } toast(mockMode ? 'Chế độ thử (mock) đang bật — dữ liệu giả, không gửi gì lên Discord.' : 'Đã tắt chế độ thử (mock).', !mockMode); renderQuests(); });
 if (ui.statsDateFrom) ui.statsDateFrom.addEventListener('change', () => renderStats());
 if (ui.statsDateTo) ui.statsDateTo.addEventListener('change', () => renderStats());
 if (ui.btnStatsHistoryCsv) ui.btnStatsHistoryCsv.addEventListener('click', () => exportStatsHistoryCsv());
@@ -2836,6 +2833,10 @@ if (ui.btnClearDoneCache) ui.btnClearDoneCache.addEventListener('click', () => {
 	toast(currentLang === 'en' ? 'Done cache cleared. Scan again to reload.' : 'Đã xóa cache Đã làm. Quét lại để nạp mới.');
 });
 if (ui.btnClaimAll) ui.btnClaimAll.addEventListener('click', claimAllMatching);
+/* Waves#202: đếm bộ lọc nâng cao đang bật + bật/tắt khối lọc nâng cao. */
+function countActiveAdvancedFilters() { let n = 0; if (platformFilter !== 'all') n++; if (taskFilter !== 'all') n++; if (expiringOnly) n++; if (doneDateFrom || doneDateTo) n++; if (!doneIncludeUndated) n++; if (groupGames) n++; return n; }
+function updateAdvancedFilterCount() { const n = countActiveAdvancedFilters(); if (ui.advancedFilterCount) ui.advancedFilterCount.textContent = n > 0 ? `(${n})` : ''; }
+if (ui.btnAdvancedFilters) ui.btnAdvancedFilters.addEventListener('click', () => { if (!ui.questAdvanced) return; const willShow = ui.questAdvanced.hidden; ui.questAdvanced.hidden = !willShow; ui.btnAdvancedFilters.setAttribute('aria-expanded', String(willShow)); });
 
 // Wave#116: chạm/rê tới nút Nhận là bắt đầu tải hCaptcha song song với request
 // claim — Discord trả captcha_sitekey là widget dựng được ngay.
@@ -3843,13 +3844,6 @@ function onQuestActClick(e) {
 				appendLog(`[Lỗi] Không mở được Discord: ${(err && err.message) || err}`, 'stderr');
 				toast('Không mở được Discord — hãy mở thủ công.', true);
 			});
-		return;
-	}
-	if (act === 'fav') {
-		e.preventDefault(); e.stopPropagation();
-		const on = toggleQuestFav(quest.id);
-		try { const btn = e.target.closest('[data-act="fav"]'); if (btn) btn.textContent = on ? '★' : '☆'; } catch {}
-		if (favOnly) renderQuests();
 		return;
 	}
 	if (act === 'claim' || act === 'retry') {
@@ -6959,8 +6953,9 @@ function switchPage(name) {
 		renderQuests(); // vẽ lại để tính lại select-tools hiển thị
 	}
 	if (name === 'stats') renderStats();
-	// Đóng drawer mobile sau khi chọn trang
-	closeDrawer();
+	// Đóng drawer mobile sau khi chọn trang — chuyển trang TRƯỚC, đóng SAU
+	// (Waves#201), và không cướp focus khỏi nút nav vừa bấm.
+	closeDrawer({ returnFocus: false });
 }
 
 ui.navQuest.addEventListener('click', () => switchPage('quest'));
@@ -6970,16 +6965,26 @@ ui.navAbout.addEventListener('click', () => switchPage('about'));
 
 /* ---------------- Drawer mobile (sidebar trượt trên màn hẹp) ---------------- */
 
+/* Waves#201: drawer — overlay nay ở trong .shell, z-index thấp hơn sidebar,
+   nên bấm nav tới được nút. Mở drawer: focus vào mục nav đầu tiên, khóa
+   cuộn nền (class drawer-open). Đóng bằng overlay/Esc: focus trả về nút
+   mở menu. Đóng sau khi chọn trang: không cướp focus (xem switchPage). */
 function openDrawer() {
 	ui.sidebar.classList.add('open');
 	ui.drawerOverlay.classList.add('show');
+	document.body.classList.add('drawer-open');
+	try { if (ui.navQuest) ui.navQuest.focus(); } catch {}
 }
-function closeDrawer() {
+function closeDrawer(opts) {
+	const wasOpen = ui.sidebar && ui.sidebar.classList.contains('open');
 	ui.sidebar.classList.remove('open');
 	ui.drawerOverlay.classList.remove('show');
+	document.body.classList.remove('drawer-open');
+	if (wasOpen && opts && opts.returnFocus) { try { if (ui.btnDrawer) ui.btnDrawer.focus(); } catch {} }
 }
 ui.btnDrawer.addEventListener('click', openDrawer);
-ui.drawerOverlay.addEventListener('click', closeDrawer);
+ui.drawerOverlay.addEventListener('click', () => closeDrawer({ returnFocus: true }));
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && ui.sidebar && ui.sidebar.classList.contains('open')) closeDrawer({ returnFocus: true }); });
 
 /* ---------------- User Actions ---------------- */
 
@@ -7367,18 +7372,6 @@ function shortWeekday(ts) {
 	return (currentLang === 'en' ? namesEn : namesVi)[new Date(ts).getDay()];
 }
 
-/* Waves#195: dữ liệu mock rõ ràng, chỉ ở RAM, không bao giờ gửi lên Discord. */
-function loadMockQuests() {
-	const now = Date.now();
-	const mocks = [
-		{ id: 'mock-done-orb', name: '[MOCK] Quest Orb đã nhận', status: 'claimed', orbs: 40, claimedAt: new Date(now - 86400000).toISOString(), rewardKind: 'orbs', gameTitle: 'Mock Game', task: 'WATCH_VIDEO', platform: 0 },
-		{ id: 'mock-done-avatar', name: '[MOCK] Quest Avatar đã nhận', status: 'claimed', orbs: 0, claimedAt: new Date(now - 2 * 86400000).toISOString(), rewardKind: 'item', rewardName: 'Avatar mock', gameTitle: 'Mock Game', task: 'PLAY_ON_DESKTOP', platform: 0 },
-		{ id: 'mock-claimable', name: '[MOCK] Quest chờ nhận (429/captcha UI)', status: 'claimable', orbs: 25, rewardKind: 'orbs', gameTitle: 'Mock Game', task: 'WATCH_VIDEO', platform: 0 },
-		{ id: 'mock-todo', name: '[MOCK] Quest chưa làm', status: 'todo', orbs: 15, secondsNeeded: 300, secondsDone: 60, rewardKind: 'orbs', gameTitle: 'Mock Game', task: 'WATCH_VIDEO', platform: 0 },
-	];
-	for (const m of mocks) upsertQuest(m.id, m, { defer: true });
-	scheduleRender();
-}
 /* Waves#197: export/import cấu hình, không bao giờ chứa token/code. */
 function exportConfigFile() {
 	const payload = { version: 1, exportedAt: new Date().toISOString(), filters: { questFilter, platformFilter, taskFilter, doneRewardFilter, doneSort }, notes: questNotesStore, theme: currentTheme };
@@ -9430,7 +9423,7 @@ async function runDiagnostics() {
 				? `Inventory cache: ${rec.quests ? rec.quests.length : 0} quests, as of ${rec.at ? new Date(rec.at).toLocaleString() : '—'}`
 				: 'Inventory cache: none';
 			ui.dataDiagOut.textContent += `\n[Rewards]\n  by type: orbs ${counts.orbs} · avatar ${counts.avatar} · code ${counts.code} · other ${counts.other}\n  asset failures: ${assetFailCount} (quests: ${assetFailQuests.size}) · asset variant: ${currentTheme} (${currentTheme === 'light' ? 'logotype_light/game_tile_light first' : 'logotype_dark/game_tile_dark first'})\n  render quests: ${lastQuestRenderMs} ms\n  ${cacheLine}\n`;
-			try { const fc = forecastOrbs(); const claimable = Array.from(quests.values()).filter((qq) => qq.status === 'claimable').length; ui.dataDiagOut.textContent += `[Waves#171-#200]\n  forecast (estimate only): ${fc.orbs} Orbs · ~${fc.minutes} min remaining · claimable: ${claimable} · done window: ${doneWindowEnd} / ${lastDoneVisibleCount} · last 429: ${last429 ? last429.scope + ' ' + last429.seconds + 's' : 'none'} · partial scan errors: ${scanPartialErrors.length} · mock mode: ${mockMode ? 'ON (mock data, never sent to Discord)' : 'off'} · build number: ${typeof AQIdentity !== 'undefined' ? AQIdentity.webBuildNumber : '—'} (placeholder, see #175) · bundle sizes: see [Bundle] below\n`; } catch {}
+			try { const fc = forecastOrbs(); const claimable = Array.from(quests.values()).filter((qq) => qq.status === 'claimable').length; ui.dataDiagOut.textContent += `[Waves#171-#200]\n  forecast (estimate only): ${fc.orbs} Orbs · ~${fc.minutes} min remaining · claimable: ${claimable} · done window: ${doneWindowEnd} / ${lastDoneVisibleCount} · last 429: ${last429 ? last429.scope + ' ' + last429.seconds + 's' : 'none'} · partial scan errors: ${scanPartialErrors.length} · build number: ${typeof AQIdentity !== 'undefined' ? AQIdentity.webBuildNumber : '—'} (placeholder, see #175) · bundle sizes: see [Bundle] below\n`; } catch {}
 			try { if (typeof document !== 'undefined') { const sz = (id) => { const el = document.querySelector(id); return el ? 'present' : 'missing'; }; ui.dataDiagOut.textContent += `[Bundle]\n  renderer.js / styles.css are loaded from the app shell; exact byte sizes are reported by the build step (npm run build:static) and by the diagnostics bundle check in self-test, not by guessing in the browser.\n`; } } catch {}
 		} catch {}
 		setDataStatus(dataSay('Đã chạy chẩn đoán.', 'Diagnostics complete.'));

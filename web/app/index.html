@@ -43,8 +43,6 @@
 			</button>
 			<span class="topbar-brand">ZoZ Community</span>
 		</header>
-		<div class="drawer-overlay" id="drawerOverlay" aria-hidden="true"></div>
-
 		<!-- Wave#123 — thanh cập nhật PWA: chỉ hiện khi có Service Worker mới chờ. -->
 		<div class="update-bar" id="updateBar" role="status" hidden>
 			<span class="update-bar-text" id="updateBarText">Đã có bản cập nhật mới.</span>
@@ -53,6 +51,11 @@
 		</div>
 
 		<div class="shell">
+			<!-- Waves#201: overlay PHẢI ở trong .shell, cùng stacking context với sidebar,
+			     và z-index (30) thấp hơn sidebar (40) — trước đây overlay nằm ngoài
+			     .shell nên phủ lên cả sidebar, bấm nav chỉ đóng drawer mà không
+			     chuyển trang. Xem thang z-index ở đầu khối SHELL trong styles.css. -->
+			<div class="drawer-overlay" id="drawerOverlay" aria-hidden="true"></div>
 			<!-- ============ SIDEBAR 256px (kasumu) ============ -->
 			<aside class="sidebar" id="sidebar">
 				<div class="side-inner">
@@ -349,7 +352,9 @@
 									<option value="manual">Cần làm thủ công</option>
 									<option value="urgent">Sắp hết hạn (3 ngày)</option>
 								</select>
-								<!-- Waves#161/#162/#167: chỉ hiện ở tab Đã làm -->
+								<!-- Waves#201/#202: hàng chính tối đa 4 nhóm: tìm kiếm + lọc chính +
+								     lọc Đã làm (chỉ tab Đã làm) + hành động chính. Mọi điều khiển
+								     còn lại nằm trong "Bộ lọc nâng cao" thu gọn được bên dưới. -->
 								<span id="doneTools" hidden>
 									<select id="questDoneRewardFilter" class="custom-select quest-filter" aria-label="Lọc Đã làm theo loại thưởng">
 										<option value="all">Mọi loại thưởng</option>
@@ -363,36 +368,46 @@
 										<option value="orbs">Nhiều Orb nhất</option>
 										<option value="name">Tên A–Z</option>
 									</select>
-									<button class="ghost-btn" id="btnExportDoneCsv" type="button">Xuất CSV</button>
-									<button class="ghost-btn" id="btnExportDoneJson" type="button">Xuất JSON</button>
-									<label class="check small"><input type="checkbox" id="chkExportCodes" /> Kèm code (chỉ phiên này)</label>
-									<button class="ghost-btn" id="btnClearDoneCache" type="button">Xóa cache Đã làm</button>
-									<label class="check small">Từ <input type="date" id="doneDateFrom" class="custom-select" /></label>
-									<label class="check small">Đến <input type="date" id="doneDateTo" class="custom-select" /></label>
-									<label class="check small"><input type="checkbox" id="chkDoneUndated" checked /> Kèm chưa rõ ngày nhận</label>
-									<label class="check small"><input type="checkbox" id="chkGroupGames" /> Nhóm theo game</label>
 								</span>
-								<select id="questPlatformFilter" class="custom-select quest-filter" aria-label="Lọc theo nền tảng">
-									<option value="all">Mọi nền tảng</option>
-									<option value="0">Desktop</option>
-									<option value="1">Console</option>
-									<option value="2">Mobile</option>
-								</select>
-								<select id="questTaskFilter" class="custom-select quest-filter" aria-label="Lọc theo loại nhiệm vụ">
-									<option value="all">Mọi loại nhiệm vụ</option>
-									<option value="WATCH_VIDEO">Video</option>
-									<option value="WATCH_STREAM">Stream</option>
-									<option value="PLAY_ON_DESKTOP">Desktop</option>
-									<option value="PLAY_ON_CONSOLE">Console</option>
-									<option value="PLAY_ON_MOBILE">Mobile</option>
-								</select>
-								<label class="check small"><input type="checkbox" id="chkExpiringSoon" /> Sắp hết hạn (3 ngày)</label>
-								<label class="check small"><input type="checkbox" id="chkFavOnly" /> Chỉ yêu thích</label>
-								<label class="check small"><input type="checkbox" id="chkMockMode" /> Chế độ thử (mock)</label>
 								<button class="btn btn-primary quest-claim-all" id="btnClaimAll" type="button" hidden>Nhận tất cả</button>
 								<button class="chip chip-ghost claim-queue-chip" id="claimQueueChip" type="button" hidden
 									title="Tiếp tục nhận các nhiệm vụ đang chờ xác minh">Chờ xác minh: 0</button>
 								<span class="quest-filter-count mono" id="questFilterCount" hidden></span>
+								<button class="ghost-btn quest-adv-toggle" id="btnAdvancedFilters" type="button" aria-expanded="false" aria-controls="questAdvanced">Bộ lọc nâng cao <span id="advancedFilterCount"></span></button>
+								<div class="quest-advanced" id="questAdvanced" hidden>
+									<div class="quest-adv-group">
+										<span class="quest-adv-title">Lọc chung</span>
+										<select id="questPlatformFilter" class="custom-select quest-filter" aria-label="Lọc theo nền tảng">
+											<option value="all">Mọi nền tảng</option>
+											<option value="0">Desktop</option>
+											<option value="1">Console</option>
+											<option value="2">Mobile</option>
+										</select>
+										<select id="questTaskFilter" class="custom-select quest-filter" aria-label="Lọc theo loại nhiệm vụ">
+											<option value="all">Mọi loại nhiệm vụ</option>
+											<option value="WATCH_VIDEO">Video</option>
+											<option value="WATCH_STREAM">Stream</option>
+											<option value="PLAY_ON_DESKTOP">Desktop</option>
+											<option value="PLAY_ON_CONSOLE">Console</option>
+											<option value="PLAY_ON_MOBILE">Mobile</option>
+										</select>
+										<label class="check small"><input type="checkbox" id="chkExpiringSoon" /> Sắp hết hạn (3 ngày)</label>
+									</div>
+									<div class="quest-adv-group" id="doneToolsAdvanced" hidden>
+										<span class="quest-adv-title">Đã làm: ngày nhận</span>
+										<label class="check small">Từ <input type="date" id="doneDateFrom" class="custom-select" /></label>
+										<label class="check small">Đến <input type="date" id="doneDateTo" class="custom-select" /></label>
+										<label class="check small"><input type="checkbox" id="chkDoneUndated" checked /> Kèm chưa rõ ngày nhận</label>
+										<label class="check small"><input type="checkbox" id="chkGroupGames" /> Nhóm theo game</label>
+									</div>
+									<div class="quest-adv-group" id="doneExportAdvanced" hidden>
+										<span class="quest-adv-title">Đã làm: xuất dữ liệu</span>
+										<button class="ghost-btn" id="btnExportDoneCsv" type="button">Xuất CSV</button>
+										<button class="ghost-btn" id="btnExportDoneJson" type="button">Xuất JSON</button>
+										<label class="check small"><input type="checkbox" id="chkExportCodes" /> Kèm code (chỉ phiên này)</label>
+										<button class="ghost-btn" id="btnClearDoneCache" type="button">Xóa cache Đã làm</button>
+									</div>
+								</div>
 							</div>
 
 							<div class="select-tools" id="selectTools" hidden>
