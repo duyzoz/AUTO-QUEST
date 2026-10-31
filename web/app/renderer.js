@@ -561,6 +561,29 @@ function playSuccess() {
 	playTone(1320, 0.16, 'sine', 0.07, 0.14);
 }
 function playError() { if (soundEnabled) playTone(180, 0.14, 'sine', 0.06, 0); }
+/* FIX64-P5 (W53/W54): 2 tieng RIENG, khong file am thanh, WebAudio tong
+   hop nhu cac tieng cu, mac dinh TAT (chi phat khi soundEnabled).
+   - playQuestComplete: quest vua xong 100% (quest:done) — 4 not triangle
+     tang dan, khac playSuccess (3 not sine) va moi tieng cu.
+   - playClaimSuccess: Discord da xac nhan trao thuong (claim don + claim
+     hang loat) — 2 not sine cao ("coin"), khac playQuestComplete,
+     playSuccess, playScanDone, playSoundOn.
+   - playSuccess giu lai de tuong thich (self-test cu assert co ham), nhung
+     khong con duoc noi vao duong claim/completion nua.
+   - playError giu nguyen: 1 not tram 180Hz sine — thap nhat he thong,
+     khong trung not nao cua ho success, khong dung chung tieng click. */
+function playQuestComplete() {
+	if (!soundEnabled) return;
+	playTone(523, 0.10, 'triangle', 0.06, 0);
+	playTone(659, 0.10, 'triangle', 0.06, 0.09);
+	playTone(784, 0.12, 'triangle', 0.06, 0.18);
+	playTone(1046, 0.20, 'triangle', 0.07, 0.30);
+}
+function playClaimSuccess() {
+	if (!soundEnabled) return;
+	playTone(1318, 0.08, 'sine', 0.07, 0);
+	playTone(1760, 0.22, 'sine', 0.07, 0.07);
+}
 function playToggle() { if (soundEnabled) { playTone(520, 0.08, 'sine', 0.06, 0); playTone(780, 0.08, 'sine', 0.06, 0.06); } }
 /* FIX26-E: bo sound rieng theo tung loai thao tac — tat ca deu la song
    WebAudio tu tong hop trong code, KHONG file am thanh, KHONG lay cua
@@ -3867,7 +3890,7 @@ async function runClaim(quest, captchaMeta) {
 			recordClaim(quest.name, res.orbs || quest.orbs || 0, id);
 			appendLog(`[OK] Đã nhận "${quest.name || ''}" (+${res.orbs || quest.orbs || 0} Orbs) — Discord xác nhận.`, 'ok');
 			toast(`Đã nhận ${res.orbs || quest.orbs || 0} Orbs · "${quest.name || ''}"`);
-			playSuccess();
+			playClaimSuccess();
 			notifySystem('Đã nhận Orbs', `+${res.orbs || quest.orbs || 0} Orbs · ${quest.name || ''}`);
 			// Số dư nhảy THẬT: đọc lại ví từ Discord (không tự cộng số ảo)
 			fetchOrbBalance(token);
@@ -4132,7 +4155,7 @@ async function claimSequence(ids, source = 'bulk') {
 		appendLog(`[Hệ thống] Nhận hàng loạt xong: ${bits.join(' · ')}.`, claimed > 0 ? 'ok' : 'warn');
 		if (claimed > 0) {
 			toast(`Đã nhận ${claimed} nhiệm vụ${orbs > 0 ? ` (+${orbs} Orbs)` : ''}.`);
-			playSuccess();
+			playClaimSuccess();
 			notifySystem('Nhận hàng loạt', `Đã nhận ${claimed} nhiệm vụ${orbs > 0 ? ` (+${orbs} Orbs)` : ''}`);
 		} else if (attempted > 0) {
 			toast('Không nhận được nhiệm vụ nào — xem nhật ký để biết lý do.', true);
@@ -4560,8 +4583,11 @@ async function handleEvent(evt) {
 				// reward was claimed. Do not toast "+Orbs" as if received, and
 				// do not add to any session total here — only a confirmed
 				// quest:claim event counts Orbs.
+				// FIX64-P5 (W53): tieng hoan thanh RIENG (khac tieng claim),
+				// chi phat 1 lan nho co doneSeen (first) — khong spam.
 				if (earned > 0) toast(`Hoàn thành "${d.name || q.name}" — phần thưởng ${earned} Orbs, chưa nhận.`);
 				else toast(`Hoàn thành "${d.name || q.name}" — chờ nhận thưởng.`);
+				playQuestComplete();
 			}
 			// Discord chặn claim bằng captcha → báo 1 lần, đừng để bro tưởng app lỗi.
 			if (d.note && !claimNoteShown) {
@@ -7302,6 +7328,11 @@ function trapFocusIn(container, e) {
 	else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
 }
 document.addEventListener('keydown', (e) => {
+	// FIX64-P5 (W61): Esc dong ca modal captcha — truoc day chi co nut Huy
+	// + bam veil moi dong duoc; Tab trap da bao modal-veil nhung Esc thi
+	// chua. Dung dung closeCaptchaModal cua nut Huy (reset widget, xoa ctx)
+	// nen khong them rui ro trang thai moi.
+	if (e.key === 'Escape' && ui.captchaModal && !ui.captchaModal.hidden) { closeCaptchaModal(); return; }
 	if (e.key === 'Escape' && ui.accountSheetVeil && !ui.accountSheetVeil.hidden) { closeAccountSheet({ returnFocus: true }); return; }
 	if (e.key === 'Escape' && ui.sidebar && ui.sidebar.classList.contains('open')) { closeDrawer({ returnFocus: true }); return; }
 	if (e.key !== 'Tab') return;

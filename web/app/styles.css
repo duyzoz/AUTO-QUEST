@@ -2550,6 +2550,13 @@ body {
 	color: #3d2f21;
 }
 [data-theme="light"] #pageSettings .config-card .ghost-btn:hover { background: rgba(150, 112, 72, 0.1); color: #1c1409; }
+/* FIX64-P5 (W56): 3 hover con sot dung chu TRANG (#fff) tren nen kem/nau
+   nhat o theme Sang — do tuong phan ~1.5:1, gan nhu trang tren trang.
+   Quy tac goc (dark) giu nguyen; chi theme Sang doi sang chu nau dam
+   (#1c1409, cung mau voi ghost-btn:hover da sua truoc do). */
+[data-theme="light"] #pageSettings .config-card .save-btn:hover { background: rgba(150, 112, 72, 0.2); color: #1c1409; }
+[data-theme="light"] #pageSettings .config-card .btn-copy-script:hover { background: rgba(150, 112, 72, 0.2); color: #1c1409; }
+[data-theme="light"] #pageSettings .config-card .guide-tab:hover { background: rgba(150, 112, 72, 0.12); color: #1c1409; }
 [data-theme="light"] #pageSettings .config-card .guide-header,
 [data-theme="light"] #pageSettings .config-card .guide-icon { color: #8a5a10; }
 [data-theme="light"] #pageSettings .config-card .guide-tab { color: #5a4a38; }
@@ -4043,8 +4050,9 @@ body {
 	}
 	/* Tín hiệu tiến trình: KHÔNG tắt, chỉ làm chậm cho dễ chịu */
 	.snake-spin { animation-duration: 1.6s !important; }
-	/* Thẻ trôi vào: giữ nhưng nhanh gọn */
-	.qcard.qin, .qdone.qin { animation-duration: 0.24s !important; }
+	/* FIX64-P5 (W55): the troi vao la chuyen dong trang tri — tat han duoi
+	   reduced-motion (truoc day van chay 0.24s), chi giu tin hieu tien trinh. */
+	.qcard.qin, .qdone.qin { animation: none !important; }
 }
 
 /* ============================================================
@@ -5965,6 +5973,12 @@ body.lite .claim-pill-spin { animation-duration: 1.6s; }
 	.toast { animation: none; }
 	.qcard { transition: none; }
 	.qdone { transition: none; }
+	/* FIX64-P5 (W55): cac cho con sot — bam nut (transform :active) va
+	   veil mo modal (veilIn) van chay duoi reduced-motion vi transition:
+	   none chi tat animation chu khong xoa transform/animation cua chinh
+	   chung. Tat han o day (block nay dung sau moi dinh nghia goc). */
+	.btn:active:not(:disabled), .qcard-act:active, .nav-item:active, .topbar-btn:active { transform: none; }
+	.modal-veil, .lock-veil { animation: none; }
 }
 
 /* ============================================================

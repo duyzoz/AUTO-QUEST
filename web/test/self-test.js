@@ -1407,6 +1407,52 @@ check('FIX64-P4: tin cay / hieu nang / chan doan (W41-W52)', () => {
 	return 'khoi phuc giu tich + social thu lai + dem nguoc 429 + cau token chet + luu lua chon + diag co gio';
 });
 
+check('FIX64-P5: am thanh / giam chuyen dong / theme sang / ban phim (W53-W62)', () => {
+	const js = read(path.join(APP, 'renderer.js'));
+	const css = read(path.join(APP, 'styles.css'));
+	const mobile = read(path.join(APP, 'mobile.css'));
+	// W53: 2 tieng moi rieng + noi dung duong.
+	assert(/function playQuestComplete/.test(js) && /function playClaimSuccess/.test(js), 'thieu playQuestComplete / playClaimSuccess');
+	const qc = js.match(/function playQuestComplete\(\) \{[\s\S]*?\n\}/)[0];
+	const cs = js.match(/function playClaimSuccess\(\) \{[\s\S]*?\n\}/)[0];
+	assert(qc.includes('523') && qc.includes('659') && qc.includes('784') && qc.includes('1046'), 'quest-complete phai la 4 not triangle 523/659/784/1046');
+	assert(cs.includes('1318') && cs.includes('1760'), 'claim-success phai la 2 not sine cao 1318/1760');
+	assert(!/523[\s\S]{0,80}1318/.test(qc) && qc !== cs, '2 tieng phai khac nhau');
+	assert(js.includes('playQuestComplete();') && /quest:done[\s\S]{0,2000}playQuestComplete/.test(js), 'quest:done (first) phai phat tieng hoan thanh');
+	assert((js.match(/playSuccess\(\);/g) || []).length === 0, 'khong con diem goi playSuccess cu — claim/completion phai dung tieng moi');
+	const claimSites = (js.match(/playClaimSuccess\(\);/g) || []).length;
+	assert(claimSites >= 2, 'claim don + claim hang loat deu phai dung playClaimSuccess');
+	assert(!/function playClaimSuccess[\s\S]{0,400}\.mp3|\.wav|\.ogg/.test(js), 'khong duoc co file am thanh');
+	// W54: tieng loi tram, don, khong trung tieng success/claim/complete.
+	const er = js.match(/function playError\(\) \{[^\n]*\}/)[0];
+	assert(er.includes('180'), 'playError phai la not tram 180Hz');
+	assert(!/(660|880|1320|1318|1760|523|659|784|1046)/.test(er), 'playError khong duoc trung not success');
+	assert(js.includes("if (isError) { playError();"), 'toast loi phai phat playError');
+	// W55: reduced-motion tat them :active, qin, veil.
+	assert(/@media \(prefers-reduced-motion: reduce\)[\s\S]{0,600}\.btn:active:not\(:disabled\)[\s\S]{0,200}transform: none/.test(css), 'reduced-motion phai tat transform :active');
+	assert(/\.qcard\.qin, \.qdone\.qin \{ animation: none !important; \}/.test(css), 'reduced-motion phai tat han qin (khong giu 0.24s)');
+	assert(/\.modal-veil, \.lock-veil \{ animation: none; \}/.test(css), 'reduced-motion phai tat veilIn');
+	assert(css.includes('.snake-spin { animation-duration: 1.6s !important; }'), 'tin hieu tien trinh (snake-spin) phai giu, chi cham lai');
+	// W56: 3 hover theme Sang khong con chu trang tren nen kem.
+	assert(css.includes('[data-theme="light"] #pageSettings .config-card .save-btn:hover') && css.includes('[data-theme="light"] #pageSettings .config-card .btn-copy-script:hover') && css.includes('[data-theme="light"] #pageSettings .config-card .guide-tab:hover'), 'theme Sang phai override 3 hover nut Settings');
+	// W58/W59/W60: breakpoint + cham + input (audit-pin, khong doi code).
+	assert(/@media \(max-width: 560px\)[\s\S]{0,300}\.quest-list \{\s*grid-template-columns: 1fr;/.test(css), 'mobile 560px phai 1 cot');
+	assert(/@media \(max-width: 1023px\)[\s\S]{0,300}\.quest-list \{ grid-template-columns: repeat\(2/.test(css), 'tablet 1023px phai 2 cot');
+	assert(css.includes('.quest-list { grid-template-columns: repeat(3, minmax(0, 1fr))'), 'desktop phai 3 cot');
+	assert(mobile.includes('min-height: 44px') && mobile.includes('font-size: 16px'), 'mobile phai co cham >=44px + input >=16px');
+	assert(mobile.includes('grid-template-columns: 1fr') && js.includes("closeDrawer({ returnFocus: true })"), 'drawer phai dong + tra focus');
+	// W61: Esc dong captcha (gap duy nhat truoc P5) + trap/focus san co.
+	assert(/Escape' && ui\.captchaModal && !ui\.captchaModal\.hidden\) \{ closeCaptchaModal/.test(js), 'Esc phai dong modal captcha');
+	assert(css.includes(':focus-visible'), 'focus-visible phai ton tai');
+	// W62: 3 trang dung chung khung .card NEO (2px + radius 20 + bong cung).
+	assert(css.includes('.stat-card { border: 2px solid var(--neo-line); border-radius: 20px') && css.includes('.config-card { border: 2px solid var(--neo-line); border-radius: 20px') && css.includes('.card { border: 2px solid var(--neo-line); border-radius: 20px'), 'Stats/Settings/About phai chung khung .card NEO');
+	// MUST NOT BREAK: P0/P1/P2/P3/P4 markers.
+	assert(js.includes('Cần chơi trong Discord') && js.includes('heartbeatBlocked'), 'khong duoc pha heartbeat-blocked (P0)');
+	assert(css.includes('gap: 28px'), 'khong duoc pha gap 28px (P2)');
+	assert(js.includes('qcard-prog') && js.includes('autoquest.selection.v1') && js.includes('Token không còn hiệu lực, dán lại token.'), 'khong duoc pha P3/P4');
+	return 'tieng complete/claim rieng + loi tram + reduced-motion du + hover Sang + Esc captcha + khung chung';
+});
+
 /* ── In kết quả ────────────────────────────────────────────────────────── */
 for (const r of results) {
 	const tag = r.ok ? 'PASS' : 'FAIL';
