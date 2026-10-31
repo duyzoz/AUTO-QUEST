@@ -71,6 +71,18 @@
 	--amber: #fbbf24;
 	--amber-strong: #d97706;
 	--amber-ink: #1c1005;
+	--neo-bg: #0a1120;
+	--neo-surface: #101a2e;
+	--neo-surface-strong: #16233a;
+	--neo-cream: #fdf6e3;
+	--neo-blue: #60a5fa;
+	--neo-blue-ink: #0b1e3f;
+	--neo-pink: #f472b6;
+	--neo-pink-ink: #3b0a24;
+	--neo-yellow: #facc15;
+	--neo-yellow-ink: #1c1005;
+	--neo-line: #e2e8f0;
+	--neo-shadow: rgba(0, 0, 0, 0.55);
 }
 
 * {
@@ -4863,6 +4875,18 @@ body {
 	--amber: #d97706;
 	--amber-strong: #b45309;
 	--amber-ink: #1f1302;
+	--neo-bg: #fff8e3;
+	--neo-surface: #ffffff;
+	--neo-surface-strong: #fef3c7;
+	--neo-cream: #fff8e3;
+	--neo-blue: #1d4ed8;
+	--neo-blue-ink: #ffffff;
+	--neo-pink: #db2777;
+	--neo-pink-ink: #ffffff;
+	--neo-yellow: #facc15;
+	--neo-yellow-ink: #1c1005;
+	--neo-line: #0f172a;
+	--neo-shadow: rgba(15, 23, 42, 0.25);
 }
 
 /* --- Nền app: sáng, glow nhẹ, KHÔNG còn mảng đen nào --- */
@@ -6564,4 +6588,41 @@ body.lite .claim-pill-spin { animation-duration: 1.6s; }
 	.qcard, .qdone, .stat-card, .nav-item, .topbar-btn, .btn, .qcard-banner img, .qdone .qmedia, .qcard-act, .modal-card, .toast.show { transition: none; animation: none; }
 	.qcard:hover, .qdone:hover, .stat-card:hover { transform: none; }
 	.qcard:hover .qcard-banner img, .qdone:hover .qmedia { transform: none; }
+}
+
+/* ============================================================
+   NEO-BRUTALIST P0 — Quest-grid fix (W1-W6, 2026-10-31).
+   W1 FINDING: base .qcard was height 126px + overflow hidden, so the
+   bottom row of a quest card (publisher/reward row) was genuinely
+   clipped whenever the title wrapped or the card narrowed. The MAJOR
+   section already set height auto, but .qcard-body kept overflow
+   hidden and .qcard-desc kept a 2-line clamp, so long text could
+   still be cut. The screenshot crop alone was not proof, but the
+   fixed-height + hidden-overflow combination was a real clipping
+   cause. This section removes every remaining internal clip: cards
+   grow to fit their content, titles/descriptions wrap in full, and
+   grid rows are complete. No logic change, no new classes here.
+   ============================================================ */
+.quest-list { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; padding: 4px; align-items: stretch; }
+.qcard { height: auto; border-radius: 20px; border: 2px solid var(--neo-line); box-shadow: 4px 4px 0 var(--neo-shadow); }
+.qcard-body { overflow: visible; padding: 16px; gap: 12px; }
+.qcard-title { display: block; overflow: visible; white-space: normal; -webkit-line-clamp: unset; }
+.qcard-desc { display: block; overflow: visible; white-space: normal; -webkit-line-clamp: unset; }
+.qcard-info { min-width: 0; }
+.qcard-pub { flex-wrap: wrap; }
+.qcard-pub-l { min-width: 0; flex-wrap: wrap; }
+.qcard-pub-l b { white-space: normal; overflow: visible; }
+.qcard-main { min-width: 0; }
+.qcard-foot { padding: 0 16px 16px; }
+.qgrid-done { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.qdone { border-radius: 20px; border: 2px solid var(--neo-line); box-shadow: 4px 4px 0 var(--neo-shadow); }
+.qstate { border: 2px solid var(--neo-line); border-radius: 20px; background: var(--neo-surface); box-shadow: 4px 4px 0 var(--neo-shadow); padding: 20px; color: var(--fg); font-weight: 700; }
+.qstate.is-empty { border: 2px dashed var(--neo-line); box-shadow: 4px 4px 0 var(--neo-shadow); }
+@media (max-width: 1023px) {
+	.quest-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+	.qgrid-done { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 560px) {
+	.quest-list { grid-template-columns: 1fr; }
+	.qgrid-done { grid-template-columns: 1fr; }
 }

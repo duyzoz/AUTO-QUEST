@@ -1073,6 +1073,18 @@ check('MAJOR REDESIGN: mọi class trong section mới đều đã tồn tại, 
 	return 'tất cả class MAJOR đã tồn tại trước đó';
 });
 
+
+check('NEO P0: quest grid 3/2/1, cards complete, no internal clip', () => {
+	const css = read(path.join(APP, 'styles.css'));
+	const neo = css.slice(css.indexOf('NEO-BRUTALIST P0'));
+	assert(/\.quest-list \{[^}]*grid-template-columns: repeat\(3, minmax\(0, 1fr\)\)/.test(neo), 'quest-list desktop phai 3 cot');
+	assert(/\.qcard-body \{[^}]*overflow: visible/.test(neo), 'qcard-body khong duoc overflow hidden');
+	assert(/\.qcard-desc \{[^}]*-webkit-line-clamp: unset/.test(neo), 'qcard-desc khong duoc clamp cat chu');
+	assert(/\.qgrid-done \{[^}]*grid-template-columns: repeat\(3, minmax\(0, 1fr\)\)/.test(neo), 'qgrid-done desktop phai 3 cot, khong 6 cot');
+	assert(/\.qcard \{[^}]*border-radius: 20px/.test(neo), 'qcard phai bo tron hoan chinh');
+	return 'grid 3/2/1 + card day du + done 3 cot';
+});
+
 /* ── In kết quả ────────────────────────────────────────────────────────── */
 for (const r of results) {
 	const tag = r.ok ? 'PASS' : 'FAIL';

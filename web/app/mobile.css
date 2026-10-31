@@ -942,3 +942,11 @@ html {
 	.stat-card { padding: 16px; }
 	.qcard-body { padding: 16px; }
 }
+
+/* NEO-BRUTALIST P0 — Done grid matches quest grid breakpoints. */
+@media (max-width: 1023px) {
+	.qgrid-done { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 560px) {
+	.qgrid-done { grid-template-columns: 1fr; }
+}
