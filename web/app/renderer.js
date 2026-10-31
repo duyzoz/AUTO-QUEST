@@ -3396,12 +3396,19 @@ function pruneQuestsMissing(list) {
      2) Discord trả OK  → orbs nhảy THẬT (đọc lại ví) + thẻ sang "Đã nhận"
      3) Discord trả 400 + captcha_sitekey → mở MODAL hCaptcha:
         render widget hCaptcha THẬT bằng sitekey/rqdata Discord cấp.
-        Người dùng tự giải. Giải xong → tự gọi lại claim kèm captcha_key.
+        Người dùng tự giải. Giải xong → callback chỉ lưu token chờ; bấm
+        "Gửi xác minh ngay" mới gọi lại claim kèm captcha_key.
      4) Nếu vẫn lỗi → hiện NGUYÊN VĂN lỗi server, tuyệt đối không bịa.
    Không bypass, không bẻ khoá: chỉ dựng lại đúng trình xác thực của Discord.
    ============================================================ */
 
-let captchaCtx = null; // { quest, captcha, widgetId }
+let captchaCtx = null; // { quest, captcha, widgetId, pendingToken }
+// CLAIM-MANUAL (2026-10-31): callback hCaptcha CHỈ báo token sẵn sàng, KHÔNG tự gửi.
+// Token chờ nằm ở captchaCtx.pendingToken; chỉ nút "Gửi xác minh ngay" mới gửi,
+// đúng 1 lần qua guard submitted trong onCaptchaSolved. Hết hạn/đóng/mở lại:
+// pendingToken bị xóa, hint về trạng thái chờ tick, không bao giờ gửi token cũ.
+const CAPTCHA_HINT_IDLE = 'Tick vào ô xác minh bên trên, giải thử thách nếu hiện, rồi bấm "Gửi xác minh ngay" để gửi kết quả nhận thưởng.';
+const CAPTCHA_HINT_READY = 'Đã có kết quả xác minh — bấm "Gửi xác minh ngay" để gửi.';
 let lastCaptchaSubmit = null; // Chẩn đoán claim: { source, delayMs } — KHÔNG chứa token.
 let hcaptchaLoading = null;
 let captchaWarmStarted = false;
@@ -3611,6 +3618,7 @@ async function openCaptchaModal(quest, captcha) {
 		quest,
 		captcha,
 		widgetId: null,
+		pendingToken: null,
 		openedAt: Date.now(),
 		theme: document.documentElement.dataset.theme === 'light' ? 'light' : 'dark',
 	};
@@ -3636,6 +3644,7 @@ async function openCaptchaModal(quest, captcha) {
 		ui.captchaTarget.hidden = false;
 	}
 	if (ui.captchaErr) setCaptchaError('');
+	if (ui.captchaHint) ui.captchaHint.textContent = CAPTCHA_HINT_IDLE;
 	if (ui.captchaLoading) ui.captchaLoading.hidden = false;
 	if (ui.btnCaptchaRetry) ui.btnCaptchaRetry.disabled = true;
 	ui.captchaModal.hidden = false;
@@ -3692,8 +3701,9 @@ async function openCaptchaModal(quest, captcha) {
 	// rồi mất, không hiện thử thách — và Discord trả 403 · 10008 (nhánh D) vì token
 	// đó không được tính là đã giải. Nay widget chỉ dựng ở size 'normal', KHÔNG
 	// execute, KHÔNG tự quét token: người dùng tick vào ô, giải thử thách nếu hiện,
-	// token từ lần tương tác thật đó mới qua callback (hoặc nút "Gửi xác minh ngay")
-	// để gửi claim. Claim nào không bị bắt captcha thì không qua bước này.
+	// token từ lần tương tác thật đó chỉ được LƯU LẠI qua callback (CLAIM-MANUAL:
+	// callback không gửi); chỉ nút "Gửi xác minh ngay" mới gửi claim. Claim nào
+	// không bị bắt captcha thì không qua bước này.
 	const renderOpts = {
 		sitekey: captcha.sitekey,
 		size: 'normal',
@@ -3703,12 +3713,16 @@ async function openCaptchaModal(quest, captcha) {
 		// visible người dùng tick trực tiếp, token do render tạo nên không mang
 		// rqdata → Discord xác minh sai → captcha-required / 403·10008.
 		...(captcha.rqdata ? { rqdata: captcha.rqdata } : {}),
-		callback: (token) => onCaptchaSolved(token),
+		callback: (token) => onCaptchaTokenReady(token),
 		'error-callback': () => setCaptchaError('hCaptcha báo lỗi khi tải. Bấm "Thử lại" hoặc tải lại ô xác minh.'),
 		'expired-callback': () => {
 			// Waves 41: hCaptcha "passive" token sống rất ngắn (vài chục giây). Khi nó
 			// hết hạn, widget KHÔNG tự lấy token mới → phải reset để lấy phiên mới.
 			// Trước đây chỉ báo lỗi mà không tự làm mới → user thấy "dead link" lặp lại.
+			// CLAIM-MANUAL: token chờ (nếu có) hết hiệu lực cùng phiên — xóa để
+			// không bao giờ gửi token cũ, hint về trạng thái chờ tick lại.
+			if (captchaCtx) captchaCtx.pendingToken = null;
+			if (ui.captchaHint) ui.captchaHint.textContent = CAPTCHA_HINT_IDLE;
 			appendLog('[Cảnh báo] Phiên xác minh hết hạn — đã reset hộp, chờ người dùng tick lại.', 'warn');
 			setCaptchaError('Phiên xác minh hết hạn — tick lại ô bên trên để lấy phiên mới.');
 			// Tự reset widget để lấy phiên mới rồi chạy lại xác minh.
@@ -3739,7 +3753,7 @@ async function openCaptchaModal(quest, captcha) {
 	if (ui.btnCaptchaRetry) ui.btnCaptchaRetry.disabled = false;
 	// Wave sửa claim mobile: KHÔNG tự execute, KHÔNG tự quét token nữa.
 	// Hộp đứng yên chờ người dùng tick; token từ tương tác thật mới được gửi.
-	appendLog('[Hệ thống] Hộp xác minh đã sẵn — tick vào ô, giải thử thách nếu hiện, rồi app tự gửi khi có token (hoặc bấm \'Gửi xác minh ngay\').', 'system');
+	appendLog('[Hệ thống] Hộp xác minh đã sẵn — tick vào ô, giải thử thách nếu hiện, rồi bấm \'Gửi xác minh ngay\' để gửi.', 'system');
 	// Waves 38: đo trạng thái widget ra terminal (chẩn đoán hộp trắng / không bấm được).
 	if (window.autoquest && window.autoquest.captchaTrace) {
 		let n = 0;
@@ -3771,15 +3785,29 @@ async function openCaptchaModal(quest, captcha) {
 	}
 }
 
-/** Người dùng giải xong captcha → tự gọi lại claim kèm captcha_key (2A). */
-async function onCaptchaSolved(captchaToken, source = 'callback') {
+/**
+ * CLAIM-MANUAL: callback hCaptcha CHỈ lưu token chờ, KHÔNG gửi, KHÔNG đóng modal.
+ * Người dùng tự quyết lúc gửi bằng nút "Gửi xác minh ngay" (onCaptchaRetryClick).
+ */
+function onCaptchaTokenReady(token) {
+	if (!captchaCtx || !token) return;
+	if (captchaCtx.submitted) return; // Đã gửi rồi — token tới sau không làm gì.
+	captchaCtx.pendingToken = token;
+	if (ui.captchaHint) ui.captchaHint.textContent = CAPTCHA_HINT_READY;
+	if (ui.btnCaptchaRetry) ui.btnCaptchaRetry.disabled = false;
+	appendLog('[Hệ thống] Đã có kết quả xác minh — chờ bạn bấm "Gửi xác minh ngay" để gửi.', 'system');
+}
+
+/** Nút "Gửi xác minh ngay" → gọi lại claim kèm captcha_key (2A). Cửa gửi DUY NHẤT. */
+async function onCaptchaSolved(captchaToken, source = 'manual') {
 	if (!captchaCtx || !captchaToken) return;
-	if (captchaCtx.submitted) return; // Chỉ gửi 1 lần (callback + nút bấm không đua nhau).
+	if (captchaCtx.submitted) return; // Chỉ gửi 1 lần (callback lưu chờ + nút bấm không đua nhau).
+	captchaCtx.pendingToken = null;
 	captchaCtx.submitted = true;
 	lastCaptchaSubmit = { source, delayMs: captchaCtx.openedAt ? Date.now() - captchaCtx.openedAt : null };
 	const { quest } = captchaCtx;
 	const captcha = captchaCtx.captcha;
-	appendLog('[Hệ thống] Đã có kết quả xác minh — tự gửi lại yêu cầu nhận thưởng tới Discord…', 'system');
+	appendLog('[Hệ thống] Đang gửi yêu cầu nhận thưởng kèm kết quả xác minh tới Discord…', 'system');
 	closeCaptchaModal();
 	const outcome = await runClaim(quest, {
 		captchaKey: captchaToken,
@@ -3795,21 +3823,24 @@ async function onCaptchaSolved(captchaToken, source = 'callback') {
 	}
 }
 
-/** Nút "Tôi đã giải xong" — đọc token từ widget nếu callback chưa bắn. */
+/** Nút "Gửi xác minh ngay" — cửa gửi DUY NHẤT: gửi token chờ, đúng 1 lần. */
 function onCaptchaRetryClick() {
 	if (!captchaCtx || captchaCtx.widgetId == null) {
 		closeCaptchaModal();
 		return;
 	}
-	let token = null;
-	try {
-		token = window.hcaptcha.getResponse(captchaCtx.widgetId);
-	} catch {
-		token = null;
+	// Ưu tiên token callback đã lưu chờ; dự phòng khi callback chưa bắn thì đọc
+	// token từ widget — chỉ gửi khi widget ĐÃ có token từ lần người dùng
+	// tick/giải, không tự tạo token.
+	let token = captchaCtx.pendingToken || null;
+	if (!token) {
+		try {
+			token = window.hcaptcha.getResponse(captchaCtx.widgetId);
+		} catch {
+			token = null;
+		}
 	}
 	if (!token) {
-		// Nút dự phòng khi callback chưa bắn: chỉ gửi khi widget ĐÃ có token
-		// từ lần người dùng tick/giải, không tự tạo token.
 		setCaptchaError('Chưa có kết quả xác minh. Tick vào ô bên trên, giải thử thách nếu hiện, rồi bấm lại nút này.');
 		return;
 	}

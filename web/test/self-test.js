@@ -972,7 +972,7 @@ check('Wave chẩn đoán claim: thẻ ghi nhánh C/D + nguồn token + thời g
 	const js = read(path.join(APP, 'renderer.js'));
 	const css = read(path.join(APP, 'styles.css'));
 	assert(/CLAIM_DIAG_BRANCH/.test(js) && /'captcha-still-required'/.test(js) && /'grant-403-10008'/.test(js), 'thiếu map nhánh C/D');
-	assert(/onCaptchaSolved\(captchaToken, source = 'callback'\)/.test(js), 'onCaptchaSolved phải nhận source');
+	assert(/onCaptchaSolved\(captchaToken, source = 'manual'\)/.test(js), 'onCaptchaSolved phai nhan source (CLAIM-MANUAL: mac dinh manual, callback khong gui)');
 	assert(!/onCaptchaSolved\(token, 'auto-poll'\)/.test(js), 'đường tự động quét đã bị wave sửa gỡ nên không còn');
 	assert(/onCaptchaSolved\(token, 'manual'\)/.test(js), 'đường bấm thủ công phải ghi source manual');
 	assert(/openedAt: Date\.now\(\)/.test(js), 'mở hộp captcha phải ghi openedAt để tính thời gian');
@@ -996,12 +996,12 @@ check('Wave sửa claim mobile: bỏ tự gửi captcha, chỉ gửi token từ 
 	assert(!/\.execute\(captchaCtx/.test(js), 'còn lời gọi hcaptcha.execute tự động');
 	assert(!/hcaptchaRecover\(/.test(js), 'còn lời gọi làm mới tự động đã xóa');
 	assert(/size: 'normal'/.test(js), 'widget phải giữ size normal để người dùng tick được');
-	assert(/callback: \(token\) => onCaptchaSolved\(token\)/.test(js), 'callback khi người dùng tick/giải phải còn');
+	assert(/callback: \(token\) => onCaptchaTokenReady\(token\)/.test(js), 'callback khi nguoi dung tick/giai chi luu token cho (CLAIM-MANUAL), khong gui');
 	assert(/onCaptchaSolved\(token, 'manual'\)/.test(js), 'nút gửi thủ công phải còn để dự phòng khi callback chưa bắn');
 	assert(!html.includes('App tự chạy xác minh'), 'gợi ý trong modal không được nói tự chạy nữa');
 	assert(html.includes('Tick vào ô xác minh'), 'modal phải hướng dẫn tick ô');
 	assert(!/'auto-poll'/.test(js), 'nguồn token tự quét không còn xảy ra nên không còn trong map chẩn đoán');
-	return 'không tự execute/quét, tick + callback + nút gửi còn đủ';
+	return 'không tự execute/quét/gửi, tick + callback lưu chờ + nút gửi mới gửi';
 });
 
 
@@ -1476,6 +1476,25 @@ check('DISCORD-ORB: video Orb Discord thay logo cu, hover + reduced-motion + khu
 	assert(css.includes('repeat(2, minmax(0, 1fr))') && css.includes('gap: 24px'), 'luoi Da lam phai 2 cot gap 24px');
 	assert(js.includes('Cần chơi trong Discord'), 'P0 blocked UI phai con');
 	return 'video Orb 3 slot + hover + reduced-motion + khung Da lam 16px/2 cot/24px, 0 logo cu';
+});
+
+check('CLAIM-MANUAL: callback captcha chỉ lưu token chờ, chỉ nút Gửi mới gửi', () => {
+	const js = read(path.join(APP, 'renderer.js'));
+	const html = read(path.join(APP, 'index.html'));
+	assert(/function onCaptchaTokenReady\(token\)/.test(js), 'thieu ham callback luu token cho');
+	assert(!/callback: \(token\) => onCaptchaSolved\(token\)/.test(js), 'callback van tu gui (phai la onCaptchaTokenReady)');
+	assert(/captchaCtx\.pendingToken = token/.test(js), 'callback phai luu token vao pendingToken');
+	const readyFn = (js.match(/function onCaptchaTokenReady\(token\) \{[\s\S]*?\n\}/) || [])[0] || '';
+	assert(readyFn && !/runClaim|closeCaptchaModal|onCaptchaSolved/.test(readyFn), 'callback luu cho khong duoc goi duong gui hay dong modal');
+	const retryFn = (js.match(/function onCaptchaRetryClick\(\) \{[\s\S]*?\n\}/) || [])[0] || '';
+	assert(retryFn && /captchaCtx\.pendingToken/.test(retryFn), 'nut Gui phai gui token cho');
+	assert(/onCaptchaSolved\(token, 'manual'\)/.test(js), 'nut Gui phai gui qua onCaptchaSolved source manual');
+	assert(/captchaCtx\.pendingToken = null/.test(js), 'gui xong va het han phai xoa token cho');
+	assert(/CAPTCHA_HINT_READY/.test(js) && /Đã có kết quả xác minh — bấm "Gửi xác minh ngay" để gửi\./.test(js), 'thieu text san sang gui khi co token');
+	assert(!js.includes('app tự gửi khi có token') && !html.includes('app tự gửi kết quả'), 'van con text hua tu gui khi co token');
+	assert(html.includes('rồi bấm "Gửi xác minh ngay" để gửi kết quả nhận thưởng'), 'hint modal phai noi bam Gui moi gui');
+	assert(/captchaCtx\.submitted/.test(js), 'guard gui 1 lan phai con');
+	return 'callback luu cho + nut Gui gui 1 lan + het han xoa token + text san sang, 0 tu gui';
 });
 
 /* ── In kết quả ────────────────────────────────────────────────────────── */
