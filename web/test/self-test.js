@@ -1125,6 +1125,22 @@ check('NEO P3: quest card v2 — progress bar, state sticker, done neo, toolbar'
 	return 'bar + state sticker + done neo + toolbar bento';
 });
 
+
+check('NEO P4: marquee + rotator + stickers + sound v2 + count-up + drag desktop-only', () => {
+	const css = read(path.join(APP, 'styles.css'));
+	const neo = css.slice(css.indexOf('NEO-BRUTALIST P4'));
+	const html = read(INDEX);
+	const js = read(path.join(APP, 'renderer.js'));
+	assert(html.includes('neo-marquee'), 'index co 1 marquee');
+	assert(!html.includes('MINH BACH') && !html.includes('UY TIN') && !html.includes('70%'), 'khong copy slogan/sticker trang tham khao');
+	assert(/\.neo-marquee:hover \.neo-marquee-track \{[^}]*animation-play-state: paused/.test(neo), 'marquee dung khi hover');
+	assert(/@media \(prefers-reduced-motion: reduce\)[\s\S]*\.neo-marquee-track \{[^}]*animation: none/.test(neo), 'marquee tat khi reduced-motion');
+	assert(js.includes('playToggle') && js.includes('neoCountUp') && js.includes('initNeoDrag'), 'renderer co toggle sound + count-up + drag');
+	assert(js.includes("(pointer: fine) and (min-width: 1024px)"), 'drag chi desktop');
+	assert(/SOUND_KEY/.test(js), 'sound van mac dinh OFF theo key hien co');
+	return 'marquee + rotator + sticker + sound v2 + count-up + drag';
+});
+
 /* ── In kết quả ────────────────────────────────────────────────────────── */
 for (const r of results) {
 	const tag = r.ok ? 'PASS' : 'FAIL';

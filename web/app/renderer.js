@@ -578,6 +578,7 @@ function playSuccess() {
 	playTone(1320, 0.16, 'sine', 0.07, 0.14);
 }
 function playError() { if (soundEnabled) playTone(180, 0.14, 'sine', 0.06, 0); }
+function playToggle() { if (soundEnabled) { playTone(520, 0.08, 'sine', 0.06, 0); playTone(780, 0.08, 'sine', 0.06, 0.06); } }
 function refreshSoundButton() {
 	if (!ui.btnSound) return;
 	ui.btnSound.classList.toggle('is-muted', !soundEnabled);
@@ -595,10 +596,24 @@ if (ui.btnSound) {
 		const willEnable = !soundEnabled;
 		if (!willEnable) playClick();
 		setSoundEnabled(willEnable);
-		if (willEnable) playClick();
+		if (willEnable) playToggle();
 	});
 }
 refreshSoundButton();
+/* NEO W33: keo sticker trang tri — CHI desktop (pointer fine + >=1024px). Chi doi
+   transform cua lop sticker, khong cham nut quest, khong anh huong logic. */
+function initNeoDrag() {
+	if (!window.matchMedia || !window.matchMedia('(pointer: fine) and (min-width: 1024px)').matches) return;
+	const el = document.querySelector('[data-neo-drag]');
+	if (!el) return;
+	let sx = 0, sy = 0, dx = 0, dy = 0, dragging = false;
+	el.addEventListener('pointerdown', (ev) => { dragging = true; sx = ev.clientX - dx; sy = ev.clientY - dy; el.setPointerCapture(ev.pointerId); el.style.cursor = 'grabbing'; });
+	el.addEventListener('pointermove', (ev) => { if (!dragging) return; dx = ev.clientX - sx; dy = ev.clientY - sy; el.style.transform = `translate(${dx}px, ${dy}px)`; });
+	const endDrag = () => { dragging = false; el.style.cursor = 'grab'; };
+	el.addEventListener('pointerup', endDrag);
+	el.addEventListener('pointercancel', endDrag);
+}
+initNeoDrag();
 /* Click chung cho mọi nút (đã lọc nút bị khóa): tiếng click chỉ kêu khi âm thanh đang bật,
    nên không cần sửa từng handler — và không đổi hành vi nào của nút. */
 document.addEventListener('click', (ev) => {
@@ -6646,9 +6661,20 @@ function updateBalanceHint() {
 	ui.orbPending.textContent = balanceHintText(pending, source, pendingUnknown);
 }
 
+/* NEO W29: dem tang cho so Orb THAT (khong so mo phong). Reduced-motion thi gan thang. */
+function neoCountUp(el, target) {
+	if (!el) return;
+	const from = parseInt((el.textContent || '').replace(/[^0-9-]/g, ''), 10);
+	const to = Number(target);
+	if (!Number.isFinite(to) || !Number.isFinite(from) || from === to) { el.textContent = String(target); return; }
+	if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) { el.textContent = String(target); return; }
+	const start = performance.now();
+	const step = (now) => { const t = Math.min(1, (now - start) / 400); el.textContent = String(Math.round(from + (to - from) * t)); if (t < 1) requestAnimationFrame(step); };
+	requestAnimationFrame(step);
+}
 function setSideBalance(balance, pendingClaim, source, pendingUnknown) {
 	if (!ui.sideBalance || !ui.orbBalance) return;
-	ui.orbBalance.textContent = String(balance);
+	neoCountUp(ui.orbBalance, balance);
 	ui.sideBalance.dataset.pending = String(Number(pendingClaim) || 0);
 	ui.sideBalance.dataset.pendingUnknown = pendingUnknown ? '1' : '';
 	ui.orbPending.textContent = balanceHintText(Number(pendingClaim) || 0, source, pendingUnknown);

@@ -6724,3 +6724,61 @@ body.lite .claim-pill-spin { animation-duration: 1.6s; }
 @media (prefers-reduced-motion: reduce) {
 	.neo-bar-fill { transition: none; }
 }
+/* ============================================================
+   NEO-BRUTALIST P4 — Motion, marquee, micro-interactions, sound
+   (W26-W34). ONE marquee band only, with original app words
+   (QUEST / ORB / NHAN THUONG) — never the reference site's
+   slogans, no fake live feed. Marquee pauses on hover/focus and
+   is fully off under prefers-reduced-motion. Rotating words are
+   CSS-only (grid-stacked spans) with app words only, placed in
+   the quest header row — not inside .profile-hero, whose inner
+   must stay untouched. Stickers are decorative, pointer-events
+   none on coarse pointers, and drag (W33) is desktop-only via
+   pointer-fine + min-width 1024px; drag moves only the sticker
+   layer via transform, never over quest buttons (the sticker row
+   sits above the toolbar, outside the quest list). Count-up and
+   sound v2 reuse the existing WebAudio synth only, default OFF.
+   Scroll-reveal is a light entry animation on the neo bands
+   only (not per-card IntersectionObserver — hundreds of Done
+   tiles must not each get an observer), disabled on small
+   screens and under reduced-motion. Live indicators stay only
+   for scan/claim actually in progress (running state sticker).
+   ============================================================ */
+.neo-marquee { overflow: hidden; border: 2px solid var(--neo-line); border-radius: 12px; background: var(--neo-blue); color: var(--neo-blue-ink); font-weight: 800; padding: 8px 0; animation: neoReveal 0.3s ease both; }
+.neo-marquee-track { display: flex; width: max-content; animation: neoMarquee 24s linear infinite; }
+.neo-marquee-track span { padding-right: 32px; white-space: nowrap; font-size: 14px; }
+.neo-marquee:hover .neo-marquee-track { animation-play-state: paused; }
+.neo-marquee:focus-within .neo-marquee-track { animation-play-state: paused; }
+.neo-sticker-row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; padding: 4px; animation: neoReveal 0.3s ease both; }
+.neo-sticker { display: inline-block; border: 2px solid var(--neo-line); border-radius: 12px; box-shadow: 2px 2px 0 var(--neo-shadow); background: var(--neo-yellow); color: var(--neo-yellow-ink); font-weight: 800; padding: 4px 8px; font-size: 14px; }
+.neo-sticker-pink { background: var(--neo-pink); color: var(--neo-pink-ink); }
+.neo-sticker-drag { cursor: grab; }
+.neo-rotator { display: inline-grid; font-weight: 800; font-size: 14px; }
+.neo-rotator span { grid-area: 1 / 1; opacity: 0; animation: neoRotate 9s infinite; }
+.neo-rotator span:nth-child(2) { animation-delay: 3s; }
+.neo-rotator span:nth-child(3) { animation-delay: 6s; }
+.qcard:hover { box-shadow: 6px 6px 0 var(--neo-shadow); }
+.qdone:hover { box-shadow: 6px 6px 0 var(--neo-shadow); }
+.modal-card { animation: neoPop 0.2s ease; }
+.toast { animation: neoPop 0.2s ease; }
+.qcard[data-status="running"] .qcard-state { background: var(--neo-blue); color: var(--neo-blue-ink); }
+@keyframes neoMarquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+@keyframes neoRotate { 0% { opacity: 1; } 30% { opacity: 1; } 33% { opacity: 0; } 100% { opacity: 0; } }
+@keyframes neoPop { from { transform: scale(0.96); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+@keyframes neoReveal { from { transform: translateY(4px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+@media (pointer: coarse) {
+	.neo-sticker-drag { pointer-events: none; }
+}
+@media (max-width: 560px) {
+	.neo-marquee { animation: none; }
+	.neo-sticker-row { animation: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+	.neo-marquee-track { animation: none; }
+	.neo-rotator span { animation: none; opacity: 0; }
+	.neo-rotator span:first-child { opacity: 1; }
+	.modal-card { animation: none; }
+	.toast { animation: none; }
+	.qcard { transition: none; }
+	.qdone { transition: none; }
+}
