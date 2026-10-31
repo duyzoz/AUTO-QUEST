@@ -1852,7 +1852,14 @@ function updateQuestFoot(node, q) {
 	if (btn.title !== label) btn.title = label;
 	const diagEl = r.diag;
 	if (diagEl) {
-		const diagText = formatClaimDiag(q, en);
+		// FIX64-P0 wave 4: hướng dẫn bằng chữ (không chỉ màu) cho quest bị
+		// chặn heartbeat — dùng chung ô chẩn đoán sẵn có của thẻ.
+		const blockedText = q.heartbeatBlocked
+			? en
+				? 'Discord rejected heartbeat (401) — play the game in the real Discord client; the app tracks progress via scans.'
+				: 'Heartbeat bị Discord từ chối (401) — mở game trong Discord thật và chơi, app theo dõi tiến độ qua quét.'
+			: '';
+		const diagText = formatClaimDiag(q, en) || blockedText;
 		if (diagEl.textContent !== diagText) diagEl.textContent = diagText;
 	}
 	node.classList.add('has-foot');
@@ -1883,9 +1890,11 @@ function updateQuestCard(node, q) {
 
 	node.dataset.status = q.stopFlag
 		? 'stop'
-		: q.running
-			? 'running'
-			: q.flag || q.status;
+		: q.heartbeatBlocked
+			? 'heartbeat-blocked'
+			: q.running
+				? 'running'
+				: q.flag || q.status;
 	let cardBadgeEl = node.querySelector('.reward-badge-card');
 	if (!cardBadgeEl) {
 		cardBadgeEl = document.createElement('span');
@@ -1955,7 +1964,11 @@ function updateQuestCard(node, q) {
 		? en
 			? 'Stopped'
 			: 'Dừng'
-		: q.running
+		: q.heartbeatBlocked
+			? en
+				? 'Play in Discord'
+				: 'Cần chơi trong Discord'
+			: q.running
 			? en
 				? 'Running'
 				: 'Đang chạy'
@@ -4202,6 +4215,22 @@ async function handleEvent(evt) {
 								? 'claimable'
 								: 'todo',
 					flag: '',
+					// FIX64-P0 wave 3/12c: quét làm mới tiến độ nhưng KHÔNG xoá
+					// trạng thái bị chặn khi quest còn todo (tiến độ vẫn cập
+					// nhật qua quét); chỉ xoá khi quest đã xong/chờ nhận vì
+					// lúc đó heartbeat không còn ý nghĩa.
+					heartbeatBlocked:
+						item.status === 'claimable' || item.status === 'claimed'
+							? false
+							: prev
+								? !!prev.heartbeatBlocked
+								: false,
+					heartbeatBlockedReason:
+						item.status === 'claimable' || item.status === 'claimed'
+							? ''
+							: prev
+								? prev.heartbeatBlockedReason || ''
+								: '',
 					// Waves 22: dữ liệu thẻ Discord
 					hero: item.hero || '',
 					gameTile: item.gameTile || '',
@@ -4333,8 +4362,34 @@ async function handleEvent(evt) {
 				orbs: d.orbs || 0,
 				running: true,
 				stopFlag: false,
+				// FIX64-P0: chạy lại thì thử heartbeat lại từ đầu — xoá trạng
+				// thái bị chặn của lần chạy trước.
+				heartbeatBlocked: false,
+				heartbeatBlockedReason: '',
 			});
 			break;
+
+		case 'quest:heartbeat-blocked': {
+			// FIX64-P0 wave 3/4: heartbeat bị Discord từ chối 401 kéo dài cả
+			// 2 appId — KHÔNG phải fail chung. Giữ nguyên status/tab, giữ
+			// tiến độ thật, chỉ tắt cờ chạy và gắn hướng dẫn chơi trong
+			// Discord thật; tiến độ tiếp tục cập nhật qua quét (xem
+			// quest:inventory: giữ heartbeatBlocked khi còn todo, xoá khi
+			// quest đã xong/chuyển sang chờ nhận).
+			const key = d.id || d.name;
+			const q = quests.get(key) || {};
+			upsertQuest(key, {
+				name: d.name || q.name,
+				running: false,
+				flag: '',
+				heartbeatBlocked: true,
+				heartbeatBlockedReason: d.reason || d.message || 'Discord từ chối heartbeat (401) — mở game trong Discord thật và chơi, app sẽ theo dõi tiến độ qua quét.',
+				secondsDone: typeof d.secondsDone === 'number' ? d.secondsDone : q.secondsDone,
+				secondsNeeded: typeof d.secondsNeeded === 'number' ? d.secondsNeeded : q.secondsNeeded,
+			});
+			appendLog(`[Cảnh báo] "${d.name || key}": heartbeat bị Discord từ chối (401) cả appId task lẫn appId quest — đã dừng heartbeat, chơi game trong Discord thật để tiến độ tiếp tục.`, 'warn');
+			break;
+		}
 
 		case 'quest:progress':
 			upsertQuest(
@@ -8724,6 +8779,9 @@ async function startRun(mode, extra = {}) {
 		setState('starting');
 		switchPage('quest'); // chạy thì hiện ngay trang Auto Quest để theo dõi console
 		startHeartbeat();
+		// FIX64-P0 wave 1: dấu hiệu phiên bản trong nhật ký — nhìn log là biết
+		// code mới đang chạy, không cần đoán theo deploy/cache.
+		appendLog('[Hệ thống] Heartbeat fallback đang bật: 401 appId task -> thử appId quest 1 lần/nhịp; 401 cả hai -> thẻ chuyển sang "Cần chơi trong Discord", không fail.', 'system');
 		toast(`Đang chạy ${extra.selectedQuests?.length || 0} nhiệm vụ đã chọn...`);
 	}
 }

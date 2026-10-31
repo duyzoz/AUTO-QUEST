@@ -1240,6 +1240,36 @@ check('HB-FIX: fallback appId khi heartbeat 401 + placeholder banner thieu anh',
 	return 'fallback 401 3 endpoint + placeholder token, khong Orb';
 });
 
+check('FIX64-P0: heartbeat 401 -> blocked state, backoff, expiry pre-check, card UI', () => {
+	const qm = read(path.join(WEB, 'engine', 'src', 'questManager.js'));
+	const js = read(path.join(APP, 'renderer.js'));
+	const css = read(path.join(APP, 'styles.css'));
+	const bot = read(path.join(WEB, 'engine', 'bot.js'));
+	const tt = read(path.join(WEB, 'engine', 'src', 'taskTypes.js'));
+	assert(qm.includes('blockHeartbeatQuest') && qm.includes("'quest:heartbeat-blocked'"), 'thieu trang thai heartbeat-blocked');
+	assert((qm.match(/taskApps=\[/g) || []).length === 3, 'log fallback phai co taskApps o desktop/console/mobile');
+	assert((qm.match(/Math\.min\(60, interval \* 2\)/g) || []).length >= 3, 'thieu backoff 2x/60s sau nhip loi');
+	assert((qm.match(/await this\.timeout\(waitS \* 1000\)/g) || []).length === 3, 'vong heartbeat phai cho theo waitS');
+	assert(qm.includes('quest.isExpired()') && qm.includes('Đã hết thời gian nhiệm vụ trong Discord'), 'thieu pre-check het han');
+	assert(bot.includes('[FIX64-P0] Heartbeat fallback đang bật') && js.includes('Heartbeat fallback đang bật'), 'thieu dau hieu phien ban wave 1');
+	assert(js.includes("case 'quest:heartbeat-blocked'") && js.includes('Cần chơi trong Discord') && js.includes('mở game trong Discord thật và chơi, app theo dõi tiến độ qua quét'), 'thieu UI the bi chan');
+	assert((js.match(/heartbeatBlocked/g) || []).length >= 3, 'thieu truong heartbeatBlocked o renderer');
+	assert(/\.qcard\[data-status="heartbeat-blocked"\] \.qcard-state \{[^}]*color: var\(--danger-soft\)/.test(css), 'thieu CSS trang thai blocked bang token');
+	assert(!/\.qcard\[data-status="heartbeat-blocked"\][^{]*\{[^}]*z-index/.test(css), 'CSS blocked khong duoc them z-index');
+	assert(tt.includes("PLAY_ON_DESKTOP: { label: 'Chơi game trên PC', kind: 'desktop' }") && tt.includes('PLAY_ON_DESKTOP_V2') && tt.includes("PLAY_ON_XBOX") && tt.includes("kind: 'console'") && tt.includes("PLAY_ON_MOBILE") && tt.includes("kind: 'mobile'"), 'sai mapping task -> endpoint');
+	const sec = (a, b) => qm.slice(qm.indexOf(a), qm.indexOf(b));
+	assert((sec('async doingPlayOnPlatformQuest', 'async doingConsoleQuest').match(/terminal: true/g) || []).length === 1, 'desktop terminal phai dung 1');
+	assert((sec('async doingConsoleQuest', 'async doingMobileQuest').match(/terminal: true/g) || []).length === 1, 'console terminal phai dung 1');
+	assert(!sec('async doingMobileQuest', 'async doingWatchStreamQuest').includes('terminal'), 'mobile khong co terminal (dung protocol)');
+	assert(js.includes("claimBranch: 'captcha-still-required'") && js.includes('Discord vẫn đòi xác minh dù đã gửi kết quả') && js.includes("return 'captcha-rejected'"), 'passive captcha phai co ly do rieng + dung vong lap');
+	const diagStart = qm.indexOf('static heartbeatDiag');
+	const diagBody = qm.slice(diagStart, qm.indexOf('\n    }\n', diagStart));
+	assert(!/token/i.test(diagBody), 'diag khong duoc ghi token');
+	assert(/\.u229 \{[^}]*overflow-y: auto[^}]*max-height: 104px/.test(css), 'log phai cuon noi bo');
+	assert(bot.includes('Promise.allSettled(tasks)'), 'bot phai chay song song, 1 quest loi khong chan quest khac');
+	return 'blocked 401 + backoff 2x/60s + expiry skip + card UI + terminal 1x + mapping dung';
+});
+
 /* ── In kết quả ────────────────────────────────────────────────────────── */
 for (const r of results) {
 	const tag = r.ok ? 'PASS' : 'FAIL';

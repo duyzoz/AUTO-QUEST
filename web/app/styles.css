@@ -2952,6 +2952,10 @@ body {
 	background: rgba(80, 10, 16, 0.72);
 }
 .qcard[data-status="done"] .qcard-state { color: #b5bac1; }
+/* FIX64-P0: trạng thái bị chặn heartbeat — chỉ đổi màu chữ/viền bằng token
+   (nhãn chữ + hướng dẫn trong .qcard-diag mới là tín hiệu chính, không
+   dựa vào màu duy nhất), không thêm z-index hay nền thô. */
+.qcard[data-status="heartbeat-blocked"] .qcard-state { color: var(--danger-soft); border-color: var(--line-strong); }
 /* Nút hành động ở trạng thái Dừng cũng đỏ */
 .qcard[data-status="stop"] .qcard-act { color: var(--danger-soft); border-color: rgba(251, 44, 54, 0.45); }
 
