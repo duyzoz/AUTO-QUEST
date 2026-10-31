@@ -938,7 +938,7 @@ html {
    taller quest banner stays readable on phones without crowding the card,
    stat cards keep the same padding scale as the shell. */
 @media (max-width: 560px) {
-	.qcard-banner { height: 96px; }
+	.qcard-banner { height: auto; }
 	.stat-card { padding: 16px; }
 	.qcard-body { padding: 16px; }
 }

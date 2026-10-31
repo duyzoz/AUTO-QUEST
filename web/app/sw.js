@@ -23,8 +23,6 @@ const SHELL = [
 	'web/bridge.js',
 	'web/engine-worker.js',
 	'web/engine-bundle.js',
-	'assets/orb-logo.png',
-	'assets/orb-logo-big.png',
 	'assets/zoZ-logo.png',
 	'assets/zoZ-logo-ico.png',
 	'assets/zoZ-logo-round.png',

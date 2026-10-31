@@ -1026,7 +1026,7 @@ check('MAJOR REDESIGN: shell + quest cards + stat cards + topbar sound, no new c
 	const css = read(path.join(APP, 'styles.css'));
 	const html = read(path.join(APP, 'index.html'));
 	const major = css.slice(css.indexOf('MAJOR REDESIGN'));
-	assert(/\.qcard-banner \{ height: 120px;/.test(major), 'banner quest mới phải cao 120px');
+	assert(/\.qcard-banner \{[^}]*aspect-ratio: 649 \/ 182/.test(major), 'banner quest moi theo ti le Discord 649/182 (DISCORD-ORB thay cao 120px)');
 	assert(/\.qcard-title \{ font-size: 16px;/.test(major), 'tiêu đề quest mới phải 16px');
 	assert(/\.qcard-act \{ height: 44px;/.test(major), 'nút hành động quest phải cao 44px (touch)');
 	assert(/\.stat-value \{ font-size: 32px;/.test(major), 'số thống kê mới phải 32px');
@@ -1079,9 +1079,9 @@ check('NEO P0: quest grid 3/2/1, cards complete, no internal clip', () => {
 	assert(/\.quest-list \{[^}]*grid-template-columns: repeat\(3, minmax\(0, 1fr\)\)/.test(neo), 'quest-list desktop phai 3 cot');
 	assert(/\.qcard-body \{[^}]*overflow: visible/.test(neo), 'qcard-body khong duoc overflow hidden');
 	assert(/\.qcard-desc \{[^}]*-webkit-line-clamp: unset/.test(neo), 'qcard-desc khong duoc clamp cat chu');
-	assert(/\.qgrid-done \{[^}]*grid-template-columns: repeat\(3, minmax\(0, 1fr\)\)/.test(neo), 'qgrid-done desktop phai 3 cot, khong 6 cot');
+	assert(/\.qgrid-done \{[^}]*grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/.test(neo), 'qgrid-done desktop phai 2 cot gap 24px theo khung Discord (DISCORD-ORB)');
 	assert(/\.qcard \{[^}]*border-radius: 20px/.test(neo), 'qcard phai bo tron hoan chinh');
-	return 'grid 3/2/1 + card day du + done 3 cot';
+	return 'grid 3/2/1 + card day du + done 2 cot Discord';
 });
 
 
@@ -1190,8 +1190,8 @@ check('FIX26-F: log cao co dinh + wrap tron ven, mobile xep chong, khong mau tho
 	const fit = js.slice(js.indexOf('function fitLogBody'));
 	assert(!/slice\(0, mid\)/.test(fit) && fit.includes('logBodyHtml(text)'), 'fitLogBody khong cat text nua');
 	assert(/FIX26-F/.test(mobile) && /#pageQuest > \.stats-row \{[^}]*grid-template-columns: 1fr/.test(mobile), 'mobile: top xep chong 1 cot');
-	assert(/\.qcard-banner \{[^}]*height: 120px/.test(css), 'banner quest 120px desktop');
-	assert(/\.qcard-banner \{[^}]*height: 96px/.test(mobile), 'banner quest 96px mobile');
+	assert(/\.qcard-banner \{[^}]*aspect-ratio: 649 \/ 182/.test(css), 'banner quest ti le 649/182 desktop (DISCORD-ORB)');
+	assert(/\.qcard-banner \{[^}]*height: auto/.test(mobile), 'banner quest cao tu dong theo ti le mobile (DISCORD-ORB)');
 	const fixAll = css.slice(css.indexOf('FIX26-A')).replace(/\/\*[\s\S]*?\*\//g, '');
 	assert(!/#[0-9a-fA-F]{3,8}\b/.test(fixAll) && !/rgba?\(/.test(fixAll), 'FIX26 khong mau tho moi');
 	return 'log 88px + wrap du + mobile 1 cot + banner 120/96 + token-only';
@@ -1451,6 +1451,31 @@ check('FIX64-P5: am thanh / giam chuyen dong / theme sang / ban phim (W53-W62)',
 	assert(css.includes('gap: 28px'), 'khong duoc pha gap 28px (P2)');
 	assert(js.includes('qcard-prog') && js.includes('autoquest.selection.v1') && js.includes('Token không còn hiệu lực, dán lại token.'), 'khong duoc pha P3/P4');
 	return 'tieng complete/claim rieng + loi tram + reduced-motion du + hover Sang + Esc captcha + khung chung';
+});
+
+check('DISCORD-ORB: video Orb Discord thay logo cu, hover + reduced-motion + khung Da lam', () => {
+	const js = read(path.join(APP, 'renderer.js'));
+	const css = read(path.join(APP, 'styles.css'));
+	const html = read(path.join(APP, 'index.html'));
+	const mob = read(path.join(APP, 'mobile.css'));
+	const sw = read(path.join(APP, 'sw.js'));
+	const mf = read(path.join(APP, 'manifest.webmanifest'));
+	for (const [name, content] of [['renderer', js], ['styles', css], ['index', html], ['mobile', mob], ['sw', sw], ['manifest', mf]]) {
+		assert(!content.includes('orb-logo.png') && !content.includes('orb-logo-big.png'), name + ' con tham chieu logo Orb cu');
+		assert(!content.includes('ORB_GLYPH') && !content.includes('ORB_ICON_SRC'), name + ' con tham chieu hang logo cu');
+	}
+	assert(js.includes('DISCORD_ORB_CARD') && js.includes('d4fc1c99b3e3044530f08ede0156d1d43a13bf78f0f539e240b63f2d4dad3554'), 'thieu video Orb the quest d4fc');
+	assert(js.includes('DISCORD_ORB_SMALL') && js.includes('864e5841fd9af8da3c50ad6d6220bee54e8c2da2d36d3c85d0a5ae95cdbf095e'), 'thieu video Orb nho 864e');
+	assert(js.includes('DISCORD_ORB_CLAIMED') && js.includes('61aaaee4a0366652022b510d9aaa8a26d552ce8457679b0c28c5e2002484a5a6'), 'thieu video o Da nhan 61aaa');
+	assert(!js.includes('122274207f3e636d'), 'video logo load khong duoc dung lam Orb');
+	assert(js.includes('orbVideoEl') && js.includes("v.muted = true") && js.includes('?format=webp'), 'helper video Orb phai muted + fallback webp');
+	assert(/\.orb-video:hover \{[^}]*transform: scale\(1\.08\)/.test(css), 'thieu hover phong + sang cho Orb');
+	assert(/prefers-reduced-motion: reduce\) \{[^}]*\.orb-video/.test(css), 'thieu reduced-motion cho Orb');
+	assert(css.includes('aspect-ratio: 649 / 182') && css.includes('aspect-ratio: 314 / 196'), 'thieu ti le khung Discord');
+	assert(/\.qdone \{[^}]*border-radius: 16px/.test(css), 'o Da lam phai bo 16px');
+	assert(css.includes('repeat(2, minmax(0, 1fr))') && css.includes('gap: 24px'), 'luoi Da lam phai 2 cot gap 24px');
+	assert(js.includes('Cần chơi trong Discord'), 'P0 blocked UI phai con');
+	return 'video Orb 3 slot + hover + reduced-motion + khung Da lam 16px/2 cot/24px, 0 logo cu';
 });
 
 /* ── In kết quả ────────────────────────────────────────────────────────── */

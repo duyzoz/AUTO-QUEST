@@ -507,7 +507,7 @@ function notifySystem(title, body) {
 	try {
 		if (!('Notification' in window) || Notification.permission !== 'granted') return;
 		if (!document.hidden) return;
-		new Notification(title, { body, icon: 'assets/orb-logo.png', tag: 'autoquest', silent: true });
+		new Notification(title, { body, icon: DISCORD_ORB_POSTER, tag: 'autoquest', silent: true });
 	} catch {
 		/* trình duyệt chặn — bỏ qua */
 	}
@@ -1647,16 +1647,45 @@ function fmtShortDate(iso) {
 	return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`;
 }
 
-/* Waves 30/46 — LOGO ORB (ảnh do bro cung cấp, đã TÁCH NỀN sạch).
-   File: web/app/assets/orb-logo.png (256×256) — dùng cho glyph nhỏ inline.
-   Waves 46: bro yêu cầu orb TO Ở CHÍNH GIỮA → thêm bản orb-logo-big.png
-   (500×500, alpha thật) dùng cho logo lớn giữa thẻ hero + các ô "Đã làm".
-   Giữ class .orb-glyph để CSS cũ áp dụng. */
-const ORB_GLYPH =
-	'<img class="orb-glyph" src="assets/orb-logo.png" alt="" aria-hidden="true" draggable="false" />';
-
-/* Waves 46 — ảnh logo Orb TO (500×500) cho vị trí chính giữa + ô "Đã làm". */
-const ORB_ICON_SRC = 'assets/orb-logo-big.png';
+/* DISCORD-ORB (2026-10-31) — logo Orb thật của Discord, đo từ quest-home.
+   Mapping màu xanh/tím CHƯA xác nhận bằng mắt (giả thuyết: ít Orbs = xanh,
+   700+ = tím) — nếu ngược, đổi 2 hằng CARD/SMALL trong 1 wave:
+     - thẻ quest (64px): d4fc (đa số thẻ Discord dùng bản này)
+     - icon nhỏ / pill 32px / captcha: 864e
+     - video trên ô Đã nhận: 61aaa
+   Video logo lúc load (122274…) KHÔNG phải slot Orb — không dùng ở đây.
+   Video luôn muted (không tiếng). Tải lỗi → ảnh tĩnh ?format=webp, rồi
+   chuỗi fallback cũ — không bao giờ về logo cũ. */
+const DISCORD_ORB_CARD = 'https://cdn.discordapp.com/assets/content/d4fc1c99b3e3044530f08ede0156d1d43a13bf78f0f539e240b63f2d4dad3554.webm';
+const DISCORD_ORB_SMALL = 'https://cdn.discordapp.com/assets/content/864e5841fd9af8da3c50ad6d6220bee54e8c2da2d36d3c85d0a5ae95cdbf095e.webm';
+const DISCORD_ORB_CLAIMED = 'https://cdn.discordapp.com/assets/content/61aaaee4a0366652022b510d9aaa8a26d552ce8457679b0c28c5e2002484a5a6.webm';
+const DISCORD_ORB_POSTER = DISCORD_ORB_SMALL + '?format=webp';
+function orbVideoEl(src, cls) {
+	const v = document.createElement('video');
+	v.className = cls;
+	v.muted = true;
+	v.playsInline = true;
+	v.preload = 'metadata';
+	v.poster = DISCORD_ORB_POSTER;
+	v.setAttribute('aria-hidden', 'true');
+	v.draggable = false;
+	if (!window.matchMedia || !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+		v.autoplay = true;
+		v.loop = true;
+	}
+	v.src = src;
+	v.addEventListener('error', () => {
+		const img = document.createElement('img');
+		img.className = v.className;
+		img.src = DISCORD_ORB_POSTER;
+		img.alt = '';
+		img.setAttribute('aria-hidden', 'true');
+		img.draggable = false;
+		img.addEventListener('error', () => img.remove(), { once: true });
+		v.replaceWith(img);
+	}, { once: true });
+	return v;
+}
 
 /* Waves 46b — ORB LỚN LÀ ẢNH CỦA Ô AVATAR HERO (không còn lớp phủ lơ lửng).
    Quy tắc: chỉ bật orb khi (a) user KHÔNG có ảnh đại diện thật, và (b) file
@@ -2053,9 +2082,9 @@ function updateQuestCard(node, q) {
 		if (q.rewardKind === 'item' && q.rewardAsset) {
 			const media = rewardMediaEl(q);
 			if (media) r.art.appendChild(media);
-			else r.art.innerHTML = ORB_GLYPH;
+			else r.art.appendChild(orbVideoEl(DISCORD_ORB_CARD, 'orb-video'));
 		} else {
-			r.art.innerHTML = ORB_GLYPH;
+			r.art.appendChild(orbVideoEl(DISCORD_ORB_CARD, 'orb-video'));
 		}
 	}
 
@@ -2179,6 +2208,7 @@ function buildDoneTile(q) {
 	// hiện đúng asset của nó, quest code hiện nhãn CODE, chỉ quest Orb
 	// mới hiện logo Orb. Asset hỏng → ẩn hàng này, logo game vẫn hiện.
 	let topRow;
+	let orbNum = null;
 	if (isItem) {
 		const media = rewardMediaEl(q);
 		if (media) {
@@ -2206,19 +2236,14 @@ function buildDoneTile(q) {
 		codeTag.textContent = 'CODE';
 		topRow.appendChild(codeTag);
 	} else {
-		// Quest Orb: logo ORB (trên) + số Orb, như cũ.
+		// Quest Orb: video Orb Discord (trên) + số Orb, như cũ.
 		topRow = document.createElement('span');
 		topRow.className = 'qdone-orbs';
-		const orbIco = document.createElement('img');
-		orbIco.className = 'qdone-orb';
-		orbIco.src = ORB_ICON_SRC;
-		orbIco.alt = '';
-		orbIco.setAttribute('aria-hidden', 'true');
-		orbIco.draggable = false;
-		const orbNum = document.createElement('span');
+		const orbIco = orbVideoEl(DISCORD_ORB_CLAIMED, 'qdone-orb orb-video');
+		orbNum = document.createElement('span');
 		orbNum.className = 'qdone-orb-num';
 		orbNum.textContent = orbs > 0 ? String(orbs) : '—';
-		topRow.append(orbIco, orbNum);
+		topRow.appendChild(orbIco);
 	}
 	const showNameFallback = () => { if (name && !name.textContent) name.textContent = doneTileGameLabel(q); if (name) name.hidden = !name.textContent; };
 
@@ -2252,7 +2277,7 @@ function buildDoneTile(q) {
 	badge.className = 'reward-badge';
 	badge.textContent = rewardTypeLabel(q);
 	badge.setAttribute('aria-label', rewardTypeLabel(q));
-	face.append(topRow, logo, name, badge);
+	face.append(topRow, logo, name, ...(orbNum ? [orbNum] : []), badge);
 
 	// FIX64-P1 (W21): badge trang thai "Da lam" cho tab Da lam — icon
 	// check SVG + text (khong chi mau), cung token badge voi .qcard-state.
@@ -3593,11 +3618,12 @@ async function openCaptchaModal(quest, captcha) {
 
 	// Thông tin nhiệm vụ đang xác minh
 	if (ui.captchaTarget) {
-		ui.captchaTargetArt.innerHTML = quest.rewardKind === 'item' ? '' : ORB_GLYPH;
+		ui.captchaTargetArt.innerHTML = '';
+		if (quest.rewardKind !== 'item') ui.captchaTargetArt.appendChild(orbVideoEl(DISCORD_ORB_SMALL, 'orb-video'));
 		if (quest.rewardKind === 'item' && quest.rewardAsset) {
 			const media = rewardMediaEl(quest);
 			if (media) ui.captchaTargetArt.appendChild(media);
-			else ui.captchaTargetArt.innerHTML = ORB_GLYPH;
+			else ui.captchaTargetArt.appendChild(orbVideoEl(DISCORD_ORB_SMALL, 'orb-video'));
 		}
 		ui.captchaTargetName.textContent =
 			quest.rewardTitle || quest.name || quest.gameTitle || 'Nhiệm vụ Discord';
