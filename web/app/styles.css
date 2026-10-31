@@ -5919,7 +5919,7 @@ body.lite .claim-pill-spin { animation-duration: 1.6s; }
    title/description full width, reward + ring, then a bordered
    progress bar in the foot (display only — its width is the same
    questPct value the ring already shows, never a new number),
-   then the action button. State labels are stickers (border +
+   then the action button. State labels are badges (border +
    hard shadow, text + SVG dot). Done tiles keep their Discord-
    accurate face/info design (info on hover/focus, not hover-only
    critical info — the face already shows Orb + game) but get the
@@ -5943,58 +5943,23 @@ body.lite .claim-pill-spin { animation-duration: 1.6s; }
 	.neo-bar-fill { transition: none; }
 }
 /* ============================================================
-   NEO-BRUTALIST P4 — Motion, marquee, micro-interactions, sound
-   (W26-W34). ONE marquee band only, with original app words
-   (QUEST / ORB / NHAN THUONG) — never the reference site's
-   slogans, no fake live feed. Marquee pauses on hover/focus and
-   is fully off under prefers-reduced-motion. Rotating words are
-   CSS-only (grid-stacked spans) with app words only, placed in
-   the quest header row — not inside .profile-hero, whose inner
-   must stay untouched. Stickers are decorative, pointer-events
-   none on coarse pointers, and drag (W33) is desktop-only via
-   pointer-fine + min-width 1024px; drag moves only the sticker
-   layer via transform, never over quest buttons (the sticker row
-   sits above the toolbar, outside the quest list). Count-up and
-   sound v2 reuse the existing WebAudio synth only, default OFF.
-   Scroll-reveal is a light entry animation on the neo bands
-   only (not per-card IntersectionObserver — hundreds of Done
-   tiles must not each get an observer), disabled on small
-   screens and under reduced-motion. Live indicators stay only
-   for scan/claim actually in progress (running state sticker).
+   NEO-BRUTALIST P4 — Motion, micro-interactions, sound
+   (W26-W34). FIX64-P1 (W13-W15, W22): the quest-header bands
+   (the three decorative header bands) and the
+   desktop-only drag interaction (W33) were DELETED here —
+   their rules, keyframes and JS are gone, not restyled.
+   What stays: hover hard shadow, modal/toast pop, running
+   state, count-up and sound v2 (existing WebAudio synth only,
+   default OFF, no sound files). Live indicators stay only
+   for scan/claim actually in progress (running state badge).
    ============================================================ */
-.neo-marquee { overflow: hidden; border: 2px solid var(--neo-line); border-radius: 12px; background: var(--neo-blue); color: var(--neo-blue-ink); font-weight: 800; padding: 8px 0; animation: neoReveal 0.3s ease both; }
-.neo-marquee-track { display: flex; width: max-content; animation: neoMarquee 24s linear infinite; }
-.neo-marquee-track span { padding-right: 32px; white-space: nowrap; font-size: 14px; }
-.neo-marquee:hover .neo-marquee-track { animation-play-state: paused; }
-.neo-marquee:focus-within .neo-marquee-track { animation-play-state: paused; }
-.neo-sticker-row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; padding: 4px; animation: neoReveal 0.3s ease both; }
-.neo-sticker { display: inline-block; border: 2px solid var(--neo-line); border-radius: 12px; box-shadow: 2px 2px 0 var(--neo-shadow); background: var(--neo-yellow); color: var(--neo-yellow-ink); font-weight: 800; padding: 4px 8px; font-size: 14px; }
-.neo-sticker-pink { background: var(--neo-pink); color: var(--neo-pink-ink); }
-.neo-sticker-drag { cursor: grab; }
-.neo-rotator { display: inline-grid; font-weight: 800; font-size: 14px; }
-.neo-rotator span { grid-area: 1 / 1; opacity: 0; animation: neoRotate 9s infinite; }
-.neo-rotator span:nth-child(2) { animation-delay: 3s; }
-.neo-rotator span:nth-child(3) { animation-delay: 6s; }
 .qcard:hover { box-shadow: 6px 6px 0 var(--neo-shadow); }
 .qdone:hover { box-shadow: 6px 6px 0 var(--neo-shadow); }
 .modal-card { animation: neoPop 0.2s ease; }
 .toast { animation: neoPop 0.2s ease; }
 .qcard[data-status="running"] .qcard-state { background: var(--neo-blue); color: var(--neo-blue-ink); }
-@keyframes neoMarquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
-@keyframes neoRotate { 0% { opacity: 1; } 30% { opacity: 1; } 33% { opacity: 0; } 100% { opacity: 0; } }
 @keyframes neoPop { from { transform: scale(0.96); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-@keyframes neoReveal { from { transform: translateY(4px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-@media (pointer: coarse) {
-	.neo-sticker-drag { pointer-events: none; }
-}
-@media (max-width: 560px) {
-	.neo-marquee { animation: none; }
-	.neo-sticker-row { animation: none; }
-}
 @media (prefers-reduced-motion: reduce) {
-	.neo-marquee-track { animation: none; }
-	.neo-rotator span { animation: none; opacity: 0; }
-	.neo-rotator span:first-child { opacity: 1; }
 	.modal-card { animation: none; }
 	.toast { animation: none; }
 	.qcard { transition: none; }
@@ -6045,21 +6010,11 @@ body[data-page="quest"] .page.active { flex: none; }
 .tab-count { min-width: 28px; box-sizing: border-box; display: inline-flex; justify-content: center; font-variant-numeric: tabular-nums; }
 
 /* ============================================================
-   FIX26-D — Marquee + sticker (F12-F14). Marquee: mo mat
-   (mask bang token, khong mau tho) de cho cat o mep trai
-   trong co chu dich, track co padding-left 16px de tu dau
-   tien hien tron ven; pause khi hover/focus va tat khi
-   reduced-motion da co tu NEO P4, giu nguyen. Sticker:
-   moi hang chi 1 sticker moi tu — rotator tach ra hang
-   rieng va co nen sticker (khong con nhan trang tron);
-   2 hang deu cao co dinh 32px, khong wrap gay nhay hang;
-   sticker keo (desktop) khong day sticker khac.
+   FIX26-D — DELETED by FIX64-P1 (W13-W15, W22). The band
+   rules below (edge fade, fixed 32px rows, own third row)
+   belonged to the quest-header bands and were removed with
+   them; the bands must not be re-added here.
    ============================================================ */
-.neo-marquee { -webkit-mask-image: linear-gradient(90deg, transparent, var(--neo-line) 32px, var(--neo-line) calc(100% - 32px), transparent); mask-image: linear-gradient(90deg, transparent, var(--neo-line) 32px, var(--neo-line) calc(100% - 32px), transparent); }
-.neo-marquee-track { padding-left: 16px; }
-.neo-sticker-row { height: 32px; flex-wrap: nowrap; overflow: hidden; }
-.neo-rotator-row { display: flex; align-items: center; height: 32px; padding: 4px; overflow: hidden; }
-.neo-sticker.neo-rotator { display: inline-grid; }
 
 /* ============================================================
    FIX26-F — Can doi tong + QA (F19-F24). F19: khung log cao
@@ -6094,3 +6049,48 @@ body[data-page="quest"] .page.active { flex: none; }
 .qcard-banner:has(img) .qcard-banner-fallback {
 	display: none;
 }
+
+/* ============================================================
+   FIX64-P1 (W16-W21, 2026-10-31) — Khung the chuan + badge
+   trang thai thong nhat 3 tab. Khung chuan la khung cua the
+   "Nhan thuong" (claim card): the .qcard dung cho ca tab
+   Chua lam va tab Chua nhan — radius 20px, vien 2px
+   var(--neo-line), bong cung 4px var(--neo-shadow) (NEO P0),
+   body padding 16px, foot padding 0 16px 16px, nut hanh dong
+   cao 44px (MAJOR). The Da lam (.qdone) dung CHINH cac token
+   khung do (radius 20px, vien 2px, bong 4px — NEO P0), chi khac
+   bo cuc o vuong (aspect-ratio 1/1) theo thiet ke Waves 44;
+   khong doi anh thuong that cua o (Orb chi cho quest Orb,
+   item dung asset that, code dung nhan CODE). Nut .qcard-act
+   la component duy nhat cho ca 2 tab the — khong nut rieng
+   theo tab; o Da lam khong co nut rieng vi bam vao o mo khung
+   chi tiet (nut trong khung dung ghost-btn chung).
+   Badge trang thai: .qcard-state (icon SVG + text) cho Chua
+   lam / Cho nhan; .qdone-state moi cho Da lam — cung token
+   badge (vien 2px, radius 12px, bong 2px, padding 4px 8px,
+   font 12px, uppercase) de khong tab nao chi dung mau.
+   .qdone-state nam SAU .qdone-face trong DOM (noi tren mat
+   truoc, duoi lop info hover) nen khong can z-index moi;
+   pointer-events none de bam vao o van mo chi tiet.
+   ============================================================ */
+.qdone-state {
+	position: absolute;
+	top: 8px;
+	right: 8px;
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	border: 2px solid var(--neo-line);
+	border-radius: 12px;
+	box-shadow: 2px 2px 0 var(--neo-shadow);
+	background: var(--neo-yellow);
+	color: var(--neo-yellow-ink);
+	font-size: 12px;
+	font-weight: 800;
+	letter-spacing: 0.05em;
+	text-transform: uppercase;
+	padding: 4px 8px;
+	white-space: nowrap;
+	pointer-events: none;
+}
+.qdone-state svg { width: 12px; height: 12px; }

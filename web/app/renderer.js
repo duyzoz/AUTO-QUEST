@@ -597,8 +597,6 @@ function playModalOpen() { if (soundEnabled) { playTone(440, 0.06, 'sine', 0.05,
 function playModalClose() { if (soundEnabled) { playTone(660, 0.06, 'sine', 0.05, 0); playTone(440, 0.06, 'sine', 0.05, 0.05); } }
 function playSoundOn() { if (soundEnabled) { playTone(520, 0.08, 'sine', 0.06, 0); playTone(780, 0.08, 'sine', 0.06, 0.06); playTone(1040, 0.10, 'sine', 0.06, 0.12); } }
 function playSoundOff() { if (soundEnabled) { playTone(780, 0.08, 'sine', 0.06, 0); playTone(520, 0.10, 'sine', 0.06, 0.06); } }
-function playDragPickup() { if (soundEnabled) playTone(350, 0.05, 'triangle', 0.05, 0); }
-function playDragDrop() { if (soundEnabled) playTone(500, 0.06, 'triangle', 0.05, 0); }
 function playHover() { if (soundEnabled) playTone(1400, 0.03, 'sine', 0.02, 0); }
 function refreshSoundButton() {
 	if (!ui.btnSound) return;
@@ -622,20 +620,6 @@ if (ui.btnSound) {
 	});
 }
 refreshSoundButton();
-/* NEO W33: keo sticker trang tri — CHI desktop (pointer fine + >=1024px). Chi doi
-   transform cua lop sticker, khong cham nut quest, khong anh huong logic. */
-function initNeoDrag() {
-	if (!window.matchMedia || !window.matchMedia('(pointer: fine) and (min-width: 1024px)').matches) return;
-	const el = document.querySelector('[data-neo-drag]');
-	if (!el) return;
-	let sx = 0, sy = 0, dx = 0, dy = 0, dragging = false;
-	el.addEventListener('pointerdown', (ev) => { dragging = true; sx = ev.clientX - dx; sy = ev.clientY - dy; el.setPointerCapture(ev.pointerId); el.style.cursor = 'grabbing'; playDragPickup(); });
-	el.addEventListener('pointermove', (ev) => { if (!dragging) return; dx = ev.clientX - sx; dy = ev.clientY - sy; el.style.transform = `translate(${dx}px, ${dy}px)`; });
-	const endDrag = () => { if (dragging) playDragDrop(); dragging = false; el.style.cursor = 'grab'; };
-	el.addEventListener('pointerup', endDrag);
-	el.addEventListener('pointercancel', endDrag);
-}
-initNeoDrag();
 /* FIX26-E: click chung phan loai theo nut — moi loai thao tac mot tieng
    rieng, cham dut tinh trang moi nut deu cung 1 tieng click. Khong doi
    hanh vi nao cua nut, chi them am thanh. */
@@ -2189,6 +2173,15 @@ function buildDoneTile(q) {
 	badge.setAttribute('aria-label', rewardTypeLabel(q));
 	face.append(topRow, logo, name, badge);
 
+	// FIX64-P1 (W21): badge trang thai "Da lam" cho tab Da lam — icon
+	// check SVG + text (khong chi mau), cung token badge voi .qcard-state.
+	// pointer-events none qua CSS nen bam vao o van mo khung chi tiet.
+	const state = document.createElement('span');
+	state.className = 'qdone-state';
+	const doneLabel = currentLang === 'en' ? 'Done' : 'Đã làm';
+	state.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span>' + doneLabel + '</span>';
+	state.setAttribute('aria-label', doneLabel);
+
 	// ---------- TẦNG B: mặt sau, hiện NGAY TRONG ô khi rê chuột ----------
 	const info = document.createElement('div');
 	info.className = 'qdone-info';
@@ -2196,7 +2189,7 @@ function buildDoneTile(q) {
 	setDoneInfoHtml(info, q, orbs);
 	node.title = ''; // tránh tooltip hệ thống chồng lên hiệu ứng trong ô
 	node.setAttribute('aria-label', doneTileAria(q, orbs));
-	node.append(face, info);
+	node.append(face, state, info);
 	// Waves#152: bấm vào ô (chuột + cảm ứng) mở khung chi tiết, không
 	// chỉ hover. Hover cũ vẫn giữ nguyên qua CSS.
 	node.addEventListener('click', () => {

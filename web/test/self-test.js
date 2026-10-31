@@ -1085,13 +1085,13 @@ check('NEO P0: quest grid 3/2/1, cards complete, no internal clip', () => {
 });
 
 
-check('NEO P1: neo tokens both themes + button/chip/tab/modal sticker language', () => {
+check('NEO P1: neo tokens both themes + button/chip/tab/modal language', () => {
 	const css = read(path.join(APP, 'styles.css'));
 	const neo = css.slice(css.indexOf('NEO-BRUTALIST P1'));
 	assert(/--neo-blue: #1d4ed8/.test(css), 'light theme can token neo-blue dam');
 	assert(/\.btn-primary \{[^}]*background: var\(--neo-blue\)/.test(neo), 'btn-primary dung token neo-blue');
 	assert(/\.btn:active \{[^}]*box-shadow: 0 0 0/.test(neo), 'nut an xuong phai xep bong');
-	assert(/\.chip \{[^}]*box-shadow: 2px 2px 0/.test(neo), 'chip dang sticker co bong cung');
+	assert(/\.chip \{[^}]*box-shadow: 2px 2px 0/.test(neo), 'chip dang badge co bong cung');
 	assert(/\.input-wrap input \{[^}]*font-size: 16px/.test(neo), 'input >=16px');
 	assert(/\.modal-card \{[^}]*box-shadow: 8px 8px 0/.test(neo), 'modal co bong cung, khong doi z-index');
 	assert(/@media \(prefers-reduced-motion: reduce\)/.test(neo), 'P1 co reduced-motion');
@@ -1124,29 +1124,60 @@ check('FIX26-BC: quest khong bi go, tab khong dich, dem tab co dinh', () => {
 	return 'cuon tu nhien + the cuoi du + dem 28px + tab nearest';
 });
 
-check('FIX26-D: marquee khong cat tu dau, sticker moi tu 1 lan', () => {
-	const css = read(path.join(APP, 'styles.css'));
-	const d = css.slice(css.indexOf('FIX26-D'));
+check('FIX64-P1: 3 band trang tri quest header da xoa sach (W13-W15, W22)', () => {
+	// Xoa tinh nang = xoa sach: HTML + CSS + JS + test cu, khong con
+	// tham chieu nao toi 3 band trong web/app (ke ca comment).
+	const files = fs.readdirSync(APP).filter((f) => /\.(html|css|js)$/.test(f));
+	assert(files.length > 0, 'khong doc duoc file web/app');
+	for (const f of files) {
+		const content = read(path.join(APP, f));
+		assert(!/marquee|sticker|rotator/i.test(content), 'con tham chieu band trong ' + f);
+		assert(!/neo-drag|initNeoDrag|neoMarquee|neoRotate/.test(content), 'con code band/drag trong ' + f);
+	}
 	const html = read(INDEX);
-	assert(/\.neo-marquee \{[^}]*mask-image: linear-gradient/.test(d), 'marquee co edge fade');
-	assert(/\.neo-marquee-track \{[^}]*padding-left: 16px/.test(d), 'marquee track co padding-left 16px');
-	assert(/\.neo-sticker-row \{[^}]*height: 32px/.test(d), 'hang sticker cao co dinh 32px');
-	assert(html.includes('neo-rotator-row'), 'rotator co hang rieng');
-	assert(!html.includes('<span class="neo-rotator">'), 'khong con rotator tran khong nen sticker');
-	const row = html.split('neo-sticker-row')[1].split('</div>')[0];
-	assert((row.match(/NHAN THUONG/g) || []).length === 1, 'hang sticker chi 1 NHAN THUONG');
-	return 'marquee fade + sticker 1 tu + rotator co nen';
+	assert(!html.includes('neo-marquee') && !html.includes('neo-sticker') && !html.includes('neo-rotator'), 'index con band');
+	return '0 tham chieu band trong ' + files.length + ' file web/app';
+});
+
+check('FIX64-P1: khung the chuan + nut + badge thong nhat 3 tab (W16-W21)', () => {
+	const css = read(path.join(APP, 'styles.css'));
+	const neo = css.slice(css.indexOf('NEO-BRUTALIST P0'));
+	const js = read(path.join(APP, 'renderer.js'));
+	// W16/W19: khung chuan claim-card — .qcard va .qdone cung token khung.
+	assert(/\.qcard \{[^}]*border-radius: 20px[^}]*border: 2px solid var\(--neo-line\)[^}]*box-shadow: 4px 4px 0 var\(--neo-shadow\)/.test(neo), 'qcard chua dung khung chuan');
+	assert(/\.qdone \{[^}]*border-radius: 20px[^}]*border: 2px solid var\(--neo-line\)[^}]*box-shadow: 4px 4px 0 var\(--neo-shadow\)/.test(neo), 'qdone chua dung khung chuan');
+	// W17/W18: Chua lam + Chua nhan dung CHUNG buildQuestCard/.qcard, chi khac nhan.
+	const card = js.slice(js.indexOf('function buildQuestCard'), js.indexOf('function updateQuestFoot'));
+	assert(card.includes("className = 'qcard'"), 'buildQuestCard khong dung qcard');
+	assert(card.includes('isDone') && card.includes('qcard-check'), 'checkbox chi cho the chua xong');
+	assert(js.includes("todo: { vi: 'Chưa làm'") && js.includes("claimable: { vi: 'Chờ nhận'"), 'nhan Chua lam / Cho nhan phai khac nhau');
+	// W20: nut hanh dong duy nhat .qcard-act, cao 44px, trang thai disabled luon co text.
+	assert(/\.qcard-act \{[^}]*height: 44px/.test(css), 'qcard-act chua cao 44px');
+	const foot = js.slice(js.indexOf('function updateQuestFoot'), js.indexOf('function updateQuestCard'));
+	assert(foot.includes("btn.disabled = act === 'todo' || act === 'claimed' || act === 'busy'"), 'nut disabled chua dung 3 trang thai');
+	assert(foot.includes("'Chưa làm'") && foot.includes("'Đã nhận'") && foot.includes("'Đang nhận…'"), 'nut disabled thieu text ly do');
+	const done = js.slice(js.indexOf('function buildDoneTile'), js.indexOf('function openDoneDetail'));
+	assert(!done.includes('qcard-act'), 'o Da lam khong duoc co nut rieng');
+	assert(done.includes('openDoneDetail(fresh, node)'), 'bam o Da lam phai mo chi tiet');
+	// W19: o Da lam giu anh thuong that — item asset, code nhan CODE, chi quest Orb moi logo Orb.
+	assert(done.includes('isItem') && done.includes('isCode') && done.includes('qdone-orb'), 'o Da lam mat nhanh anh thuong that');
+	// W21: badge text + icon, khong chi mau — qcard-state san co, qdone-state moi.
+	assert(/qcard-state"><svg/.test(js) && js.includes('qcard-state-text'), 'qcard-state thieu SVG + text');
+	assert(done.includes("className = 'qdone-state'") && done.includes("'Đã làm'"), 'o Da lam thieu badge Da lam');
+	assert(/\.qdone-state \{[^}]*pointer-events: none/.test(css), 'qdone-state phai pointer-events none');
+	assert(!/\.qdone-state \{[^}]*z-index/.test(css), 'qdone-state khong duoc them z-index');
+	return 'khung 20px/2px/4px + nut 44px + badge 3 tab';
 });
 
 check('FIX26-E: bo sound rieng moi thao tac, WebAudio tu tong hop, mac dinh OFF', () => {
 	const js = read(path.join(APP, 'renderer.js'));
-	for (const fn of ['playTab', 'playSelect', 'playFilter', 'playScanStart', 'playScanDone', 'playQuestAct', 'playAuto', 'playStop', 'playModalOpen', 'playModalClose', 'playSoundOn', 'playSoundOff', 'playDragPickup', 'playDragDrop', 'playHover', 'playSweep']) {
+	for (const fn of ['playTab', 'playSelect', 'playFilter', 'playScanStart', 'playScanDone', 'playQuestAct', 'playAuto', 'playStop', 'playModalOpen', 'playModalClose', 'playSoundOn', 'playSoundOff', 'playHover', 'playSweep']) {
 		assert(js.includes('function ' + fn + '('), 'thieu tieng ' + fn);
 	}
 	assert(js.includes('playSoundOn()') && js.includes('playSoundOff()'), 'nut loa phai dung tieng bat/tat rieng');
 	assert(js.includes("btn.classList.contains('tab-btn')") && js.includes("btn.id === 'btnScan'"), 'click chung phai phan loai tab/scan');
 	assert(!/\.mp3|\.wav|\.ogg/.test(js), 'khong file am thanh, chi synth');
-	return '15 tieng rieng + phan loai click + khong file';
+	return '14 tieng rieng (drag da xoa theo band) + phan loai click + khong file';
 });
 
 check('FIX26-F: log cao co dinh + wrap tron ven, mobile xep chong, khong mau tho moi', () => {
@@ -1167,33 +1198,32 @@ check('FIX26-F: log cao co dinh + wrap tron ven, mobile xep chong, khong mau tho
 });
 
 
-check('NEO P3: quest card v2 — progress bar, state sticker, done neo, toolbar', () => {
+check('NEO P3: quest card v2 — progress bar, state badge, done neo, toolbar', () => {
 	const css = read(path.join(APP, 'styles.css'));
 	const neo = css.slice(css.indexOf('NEO-BRUTALIST P3'));
 	const js = read(path.join(APP, 'renderer.js'));
 	assert(js.includes('neo-bar'), 'renderer co thanh tien do neo-bar');
 	assert(js.includes('qcard-state-text'), 'state co SVG + text span');
 	assert(/\.neo-bar \{[^}]*border: 2px solid var\(--neo-line\)/.test(neo), 'thanh tien do co vien + token');
-	assert(/\.qcard-state \{[^}]*box-shadow: 2px 2px 0/.test(neo), 'state dang sticker');
+	assert(/\.qcard-state \{[^}]*box-shadow: 2px 2px 0/.test(neo), 'state dang badge');
 	assert(/\.qdone \{[^}]*background: var\(--neo-surface\)/.test(neo), 'done tile nen token, khong mang toi');
 	assert(/\.quest-advanced \{[^}]*border: 2px solid/.test(neo), 'bo loc nang cao van collapsible, dang bento');
-	return 'bar + state sticker + done neo + toolbar bento';
+	return 'bar + state badge + done neo + toolbar bento';
 });
 
 
-check('NEO P4: marquee + rotator + stickers + sound v2 + count-up + drag desktop-only', () => {
+check('NEO P4 (FIX64-P1): sound v2 + count-up con, band/drag da xoa', () => {
 	const css = read(path.join(APP, 'styles.css'));
 	const neo = css.slice(css.indexOf('NEO-BRUTALIST P4'));
 	const html = read(INDEX);
 	const js = read(path.join(APP, 'renderer.js'));
-	assert(html.includes('neo-marquee'), 'index co 1 marquee');
-	assert(!html.includes('MINH BACH') && !html.includes('UY TIN') && !html.includes('70%'), 'khong copy slogan/sticker trang tham khao');
-	assert(/\.neo-marquee:hover \.neo-marquee-track \{[^}]*animation-play-state: paused/.test(neo), 'marquee dung khi hover');
-	assert(/@media \(prefers-reduced-motion: reduce\)[\s\S]*\.neo-marquee-track \{[^}]*animation: none/.test(neo), 'marquee tat khi reduced-motion');
-	assert(js.includes('playToggle') && js.includes('neoCountUp') && js.includes('initNeoDrag'), 'renderer co toggle sound + count-up + drag');
-	assert(js.includes("(pointer: fine) and (min-width: 1024px)"), 'drag chi desktop');
+	assert(!html.includes('MINH BACH') && !html.includes('UY TIN') && !html.includes('70%'), 'khong copy slogan trang tham khao');
+	assert(/@media \(prefers-reduced-motion: reduce\)/.test(neo), 'P4 van co reduced-motion');
+	assert(js.includes('playToggle') && js.includes('neoCountUp'), 'renderer co toggle sound + count-up');
+	assert(!js.includes('initNeoDrag') && !html.includes('neo-marquee'), 'band/drag phai xoa sach');
 	assert(/SOUND_KEY/.test(js), 'sound van mac dinh OFF theo key hien co');
-	return 'marquee + rotator + sticker + sound v2 + count-up + drag';
+	assert(!/\.mp3|\.wav|\.ogg/.test(js), 'khong file am thanh, chi synth');
+	return 'sound v2 + count-up + khong band/drag';
 });
 
 
@@ -1208,8 +1238,8 @@ check('NEO P5: full audit — token-only, scale, hero/up-row/dns intact, no copy
 	const html = read(INDEX);
 	assert(!/navAccount/.test(html), 'khong navAccount');
 	assert(!/MINH BACH|UY TIN/.test(html + css), 'khong copy slogan');
-	assert(html.includes('neo-marquee') && html.includes('neo-sticker') && html.includes('neo-rotator'), 'marquee + sticker + rotator co mat');
-	return 'audit P5 sach';
+	assert(!html.includes('neo-marquee') && !html.includes('neo-sticker') && !html.includes('neo-rotator'), 'band phai xoa sach (FIX64-P1)');
+	return 'audit P5 sach (band da xoa)';
 });
 
 check('HB-DIAG: log loi heartbeat ghi status/code/appId/task, khong doi cach chay', () => {
