@@ -683,7 +683,7 @@
 					ok: false,
 					message:
 						meRes.status === 401
-							? 'Token không hợp lệ hoặc đã hết hạn.'
+							? 'Token không còn hiệu lực, dán lại token.'
 							: meRes.status === 403
 								? 'Discord từ chối token này (403) — token có thể đã bị thu hồi.'
 								: `Discord trả lỗi ${meRes.status}.`,
@@ -914,7 +914,7 @@
 				const status = walletRes?.res.status || claimedRes?.res.status || 0;
 				return {
 					ok: false,
-					message: status === 401 ? 'Token không hợp lệ.' : `Discord trả lỗi ${status || 'mạng'}.`,
+					message: status === 401 ? 'Token không còn hiệu lực, dán lại token.' : `Discord trả lỗi ${status || 'mạng'}.`,
 				};
 			}
 
@@ -1213,7 +1213,7 @@
 				code: data?.code ?? null,
 				message:
 					data?.message ||
-					(res.status === 401 ? 'Token không hợp lệ.' : `Discord trả lỗi ${res.status}.`),
+					(res.status === 401 ? 'Token không còn hiệu lực, dán lại token.' : `Discord trả lỗi ${res.status}.`),
 				raw: data,
 			};
 		} catch (err) {

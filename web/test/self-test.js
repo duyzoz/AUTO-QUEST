@@ -1366,6 +1366,47 @@ check('FIX64-P3: the / tien do / claim (W31-W40)', () => {
 	return 'logo fallback + phut that + chon game + ly do khoa + claimError tren the + sap claimedAt + empty co hanh dong + wrap tron ven';
 });
 
+check('FIX64-P4: tin cay / hieu nang / chan doan (W41-W52)', () => {
+	const js = read(path.join(APP, 'renderer.js'));
+	const qm = read(path.join(WEB, 'engine', 'src', 'questManager.js'));
+	const bot = read(path.join(WEB, 'engine', 'bot.js'));
+	const bridge = read(path.join(WEB, 'bridge.js'));
+	const bundle = read(path.join(WEB, 'engine-bundle.js'));
+	// W41 (audit + fix): nut Khoi phuc + tu phuc hoi da co; khoi phuc
+	// phai ap lai tich UI tu cau hinh chay, khong lam mat lua chon.
+	assert(js.includes('btnRecover') && js.includes('recoverRun') && js.includes('scheduleSelfHeal'), 'thieu duong khoi phuc worker (btnRecover/recoverRun/self-heal)');
+	assert(/recoverRun[\s\S]{0,1200}canSelectQuest\(q\)/.test(js), 'recoverRun phai ap lai tich UI tu cfg.selectedQuests');
+	// W42 (fix): social-action khong fail ngay lan dau; 401/403/404 dung ngay.
+	assert(qm.includes('SOCIAL_RETRY_DELAYS_MS') && qm.includes('social-action lỗi sau 3 lần thử'), 'social-action phai thu lai co backoff truoc khi fail');
+	assert(bundle.includes('SOCIAL_RETRY_DELAYS_MS'), 'bundle phai chua code thu lai social-action');
+	// W43 (fix): 429 claim co dem nguoc truc tiep tren pill theo retry_after.
+	assert(js.includes('startRateLimitCountdown') && js.includes('tự nhận tiếp sau'), 'thieu dem nguoc 429 tren pill');
+	assert(bridge.includes('claimBlockedUntil') && bridge.includes('respect the FULL retry_after'), 'bridge phai cho het retry_after, khong cap');
+	// W44 (fix): token chet/het han noi dung 1 cau ro + hanh dong tiep theo.
+	assert(js.includes('Token không còn hiệu lực, dán lại token.') && js.includes('function tokenDeadText'), 'thieu cau token chet chuan hoa o renderer');
+	assert(bot.includes('Token không còn hiệu lực, dán lại token (401).'), 'engine fatal 401 phai dung cau token chet');
+	assert(bridge.includes('Token không còn hiệu lực, dán lại token.'), 'bridge 401 phai dung cau token chet');
+	// W45 (audit): quet dedupe theo id, giu tien do qua quet, bao quest moi.
+	assert(js.includes('byId.set(String(item.id), item)') && js.includes('Có ${fresh.length} quest mới'), 'quet phai dedupe theo id + bao quest moi');
+	// W46 (fix): lua chon luu theo tai khoan, khoi phuc sau quet; khong luu token/code.
+	assert(js.includes('autoquest.selection.v1') && js.includes('function persistSelection') && js.includes('function restoreSelection'), 'thieu luu/khoi phuc lua chon');
+	assert(!/selection\.v1[\s\S]{0,200}token/.test(js), 'luu lua chon khong duoc dinh token');
+	// W47 (audit): windowing ca 3 tab + anh lazy, khong observer theo the.
+	assert(js.includes('activeWindowing') && js.includes('newWindowing') && js.includes('doneWindowing'), 'thieu windowing ca 3 tab');
+	assert(!/new IntersectionObserver/.test(js), 'khong duoc co observer theo the');
+	// W48 (process): bundle + integrity duoc kiem tra truoc khi day (xem bao cao batch).
+	// W49 (audit): log gioi han 400 dong, cuon noi bo, xoa log khong xoa quest.
+	assert(js.includes('childElementCount > 400') && js.includes("ui.console.innerHTML = '';"), 'log phai gioi han dong + xoa duoc');
+	// W50 (fix): the loi co nhan + nguon + thoi gian; quest:error co chu tren the.
+	assert(js.includes('questErrorMsg') && js.includes('questErrorAt') && js.includes('toLocaleTimeString'), 'the loi phai co ly do + thoi gian');
+	assert(js.includes('formatClaimDiag(q, en) || blockedText'), 'the phai giu chan doan claim/blocked');
+	// MUST NOT BREAK: P0 blocked, P3 frame/prog.
+	assert(js.includes('Cần chơi trong Discord') && js.includes('heartbeatBlocked'), 'khong duoc pha trang thai heartbeat-blocked (P0)');
+	assert(bundle.includes('blockHeartbeatQuest'), 'bundle phai giu blockHeartbeatQuest (P0)');
+	assert(js.includes('qcard-prog'), 'khong duoc pha dong phut P3');
+	return 'khoi phuc giu tich + social thu lai + dem nguoc 429 + cau token chet + luu lua chon + diag co gio';
+});
+
 /* ── In kết quả ────────────────────────────────────────────────────────── */
 for (const r of results) {
 	const tag = r.ok ? 'PASS' : 'FAIL';

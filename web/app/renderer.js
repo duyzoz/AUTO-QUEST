@@ -1874,8 +1874,16 @@ function updateQuestFoot(node, q) {
 			: '';
 		// FIX64-P3 (W37): ly do claim loi phai hien NGAY TREN THE (nut chi
 		// noi "Thu lai"), khong chi trong toast/log de roi troi mat.
-		// Thu tu: chan doan claim > bi chan heartbeat > claimError that.
-		const diagText = formatClaimDiag(q, en) || blockedText || (q.claimError ? String(q.claimError) : '');
+		// Thu tu: chan doan claim > bi chan heartbeat > claimError that >
+		// loi engine (quest:error). FIX64-P4 (W50): kem thoi gian xay ra
+		// (gio:phut) — the loi ma khong co thoi gian thi khong biet loi
+		// moi hay tu phien truoc.
+		const diagBase = formatClaimDiag(q, en) || blockedText || (q.claimError ? String(q.claimError) : '') || (q.questErrorMsg ? String(q.questErrorMsg) : '');
+		const diagAt = q.claimErrorAt || q.heartbeatBlockedAt || q.questErrorAt || 0;
+		const diagTime = diagBase && diagAt
+			? ` · ${new Date(diagAt).toLocaleTimeString(en ? 'en-US' : 'vi-VN', { hour: '2-digit', minute: '2-digit' })}`
+			: '';
+		const diagText = diagBase + diagTime;
 		if (diagEl.textContent !== diagText) diagEl.textContent = diagText;
 	}
 	node.classList.add('has-foot');
@@ -2734,7 +2742,7 @@ function renderQuests() {
 		// Waves#159: dữ liệu + bộ lọc không đổi thì không cập nhật lại
 		// node (giữ ảnh đã nạp, giữ vị trí cuộn, tránh nháy toàn lưới).
 		const filterSig = `${questFilter}|${questQuery}|${currentTab}|${doneRewardFilter}|${doneSort}`;
-		const sig = [q.status, q.orbs, q.claimedAt, q.rewardKind, q.rewardAsset, q.rewardCode ? 'code' : '', q.logotype, q.logotypeDark, q.logotypeLight, q.gameTile, q.name, q.gameTitle, q.flag, q.claimPhase, q.claimBusy, q.running, q.secondsDone, q.secondsNeeded, q.task, filterSig].join('|');
+		const sig = [q.status, q.orbs, q.claimedAt, q.rewardKind, q.rewardAsset, q.rewardCode ? 'code' : '', q.logotype, q.logotypeDark, q.logotypeLight, q.gameTile, q.name, q.gameTitle, q.flag, q.claimPhase, q.claimBusy, q.claimError, q.claimErrorAt, q.heartbeatBlocked, q.heartbeatBlockedAt, q.questErrorMsg, q.questErrorAt, q.running, q.secondsDone, q.secondsNeeded, q.task, filterSig].join('|');
 		if (questRenderSig.get(id) !== sig) {
 			questRenderSig.set(id, sig);
 			if (kind === 'card') updateQuestCard(node, q);
@@ -3015,10 +3023,40 @@ if (ui.btnSelectGame) ui.btnSelectGame.addEventListener('click', () => {
 	for (const id of questOrder) { const q = quests.get(id); if (!q || !canSelectQuest(q) || !questMatchesFilter(q) || gameLabelOf(q) !== g) continue; if (!selected.has(id)) { selected.add(id); n++; } }
 	renderQuests();
 	updateSelectionUi();
+	persistSelection();
 	if (n) toast(`Đã chọn ${n} nhiệm vụ của ${g}.`);
 });
 
 /* ---------------- Selection handlers ---------------- */
+
+/* FIX64-P4 (W46 + W41): lua chon quest phai song qua tai lai trang,
+   quet lai va khoi phuc worker. Truoc day `selected` chi nam trong RAM:
+   bam Quet lai xoa sach (scan handler), tai lai trang mat het, khoi phuc
+   worker chi giu danh sach trong cau hinh chay chu khong giu tich tren UI.
+   Nay luu id da chon theo tai khoan (localStorage, KHONG token/code) va
+   khoi phuc lai moi lan nhan danh sach quet — chi nhung id con ton tai va
+   con chon duoc (todo + automatable). Doi tai khoan thi luu truoc roi moi
+   xoa RAM, de quay lai tai khoan cu van con lua chon cu. */
+const SELECTION_KEY = 'autoquest.selection.v1';
+function persistSelection() {
+	try {
+		const store = loadJsonLocal(SELECTION_KEY, {});
+		store[accountScope()] = Array.from(selected).slice(0, 300);
+		saveJsonLocal(SELECTION_KEY, store);
+	} catch {}
+}
+function restoreSelection() {
+	try {
+		const store = loadJsonLocal(SELECTION_KEY, {});
+		const saved = store[accountScope()];
+		if (!Array.isArray(saved)) return;
+		for (const id of saved) {
+			const q = quests.get(String(id));
+			if (q && canSelectQuest(q)) selected.add(String(id));
+		}
+		persistSelection();
+	} catch {}
+}
 
 function onQuestCheckChange(e) {
 	const check = e.target.closest('input[data-quest-check]');
@@ -3030,6 +3068,7 @@ function onQuestCheckChange(e) {
 	const card = check.closest('.qcard');
 	if (card) card.dataset.selected = check.checked ? '1' : '0';
 	updateSelectionUi();
+	persistSelection();
 }
 
 /* Waves 24: gắn cho CẢ tab "Chưa làm" và "Chưa nhận" — trước đây chỉ gắn tab
@@ -3046,6 +3085,7 @@ ui.selectAll.addEventListener('change', () => {
 	}
 	renderQuests();
 	updateSelectionUi();
+	persistSelection();
 });
 
 /* ---------------- Wave#111: tìm kiếm · lọc · nhận tất cả ---------------- */
@@ -3260,6 +3300,11 @@ function upsertQuest(id, patch, opts = {}) {
 			orbs: 0,
 		});
 	}
+	// FIX64-P4 (W50): dong thoi gian cho chan doan tren the — claimError va
+	// heartbeatBlocked chi co noi dung thi khong biet loi tu luc nao. Dong
+	// dau thoi gian o day (1 cho duy nhat) thay vi sua tung cho goi upsert.
+	if (patch && typeof patch.claimError === 'string' && patch.claimError && !patch.claimErrorAt) patch.claimErrorAt = Date.now();
+	if (patch && patch.heartbeatBlocked === true && !patch.heartbeatBlockedAt) patch.heartbeatBlockedAt = Date.now();
 	Object.assign(quests.get(id), patch);
 	if (opts.defer) {
 		scheduleRender(); // gộp: render 1 lần duy nhất mỗi frame
@@ -3291,6 +3336,9 @@ function pruneQuestsMissing(list) {
 			questNodes.delete(id);
 		}
 	}
+	// FIX64-P4 (W46): quet moi loai id da mat thi lua chon luu cung phai
+	// cap nhat theo, khong de id chet song lai o lan khoi phuc sau.
+	try { persistSelection(); } catch {}
 }
 
 /* ============================================================
@@ -3956,6 +4004,8 @@ function claimableMatchingIds() {
 let lastClaimRateLimitSec = 0;
 
 async function claimSequence(ids, source = 'bulk') {
+	clearInterval(rateLimitCountdownTimer);
+	rateLimitCountdownTimer = null;
 	bulkClaimBusy = true;
 	bulkClaimDone = 0;
 	bulkClaimTotal = ids.length;
@@ -4070,9 +4120,10 @@ async function claimSequence(ids, source = 'bulk') {
 		const resumeMs = ((Number.isFinite(lastClaimRateLimitSec) && lastClaimRateLimitSec > 0 ? lastClaimRateLimitSec : 30) * 1000) + 1000;
 		appendLog(`[Cảnh báo] Đã dừng nhận hàng loạt: Discord giới hạn tốc độ. Sẽ tự nhận tiếp sau ${Math.ceil(resumeMs / 1000)}s.`, 'warn');
 		toast(`Đã dừng: Discord giới hạn tốc độ — sẽ tự nhận tiếp sau ${Math.ceil(resumeMs / 1000)}s.`, true);
-		setTimeout(() => {
+		// FIX64-P4 (W43): dem nguoc truc tiep tren pill thay vi setTimeout cam.
+		startRateLimitCountdown(resumeMs, () => {
 			if (queueRows().length) continueClaimQueue();
-		}, resumeMs);
+		});
 	} else if (stopReason === 'engine') {
 		appendLog('[Hệ thống] Đã dừng nhận hàng loạt vì tiến trình cày vừa khởi động.', 'warn');
 	} else {
@@ -4193,6 +4244,20 @@ if (ui.captchaVeilClick) ui.captchaVeilClick.addEventListener('click', (e) => {
 });
 
 /* ---------------- Event Dispatcher ---------------- */
+
+/* FIX64-P4 (W44): loi fatal do token chet/het han phai noi dung 1 cau ro
+   rang + hanh dong tiep theo, khong de thong diep chung chung hay ma 401
+   troi. Cac nguon (engine bot.js, bridge login/balance/claim) da tra cau
+   nay; day la lop chuan hoa cuoi cho moi fatal lac toi UI. */
+function tokenDeadText(msg) {
+	const s = String(msg || '');
+	if (/401/.test(s) || /token.*(không hợp lệ|hết hạn|het han|invalid|expired)/i.test(s)) {
+		return currentLang === 'en'
+			? 'Token is no longer valid, paste the token again.'
+			: 'Token không còn hiệu lực, dán lại token.';
+	}
+	return s;
+}
 
 async function handleEvent(evt) {
 	const d = evt.data || {};
@@ -4333,6 +4398,9 @@ async function handleEvent(evt) {
 			}
 			scanBuffer.length = 0;
 			pruneQuestsMissing(list);
+			// FIX64-P4 (W46): khoi phuc lua chon da luu cho nhung quest con
+			// ton tai trong danh sach moi (sau khi prune da loai id chet).
+			restoreSelection();
 			// Wave#128: giữ bản lưu ngoại tuyến theo tài khoản (không token).
 			saveInventoryCache(list);
 			// Wave#118: hàng đợi chỉ giữ mục còn nhận được / chưa quá hạn.
@@ -4646,7 +4714,10 @@ async function handleEvent(evt) {
 		case 'quest:error':
 			// Waves#186: ghi lại nhiệm vụ quét lỗi để scan:complete báo rõ phần thiếu.
 			try { if (scanning && d && (d.id || d.name)) scanPartialErrors.push({ id: String(d.id || ''), name: String(d.name || ''), message: String(d.message || d.reason || '') }); } catch {}
-			upsertQuest(d.id || d.name, { running: false, flag: 'error' });
+			// FIX64-P4 (W50): quest loi tu engine truoc day chi co co 'error'
+			// ma khong co chu gi tren the — ghi ca ly do + thoi gian de the
+			// hien duoc ma khong can mo log.
+			upsertQuest(d.id || d.name, { running: false, flag: 'error', questErrorMsg: String(d.message || d.reason || ''), questErrorAt: Date.now() });
 			break;
 
 		case 'orb:summary':
@@ -4690,8 +4761,8 @@ async function handleEvent(evt) {
 			break;
 
 		case 'fatal':
-			appendLog(`[LỖI] ${d.message || 'Lỗi không xác định'}`, 'stderr');
-			toast(`Lỗi: ${d.message}`, true);
+			appendLog(`[LỖI] ${tokenDeadText(d.message) || 'Lỗi không xác định'}`, 'stderr');
+			toast(`Lỗi: ${tokenDeadText(d.message)}`, true);
 			if (scanning) {
 				// Wave#103: quét lỗi không được để loader quay mãi.
 				setScanning(false, scanDone);
@@ -5029,6 +5100,9 @@ function showLoginVeil() {
 function resetQuestSessionForSwitch() {
 	try {
 		// 1) State nhiệm vụ trong RAM (store theo id + thứ tự + chọn + dedupe + bộ đếm phiên).
+		// FIX64-P4 (W46): luu lua chon cua tai khoan cu TRUOC khi xoa RAM,
+		// de quay lai tai khoan do van con lua chon cu.
+		try { persistSelection(); } catch {}
 		quests.clear();
 		questOrder.length = 0;
 		selected.clear();
@@ -7526,6 +7600,34 @@ function pillEnd() {
 	}, 420);
 }
 
+/* FIX64-P4 (W43): dem nguoc TRUC TIEP tren claim pill khi Discord tra 429.
+   Truoc day chi co 1 dong log/toast tinh "sau Xs" roi im lang den luc tu
+   nhan tiep — nguoi dung khong biet con cho bao lau. Nay pill tick moi
+   giay theo dung retry_after (+1s) ma claimSequence da tinh, het gio thi
+   tu goi lai ham tiep tuc hang doi. Khong gui request som hon retry_after. */
+let rateLimitCountdownTimer = null;
+function startRateLimitCountdown(resumeMs, onDone) {
+	clearInterval(rateLimitCountdownTimer);
+	rateLimitCountdownTimer = null;
+	let remaining = Math.max(1, Math.ceil((Number(resumeMs) || 0) / 1000));
+	const label = () => currentLang === 'en'
+		? `Rate limited — resuming in ${remaining}s…`
+		: `Giới hạn tốc độ — tự nhận tiếp sau ${remaining}s…`;
+	pillStart(label());
+	pillSetCount(0, 0);
+	rateLimitCountdownTimer = setInterval(() => {
+		remaining -= 1;
+		if (remaining <= 0) {
+			clearInterval(rateLimitCountdownTimer);
+			rateLimitCountdownTimer = null;
+			pillEnd();
+			if (typeof onDone === 'function') onDone();
+			return;
+		}
+		pillSetText(label());
+	}, 1000);
+}
+
 /* ---------------- Wave#118: hàng đợi nhận thưởng chờ xác minh ---------------- */
 
 function queueRows() {
@@ -8542,6 +8644,16 @@ async function recoverRun(auto = false) {
 		);
 	}
 	userStopped = false;
+	// FIX64-P4 (W41): khoi phuc worker khong duoc lam mat tich tren UI —
+	// ap lai lua chon tu cau hinh chay gan nhat cho quest con ton tai va
+	// con chon duoc, roi luu lai theo tai khoan.
+	if (Array.isArray(cfg.selectedQuests)) {
+		for (const id of cfg.selectedQuests) {
+			const q = quests.get(String(id));
+			if (q && canSelectQuest(q)) selected.add(String(id));
+		}
+		persistSelection();
+	}
 	startHeartbeat();
 	await startRun(cfg.mode || 'run', {
 		selectedQuests: Array.isArray(cfg.selectedQuests) ? cfg.selectedQuests : [],
@@ -8777,10 +8889,12 @@ ui.btnScan.addEventListener('click', async () => {
 	//   Trước đây `await api.saveConfig(...)` (IPC, tốn vài chục–trăm ms trên máy
 	//   yếu) nằm TRƯỚC setScanning ⇒ % đứng im ⇒ bro cảm nhận "chậm".
 	//   Nay: reset state (đồng bộ, rẻ) → setScanning(true) → await saveConfig.
-	// Reset danh sách & lựa chọn cũ
+	// Reset danh sách cũ — KHONG xoa lua chon (FIX64-P4 W46): lua chon
+	// duoc luu theo tai khoan va khoi phuc lai khi danh sach quet moi ve
+	// (quest:inventory -> prune -> restoreSelection); id khong con trong
+	// danh sach moi se bi prune loai khoi lua chon o do.
 	questOrder.length = 0;
 	quests.clear();
-	selected.clear();
 	doneSeen.clear();
 	ui.console.innerHTML = '';
 	logText = '';

@@ -411,7 +411,7 @@ async function runQuestCycle() {
         // Wave#104: lỗi của MỘT lượt (mạng chập chờn, Discord 5xx) không được
         // giết cả chế độ treo. Chỉ token chết (401) mới dừng hẳn.
         if (err?.status === 401) {
-            (0, events_1.report)('fatal', { message: 'Token Discord không hợp lệ hoặc đã hết hạn (401).' });
+            (0, events_1.report)('fatal', { message: 'Token không còn hiệu lực, dán lại token (401).' });
             console.error('Token hết hiệu lực:', message);
             void shutdown(1);
             return;
@@ -1920,12 +1920,35 @@ class QuestManager {
                 : 'join';
         const platform = taskName === 'JOIN_COMMUNITY' ? 'community' : 'social';
         console.log(`Đang thực hiện hành động "${action}" cho "${questName}"...`);
-        try {
-            const res = await this.client.rest.post(`/quests/${quest.id}/social-action`, { body: { action, platform } });
-            quest.updateUserStatus(res);
+        // FIX64-P4 (W42): loi mang/Discord nhat thoi KHONG duoc fail quest ngay
+        // lan dau. Thu lai toi da 3 lan voi backoff 2s/5s; chi 401/403/404 la
+        // ket cuc cuoi (token chet / quest khong ton tai / khong co quyen) thi
+        // dung ngay thay vi cho vo ich. Het luot thu moi failQuest.
+        const SOCIAL_RETRY_DELAYS_MS = [2000, 5000];
+        let socialDone = false;
+        let socialLastErr = null;
+        for (let attempt = 0; attempt <= SOCIAL_RETRY_DELAYS_MS.length; attempt++) {
+            try {
+                const res = await this.client.rest.post(`/quests/${quest.id}/social-action`, { body: { action, platform } });
+                quest.updateUserStatus(res);
+                socialDone = true;
+                break;
+            }
+            catch (err) {
+                socialLastErr = err;
+                const status = err?.status;
+                if (status === 401 || status === 403 || status === 404) {
+                    console.warn(`[Cảnh báo] social-action dung ngay (HTTP ${status}, khong thu lai): ${err?.message || err}`);
+                    break;
+                }
+                if (attempt >= SOCIAL_RETRY_DELAYS_MS.length)
+                    break;
+                console.warn(`[Cảnh báo] social-action loi lan ${attempt + 1}/3 (se thu lai sau ${SOCIAL_RETRY_DELAYS_MS[attempt] / 1000}s): ${err?.message || err}`);
+                await this.timeout(SOCIAL_RETRY_DELAYS_MS[attempt]);
+            }
         }
-        catch (err) {
-            this.failQuest(quest, questName, `social-action lỗi: ${err?.message || err}`);
+        if (!socialDone) {
+            this.failQuest(quest, questName, `social-action lỗi sau 3 lần thử: ${socialLastErr?.message || socialLastErr}`);
             return;
         }
         await this.finishQuest(quest, questName);

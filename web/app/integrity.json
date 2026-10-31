@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "version": "2.0.0",
-  "createdAt": "2026-10-31T09:26:50.144Z",
+  "createdAt": "2026-10-31T09:41:51.945Z",
   "files": {
     "index.html": "NSdvWzNT79dkF0OiGLwY3jCrz9xBQ0PfUB2kPJK+h9A=",
-    "renderer.js": "EZ8TXFZgC47d0uczfXNM1H5A0w+8yyUcCAG6J5FocNY=",
+    "renderer.js": "5kQ7r5eC2PyhTn4EbQc5Nxdx6qDH3tZhnYaVtDMWQqc=",
     "styles.css": "MHzLrZs2dKn+fEfmCW5tgB1nYb3NaS4Q9ixlkkIX6TY=",
     "mobile.css": "i1Nru3t2SSo75RY0qaKce49iK7o1GE5dsA4O1k/eCe4=",
     "fonts.css": "U4/m5jmHWyfQzMd2EDNkTD6WuO20V4R2+WQkLB8W8LU=",
@@ -12,8 +12,8 @@
     "sw.js": "e77xr5qHsiXi0ih5eiEUFul5QAIClxTHLFjNKFyJOP8=",
     "web/identity.js": "FHQGYNyVwaIvMJW4pZKbt7PU0cSpXQooPKO/Be5K8+E=",
     "web/display-name-style.js": "OcvXwY1y4EhxeZa1qsbcZhNSEFJ2nagPGLcRmf7plMI=",
-    "web/bridge.js": "qQ6pU43AfXSVm1IedWYfy3h+UJT95Xlk3nlxvbpz8Zc=",
+    "web/bridge.js": "UL7XO1uFd1PvkDtLxw5ojYhHaAydkeH0AsQyBr10Zqk=",
     "web/engine-worker.js": "o62nfrB87JeqnW0sVqyc+BTaCQLyCDIrvQvjK8hdlNY=",
-    "web/engine-bundle.js": "ajBKeOxoxp8Z0K6ogeV6oZxOuuDf2y8GwJgKxjt4YUk="
+    "web/engine-bundle.js": "r4Cd+UZ12EsEhUHo8wO+JlxR3WAnajTELwDvlvTSlv0="
   }
 }

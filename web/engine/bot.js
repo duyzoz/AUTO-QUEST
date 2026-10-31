@@ -400,7 +400,7 @@ async function runQuestCycle() {
         // Wave#104: lỗi của MỘT lượt (mạng chập chờn, Discord 5xx) không được
         // giết cả chế độ treo. Chỉ token chết (401) mới dừng hẳn.
         if (err?.status === 401) {
-            (0, events_1.report)('fatal', { message: 'Token Discord không hợp lệ hoặc đã hết hạn (401).' });
+            (0, events_1.report)('fatal', { message: 'Token không còn hiệu lực, dán lại token (401).' });
             console.error('Token hết hiệu lực:', message);
             void shutdown(1);
             return;
