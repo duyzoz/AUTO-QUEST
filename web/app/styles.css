@@ -6039,3 +6039,20 @@ body[data-page="quest"] .page.active { flex: none; }
 #pageQuest .quest-head, #pageQuest .quest-tools, #pageQuest .quest-advanced, #pageQuest .select-tools { flex: 0 0 auto; }
 #pageQuest .qstate.is-empty { min-height: 120px; }
 .tab-count { min-width: 28px; box-sizing: border-box; display: inline-flex; justify-content: center; font-variant-numeric: tabular-nums; }
+
+/* ============================================================
+   FIX26-D — Marquee + sticker (F12-F14). Marquee: mo mat
+   (mask bang token, khong mau tho) de cho cat o mep trai
+   trong co chu dich, track co padding-left 16px de tu dau
+   tien hien tron ven; pause khi hover/focus va tat khi
+   reduced-motion da co tu NEO P4, giu nguyen. Sticker:
+   moi hang chi 1 sticker moi tu — rotator tach ra hang
+   rieng va co nen sticker (khong con nhan trang tron);
+   2 hang deu cao co dinh 32px, khong wrap gay nhay hang;
+   sticker keo (desktop) khong day sticker khac.
+   ============================================================ */
+.neo-marquee { -webkit-mask-image: linear-gradient(90deg, transparent, var(--neo-line) 32px, var(--neo-line) calc(100% - 32px), transparent); mask-image: linear-gradient(90deg, transparent, var(--neo-line) 32px, var(--neo-line) calc(100% - 32px), transparent); }
+.neo-marquee-track { padding-left: 16px; }
+.neo-sticker-row { height: 32px; flex-wrap: nowrap; overflow: hidden; }
+.neo-rotator-row { display: flex; align-items: center; height: 32px; padding: 4px; overflow: hidden; }
+.neo-sticker.neo-rotator { display: inline-grid; }

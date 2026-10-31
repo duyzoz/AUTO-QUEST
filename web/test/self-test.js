@@ -1124,6 +1124,20 @@ check('FIX26-BC: quest khong bi go, tab khong dich, dem tab co dinh', () => {
 	return 'cuon tu nhien + the cuoi du + dem 28px + tab nearest';
 });
 
+check('FIX26-D: marquee khong cat tu dau, sticker moi tu 1 lan', () => {
+	const css = read(path.join(APP, 'styles.css'));
+	const d = css.slice(css.indexOf('FIX26-D'));
+	const html = read(INDEX);
+	assert(/\.neo-marquee \{[^}]*mask-image: linear-gradient/.test(d), 'marquee co edge fade');
+	assert(/\.neo-marquee-track \{[^}]*padding-left: 16px/.test(d), 'marquee track co padding-left 16px');
+	assert(/\.neo-sticker-row \{[^}]*height: 32px/.test(d), 'hang sticker cao co dinh 32px');
+	assert(html.includes('neo-rotator-row'), 'rotator co hang rieng');
+	assert(!html.includes('<span class="neo-rotator">'), 'khong con rotator tran khong nen sticker');
+	const row = html.split('neo-sticker-row')[1].split('</div>')[0];
+	assert((row.match(/NHAN THUONG/g) || []).length === 1, 'hang sticker chi 1 NHAN THUONG');
+	return 'marquee fade + sticker 1 tu + rotator co nen';
+});
+
 
 check('NEO P3: quest card v2 — progress bar, state sticker, done neo, toolbar', () => {
 	const css = read(path.join(APP, 'styles.css'));
