@@ -1,12 +1,12 @@
 {
   "schema": 1,
   "version": "2.0.0",
-  "createdAt": "2026-10-31T15:20:02.913Z",
+  "createdAt": "2026-10-31T15:37:29.456Z",
   "files": {
     "index.html": "nvWpUpG1wHXiKrkGHKnVCMbE/fk8MLwrdNI8SscHEBk=",
-    "renderer.js": "CqhUD2k6ZaH4f1gsRIUu1E4nxXsgJyi/BoiTPZSnNz0=",
-    "styles.css": "LjDv3eh204mF8tdjSZ6tuWs8gSQd1E2VVjjKWVB8Sdo=",
-    "mobile.css": "k2h+8NGakxpD732l9tJWQOZu489loAGt71fjaa13TRE=",
+    "renderer.js": "K9dz0nccBV1e3jA0YWCdlJpmQo3pxEbaoNCsQZ+yGFM=",
+    "styles.css": "S6YZjbiCATmsHY/7HWmSGepMBQTFEl2pwf032P3b6Nc=",
+    "mobile.css": "Bn9fL5T4LrW0qHzCHJ7TYZlLgMjLfK9pxrDmr22MZV8=",
     "fonts.css": "U4/m5jmHWyfQzMd2EDNkTD6WuO20V4R2+WQkLB8W8LU=",
     "manifest.webmanifest": "1H63uD8LE6+M73rye3uliVF93LTEjSpqy7e/FabShMU=",
     "sw.js": "3DKpPgnZpuxzQ/y+RIRR2jwlnTweB5CfpIJqJQ8lgHQ=",

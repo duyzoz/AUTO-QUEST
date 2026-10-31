@@ -914,13 +914,14 @@ check('Waves#247/#248: chống tràn chữ + text-size-adjust + chữ nhỏ tố
 	assert(/\.qcard-kicker,/.test(mobile) && /font-size: 0\.75rem;/.test(mobile), 'chữ nhỏ mobile phải lên 0.75rem');
 	return 'text-size-adjust + bỏ nowrap + chữ 0.75rem';
 });
-check('Waves#251/#266: lưới Đã làm 3/4/6 cột, drawer 85vw, tablet 300px', () => {
+check('Waves#251/#266 (GRID-DISCORD supersede): lưới Đã làm 1/2/3 cột, drawer 85vw, tablet 300px', () => {
 	const mobile = read(path.join(APP, 'mobile.css'));
-	assert(/\.qgrid-done \{\s*grid-template-columns: repeat\(3,/.test(mobile), '≤560px phải 3 cột Done');
-	assert(/\.qgrid-done \{\s*grid-template-columns: repeat\(4,/.test(mobile), '561-1023px phải 4 cột Done');
+	const grid = mobile.slice(mobile.indexOf('GRID-DISCORD'));
+	assert(/@media \(max-width: 767px\)[\s\S]{0,400}\.qgrid-done \{\s*grid-template-columns: 1fr;/.test(grid), 'mobile ≤767px phải 1 cột Done');
+	assert(/@media \(min-width: 768px\) and \(max-width: 1023px\)[\s\S]{0,400}\.qgrid-done \{\s*grid-template-columns: repeat\(2,/.test(grid), 'tablet 768-1023px phải 2 cột Done');
 	assert(/width: min\(280px, 85vw\);/.test(mobile), 'drawer mobile phải min(280px, 85vw)');
 	assert(/width: 300px;/.test(mobile), 'tablet phải drawer 300px');
-	return 'Done 3/4 cột + drawer 85vw/300px';
+	return 'Done 1/2 cột + drawer 85vw/300px';
 });
 check('Waves#253/#255: toolbar và setting từ 1023px trở xuống thành cột', () => {
 	const mobile = read(path.join(APP, 'mobile.css'));
@@ -1079,9 +1080,9 @@ check('NEO P0: quest grid 3/2/1, cards complete, no internal clip', () => {
 	assert(/\.quest-list \{[^}]*grid-template-columns: repeat\(3, minmax\(0, 1fr\)\)/.test(neo), 'quest-list desktop phai 3 cot');
 	assert(/\.qcard-body \{[^}]*overflow: visible/.test(neo), 'qcard-body khong duoc overflow hidden');
 	assert(/\.qcard-desc \{[^}]*-webkit-line-clamp: unset/.test(neo), 'qcard-desc khong duoc clamp cat chu');
-	assert(/\.qgrid-done \{[^}]*grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/.test(neo), 'qgrid-done desktop phai 2 cot gap 24px theo khung Discord (DISCORD-ORB)');
+	assert(/\.qgrid-done \{[^}]*grid-template-columns: repeat\(3, minmax\(0, 1fr\)\)/.test(neo), 'qgrid-done desktop phai 3 cot gap 24px theo khung Discord (GRID-DISCORD thay 2 cot DISCORD-ORB)');
 	assert(/\.qcard \{[^}]*border-radius: 20px/.test(neo), 'qcard phai bo tron hoan chinh');
-	return 'grid 3/2/1 + card day du + done 2 cot Discord';
+	return 'grid 3/2/1 + card day du + done 3 cot Discord';
 });
 
 
@@ -1111,17 +1112,19 @@ check('FIX26-A: hero da xoa, top chi con 2 khung bang nhau, gap 28px (FIX64-P2 d
 	return 'hero xoa sach + top 2 khung + gap 28px + up-row con';
 });
 
-check('FIX26-BC: quest khong bi go, tab khong dich, dem tab co dinh', () => {
+check('GRID-DISCORD: khung luoi co dinh + cuon noi bo (thay cuon tu nhien FIX26-BC), tab khong dich, dem tab co dinh', () => {
 	const css = read(path.join(APP, 'styles.css'));
-	const bc = css.slice(css.indexOf('FIX26-BC'));
+	const grid = css.slice(css.indexOf('GRID-DISCORD'));
 	const js = read(path.join(APP, 'renderer.js'));
-	assert(/body\[data-page="quest"\] \.main-wrap \{[^}]*overflow-y: auto/.test(bc), 'trang quest phai cuon tu nhien, khong khoa viewport');
-	assert(/#pageQuest > \.quests-card \{[^}]*flex: none/.test(bc), 'quests-card flex none, no theo noi dung');
-	assert(/#pageQuest \.quests-card \.quest-list \{[^}]*padding-bottom: 16px/.test(bc), 'the cuoi co padding-bottom');
-	assert(/#pageQuest \.qstate\.is-empty \{[^}]*min-height: 120px/.test(bc), 'khung rong co min-height on dinh');
-	assert(/\.tab-count \{[^}]*min-width: 28px/.test(bc), 'chip dem tab rong co dinh 28px');
+	assert(/body\[data-page="quest"\] \.main-wrap \{[^}]*overflow: hidden/.test(grid), 'trang quest phai khoa cuon trang, chi luoi cuon');
+	assert(/body\[data-page="quest"\] \.content \{[^}]*height: 100%/.test(grid), 'content trang quest phai cao 100%');
+	assert(/#pageQuest > \.quests-card \{[^}]*flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column/.test(grid), 'quests-card phai flex cot chiem phan con lai');
+	assert(/#pageQuest \.quests-card \.quest-list \{[^}]*flex: 1 1 auto; min-height: 0; overflow-y: auto/.test(grid), 'luoi phai flex 1 + cuon noi bo');
+	assert(/#pageQuest \.quests-card \.quest-list \{[^}]*padding-bottom: 16px/.test(grid), 'the cuoi co padding-bottom');
+	assert(/#pageQuest \.qstate\.is-empty \{[^}]*min-height: 120px/.test(css), 'khung rong co min-height on dinh');
+	assert(/\.tab-count \{[^}]*min-width: 28px/.test(css), 'chip dem tab rong co dinh 28px');
 	assert(/scrollIntoView\(\{ block: 'nearest' \}\)/.test(js), 'doi tab chi cuon nearest, khong nhay dau/cuoi trang');
-	return 'cuon tu nhien + the cuoi du + dem 28px + tab nearest';
+	return 'khung co dinh + luoi cuon noi bo + the cuoi du + dem 28px + tab nearest';
 });
 
 check('FIX64-P1: 3 band trang tri quest header da xoa sach (W13-W15, W22)', () => {
@@ -1473,9 +1476,52 @@ check('DISCORD-ORB: video Orb Discord thay logo cu, hover + reduced-motion + khu
 	assert(/prefers-reduced-motion: reduce\) \{[^}]*\.orb-video/.test(css), 'thieu reduced-motion cho Orb');
 	assert(css.includes('aspect-ratio: 649 / 182') && css.includes('aspect-ratio: 314 / 196'), 'thieu ti le khung Discord');
 	assert(/\.qdone \{[^}]*border-radius: 16px/.test(css), 'o Da lam phai bo 16px');
-	assert(css.includes('repeat(2, minmax(0, 1fr))') && css.includes('gap: 24px'), 'luoi Da lam phai 2 cot gap 24px');
+	assert(/\.qgrid-done \{[^}]*grid-template-columns: repeat\(3, minmax\(0, 1fr\)\); gap: 24px;/.test(css), 'luoi Da lam phai 3 cot gap 24px (GRID-DISCORD thay 2 cot)');
 	assert(js.includes('Cần chơi trong Discord'), 'P0 blocked UI phai con');
-	return 'video Orb 3 slot + hover + reduced-motion + khung Da lam 16px/2 cot/24px, 0 logo cu';
+	return 'video Orb 3 slot + hover + reduced-motion + khung Da lam 16px/3 cot/24px, 0 logo cu';
+});
+
+check('GRID-DISCORD: luoi 3 cot + khung cuon noi bo + the Discord + cam lech Orb/logo', () => {
+	const js = read(path.join(APP, 'renderer.js'));
+	const css = read(path.join(APP, 'styles.css'));
+	const mobile = read(path.join(APP, 'mobile.css'));
+	const grid = css.slice(css.indexOf('GRID-DISCORD'));
+	const gridMob = mobile.slice(mobile.indexOf('GRID-DISCORD'));
+	// Khung: viewport-bound, chi luoi cuon.
+	assert(/body\[data-page="quest"\] \.main-wrap \{[^}]*overflow: hidden/.test(grid), 'main-wrap trang quest phai khoa cuon trang');
+	assert(/body\[data-page="quest"\] \.content \{[^}]*height: 100%/.test(grid), 'content trang quest phai cao 100%');
+	assert(/#pageQuest > \.quests-card \{[^}]*display: flex; flex-direction: column/.test(grid), 'quests-card phai flex cot');
+	assert(/#pageQuest \.quests-card \.quest-list \{[^}]*overflow-y: auto/.test(grid), 'luoi phai cuon noi bo');
+	// Luoi 3 cot desktop, gap 24.
+	assert(/\.quest-list \{[^}]*grid-template-columns: repeat\(3, minmax\(0, 1fr\)\); gap: 24px/.test(grid), 'luoi quest desktop phai 3 cot gap 24px');
+	assert(/\.qgrid-done \{[^}]*grid-template-columns: repeat\(3, minmax\(0, 1fr\)\); gap: 24px/.test(grid), 'luoi Da lam desktop phai 3 cot gap 24px');
+	// Responsive: 1 cot ≤767, 2 cot 768-1023.
+	assert(/@media \(max-width: 767px\)[\s\S]{0,400}\.quest-list \{\s*grid-template-columns: 1fr;/.test(gridMob), 'mobile ≤767px phai 1 cot quest');
+	assert(/@media \(max-width: 767px\)[\s\S]{0,400}\.qgrid-done \{\s*grid-template-columns: 1fr;/.test(gridMob), 'mobile ≤767px phai 1 cot Done');
+	assert(/@media \(min-width: 768px\) and \(max-width: 1023px\)[\s\S]{0,400}\.quest-list \{\s*grid-template-columns: repeat\(2,/.test(gridMob), 'tablet 768-1023px phai 2 cot quest');
+	// The Discord: nen toi token, khong clamp, badge nhan co dieu kien.
+	assert(/\.qcard \{[^}]*background: var\(--media-card\)/.test(grid), 'the quest phai nen toi token media-card');
+	assert(/\.qcard-title \{[^}]*-webkit-line-clamp: unset/.test(grid), 'tieu de the khong duoc clamp');
+	assert(/\.qcard-desc \{[^}]*-webkit-line-clamp: unset/.test(grid), 'mo ta the khong duoc clamp');
+	assert(/\.qcard-mult:empty \{[^}]*display: none/.test(grid), 'badge nhan phai an khi khong co he so');
+	assert(js.includes('qcard-mult'), 'thieu span badge nhan tren the');
+	assert(/q\.multiplier|q\.rewardMultiplier/.test(js), 'badge nhan phai doc he so tu du lieu, khong bia');
+	// Nut Phat Ngay: nhan + hanh vi play that (khong phai nut chet).
+	assert(js.includes("'Phát Ngay'"), 'thieu nhan Phat Ngay');
+	assert(/act = 'play'/.test(js), 'thieu act play cho nut Phat Ngay');
+	assert(/act === 'play'/.test(js), 'thieu nhanh click play');
+	assert(/\.qcard-act\[data-act="play"\] \{[^}]*cursor: pointer/.test(grid), 'nut Phat Ngay phai bam duoc (pointer)');
+	// Cam lech: vong + orb + video + logo.
+	assert(/\.qcard-reward \{[^}]*width: 70px; height: 70px/.test(grid), 'hop reward phai 70px de dong tam vong');
+	assert(/\.qcard-reward-art \{[^}]*width: 64px; height: 64px; aspect-ratio: 1 \/ 1/.test(grid), 'art Orb phai 64px ti le 1/1');
+	assert(/\.qring \{[^}]*left: 50%; top: 50%[^}]*translate\(-50%, -50%\) rotate\(-90deg\)/.test(grid), 'vong tien do phai can giua that');
+	assert(/\.qcard-reward-art \.orb-video \{[^}]*object-fit: contain/.test(grid), 'video Orb the phai contain');
+	assert(/\.qdone-orb \{[^}]*object-position: center/.test(grid), 'video o Da lam phai can giua');
+	assert(/\.qdone-logo \{[^}]*margin: -16px auto 0; object-position: center/.test(grid), 'logo o Da lam phai can giua, de mep -16px');
+	// P0/P2 khong duoc pha.
+	assert(js.includes('Cần chơi trong Discord') && js.includes('heartbeatBlocked'), 'khong duoc pha heartbeat-blocked (P0)');
+	assert(css.includes('gap: 28px'), 'khong duoc pha gap 28px (P2)');
+	return 'luoi 3 cot + khung cuon noi bo + the toi Discord + Phat Ngay that + cam lech';
 });
 
 check('CLAIM-MANUAL: callback captcha chỉ lưu token chờ, chỉ nút Gửi mới gửi', () => {

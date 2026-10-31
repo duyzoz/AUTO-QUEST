@@ -50,6 +50,15 @@
 	--qdone-bg-a: #101a2e;
 	--qdone-bg-b: #0a1120;
 	--qdone-name: #c9ccd1;
+	/* GRID-DISCORD: token thẻ quest kiểu Discord — NỀN TỐI ở CẢ 2 theme
+	   (khối light không ghi đè các tên này): chữ sáng trên nền tối tương
+	   phản cao, chữ mờ vẫn đủ tương phản. Định nghĩa ở đây (đầu file)
+	   để các test quét-màu-thô theo lát cắt (MAJOR/FIX26/NEO) không báo
+	   nhầm — token chỉ được phép nằm trong khối :root này. */
+	--media-card: #232428;
+	--media-fg: #f2f3f5;
+	--media-fg-muted: #b5bac1;
+	--media-line: rgba(255, 255, 255, 0.16);
 	--banner-c: #0f766e;
 	--scroll-thumb: rgba(255, 255, 255, 0.14);
 	--scroll-thumb-hover: rgba(255, 255, 255, 0.28);
@@ -6153,3 +6162,84 @@ body[data-page="quest"] .page.active { flex: none; }
 	background: linear-gradient(to top, var(--well) 0%, transparent 50%);
 	pointer-events: none;
 }
+
+/* ============================================================
+   GRID-DISCORD (2026-10-31) — Lưới Discord 3 thẻ/dòng, khung cuộn
+   nội bộ, thẻ kiểu ảnh Discord, cấm lệch Orb/logo, cấm cắt thẻ.
+   Quyết định của user (options widget 22:28): khung lưới CỐ ĐỊNH
+   chiều cao, cuộn BÊN TRONG khung; trang không cuộn xuống nữa.
+   Điều này THAY THẾ hành vi cuộn tự nhiên của FIX26-BC (giữ nguyên
+   text FIX26-BC phía trên để đối chiếu, nhưng các rule dưới đây
+   thắng vì đứng sau + đặc hiệu bằng/khác hơn): main-wrap khóa
+   cuộn, .content cao 100%, quests-card flex cột chiếm phần còn
+   lại, chỉ .quest-list cuộn (flex:1 + min-height:0 + overflow-y).
+   Top (Số dư + Nhật ký), tab, toolbar, tìm kiếm đều flex none nên
+   KHÔNG bị cuộn mất. Khung vẫn dùng được ở màn thấp vì lưới có
+   thanh cuộn riêng — không thẻ nào kẹt ngoài tầm với.
+   Token --media-*: thẻ quest kiểu Discord NỀN TỐI ở CẢ 2 theme
+   (định nghĩa trong khối :root ở đầu file, khối light không ghi đè)
+   — chữ trên thẻ dùng --media-fg/--media-fg-muted để tương phản
+   ≥4.5:1 (chữ sáng trên nền tối, chữ mờ vẫn đủ tương phản).
+   Khung thẻ giữ nguyên khung NEO (radius 20px, viền 2px, bóng cứng)
+   — chỉ đổi nền + chữ, không restyle khung tại chỗ dùng.
+   Không z-index mới, không màu thô trong khối này (chỉ var()),
+   spacing trên thang (12/16/20/24/28), không inline style.
+   Khung thẻ (.qcard) vẫn overflow:hidden để bo tròn góc banner —
+   đó là bo khung, KHÔNG phải cắt nội dung: body/info/title/desc
+   đều overflow visible + bỏ clamp (kế thừa NEO P0, khẳng định lại).
+   ============================================================ */
+.shell { height: 100vh; height: 100dvh; }
+
+/* --- Khung trang quest: viewport-bound, lưới cuộn nội bộ --- */
+body[data-page="quest"] .main-wrap { overflow: hidden; overflow-x: hidden; }
+body[data-page="quest"] .content { height: 100%; min-height: 0; }
+body[data-page="quest"] .page.active { flex: 1 1 auto; min-height: 0; }
+#pageQuest { height: 100%; min-height: 0; }
+#pageQuest > .stats-row { flex: 0 0 auto; }
+#pageQuest > .quests-card { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+#pageQuest .quests-card .quest-list { flex: 1 1 auto; min-height: 0; overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; padding-bottom: 16px; }
+#pageQuest .quest-head, #pageQuest .quest-tools, #pageQuest .quest-advanced, #pageQuest .select-tools { flex: 0 0 auto; }
+
+/* --- Lưới: 3 cột desktop, gap 24px (khung Discord đo được) --- */
+.quest-list { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; }
+.qgrid-done { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; }
+
+/* --- Thẻ Chưa làm / Chưa nhận: nền tối kiểu Discord, đủ thông tin --- */
+.qcard { background: var(--media-card); height: auto; }
+.qcard-banner { border-bottom: 1px solid var(--media-line); }
+.qcard-banner-fallback { background: var(--media-card); color: var(--media-fg); }
+.qcard-title { color: var(--media-fg); font-size: 16px; line-height: 1.25; display: block; overflow: visible; white-space: normal; -webkit-line-clamp: unset; }
+.qcard-desc { color: var(--media-fg-muted); font-size: 14px; line-height: 1.5; display: block; overflow: visible; white-space: normal; -webkit-line-clamp: unset; }
+.qcard-kicker { font-size: 12px; }
+.qcard-pub { color: var(--media-fg-muted); font-size: 12px; }
+.qcard-pub-l b { color: var(--media-fg); }
+.qcard-prog { color: var(--media-fg-muted); font-size: 12px; }
+.qcard-diag { color: var(--media-fg-muted); }
+.qcard-body { overflow: visible; }
+.qcard-info { overflow: visible; }
+.qcard-main { gap: 12px; align-items: center; }
+/* Badge nhân Orbs kiểu Discord — chỉ hiện khi dữ liệu có hệ số (JS đổ
+   text), không có text thì ẩn hẳn, không chiếm chỗ, không badge giả. */
+.qcard-mult { display: inline-flex; align-items: center; padding: 4px 8px; border-radius: 12px; border: 1px solid var(--media-line); background: var(--tint-08); color: var(--media-fg); font-size: 12px; font-weight: 800; }
+.qcard-mult:empty { display: none; }
+/* Nút "Phát Ngay": cùng họ nút claim (viền brand, nền tint, chữ sáng
+   trên thẻ tối), con trỏ pointer — bấm được thật, không phải nút chết. */
+.qcard-act[data-act="play"] { cursor: pointer; border-color: var(--brand); background: var(--tint-08); color: var(--media-fg); }
+.qcard-act[data-act="play"]:hover { border-color: var(--brand-bright); transform: translateY(-1px); }
+.qcard-act[data-act="claim"], .qcard-act[data-act="retry"] { color: var(--media-fg); }
+
+/* --- CẤM LỆCH Orb: vòng 70px, art 64px, video contain 1/1, căn giữa thật.
+   Gốc lệch cũ: .qring width 70px nhưng inset -3px trên hộp 40px nên tâm
+   vòng lệch phải ~12px so với tâm orb/% — nay vòng căn giữa bằng
+   left/top 50% + translate, hộp reward đúng 70px nên mọi lớp đồng tâm. */
+.qcard-reward { width: 70px; height: 70px; }
+.qcard-reward-art { width: 64px; height: 64px; aspect-ratio: 1 / 1; }
+.qcard-reward-art .orb-video { width: 100%; height: 100%; aspect-ratio: 1 / 1; object-fit: contain; object-position: center; display: block; }
+.qring { inset: auto; left: 50%; top: 50%; width: 70px; height: 70px; transform: translate(-50%, -50%) rotate(-90deg); }
+
+/* --- CẤM LỆCH ô Đã làm: video tràn chiều rộng ô, tỉ lệ 314/196, logo
+   căn giữa thật bằng hộp co theo nội dung + margin auto (không kéo
+   hộp 100% rồi trông chờ object-position) — logo không thể trôi trái/
+   phải, vẫn đè mép video đúng -16px như Discord đo được. */
+.qdone-orb { object-position: center; }
+.qdone-logo { width: auto; max-width: 92%; margin: -16px auto 0; object-position: center; }

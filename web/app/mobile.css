@@ -958,3 +958,20 @@ html {
 	#pageQuest > .stats-row { grid-template-columns: 1fr; }
 	#pageQuest > .quests-card { width: 100%; min-width: 0; }
 }
+
+/* ============================================================
+   GRID-DISCORD (2026-10-31) — Lưới 3/2/1 theo đúng lựa chọn của user:
+   desktop 3 cột (styles.css), tablet 768–1023px 2 cột, mobile ≤767px
+   1 cột — cho CẢ 2 lưới (quest + Đã làm). Đứng cuối file nên thắng
+   rule 2 cột ≤1023px cũ ở dải 561–767px. Khung cuộn nội bộ của
+   styles.css vẫn giữ trên mobile (lưới flex:1 + overflow-y:auto);
+   topbar/drawer không bị ảnh hưởng (chúng nằm ngoài .main-wrap).
+   ============================================================ */
+@media (min-width: 768px) and (max-width: 1023px) {
+	.quest-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+	.qgrid-done { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 767px) {
+	.quest-list { grid-template-columns: 1fr; }
+	.qgrid-done { grid-template-columns: 1fr; }
+}

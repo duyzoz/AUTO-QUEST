@@ -1805,6 +1805,7 @@ function buildQuestCard(q) {
 				<div class="qcard-info">
 					<span class="qcard-kicker"></span>
 					<span class="qcard-title"></span>
+					<span class="qcard-mult"></span>
 					<span class="qcard-desc"></span>
 					<span class="qcard-prog"></span>
 				</div>
@@ -1824,6 +1825,7 @@ function buildQuestCard(q) {
 
 /* Waves 31: nội dung + hành vi nút trạng thái theo đúng trạng thái thật của quest.
    - todo      → "Chưa làm"      (disabled, không bấm)
+   - play      → "Phát Ngay"     (GRID-DISCORD: chọn riêng quest + chạy Auto)
    - claimable → "Nhận N Orbs"   (bấm → claim thật, captcha thì mở modal)
    - busy      → "Đang nhận…"    (đang gọi Discord)
    - claimed   → "Đã nhận"       (tick xanh, không bấm)
@@ -1893,19 +1895,22 @@ function updateQuestFoot(node, q) {
 	} else if (q.status === 'claimable') {
 		act = 'claim';
 		label = q.orbs ? `${en ? 'Claim' : 'Nhận'} ${q.orbs} Orbs` : en ? 'Claim reward' : 'Nhận thưởng';
+	} else if (q.stopFlag) {
+		act = 'todo';
+		label = en ? 'Stopped' : 'Đã dừng';
+	} else if (q.running) {
+		act = 'todo';
+		label = en ? 'Working…' : 'Đang cày…';
+	} else if (canSelectQuest(q)) {
+		// GRID-DISCORD: nút "Phát Ngay" kiểu Discord cho quest chưa chạy mà
+		// chọn được — bấm = chọn riêng quest này + chạy Auto bằng đúng đường
+		// startRun của nút Auto ORBs (xem nhánh 'play' trong onQuestActClick).
+		// Quest thủ công (không chọn được) giữ nguyên nút "Chưa làm" khoá.
+		act = 'play';
+		label = en ? 'Play now' : 'Phát Ngay';
 	} else {
 		act = 'todo';
-		label = q.stopFlag
-			? en
-				? 'Stopped'
-				: 'Đã dừng'
-			: q.running
-				? en
-					? 'Working…'
-					: 'Đang cày…'
-				: en
-					? 'To do'
-					: 'Chưa làm';
+		label = en ? 'To do' : 'Chưa làm';
 	}
 
 	if (btn.dataset.act !== act) btn.dataset.act = act;
@@ -1956,6 +1961,7 @@ function updateQuestCard(node, q) {
 			art: node.querySelector('.qcard-reward-art'),
 			kicker: node.querySelector('.qcard-kicker'),
 			title: node.querySelector('.qcard-title'),
+			mult: node.querySelector('.qcard-mult'),
 			desc: node.querySelector('.qcard-desc'),
 			prog: node.querySelector('.qcard-prog'),
 			ring: node.querySelector('.qring-fg'),
@@ -2102,6 +2108,22 @@ function updateQuestCard(node, q) {
 	if (r.title.textContent !== titleText) {
 		r.title.textContent = titleText;
 		r.title.title = titleText;
+	}
+
+	// GRID-DISCORD: badge nhân Orbs kiểu Discord ("Mở khóa 1,2x") — CHỈ hiện
+	// khi dữ liệu quest thật sự có hệ số nhân (q.multiplier / q.rewardMultiplier
+	// dạng số > 1). API hiện tại không trả trường này nên badge mặc định ẩn
+	// (CSS .qcard-mult:empty) — KHÔNG bịa hệ số, không hiện badge giả.
+	if (r.mult) {
+		const rawMult = q.multiplier != null ? q.multiplier : q.rewardMultiplier;
+		const multNum = rawMult != null ? Number(String(rawMult).replace(',', '.')) : NaN;
+		const multText =
+			Number.isFinite(multNum) && multNum > 1
+				? en
+					? `Unlock ${multNum}x`
+					: `Mở khóa ${String(multNum).replace('.', ',')}x`
+				: '';
+		if (r.mult.textContent !== multText) r.mult.textContent = multText;
 	}
 
 	const descText = questDesc(q);
@@ -4280,6 +4302,26 @@ function onQuestActClick(e) {
 				appendLog(`[Lỗi] Không mở được Discord: ${(err && err.message) || err}`, 'stderr');
 				toast('Không mở được Discord — hãy mở thủ công.', true);
 			});
+		return;
+	}
+	if (act === 'play') {
+		// GRID-DISCORD: "Phát Ngay" = chọn RIÊNG quest này rồi chạy Auto bằng
+		// đúng đường startRun của nút Auto ORBs — không thêm logic engine nào.
+		// Đang có đợt chạy khác thì không chồng đợt mới: chỉ chọn quest + báo.
+		e.preventDefault();
+		e.stopPropagation();
+		const runBusy = state === 'starting' || state === 'running' || state === 'stopping' || state === 'scanning';
+		selected.clear();
+		selected.add(String(quest.id));
+		persistSelection();
+		renderQuests();
+		if (runBusy) {
+			toast(currentLang === 'en' ? 'Auto is already running — quest selected.' : 'Auto đang chạy — đã chọn quest này.', true);
+			return;
+		}
+		healAttempts = 0;
+		lastAutoHeal = 0;
+		startRun('run', { selectedQuests: [String(quest.id)] });
 		return;
 	}
 	if (act === 'claim' || act === 'retry') {
