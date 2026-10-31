@@ -1141,6 +1141,22 @@ check('NEO P4: marquee + rotator + stickers + sound v2 + count-up + drag desktop
 	return 'marquee + rotator + sticker + sound v2 + count-up + drag';
 });
 
+
+check('NEO P5: full audit — token-only, scale, hero/up-row/dns intact, no copy', () => {
+	const css = read(path.join(APP, 'styles.css'));
+	const neo = css.slice(css.indexOf('NEO-BRUTALIST P0'));
+	const code = neo.replace(/\/\*[\s\S]*?\*\//g, '');
+	assert(!/#[0-9a-fA-F]{3,8}\b/.test(code) && !/rgba?\(/.test(code), 'NEO khong co mau tho');
+	assert(!/\.profile-hero\s+\./.test(neo), 'hero inner khong bi cham');
+	assert(!/\.up-row \{[^}]*border/.test(neo), 'up-row giu borderless');
+	assert(!/z-index\s*:/.test(code), 'NEO khong doi z-index');
+	const html = read(INDEX);
+	assert(!/navAccount/.test(html), 'khong navAccount');
+	assert(!/MINH BACH|UY TIN/.test(html + css), 'khong copy slogan');
+	assert(html.includes('neo-marquee') && html.includes('neo-sticker') && html.includes('neo-rotator'), 'marquee + sticker + rotator co mat');
+	return 'audit P5 sach';
+});
+
 /* ── In kết quả ────────────────────────────────────────────────────────── */
 for (const r of results) {
 	const tag = r.ok ? 'PASS' : 'FAIL';
