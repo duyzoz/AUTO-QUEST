@@ -12,5 +12,6 @@ file theo ngày; README chính không chứa các ghi chú này.
 - `2026-10-22.md` — Waves 24: log terminal thật, sửa Auto ORBs không chạy (6 gốc rễ).
 - `2026-10-28.txt` — Waves 97–100: ORB claim audit, claim + captcha ở lại trong client, không đi qua dịch vụ ngoài.
 - `2026-10-30.md` — Ngày README được viết lại chuyên nghiệp: toàn bộ mục waves/log cũ chuyển từ README sang đây; favicon tròn; Waves 215–240 (xem cuối file).
+- `2026-10-31.md` — Đại cải tổ UI/UX toàn diện (MAJOR REDESIGN): bản sắc teal/amber mới, font system stack, shell + thẻ quest + stat cards thiết kế lại, logic giữ nguyên 100%.
 - `WAVE_LOG.md` — Nhật ký bàn giao giữa các phiên làm việc (Token-Optimized Handoff Protocol).
 - `handoff.json` — Trạng thái bàn giao máy đọc được (wave hiện tại, ước tính).

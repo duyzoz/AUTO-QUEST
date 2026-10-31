@@ -1005,6 +1005,74 @@ check('Wave sửa claim mobile: bỏ tự gửi captcha, chỉ gửi token từ 
 	return 'không tự execute/quét, tick + callback + nút gửi còn đủ';
 });
 
+
+check('MAJOR REDESIGN: new teal/amber identity via tokens, system font stack, both themes', () => {
+	const css = read(path.join(APP, 'styles.css'));
+	const dark = css.slice(0, css.indexOf(':root[data-theme="light"]'));
+	const lightStart = css.indexOf(':root[data-theme="light"]');
+	const light = css.slice(lightStart, css.indexOf('/* --- Nền app: sáng', lightStart));
+	assert(/--brand: #2dd4bf;/.test(dark), 'dark brand phải là teal #2dd4bf');
+	assert(/--brand-ink: #042f2b;/.test(dark), 'dark brand-ink phải là chữ tối trên accent');
+	assert(/--amber: #fbbf24;/.test(dark) && /--amber-ink: #1c1005;/.test(dark), 'dark amber + amber-ink thiếu');
+	assert(/--brand: #0f766e;/.test(light), 'light brand phải là teal đậm #0f766e');
+	assert(/--brand-ink: #ffffff;/.test(light), 'light brand-ink phải là trắng trên teal đậm');
+	assert(/--amber: #d97706;/.test(light) && /--amber-ink: #1f1302;/.test(light), 'light amber + amber-ink thiếu');
+	const sans = css.match(/--font-sans:([^;]+);/);
+	assert(sans && !/Inter/.test(sans[1]) && /system-ui/.test(sans[1]), 'font-sans phải là system stack, không còn Inter');
+	assert(/--font-mono:[^;]*ui-monospace/.test(css), 'font-mono phải là system mono stack');
+	return 'teal/amber tokens 2 theme + system fonts';
+});
+
+check('MAJOR REDESIGN: shell + quest cards + stat cards + topbar sound, no new controls', () => {
+	const css = read(path.join(APP, 'styles.css'));
+	const html = read(path.join(APP, 'index.html'));
+	const major = css.slice(css.indexOf('MAJOR REDESIGN'));
+	assert(/\.qcard-banner \{ height: 120px;/.test(major), 'banner quest mới phải cao 120px');
+	assert(/\.qcard-title \{ font-size: 16px;/.test(major), 'tiêu đề quest mới phải 16px');
+	assert(/\.qcard-act \{ height: 44px;/.test(major), 'nút hành động quest phải cao 44px (touch)');
+	assert(/\.stat-value \{ font-size: 32px;/.test(major), 'số thống kê mới phải 32px');
+	assert(/\.nav-item\.active \{[^}]*border-color: var\(--brand\)/.test(major), 'nav active phải viền brand + bar');
+	assert(/#btnSound:not\(\.is-muted\) \{[^}]*background: var\(--brand\)/.test(major), 'nút loa bật phải nền brand');
+	assert(html.includes('id="btnSound"') && html.includes('id="heroProfile"'), 'btnSound + heroProfile phải còn');
+	assert(!/navAccount/.test(css + html), 'navAccount đã xóa, không được quay lại');
+	return 'banner/title/act/stat/nav/sound markers đủ, không navAccount';
+});
+
+check('MAJOR REDESIGN: section mới chỉ dùng token, spacing trên thang, không phá hero/up-row/dns', () => {
+	const css = read(path.join(APP, 'styles.css'));
+	const major = css.slice(css.indexOf('MAJOR REDESIGN'));
+	const code = major.replace(/\/\*[\s\S]*?\*\//g, '');
+	assert(!/#[0-9a-fA-F]{3,8}\b/.test(code), 'section MAJOR không được có màu thô');
+	assert(!/rgba?\(/.test(code), 'section MAJOR không được có rgb/rgba thô');
+	const vals = new Set();
+	for (const m of code.matchAll(/(?:padding|gap|font-size)\s*:[^;]+;/g)) {
+		for (const v of m[0].matchAll(/(\d+)px/g)) vals.add(Number(v[1]));
+	}
+	for (const v of vals) assert([0, 4, 6, 8, 10, 12, 14, 16, 20, 24, 28, 32].includes(v), 'spacing/font ngoài thang: ' + v + 'px');
+	const upRow = code.match(/\.up-row \{[^}]*\}/);
+	assert(upRow && !/border\s*:/.test(upRow[0]), '.up-row phải giữ borderless (Wave#87)');
+	assert(!/\.profile-hero\s+\./.test(code), 'section MAJOR không được đụng phần trong của profile-hero');
+	assert(!/@keyframes dns-/.test(code), 'section MAJOR không được đụng keyframes dns-*');
+	assert(/\.qcard-pct \{[^}]*background: var\(--amber\)[^}]*color: var\(--amber-ink\)/.test(code), 'chip % phải nền amber + chữ tối, không chỉ màu');
+	assert(/\.btn-primary \{[^}]*background: var\(--brand\)[^}]*color: var\(--brand-ink\)/.test(code), 'nút chính phải nền brand + chữ ink tương phản');
+	assert(/prefers-reduced-motion/.test(major) && /\.qcard/.test(major.split('prefers-reduced-motion')[1]), 'reduced-motion phải mở rộng tới hiệu ứng mới');
+	return 'token-only + thang spacing + hero/up-row/dns an toàn + reduced-motion';
+});
+
+check('MAJOR REDESIGN: mọi class trong section mới đều đã tồn tại, không class lạ', () => {
+	const css = read(path.join(APP, 'styles.css'));
+	const html = read(path.join(APP, 'index.html'));
+	const js = read(path.join(APP, 'renderer.js'));
+	const pre = css.slice(0, css.indexOf('MAJOR REDESIGN'));
+	const major = css.slice(css.indexOf('MAJOR REDESIGN')).replace(/\/\*[\s\S]*?\*\//g, '');
+	const classes = new Set();
+	for (const m of major.matchAll(/\.([a-zA-Z][a-zA-Z0-9_-]*)/g)) classes.add(m[1]);
+	for (const c of classes) {
+		assert(html.includes(c) || js.includes(c) || pre.includes('.' + c), 'class lạ trong MAJOR: ' + c);
+	}
+	return 'tất cả class MAJOR đã tồn tại trước đó';
+});
+
 /* ── In kết quả ────────────────────────────────────────────────────────── */
 for (const r of results) {
 	const tag = r.ok ? 'PASS' : 'FAIL';
