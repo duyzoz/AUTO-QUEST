@@ -6626,3 +6626,42 @@ body.lite .claim-pill-spin { animation-duration: 1.6s; }
 	.quest-list { grid-template-columns: 1fr; }
 	.qgrid-done { grid-template-columns: 1fr; }
 }
+/* ============================================================
+   NEO-BRUTALIST P1 — Identity via tokens, both themes (W7-W15).
+   Palette: light = cream paper, bold near-black text, blue/pink/
+   yellow accents; dark = the contrast-equivalent (text changes too,
+   not just a darkened background). All colours come from --neo-*
+   tokens defined in :root / :root[data-theme="light"] — no raw
+   colour in this section. Hard shadows offset downwards only, no
+   neon, no blurred glow. z-index order unchanged. Contrast target
+   >=4.5:1: blue ink on blue, pink ink on pink, dark ink on yellow.
+   ============================================================ */
+.card-title { font-size: 20px; font-weight: 800; letter-spacing: -0.02em; }
+.modal-title { font-size: 20px; font-weight: 800; letter-spacing: -0.02em; }
+.btn { border: 2px solid var(--neo-line); border-radius: 12px; box-shadow: 4px 4px 0 var(--neo-shadow); font-weight: 800; }
+.btn:active { transform: translate(4px, 4px); box-shadow: 0 0 0 var(--neo-shadow); }
+.btn-primary { background: var(--neo-blue); color: var(--neo-blue-ink); border-color: var(--neo-line); }
+.btn-ghost { background: var(--neo-surface); color: var(--fg); }
+.btn-outline { background: var(--neo-surface); color: var(--fg); }
+.btn-danger { border: 2px solid var(--neo-line); box-shadow: 4px 4px 0 var(--neo-shadow); }
+.btn-orb { background: var(--neo-yellow); color: var(--neo-yellow-ink); border: 2px solid var(--neo-line); box-shadow: 4px 4px 0 var(--neo-shadow); font-weight: 800; }
+.chip { border: 2px solid var(--neo-line); border-radius: 12px; box-shadow: 2px 2px 0 var(--neo-shadow); background: var(--neo-yellow); color: var(--neo-yellow-ink); font-weight: 800; }
+.chip-ghost { background: var(--neo-surface); color: var(--fg); }
+.sec-chip { border: 2px solid var(--neo-line); box-shadow: 2px 2px 0 var(--neo-shadow); background: var(--neo-blue); color: var(--neo-blue-ink); font-weight: 800; }
+.input-wrap { border: 2px solid var(--neo-line); border-radius: 12px; box-shadow: 4px 4px 0 var(--neo-shadow); background: var(--neo-surface); }
+.input-wrap input { font-size: 16px; }
+.input-wrap:focus-within { outline: 2px solid var(--neo-blue); outline-offset: 2px; }
+.field label { font-weight: 800; font-size: 14px; }
+.tab-btn { border: 2px solid var(--neo-line); border-radius: 12px; box-shadow: 2px 2px 0 var(--neo-shadow); font-weight: 800; }
+.tab-btn.active { background: var(--neo-blue); color: var(--neo-blue-ink); }
+.nav-item { border: 2px solid var(--neo-line); border-radius: 12px; box-shadow: 2px 2px 0 var(--neo-shadow); }
+.nav-item.active { background: var(--neo-blue); color: var(--neo-blue-ink); }
+.modal-card { border: 2px solid var(--neo-line); border-radius: 20px; box-shadow: 8px 8px 0 var(--neo-shadow); background: var(--neo-surface); }
+.toast { border: 2px solid var(--neo-line); border-radius: 12px; box-shadow: 4px 4px 0 var(--neo-shadow); font-weight: 700; }
+:focus-visible { outline: 2px solid var(--neo-blue); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) {
+	.btn { transition: none; }
+	.chip { transition: none; }
+	.tab-btn { transition: none; }
+	.nav-item { transition: none; }
+}

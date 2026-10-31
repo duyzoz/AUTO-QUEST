@@ -1085,6 +1085,20 @@ check('NEO P0: quest grid 3/2/1, cards complete, no internal clip', () => {
 	return 'grid 3/2/1 + card day du + done 3 cot';
 });
 
+
+check('NEO P1: neo tokens both themes + button/chip/tab/modal sticker language', () => {
+	const css = read(path.join(APP, 'styles.css'));
+	const neo = css.slice(css.indexOf('NEO-BRUTALIST P1'));
+	assert(/--neo-blue: #1d4ed8/.test(css), 'light theme can token neo-blue dam');
+	assert(/\.btn-primary \{[^}]*background: var\(--neo-blue\)/.test(neo), 'btn-primary dung token neo-blue');
+	assert(/\.btn:active \{[^}]*box-shadow: 0 0 0/.test(neo), 'nut an xuong phai xep bong');
+	assert(/\.chip \{[^}]*box-shadow: 2px 2px 0/.test(neo), 'chip dang sticker co bong cung');
+	assert(/\.input-wrap input \{[^}]*font-size: 16px/.test(neo), 'input >=16px');
+	assert(/\.modal-card \{[^}]*box-shadow: 8px 8px 0/.test(neo), 'modal co bong cung, khong doi z-index');
+	assert(/@media \(prefers-reduced-motion: reduce\)/.test(neo), 'P1 co reduced-motion');
+	return 'token 2 theme + nut/chip/tab/modal neo';
+});
+
 /* ── In kết quả ────────────────────────────────────────────────────────── */
 for (const r of results) {
 	const tag = r.ok ? 'PASS' : 'FAIL';
