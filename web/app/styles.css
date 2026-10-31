@@ -59,6 +59,9 @@
 	--media-fg: #f2f3f5;
 	--media-fg-muted: #b5bac1;
 	--media-line: rgba(255, 255, 255, 0.16);
+	/* SHOTFIX: accent sang cho eyebrow kicker tren the toi o ca 2 theme
+	   (token brand cua theme Sang la gam toi, khong doc duoc tren nen toi). */
+	--media-accent: #5eead4;
 	--banner-c: #0f766e;
 	--scroll-thumb: rgba(255, 255, 255, 0.14);
 	--scroll-thumb-hover: rgba(255, 255, 255, 0.28);
@@ -6243,3 +6246,81 @@ body[data-page="quest"] .page.active { flex: 1 1 auto; min-height: 0; }
    phải, vẫn đè mép video đúng -16px như Discord đo được. */
 .qdone-orb { object-position: center; }
 .qdone-logo { width: auto; max-width: 92%; margin: -16px auto 0; object-position: center; }
+
+/* ============================================================
+   SHOTFIX (2026-10-31) — Sua cac loi thay duoc trong anh chup
+   man hinh live (theme Sang, tab Chua lam) sau GRID-DISCORD.
+   Goc loi lon nhat: luat theme Sang co do dac hieu cao hon luat
+   the toi cua GRID, nen than the trang trong khi chu/nut dung
+   token chu sang — nut Phat Ngay va dong quang ba mo khong doc
+   duoc. Khoi nay dung selector theme Sang co do dac hieu bang
+   hoac cao hon de the toi thang o CA 2 theme, chi cho the quest
+   (khong doi kieu cua component khac).
+   Khong mau tho, khong spacing le, khong z-index moi, khong
+   inline style moi trong khoi nay (chi var()).
+   ============================================================ */
+
+/* W1/W2 — The toi thang o theme Sang: nen, tieu de, mo ta, dong
+   quang ba, tien do, chan doan deu dung token media. */
+[data-theme="light"] .qcard { background: var(--media-card); }
+[data-theme="light"] .qcard-title { color: var(--media-fg); }
+[data-theme="light"] .qcard-desc { color: var(--media-fg-muted); }
+[data-theme="light"] .qcard-pub { color: var(--media-fg-muted); }
+[data-theme="light"] .qcard-pub-l b { color: var(--media-fg); }
+[data-theme="light"] .qcard-prog { color: var(--media-fg-muted); }
+[data-theme="light"] .qcard-diag { color: var(--media-fg-muted); }
+/* Kicker tren the toi o theme Sang khong dung duoc token brand
+   cua theme Sang (gam toi tren nen toi) — dung token accent
+   sang cua ho media, van giu dang eyebrow nhan manh. */
+[data-theme="light"] .qcard-kicker { color: var(--media-accent); }
+/* Nut khoa o theme Sang: nen trong suot + chu mo media + vien
+   dut net — phan biet ro voi nut Phat Ngay that, khong dung
+   token nen sang cua theme Sang lam nut trang tren the toi. */
+[data-theme="light"] .qcard-act[data-act="todo"] { background: transparent; color: var(--media-fg-muted); border-color: var(--media-line); border-style: dashed; }
+/* Nut trang thai kem (da nhan / loi / dang nhan) o theme Sang:
+   token ngu nghia cua theme Sang la gam toi, tren the toi se
+   chim — chu dung token media, nghia van phan biet bang text
+   va icon cua nut (theo luat trang thai cua skill). */
+[data-theme="light"] .qcard-act[data-act="claimed"],
+[data-theme="light"] .qcard-act[data-act="error"],
+[data-theme="light"] .qcard-act[data-act="busy"] { color: var(--media-fg); }
+
+/* W3 — Nut Phat Ngay: nen brand + chu brand-ink (cung cap nhu
+   nut claim goc) — tuong phan dat o ca 2 theme, khong con
+   chu sang tren nen tint mo nhu ban GRID. Nut claim/retry
+   tra lai chu brand-ink goc (GRID doi sang chu media lam
+   giam tuong phan tren nen brand o theme Toi). */
+.qcard-act[data-act="play"] { background: var(--brand); color: var(--brand-ink); border-color: var(--brand); cursor: pointer; }
+.qcard-act[data-act="claim"],
+.qcard-act[data-act="retry"] { color: var(--brand-ink); }
+
+/* W5 — Chan the: huong cot ke thua align-items center tu
+   luat goc, lam thanh tien do neo-bar co lai thanh vach doc
+   giua the. Stretch de thanh tien do luon day du chieu ngang. */
+.qcard-foot { align-items: stretch; }
+.qcard-foot .neo-bar { width: 100%; }
+
+/* W10/W12 — Het cat chu trai: main dang cot + can giua lam
+   khoi info co lai theo noi dung roi tran ca 2 ben khi
+   kicker dai khong xuong dong. Stretch de info day du chieu
+   ngang the, reward tu can giua, kicker xuong dong day du,
+   tieu de/mo ta wrap moi noi. */
+.qcard-main { align-items: stretch; }
+.qcard-reward { align-self: center; }
+.qcard-kicker { white-space: normal; overflow: visible; text-overflow: unset; }
+.qcard-info,
+.qcard-title,
+.qcard-desc { overflow-wrap: anywhere; }
+.qcard-body,
+.qcard-main,
+.qcard-info { min-width: 0; }
+
+/* W11 — Vien + bong the khong bi cat o mep khung cuon. */
+#pageQuest .quests-card .quest-list { padding: 8px; padding-bottom: 16px; scroll-padding: 8px; }
+
+/* W7/W9 — Anh/video hero cua banner: cung cach full-bleed
+   nhu anh banner goc; fallback an khi co video (nhu khi
+   co anh). */
+.qcard-banner-hero { width: 100%; height: 100%; object-fit: cover; display: block; }
+.qcard-banner-video { width: 100%; height: 100%; object-fit: cover; display: block; }
+.qcard-banner:has(video) .qcard-banner-fallback { display: none; }

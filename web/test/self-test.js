@@ -952,9 +952,14 @@ check('Waves#260/#261/#262: bỏ blur mobile, PWA iOS, font tiếng Việt', () 
 check('Waves#263/#264: kicker light dùng token tương phản, chữ mobile được chọn', () => {
 	const css = read(path.join(APP, 'styles.css'));
 	const mobile = read(path.join(APP, 'mobile.css'));
-	assert(/\[data-theme="light"\] \.qcard-kicker \{ color: var\(--brand-bright\); \}/.test(css), 'kicker light phải dùng token brand-bright');
+	// SHOTFIX supersede: luật cũ (brand-bright của theme Sáng) đúng khi thẻ
+	// còn nền trắng; từ khi thẻ quest thành nền tối ở cả 2 theme thì
+	// brand-bright của theme Sáng là gam tối, chìm trên nền tối — luật
+	// SHOTFIX sau đó (media-accent, cùng độ đặc hiệu, đứng sau) mới là
+	// luật thắng. Test này khóa luật thắng mới, không khóa luật cũ.
+	assert(/\[data-theme="light"\] \.qcard-kicker \{ color: var\(--media-accent\); \}/.test(css), 'kicker light phải dùng token media-accent trên thẻ tối');
 	assert(/user-select: text;/.test(mobile), 'chữ mobile phải được chọn (user-select: text)');
-	return 'kicker light token + selectable text';
+	return 'kicker light media-accent + selectable text';
 });
 check('Waves#267: smoke checklist có mục mobile, tất cả CHƯA XÁC MINH', () => {
 	const sm = read(path.join(ROOT, 'web', 'test', 'SMOKE-CHECKLIST.md'));
@@ -1541,6 +1546,240 @@ check('CLAIM-MANUAL: callback captcha chỉ lưu token chờ, chỉ nút Gửi m
 	assert(html.includes('rồi bấm "Gửi xác minh ngay" để gửi kết quả nhận thưởng'), 'hint modal phai noi bam Gui moi gui');
 	assert(/captchaCtx\.submitted/.test(js), 'guard gui 1 lan phai con');
 	return 'callback luu cho + nut Gui gui 1 lan + het han xoa token + text san sang, 0 tu gui';
+});
+
+/* ── SHOTFIX: bộ giải cascade CSS (W16/W17) ─────────────────────────────
+   Bài học từ GRID-DISCORD: test chỉ kiểm tra "luật có tồn tại" thì vẫn
+   pass trong khi render thật sai, vì luật theme Sáng có độ đặc hiệu
+   cao hơn đã thắng luật thẻ tối đứng sau. Bộ giải này tính LUẬT
+   THẮNG THẬT cho một phần tử ở một theme: bỏ comment, bỏ khối
+   @-rule (media/reduced-motion/keyframes — chỉ tính luật nền
+   desktop), rồi so đặc hiệu + thứ tự nguồn như trình duyệt.
+   Phạm vi cố tình hẹp: chỉ các selector/property của thẻ quest
+   (nền/chữ/nút/canh lề/cắt chữ). Selector có pseudo trạng thái
+   (:hover/:active/:has/:empty...) không tính cho trạng thái nền.
+   Full DOM render không thể chạy trong harness Node này (renderer
+   cần document) — W17 vì vậy khóa bằng code-path + cascade, và
+   ghi rõ giới hạn đó trong detail, không tự nhận là render thật. */
+function shotStripComments(s) { return s.replace(/\/\*[\s\S]*?\*\//g, ''); }
+function shotStripAtRules(s) {
+	let out = ''; let i = 0;
+	while (i < s.length) {
+		if (s[i] === '@') {
+			let j = i; while (j < s.length && s[j] !== '{' && s[j] !== ';') j++;
+			if (j < s.length && s[j] === '{') {
+				let depth = 0; let k = j;
+				do { if (s[k] === '{') depth++; else if (s[k] === '}') depth--; k++; } while (k < s.length && depth > 0);
+				i = k;
+			} else { i = j + 1; }
+		} else { out += s[i]; i++; }
+	}
+	return out;
+}
+function shotParseRules(cssText) {
+	const clean = shotStripAtRules(shotStripComments(cssText));
+	const rules = [];
+	const re = /([^{}]+)\{([^{}]*)\}/g;
+	let m; let order = 0;
+	while ((m = re.exec(clean)) !== null) {
+		const selectors = m[1].split(',').map((x) => x.trim()).filter(Boolean);
+		const decls = {};
+		for (const part of m[2].split(';')) {
+			const idx = part.indexOf(':');
+			if (idx > 0) decls[part.slice(0, idx).trim()] = part.slice(idx + 1).trim();
+		}
+		if (selectors.length && Object.keys(decls).length) rules.push({ selectors, decls, order: order++ });
+	}
+	return rules;
+}
+function shotSpec(sel) {
+	const s = sel.replace(/"[^"]*"/g, '""').replace(/'[^']*'/g, "''");
+	let a = (s.match(/#[A-Za-z0-9_-]+/g) || []).length;
+	let b = (s.match(/\.[A-Za-z0-9_-]+/g) || []).length;
+	b += (s.match(/\[[^\]]+\]/g) || []).length;
+	b += (s.match(/:[A-Za-z-]+(\([^)]*\))?/g) || []).length;
+	const tmp = s.replace(/#[A-Za-z0-9_-]+/g, '').replace(/\.[A-Za-z0-9_-]+/g, '').replace(/\[[^\]]+\]/g, '').replace(/:[A-Za-z-]+(\([^)]*\))?/g, '').replace(/[\s>+~*]/g, ' ').trim();
+	const c = tmp ? tmp.split(/\s+/).filter(Boolean).length : 0;
+	return [a, b, c];
+}
+function shotMatchCompound(comp, el, theme, isRoot) {
+	let rest = comp;
+	if (rest.startsWith(':root')) {
+		if (!isRoot) return false;
+		rest = rest.slice(5);
+		if (!rest) return true;
+	}
+	// Mọi pseudo còn lại (:hover/:has/::before/::-webkit-scrollbar-*)
+	// đều là trạng thái hoặc phần tử giả — không tính cho trạng thái
+	// nền. (Bắt buộc: pseudo-element không có tag/class/attr nên
+	// nếu không chặn ở đây nó sẽ khớp rỗng với mọi phần tử.)
+	if (rest.includes(':')) return false;
+	const tagM = rest.match(/^[A-Za-z][A-Za-z0-9-]*/);
+	if (tagM) { if (el.tag && el.tag !== tagM[0]) return false; rest = rest.slice(tagM[0].length); }
+	for (const id of (rest.match(/#[A-Za-z0-9_-]+/g) || [])) { if (el.id !== id.slice(1)) return false; }
+	for (const cl of (rest.match(/\.[A-Za-z0-9_-]+/g) || [])) { if (!el.classes.includes(cl.slice(1))) return false; }
+	for (const at of (rest.match(/\[[^\]]+\]/g) || [])) {
+		const mm = at.match(/\[([A-Za-z-]+)(?:="([^"]*)")?\]/);
+		if (!mm) return false;
+		if (mm[1] === 'data-theme') { if (theme !== mm[2]) return false; }
+		else if (mm[2] !== undefined) { if (String(el.attrs[mm[1]] || '') !== mm[2]) return false; }
+		else if (!(mm[1] in el.attrs)) return false;
+	}
+	return true;
+}
+function shotMatchSelector(sel, el, theme, ancestors) {
+	const parts = sel.trim().split(/\s+/);
+	if (!parts.length) return false;
+	if (!shotMatchCompound(parts[parts.length - 1], el, theme, false)) return false;
+	const rootEl = { tag: 'html', classes: [], attrs: {}, id: '' };
+	for (let i = 0; i < parts.length - 1; i++) {
+		const p = parts[i];
+		let ok = shotMatchCompound(p, rootEl, theme, true);
+		if (!ok) for (const anc of ancestors) { if (shotMatchCompound(p, anc, theme, false)) { ok = true; break; } }
+		if (!ok) return false;
+	}
+	return true;
+}
+function shotCmpKey(a, b) {
+	for (let i = 0; i < 4; i++) { if (a[i] !== b[i]) return a[i] - b[i]; }
+	return 0;
+}
+function shotWin(rules, el, theme, ancestors, prop) {
+	let best = null;
+	for (const r of rules) {
+		if (!(prop in r.decls)) continue;
+		for (const sel of r.selectors) {
+			if (!shotMatchSelector(sel, el, theme, ancestors)) continue;
+			const key = [...shotSpec(sel), r.order];
+			if (!best || shotCmpKey(key, best.key) > 0) best = { key, value: r.decls[prop] };
+		}
+	}
+	return best ? best.value : null;
+}
+function shotCollectTokens(rules, theme) {
+	const tokens = {};
+	for (const r of rules) {
+		for (const sel of r.selectors) {
+			if (sel === ':root' || (theme === 'light' && sel === ':root[data-theme="light"]')) {
+				for (const [k, v] of Object.entries(r.decls)) if (k.startsWith('--')) tokens[k] = v;
+			}
+		}
+	}
+	return tokens;
+}
+function shotResolve(value, tokens) {
+	if (value === null || value === undefined) return null;
+	let v = String(value);
+	for (let i = 0; i < 6; i++) {
+		const nv = v.replace(/var\(--([A-Za-z0-9-]+)\)/g, (_, n) => (tokens['--' + n] !== undefined ? tokens['--' + n] : ''));
+		if (nv === v) break;
+		v = nv;
+	}
+	return v.trim();
+}
+function shotLum(hex) {
+	const m = /^#([0-9a-f]{6})$/i.exec(hex || '');
+	if (!m) return null;
+	const ch = (h) => { const v = parseInt(h, 16) / 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); };
+	return 0.2126 * ch(m[1].slice(0, 2)) + 0.7152 * ch(m[1].slice(2, 4)) + 0.0722 * ch(m[1].slice(4, 6));
+}
+function shotContrast(a, b) {
+	const la = shotLum(a), lb = shotLum(b);
+	if (la === null || lb === null) return null;
+	return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05);
+}
+const SHOT_CARD_ANC = [
+	{ tag: 'div', classes: ['qcard'], attrs: {}, id: '' },
+	{ tag: 'div', classes: ['qcard-pub-l'], attrs: {}, id: '' },
+	{ tag: 'div', classes: ['qcard-pub'], attrs: {}, id: '' },
+	{ tag: 'div', classes: ['qcard-body'], attrs: {}, id: '' },
+	{ tag: 'div', classes: ['qcard-main'], attrs: {}, id: '' },
+];
+function shotEl(classes, tag, attrs) { return { tag: tag || 'div', classes, attrs: attrs || {}, id: '' }; }
+
+check('SHOTFIX-W16: luật thắng thật (đặc hiệu + thứ tự) cho thẻ quest ở cả 2 theme', () => {
+	const css = read(path.join(APP, 'styles.css'));
+	const rules = shotParseRules(css);
+	const elCard = shotEl(['qcard']);
+	const elTitle = shotEl(['qcard-title'], 'span');
+	const elDesc = shotEl(['qcard-desc'], 'span');
+	const elPub = shotEl(['qcard-pub']);
+	const elPubB = shotEl([], 'b');
+	const elKicker = shotEl(['qcard-kicker'], 'span');
+	const elPlay = shotEl(['qcard-act'], 'button', { 'data-act': 'play' });
+	const elClaim = shotEl(['qcard-act'], 'button', { 'data-act': 'claim' });
+	for (const theme of ['light', 'dark']) {
+		const tokens = shotCollectTokens(rules, theme);
+		const bg = shotResolve(shotWin(rules, elCard, theme, SHOT_CARD_ANC, 'background'), tokens);
+		const title = shotResolve(shotWin(rules, elTitle, theme, SHOT_CARD_ANC, 'color'), tokens);
+		const desc = shotResolve(shotWin(rules, elDesc, theme, SHOT_CARD_ANC, 'color'), tokens);
+		const pub = shotResolve(shotWin(rules, elPub, theme, SHOT_CARD_ANC, 'color'), tokens);
+		const pubB = shotResolve(shotWin(rules, elPubB, theme, SHOT_CARD_ANC, 'color'), tokens);
+		const kick = shotResolve(shotWin(rules, elKicker, theme, SHOT_CARD_ANC, 'color'), tokens);
+		const playBg = shotResolve(shotWin(rules, elPlay, theme, SHOT_CARD_ANC, 'background'), tokens);
+		const playFg = shotResolve(shotWin(rules, elPlay, theme, SHOT_CARD_ANC, 'color'), tokens);
+		const claimFg = shotResolve(shotWin(rules, elClaim, theme, SHOT_CARD_ANC, 'color'), tokens);
+		assert(bg === '#232428', `theme ${theme}: nền thẻ thắng phải là token media-card, đang là ${bg}`);
+		assert(title === '#f2f3f5', `theme ${theme}: chữ tiêu đề thắng phải là token media-fg, đang là ${title}`);
+		assert(desc === '#b5bac1', `theme ${theme}: chữ mô tả thắng phải là token media-fg-muted, đang là ${desc}`);
+		assert(pub === '#b5bac1', `theme ${theme}: dòng quảng bá thắng phải là token media-fg-muted, đang là ${pub}`);
+		assert(pubB === '#f2f3f5', `theme ${theme}: tên nhà phát hành thắng phải là token media-fg, đang là ${pubB}`);
+		assert(shotContrast(kick, bg) !== null && shotContrast(kick, bg) >= 4.5, `theme ${theme}: kicker (${kick}) trên nền thẻ (${bg}) phải đạt 4.5:1`);
+		assert(shotContrast(title, bg) !== null && shotContrast(title, bg) >= 4.5, `theme ${theme}: tiêu đề trên nền thẻ phải đạt 4.5:1`);
+		assert(shotContrast(desc, bg) !== null && shotContrast(desc, bg) >= 4.5, `theme ${theme}: mô tả trên nền thẻ phải đạt 4.5:1`);
+		assert(shotContrast(playFg, playBg) !== null && shotContrast(playFg, playBg) >= 4.5, `theme ${theme}: nút Phát Ngay (${playFg} trên ${playBg}) phải đạt 4.5:1`);
+		assert(claimFg === (theme === 'light' ? '#ffffff' : '#042f2b'), `theme ${theme}: nút claim phải dùng chữ brand-ink, đang là ${claimFg}`);
+	}
+	return 'thẻ tối thắng ở cả 2 theme + tương phản nút/tựa/mô tả đạt 4.5:1';
+});
+
+check('SHOTFIX-W17: hồi quy 5 lỗi ảnh chụp — banner, nút, cắt chữ (code-path + cascade)', () => {
+	const js = read(path.join(APP, 'renderer.js'));
+	const css = read(path.join(APP, 'styles.css'));
+	const rules = shotParseRules(css);
+	// (a) Banner: có hero thì có ảnh, không hero thì chỉ fallback + lý do.
+	assert(/banner\.dataset\.mediaSig !== bannerSig/.test(js), 'banner phải dựng lại theo chữ ký, không kẹt 1 lần/node');
+	assert(!/if \(!banner\.dataset\.media\)/.test(js), 'vẫn còn guard banner 1 lần/node cũ');
+	assert(/querySelectorAll\('\.qcard-banner-fallback, \.qcard-logo, \.qcard-banner-hero, \.qcard-banner-video'\)/.test(js), 'dựng lại banner phải gỡ đúng phần tử media cũ');
+	assert((js.match(/heroVideo: item\.heroVideo/g) || []).length >= 2, 'cả 2 chỗ map quest phải truyền heroVideo');
+	assert(/qcard-banner-video/.test(js) && /v\.muted = true/.test(js) && /v\.loop = true/.test(js) && /v\.playsInline = true/.test(js), 'hero video phải dựng <video> muted/loop/playsInline');
+	assert(/qcard-banner-hero/.test(js), 'ảnh hero phải mang class riêng để dựng lại được');
+	assert(js.includes('không trả ảnh hero') && js.includes('không hợp lệ') && js.includes('tải lỗi'), 'fallback phải ghi lý do đủ 3 trường hợp');
+	assert(/\.qcard-banner:has\(video\) \.qcard-banner-fallback \{ display: none; \}/.test(css), 'fallback phải ẩn khi có video hero');
+	assert(/\.qcard-banner-hero \{[^}]*object-fit: cover/.test(css) && /\.qcard-banner-video \{[^}]*object-fit: cover/.test(css), 'ảnh/video hero phải full-bleed cover');
+	// (b) Nút: Phát Ngay bấm được, claimable nhận thưởng, thủ công khóa.
+	assert(/act = 'play'/.test(js) && /act === 'play'/.test(js), 'thiếu nhánh nút Phát Ngay');
+	const disLine = (js.match(/btn\.disabled = [^\n]+/) || [])[0] || '';
+	assert(disLine.includes("act === 'todo'") && !disLine.includes('play'), 'nút Phát Ngay không được nằm trong diện disabled');
+	assert(/act = 'claim'/.test(js), 'thiếu nhánh nút nhận thưởng');
+	assert(/r\.check\.disabled = !canSelectQuest\(q\)/.test(js), 'quest thủ công phải khóa checkbox theo canSelectQuest');
+	// (c) Cắt chữ: thắng cascade cho main/info/title/desc/kicker/foot.
+	const elMain = shotEl(['qcard-main']);
+	const elInfo = shotEl(['qcard-info']);
+	const elBody = shotEl(['qcard-body']);
+	const elFoot = shotEl(['qcard-foot']);
+	const elTitle = shotEl(['qcard-title'], 'span');
+	const elDesc = shotEl(['qcard-desc'], 'span');
+	const elKicker = shotEl(['qcard-kicker'], 'span');
+	assert(shotWin(rules, elMain, 'light', SHOT_CARD_ANC, 'align-items') === 'stretch', 'main thẻ phải stretch, không center gây tràn 2 bên');
+	assert(shotWin(rules, shotEl(['qcard-reward']), 'light', SHOT_CARD_ANC, 'align-self') === 'center', 'hộp orb phải tự căn giữa');
+	assert(shotWin(rules, elKicker, 'light', SHOT_CARD_ANC, 'white-space') === 'normal', 'kicker không được nowrap (nguồn gây tràn)');
+	assert(shotWin(rules, elKicker, 'light', SHOT_CARD_ANC, 'overflow') === 'visible', 'kicker không được overflow hidden');
+	assert(shotWin(rules, elTitle, 'light', SHOT_CARD_ANC, 'display') === 'block', 'tiêu đề phải block, không -webkit-box clamp');
+	assert(shotWin(rules, elTitle, 'light', SHOT_CARD_ANC, '-webkit-line-clamp') === 'unset', 'tiêu đề không được clamp');
+	assert(shotWin(rules, elTitle, 'light', SHOT_CARD_ANC, 'overflow') === 'visible', 'tiêu đề không được overflow hidden');
+	assert(shotWin(rules, elDesc, 'light', SHOT_CARD_ANC, '-webkit-line-clamp') === 'unset', 'mô tả không được clamp');
+	assert(shotWin(rules, elInfo, 'light', SHOT_CARD_ANC, 'overflow') === 'visible', 'khối info không được overflow hidden');
+	assert(shotWin(rules, elBody, 'light', SHOT_CARD_ANC, 'overflow') === 'visible', 'thân thẻ không được overflow hidden');
+	assert(shotWin(rules, elFoot, 'light', SHOT_CARD_ANC, 'align-items') === 'stretch', 'chân thẻ phải stretch để thanh tiến độ không co thành vạch');
+	assert(!/\.qcard-(body|info|title|desc)[^{]*\{[^}]*margin-left:\s*-/.test(css), 'thân/info/tựa/mô tả không được margin-left âm');
+	// (d) Khung/lưới giữ nguyên quyết định GRID-DISCORD.
+	assert(/\.quest-list \{[^}]*grid-template-columns: repeat\(3, minmax\(0, 1fr\)\); gap: 24px/.test(css), 'lưới quest phải giữ 3 cột gap 24px');
+	assert(/#pageQuest \.quests-card \.quest-list \{[^}]*overflow-y: auto/.test(css), 'lưới phải giữ cuộn nội bộ');
+	assert(/#pageQuest \.quests-card \.quest-list \{[^}]*scroll-padding: 8px/.test(css), 'khung cuộn phải có scroll-padding để viền không cắt');
+	// (e) Class mới phải được định nghĩa (luật no-unknown-classes).
+	assert(/\.qcard-banner-hero \{/.test(css) && /\.qcard-banner-video \{/.test(css), 'class banner mới phải được định nghĩa trong styles.css');
+	return 'banner chữ ký + hero video + nút đúng trạng thái + hết cắt chữ + khung giữ nguyên (giới hạn: assert tĩnh, không phải render trình duyệt thật)';
 });
 
 /* ── In kết quả ────────────────────────────────────────────────────────── */

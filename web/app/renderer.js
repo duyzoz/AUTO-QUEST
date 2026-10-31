@@ -1935,9 +1935,11 @@ function updateQuestFoot(node, q) {
 		// loi engine (quest:error). FIX64-P4 (W50): kem thoi gian xay ra
 		// (gio:phut) — the loi ma khong co thoi gian thi khong biet loi
 		// moi hay tu phien truoc.
-		const diagBase = formatClaimDiag(q, en) || blockedText || (q.claimError ? String(q.claimError) : '') || (q.questErrorMsg ? String(q.questErrorMsg) : '');
+		const mainDiag = formatClaimDiag(q, en) || blockedText || (q.claimError ? String(q.claimError) : '') || (q.questErrorMsg ? String(q.questErrorMsg) : '');
+		const bannerDiag = (node.dataset && node.dataset.bannerDiag) || '';
+		const diagBase = mainDiag || bannerDiag;
 		const diagAt = q.claimErrorAt || q.heartbeatBlockedAt || q.questErrorAt || 0;
-		const diagTime = diagBase && diagAt
+		const diagTime = mainDiag && diagAt
 			? ` · ${new Date(diagAt).toLocaleTimeString(en ? 'en-US' : 'vi-VN', { hour: '2-digit', minute: '2-digit' })}`
 			: '';
 		const diagText = diagBase + diagTime;
@@ -1989,10 +1991,23 @@ function updateQuestCard(node, q) {
 	const sel = selected.has(q.id) ? '1' : '0';
 	if (node.dataset.selected !== sel) node.dataset.selected = sel;
 
-	// ---- Banner thật + logo game (1 lần / thẻ) ----
+	// ---- Banner thật + logo game (dựng lại khi chữ ký banner đổi) ----
+	// SHOTFIX (W6): trước đây banner chỉ dựng 1 lần / node (dataset.media),
+	// trong khi renderQuests tái dùng node qua questNodes — thẻ dựng lần
+	// đầu không có hero (hoặc hero đổi sau quét mới) kẹt mãi ở chữ cái.
+	// Nay lưu chữ ký (id + hero + heroVideo + logo + theme) và dựng lại
+	// mỗi khi chữ ký đổi; chỉ gỡ các phần tử media cũ, giữ nguyên
+	// checkbox + badge trạng thái của template.
 	const banner = r.banner;
-	if (!banner.dataset.media) {
-		banner.dataset.media = '1';
+	const logoUrl = questLogoUrl(q);
+	const bannerTheme = document.documentElement.dataset.theme || '';
+	const bannerSig = [q.id, q.hero || '', q.heroVideo || '', logoUrl, bannerTheme].join('|');
+	let bannerReason = '';
+	let heroMedia = false;
+	if (banner.dataset.mediaSig !== bannerSig) {
+		banner.dataset.mediaSig = bannerSig;
+		banner.querySelectorAll('.qcard-banner-fallback, .qcard-logo, .qcard-banner-hero, .qcard-banner-video').forEach((el) => el.remove());
+		banner.style.background = '';
 		// HB-FIX: placeholder khi quest không có ảnh hero/logo — chữ cái đầu
 		// của tên game, nền token, KHÔNG dùng logo Orb sai quest. Ẩn tự động
 		// khi banner có bất kỳ <img> nào (xem CSS .qcard-banner:has(img)).
@@ -2003,17 +2018,56 @@ function updateQuestCard(node, q) {
 		banner.prepend(ph);
 		const grad = [toHexColor(q.colorPrimary), toHexColor(q.colorSecondary)].filter(Boolean);
 		if (grad.length === 2) banner.style.background = `linear-gradient(135deg, ${grad[0]}, ${grad[1]})`;
-		if (q.hero) {
-			const img = document.createElement('img');
-			img.alt = '';
-			img.loading = 'lazy';
-			img.decoding = 'async';
-			if (setQuestImg(img, q.hero)) banner.appendChild(img);
+		const langEn = currentLang === 'en';
+		const heroVideoUrl = questAssetUrl(q.heroVideo);
+		const heroImgUrl = q.hero && q.hero !== q.heroVideo ? questAssetUrl(q.hero) : '';
+		const markBannerError = (reason) => {
+			node.dataset.bannerDiag = reason;
+			if (r.diag && !r.diag.textContent) r.diag.textContent = reason;
+		};
+		if (heroVideoUrl) {
+			// SHOTFIX (W7): quest có hero_video thật (engine đã trả trường
+			// heroVideo) — dựng <video> thay vì cố nhét video vào <img>
+			// (img sẽ lỗi rồi rơi về chữ cái). Tôn trọng reduced-motion:
+			// không tự phát khi user đã bật giảm chuyển động.
+			const v = document.createElement('video');
+			v.className = 'qcard-banner-video';
+			v.muted = true;
+			v.loop = true;
+			v.autoplay = !(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+			v.playsInline = true;
+			v.preload = 'metadata';
+			if (heroImgUrl) v.poster = heroImgUrl;
+			v.addEventListener('error', () => {
+				v.remove();
+				markBannerError(langEn ? 'Hero video failed to load — showing the game initial.' : 'Video hero tải lỗi — đang hiện chữ cái.');
+			}, { once: true });
+			v.src = heroVideoUrl;
+			banner.appendChild(v);
+			heroMedia = true;
+		} else if (q.hero) {
+			if (heroImgUrl) {
+				const img = document.createElement('img');
+				img.className = 'qcard-banner-hero';
+				img.alt = '';
+				img.loading = 'lazy';
+				img.decoding = 'async';
+				img.addEventListener('error', () => {
+					img.remove();
+					markBannerError(langEn ? 'Hero image failed to load — showing the game initial.' : 'Ảnh hero tải lỗi — đang hiện chữ cái.');
+				}, { once: true });
+				img.src = heroImgUrl;
+				banner.appendChild(img);
+				heroMedia = true;
+			} else {
+				bannerReason = langEn ? 'Quest hero image is invalid — showing the game initial.' : 'Ảnh hero không hợp lệ — đang hiện chữ cái.';
+			}
+		} else {
+			bannerReason = langEn ? 'Discord did not provide a hero image — showing the game initial.' : 'Discord không trả ảnh hero — đang hiện chữ cái.';
 		}
 		// Waves 42: logo THẬT của nhiệm vụ — ưu tiên logotype/game_tile, thiếu thì
 		// dùng icon application (luôn có). Nếu ảnh lỗi → thử tiếp icon app, cuối
 		// cùng mới bỏ (không hiện logo Orb sai nhiệm vụ).
-		const logoUrl = questLogoUrl(q);
 		if (logoUrl) {
 			const logo = document.createElement('img');
 			logo.className = 'qcard-logo';
@@ -2040,6 +2094,7 @@ function updateQuestCard(node, q) {
 			logo.src = logoUrl;
 			banner.appendChild(logo);
 		}
+		node.dataset.bannerDiag = heroMedia ? '' : bannerReason;
 	}
 
 	// ---- Nhãn trạng thái ----
@@ -4485,6 +4540,7 @@ async function handleEvent(evt) {
 								: '',
 					// Waves 22: dữ liệu thẻ Discord
 					hero: item.hero || '',
+					heroVideo: item.heroVideo || '',
 					gameTile: item.gameTile || '',
 					gameTileDark: item.gameTileDark || '',
 					gameTileLight: item.gameTileLight || '',
@@ -8404,6 +8460,7 @@ function stripInventoryItem(item) {
 		automatable: item.automatable !== false,
 		status: item.status,
 		hero: item.hero || '',
+		heroVideo: item.heroVideo || '',
 		gameTile: item.gameTile || '',
 		gameTileDark: item.gameTileDark || '',
 		gameTileLight: item.gameTileLight || '',
