@@ -6069,3 +6069,24 @@ body[data-page="quest"] .page.active { flex: none; }
    ============================================================ */
 .console-card .console { height: 88px; max-height: 88px; min-height: 88px; overflow-y: auto; }
 .u229-body { display: block; -webkit-line-clamp: unset; overflow: visible; }
+
+/* HB-FIX (2026-10-31): placeholder banner khi quest không có ảnh hero/logo.
+   Chỉ dùng token, font-size 32px trên thang, pointer-events none để không
+   chặn checkbox/trạng thái (z-index 3) phía trên. Ẩn khi banner có <img>. */
+.qcard-banner-fallback {
+	/* Khong z-index: placeholder la con dau tien cua banner, nen check/state
+	   (z-index 3) va img/logo them sau tu nam tren no theo thu tu DOM. */
+	position: absolute;
+	inset: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: var(--well);
+	color: var(--fg);
+	font-size: 32px;
+	font-weight: 800;
+	pointer-events: none;
+}
+.qcard-banner:has(img) .qcard-banner-fallback {
+	display: none;
+}

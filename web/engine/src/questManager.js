@@ -874,12 +874,48 @@ class QuestManager {
                 });
             }
             catch (err) {
-                consecutiveErrors++;
-                const msg = err?.message || String(err);
-                console.warn(`[Cảnh báo] Lỗi gửi tín hiệu heartbeat "${applicationName}" (${consecutiveErrors}/5): ${QuestManager.heartbeatDiag(err, { questId: QuestManager.getQuestId(quest), taskName, applicationId, endpoint: 'heartbeat' })}`);
-                if (consecutiveErrors >= 5) {
-                    this.failQuest(quest, questName, `Mất tín hiệu liên tục: ${msg}`);
-                    return;
+                // HB-FIX (2026-10-31): 401 -> thử lại ĐÚNG 1 lần với application_id
+                // của chính quest (không phải appId của task). Chỉ đổi appId trong
+                // lần thử lại, không đổi endpoint, nhịp hay ngưỡng fail.
+                const questAppId = String(quest.config?.application?.id ?? '');
+                const is401 = err?.status === 401 || err?.code === 40001;
+                if (is401 && questAppId && questAppId !== applicationId) {
+                    try {
+                        const resFb = await this.client.rest.post(`/quests/${quest.id}/heartbeat`, {
+                            body: {
+                                application_id: questAppId,
+                                terminal: false,
+                            },
+                        });
+                        quest.updateUserStatus(resFb);
+                        consecutiveErrors = 0;
+                        const currentDone = QuestManager.getTaskProgress(quest, taskName);
+                        console.log(`  [Heartbeat: ${applicationName}] Fallback appId quest (${questAppId}) đã nhận sau khi appId task (${applicationId}) bị 401. Tiến độ: ${Math.floor(currentDone / 60)}/${Math.ceil(secondsNeeded / 60)} phút.`);
+                        (0, events_1.report)('quest:progress', {
+                            id: QuestManager.getQuestId(quest),
+                            name: questName,
+                            secondsDone: currentDone,
+                            secondsNeeded,
+                        });
+                    }
+                    catch (errFb) {
+                        consecutiveErrors++;
+                        const msg = errFb?.message || String(errFb);
+                        console.warn(`[Cảnh báo] Lỗi gửi tín hiệu heartbeat "${applicationName}" (${consecutiveErrors}/5) sau fallback appId=${questAppId} (appId task=${applicationId} bị 401): ${QuestManager.heartbeatDiag(errFb, { questId: QuestManager.getQuestId(quest), taskName, applicationId: questAppId, endpoint: 'heartbeat' })}`);
+                        if (consecutiveErrors >= 5) {
+                            this.failQuest(quest, questName, `Mất tín hiệu liên tục: ${msg}`);
+                            return;
+                        }
+                    }
+                }
+                else {
+                    consecutiveErrors++;
+                    const msg = err?.message || String(err);
+                    console.warn(`[Cảnh báo] Lỗi gửi tín hiệu heartbeat "${applicationName}" (${consecutiveErrors}/5): ${QuestManager.heartbeatDiag(err, { questId: QuestManager.getQuestId(quest), taskName, applicationId, endpoint: 'heartbeat' })}`);
+                    if (consecutiveErrors >= 5) {
+                        this.failQuest(quest, questName, `Mất tín hiệu liên tục: ${msg}`);
+                        return;
+                    }
                 }
             }
             await this.timeout(interval * 1000);
@@ -936,12 +972,47 @@ class QuestManager {
                 });
             }
             catch (err) {
-                consecutiveErrors++;
-                const msg = err?.message || String(err);
-                console.warn(`[Cảnh báo] Lỗi console-heartbeat (${consecutiveErrors}/5): ${QuestManager.heartbeatDiag(err, { questId: QuestManager.getQuestId(quest), taskName, applicationId, endpoint: 'console-heartbeat' })}`);
-                if (consecutiveErrors >= 5) {
-                    this.failQuest(quest, questName, `Console heartbeat lỗi liên tục: ${msg}`);
-                    return;
+                // HB-FIX: 401 -> thử lại ĐÚNG 1 lần với application_id của chính quest.
+                const questAppId = String(quest.config?.application?.id ?? '');
+                const is401 = err?.status === 401 || err?.code === 40001;
+                if (is401 && questAppId && questAppId !== applicationId) {
+                    try {
+                        const resFb = await this.client.rest.post(`/quests/${quest.id}/console-heartbeat`, {
+                            body: {
+                                application_id: questAppId,
+                                platform,
+                                terminal: false,
+                            },
+                        });
+                        quest.updateUserStatus(resFb);
+                        consecutiveErrors = 0;
+                        const currentDone = QuestManager.getTaskProgress(quest, taskName);
+                        console.log(`  [Console ${platform}] Fallback appId quest (${questAppId}) đã nhận sau khi appId task (${applicationId}) bị 401. Tiến độ: ${Math.floor(currentDone / 60)}/${Math.ceil(secondsNeeded / 60)} phút.`);
+                        (0, events_1.report)('quest:progress', {
+                            id: QuestManager.getQuestId(quest),
+                            name: questName,
+                            secondsDone: currentDone,
+                            secondsNeeded,
+                        });
+                    }
+                    catch (errFb) {
+                        consecutiveErrors++;
+                        const msg = errFb?.message || String(errFb);
+                        console.warn(`[Cảnh báo] Lỗi console-heartbeat (${consecutiveErrors}/5) sau fallback appId=${questAppId} (appId task=${applicationId} bị 401): ${QuestManager.heartbeatDiag(errFb, { questId: QuestManager.getQuestId(quest), taskName, applicationId: questAppId, endpoint: 'console-heartbeat' })}`);
+                        if (consecutiveErrors >= 5) {
+                            this.failQuest(quest, questName, `Console heartbeat lỗi liên tục: ${msg}`);
+                            return;
+                        }
+                    }
+                }
+                else {
+                    consecutiveErrors++;
+                    const msg = err?.message || String(err);
+                    console.warn(`[Cảnh báo] Lỗi console-heartbeat (${consecutiveErrors}/5): ${QuestManager.heartbeatDiag(err, { questId: QuestManager.getQuestId(quest), taskName, applicationId, endpoint: 'console-heartbeat' })}`);
+                    if (consecutiveErrors >= 5) {
+                        this.failQuest(quest, questName, `Console heartbeat lỗi liên tục: ${msg}`);
+                        return;
+                    }
                 }
             }
             await this.timeout(interval * 1000);
@@ -997,12 +1068,46 @@ class QuestManager {
                 });
             }
             catch (err) {
-                consecutiveErrors++;
-                const msg = err?.message || String(err);
-                console.warn(`[Cảnh báo] Lỗi mobile-heartbeat (${consecutiveErrors}/5): ${QuestManager.heartbeatDiag(err, { questId: QuestManager.getQuestId(quest), taskName, applicationId, endpoint: 'mobile-heartbeat' })}`);
-                if (consecutiveErrors >= 5) {
-                    this.failQuest(quest, questName, `Mobile heartbeat lỗi liên tục: ${msg}`);
-                    return;
+                // HB-FIX: 401 -> thử lại ĐÚNG 1 lần với application_id của chính quest.
+                const questAppId = String(quest.config?.application?.id ?? '');
+                const is401 = err?.status === 401 || err?.code === 40001;
+                if (is401 && questAppId && questAppId !== applicationId) {
+                    try {
+                        const resFb = await this.client.rest.post(`/quests/${quest.id}/mobile-heartbeat`, {
+                            body: {
+                                application_id: questAppId,
+                                session_id: sessionId,
+                            },
+                        });
+                        quest.updateUserStatus(resFb);
+                        consecutiveErrors = 0;
+                        const currentDone = QuestManager.getTaskProgress(quest, taskName);
+                        console.log(`  [Mobile] Fallback appId quest (${questAppId}) đã nhận sau khi appId task (${applicationId}) bị 401. Tiến độ: ${Math.floor(currentDone / 60)}/${Math.ceil(secondsNeeded / 60)} phút.`);
+                        (0, events_1.report)('quest:progress', {
+                            id: QuestManager.getQuestId(quest),
+                            name: questName,
+                            secondsDone: currentDone,
+                            secondsNeeded,
+                        });
+                    }
+                    catch (errFb) {
+                        consecutiveErrors++;
+                        const msg = errFb?.message || String(errFb);
+                        console.warn(`[Cảnh báo] Lỗi mobile-heartbeat (${consecutiveErrors}/5) sau fallback appId=${questAppId} (appId task=${applicationId} bị 401): ${QuestManager.heartbeatDiag(errFb, { questId: QuestManager.getQuestId(quest), taskName, applicationId: questAppId, endpoint: 'mobile-heartbeat' })}`);
+                        if (consecutiveErrors >= 5) {
+                            this.failQuest(quest, questName, `Mobile heartbeat lỗi liên tục: ${msg}`);
+                            return;
+                        }
+                    }
+                }
+                else {
+                    consecutiveErrors++;
+                    const msg = err?.message || String(err);
+                    console.warn(`[Cảnh báo] Lỗi mobile-heartbeat (${consecutiveErrors}/5): ${QuestManager.heartbeatDiag(err, { questId: QuestManager.getQuestId(quest), taskName, applicationId, endpoint: 'mobile-heartbeat' })}`);
+                    if (consecutiveErrors >= 5) {
+                        this.failQuest(quest, questName, `Mobile heartbeat lỗi liên tục: ${msg}`);
+                        return;
+                    }
                 }
             }
             await this.timeout(interval * 1000);

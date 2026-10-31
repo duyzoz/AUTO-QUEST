@@ -1901,6 +1901,14 @@ function updateQuestCard(node, q) {
 	const banner = r.banner;
 	if (!banner.dataset.media) {
 		banner.dataset.media = '1';
+		// HB-FIX: placeholder khi quest không có ảnh hero/logo — chữ cái đầu
+		// của tên game, nền token, KHÔNG dùng logo Orb sai quest. Ẩn tự động
+		// khi banner có bất kỳ <img> nào (xem CSS .qcard-banner:has(img)).
+		const ph = document.createElement('span');
+		ph.className = 'qcard-banner-fallback';
+		ph.setAttribute('aria-hidden', 'true');
+		ph.textContent = String(q.gameTitle || q.application || q.name || '?').trim().charAt(0).toUpperCase() || '?';
+		banner.prepend(ph);
 		const grad = [toHexColor(q.colorPrimary), toHexColor(q.colorSecondary)].filter(Boolean);
 		if (grad.length === 2) banner.style.background = `linear-gradient(135deg, ${grad[0]}, ${grad[1]})`;
 		if (q.hero) {

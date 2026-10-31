@@ -1225,6 +1225,21 @@ check('HB-DIAG: log loi heartbeat ghi status/code/appId/task, khong doi cach cha
 	return 'diag 4 endpoint + status/code/appId/task, khong token';
 });
 
+check('HB-FIX: fallback appId khi heartbeat 401 + placeholder banner thieu anh', () => {
+	const qm = read(path.join(WEB, 'engine', 'src', 'questManager.js'));
+	assert(qm.includes('HB-FIX') && qm.includes('questAppId'), 'thieu fallback questAppId');
+	assert(/err\?\.status === 401 \|\| err\?\.code === 40001/.test(qm), 'fallback chi khi 401/40001');
+	assert(qm.includes("endpoint: 'heartbeat'") && qm.includes("endpoint: 'console-heartbeat'") && qm.includes("endpoint: 'mobile-heartbeat'"), 'fallback phai co o desktop/console/mobile');
+	const js = read(path.join(APP, 'renderer.js'));
+	const css = read(path.join(APP, 'styles.css'));
+	assert(js.includes('qcard-banner-fallback') && js.includes("banner.prepend(ph)"), 'thieu placeholder banner');
+	assert(/ph\.textContent = String\(q\.gameTitle/.test(js), 'placeholder lay chu cai dau ten game, khong logo Orb');
+	assert(/\.qcard-banner-fallback \{[^}]*background: var\(--well\)/.test(css), 'placeholder nen token');
+	assert(/\.qcard-banner:has\(img\) \.qcard-banner-fallback \{[^}]*display: none/.test(css), 'placeholder an khi co img');
+	assert(/\.qcard-banner-fallback \{[^}]*pointer-events: none/.test(css), 'placeholder khong chan bam');
+	return 'fallback 401 3 endpoint + placeholder token, khong Orb';
+});
+
 /* ── In kết quả ────────────────────────────────────────────────────────── */
 for (const r of results) {
 	const tag = r.ok ? 'PASS' : 'FAIL';
