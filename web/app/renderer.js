@@ -1696,7 +1696,7 @@ function buildQuestCard(q) {
 	node.innerHTML = `
 		<div class="qcard-banner">
 			${checkHtml}
-			<span class="qcard-state"></span>
+			<span class="qcard-state"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="12" r="6"/></svg><span class="qcard-state-text"></span></span>
 		</div>
 		<div class="qcard-body">
 			<div class="qcard-pub">
@@ -1725,6 +1725,7 @@ function buildQuestCard(q) {
 		</div>
 		<!-- Waves 31: hàng nút trạng thái — Chưa làm (khoá) / Nhận (bấm được) / Đã nhận -->
 		<div class="qcard-foot">
+			<div class="neo-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div class="neo-bar-fill"></div></div>
 			<button type="button" class="qcard-act" data-act="todo" disabled></button>
 		</div>
 		<div class="qcard-diag"></div>
@@ -1841,7 +1842,9 @@ function updateQuestCard(node, q) {
 		node._r ||
 		(node._r = {
 			banner: node.querySelector('.qcard-banner'),
-			state: node.querySelector('.qcard-state'),
+			state: node.querySelector('.qcard-state-text'),
+			bar: node.querySelector('.neo-bar-fill'),
+			barWrap: node.querySelector('.neo-bar'),
 			pub: node.querySelector('.qcard-pub-name'),
 			pubCaption: node.querySelector('.qcard-pub-caption'),
 			end: node.querySelector('.qcard-end'),
@@ -1990,6 +1993,8 @@ function updateQuestCard(node, q) {
 	}
 	const pctText = `${pct}%`;
 	if (r.pct.textContent !== pctText) r.pct.textContent = pctText;
+	if (r.bar && r.bar.style.width !== `${pct}%`) r.bar.style.width = `${pct}%`;
+	if (r.barWrap) r.barWrap.setAttribute('aria-valuenow', String(pct));
 
 	// ---- Checkbox ----
 	if (r.check) {

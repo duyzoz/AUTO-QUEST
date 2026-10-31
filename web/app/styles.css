@@ -6696,3 +6696,31 @@ body.lite .claim-pill-spin { animation-duration: 1.6s; }
 	#pageQuest:has(> .profile-hero:not([hidden])) > .stats-row { grid-column: 2; grid-row: 1; flex-direction: column; }
 	#pageQuest:has(> .profile-hero:not([hidden])) > .quests-card { grid-column: 1 / -1; }
 }
+/* ============================================================
+   NEO-BRUTALIST P3 — Quest cards (W21-W25). Layout: banner,
+   title/description full width, reward + ring, then a bordered
+   progress bar in the foot (display only — its width is the same
+   questPct value the ring already shows, never a new number),
+   then the action button. State labels are stickers (border +
+   hard shadow, text + SVG dot). Done tiles keep their Discord-
+   accurate face/info design (info on hover/focus, not hover-only
+   critical info — the face already shows Orb + game) but get the
+   neo border/shadow and a token-neutral background, no dark slab.
+   Toolbar hierarchy unchanged: main row + collapsible advanced
+   filters with their existing active-filter count.
+   ============================================================ */
+.qcard-main { gap: 12px; }
+.qcard-foot { display: flex; flex-direction: column; gap: 12px; padding: 0 16px 16px; }
+.neo-bar { height: 12px; border: 2px solid var(--neo-line); border-radius: 12px; background: var(--neo-surface); overflow: hidden; }
+.neo-bar-fill { height: 100%; width: 0%; background: var(--neo-blue); transition: width 0.2s ease; }
+.qcard-state { display: inline-flex; align-items: center; gap: 6px; border: 2px solid var(--neo-line); border-radius: 12px; box-shadow: 2px 2px 0 var(--neo-shadow); background: var(--neo-yellow); color: var(--neo-yellow-ink); font-weight: 800; padding: 4px 8px; }
+.qcard-state svg { width: 12px; height: 12px; }
+.qcard-state-text { font-weight: 800; }
+.qdone { background: var(--neo-surface); border: 2px solid var(--neo-line); box-shadow: 4px 4px 0 var(--neo-shadow); }
+.quest-tools { gap: 12px; padding: 12px; border: 2px solid var(--neo-line); border-radius: 16px; background: var(--neo-surface); box-shadow: 4px 4px 0 var(--neo-shadow); }
+.quest-advanced { border: 2px solid var(--neo-line); border-radius: 16px; background: var(--neo-surface); padding: 12px; }
+.quest-adv-toggle { border: 2px solid var(--neo-line); border-radius: 12px; box-shadow: 2px 2px 0 var(--neo-shadow); font-weight: 800; }
+.quest-adv-title { font-weight: 800; font-size: 14px; }
+@media (prefers-reduced-motion: reduce) {
+	.neo-bar-fill { transition: none; }
+}

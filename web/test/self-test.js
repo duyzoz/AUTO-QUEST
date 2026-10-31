@@ -1111,6 +1111,20 @@ check('NEO P2: shell bento + hero two-column (hero visible only) + stats bento',
 	return 'shell bento + hero 2 cot + stats bento';
 });
 
+
+check('NEO P3: quest card v2 — progress bar, state sticker, done neo, toolbar', () => {
+	const css = read(path.join(APP, 'styles.css'));
+	const neo = css.slice(css.indexOf('NEO-BRUTALIST P3'));
+	const js = read(path.join(APP, 'renderer.js'));
+	assert(js.includes('neo-bar'), 'renderer co thanh tien do neo-bar');
+	assert(js.includes('qcard-state-text'), 'state co SVG + text span');
+	assert(/\.neo-bar \{[^}]*border: 2px solid var\(--neo-line\)/.test(neo), 'thanh tien do co vien + token');
+	assert(/\.qcard-state \{[^}]*box-shadow: 2px 2px 0/.test(neo), 'state dang sticker');
+	assert(/\.qdone \{[^}]*background: var\(--neo-surface\)/.test(neo), 'done tile nen token, khong mang toi');
+	assert(/\.quest-advanced \{[^}]*border: 2px solid/.test(neo), 'bo loc nang cao van collapsible, dang bento');
+	return 'bar + state sticker + done neo + toolbar bento';
+});
+
 /* ── In kết quả ────────────────────────────────────────────────────────── */
 for (const r of results) {
 	const tag = r.ok ? 'PASS' : 'FAIL';
