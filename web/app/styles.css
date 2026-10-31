@@ -4072,8 +4072,9 @@ body {
 	body[data-page="quest"] .page.active {
 		flex: 1;
 		min-height: 0;
-		gap: 14px;
 	}
+	/* FIX64-P2: gap 14px cu o day da xoa — #pageQuest (ID)
+	   la nguon gap duy nhat cua trang quest (28px). */
 	.stats-row { flex: 0 0 auto; }
 
 	/* Danh sách nhiệm vụ chiếm toàn bộ khoảng trống còn lại */
@@ -5970,19 +5971,38 @@ body.lite .claim-pill-spin { animation-duration: 1.6s; }
    FIX26-A — Top moi sau khi xoa the profile giua (F1-F4).
    Top chi con 2 khung: .stats-row (So du kha dung + Nhat ky
    hoat dong), 2 cot bang nhau, cung chieu cao (grid stretch),
-   khoang cach toi .quests-card co dinh 16px qua gap cua
-   #pageQuest. Top dong bang: chieu cao cua no chi phu thuoc
-   vao noi dung co dinh (so du) + khung log co max-height va
-   cuon noi bo, khong phu thuoc chieu cao danh sach quest,
-   nen doi tab / doi danh sach khong dich / thu nho top.
-   Khong doi z-index, khong doi thu bac toolbar, khong class
-   moi, khong mau tho, spacing tren thang 16px.
+   khoang cach toi .quests-card (FIX64-P2 doi thanh 28px,
+   xem block duoi). Top dong bang: chieu cao cua no chi phu
+   thuoc vao noi dung co dinh (so du) + khung log co
+   max-height va cuon noi bo, khong phu thuoc chieu cao
+   danh sach quest, nen doi tab / doi danh sach khong dich
+   / thu nho top. Khong doi z-index, khong doi thu bac
+   toolbar, khong class moi, khong mau tho, spacing tren thang.
    ============================================================ */
-#pageQuest { display: block; gap: 16px; }
-#pageQuest > .stats-row { grid-template-columns: 1fr 1fr; gap: 16px; align-items: stretch; }
+/* ============================================================
+   FIX64-P2 (W23-W30, 2026-10-31) — Top + khoang cach, giu
+   nguyen noi dung/khung (W23). Phat hien goc: FIX26-A de
+   #pageQuest o display:block (ID thang class .page.active)
+   nen gap 16px khai bao khong bao gio ap dung — khoang
+   thuc te giua top va quests-card = 0 (margin-top: 0),
+   dung nhu phan anh "qua sat". Sua o dung mot cho duy
+   nhat: #pageQuest thanh flex column, gap 28px (W24, tren
+   thang spacing); gap giua 2 khung top 20px, stretch giu
+   cung chieu cao (W25); quests-card margin-top 0, khong
+   margin canh tranh nao khac (W26). 2 khai bao gap cu
+   canh tranh (body[data-page=quest] .page.active 16px va
+   rule man cao 14px) da xoa — #pageQuest la nguon gap
+   duy nhat cua trang quest. Khong doi z-index, khong
+   class moi, khong mau tho, spacing tren thang.
+   W27/W28/W30 chi audit (xem test FIX64-P2): log .u229
+   van max-height + cuon noi bo, dong wrap tron ven (bo
+   cap tu FIX26-F); so du so lon + nhan ro + sub tach
+   biet; vien token ca 2 theme.
+   ============================================================ */
+#pageQuest { display: flex; flex-direction: column; gap: 28px; }
+#pageQuest > .stats-row { grid-template-columns: 1fr 1fr; gap: 20px; align-items: stretch; }
 #pageQuest > .stats-row > * { min-width: 0; }
 #pageQuest > .quests-card { margin-top: 0; }
-body[data-page="quest"] .page.active { gap: 16px; }
 
 /* ============================================================
    FIX26-BC — Khung quest khong bi go, tab khong dich layout

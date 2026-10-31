@@ -1099,16 +1099,16 @@ check('NEO P1: neo tokens both themes + button/chip/tab/modal language', () => {
 });
 
 
-check('FIX26-A: hero da xoa, top chi con 2 khung bang nhau, gap 16px, up-row con', () => {
+check('FIX26-A: hero da xoa, top chi con 2 khung bang nhau, gap 28px (FIX64-P2 doi tu 16px), up-row con', () => {
 	const css = read(path.join(APP, 'styles.css'));
 	const html = read(INDEX);
 	const js = read(path.join(APP, 'renderer.js'));
 	assert(!/heroProfile/.test(html + js + css), 'heroProfile phai = 0 trong web/app');
 	assert(!/\.profile-hero\s*\{/.test(css), 'khong con rule .profile-hero');
 	assert(/#pageQuest > \.stats-row \{[^}]*grid-template-columns: 1fr 1fr/.test(css), 'top 2 khung bang nhau 1fr 1fr');
-	assert(/#pageQuest \{[^}]*gap: 16px/.test(css), 'gap top -> quest co dinh 16px');
+	assert(/#pageQuest \{[^}]*gap: 28px/.test(css), 'gap top -> quest co dinh 28px (FIX64-P2)');
 	assert(html.includes('id="upRow"') && html.includes('id="sideBalance"') && html.includes('id="consoleCard"'), 'up-row + so du + nhat ky phai con');
-	return 'hero xoa sach + top 2 khung + gap 16px + up-row con';
+	return 'hero xoa sach + top 2 khung + gap 28px + up-row con';
 });
 
 check('FIX26-BC: quest khong bi go, tab khong dich, dem tab co dinh', () => {
@@ -1298,6 +1298,34 @@ check('FIX64-P0: heartbeat 401 -> blocked state, backoff, expiry pre-check, card
 	assert(/\.u229 \{[^}]*overflow-y: auto[^}]*max-height: 104px/.test(css), 'log phai cuon noi bo');
 	assert(bot.includes('Promise.allSettled(tasks)'), 'bot phai chay song song, 1 quest loi khong chan quest khac');
 	return 'blocked 401 + backoff 2x/60s + expiry skip + card UI + terminal 1x + mapping dung';
+});
+
+check('FIX64-P2: top giu nguyen, gap trang 28px + gap 2 khung top 20px, mobile xep chong (W23-W30)', () => {
+	const css = read(path.join(APP, 'styles.css'));
+	const mobile = read(path.join(APP, 'mobile.css'));
+	const html = read(INDEX);
+	// W23: noi dung/cau truc top khong doi — 2 khung van con, dung thu tu.
+	assert(html.includes('id="sideBalance"') && html.includes('id="consoleCard"'), 'so du + nhat ky phai con');
+	assert(html.indexOf('id="sideBalance"') < html.indexOf('id="consoleCard"'), 'thu tu so du -> nhat ky khong doi');
+	assert(html.indexOf('id="consoleCard"') < html.indexOf('quests-card'), 'top phai dung truoc quests-card');
+	// W24/W26: mot nguon gap duy nhat — #pageQuest flex column gap 28px,
+	// khong con gap canh tranh cho trang quest, quests-card margin-top 0.
+	assert(/#pageQuest \{[^}]*display: flex[^}]*flex-direction: column[^}]*gap: 28px/.test(css), 'pageQuest phai flex column gap 28px');
+	assert(!/body\[data-page="quest"\] \.page\.active \{[^}]*gap:/.test(css), 'khong con gap canh tranh body[data-page=quest]');
+	assert(/#pageQuest > \.quests-card \{[^}]*margin-top: 0/.test(css), 'quests-card margin-top 0, khong margin canh tranh');
+	// W25: gap 2 khung top 20px, 1fr 1fr, stretch = cung chieu cao.
+	assert(/#pageQuest > \.stats-row \{[^}]*grid-template-columns: 1fr 1fr[^}]*gap: 20px[^}]*align-items: stretch/.test(css), 'top 2 khung 1fr 1fr gap 20px stretch');
+	// W27 (audit, giu FIX26-F): log .u229 max-height + cuon noi bo, dong khong bi cap.
+	assert(/\.u229 \{[^}]*overflow-y: auto[^}]*max-height: 104px/.test(css), 'log phai cuon noi bo max-height 104px');
+	assert(/\.u229-body \{[^}]*-webkit-line-clamp: unset/.test(css), 'dong log khong bi cap 2 dong');
+	// W28 (audit): so du so lon + nhan + sub tach biet, khong tran (card overflow hidden).
+	assert(/\.sb-value \{[^}]*font-size: 1\.7rem/.test(css), 'so du phai so lon 1.7rem');
+	assert(html.includes('Số dư khả dụng') && html.includes('id="orbBalance"') && html.includes('id="orbPending"'), 'nhan + so + sub so du phai con');
+	assert(/\.side-balance \{[^}]*overflow: hidden/.test(css), 'the so du khong duoc tran');
+	// W29: mobile <=1023 top xep 1 cot; W30 (audit): vien token ro ca 2 theme.
+	assert(/#pageQuest > \.stats-row \{[^}]*grid-template-columns: 1fr/.test(mobile), 'mobile: top xep chong 1 cot');
+	assert(/--neo-line: #e2e8f0/.test(css) && /--neo-line: #0f172a/.test(css), 'vien neo phai ro ca 2 theme');
+	return 'gap 28px + top gap 20px + log cuon noi bo + mobile 1 cot + vien 2 theme';
 });
 
 /* ── In kết quả ────────────────────────────────────────────────────────── */
