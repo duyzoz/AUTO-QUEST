@@ -92,10 +92,10 @@
 }
 
 /* Waves 46 — [hidden] PHẢI luôn thắng. Nhiều component set `display:flex/grid`
-   trên chính element đó (vd .hero-card, .up-row), mà quy tắc class có độ ưu tiên
+   trên chính element đó (vd .card, .up-row), mà quy tắc class có độ ưu tiên
    cao hơn thuộc tính `hidden` của UA → element "ẩn" vẫn chiếm chỗ VÀ vẫn vẽ nền
    tối, đè lên bố cục phía dưới. Đây là gốc của việc "chìm màu" ở chế độ Sáng:
-   thẻ hero tối màu vẫn được vẽ dù đã hidden. Chốt bằng !important một lần. */
+   thẻ tối màu vẫn được vẽ dù đã hidden. Chốt bằng !important một lần. */
 [hidden] {
 	display: none !important;
 }
@@ -678,7 +678,6 @@ body {
    cột dọc căn giữa → bro không muốn. Đã XOÁ toàn bộ khối căn giữa đó.
    Khách giờ y như tài khoản đã đăng nhập: avatar trái, tên + phụ đề bên phải.
    ========================================================================== */
-/* (không còn override nào cho .userpanel[data-state="guest"] / .profile-hero[data-state="guest"]
    về căn giữa — layout mặc định hàng ngang được dùng cho MỌI trạng thái.) */
 
 /* Nút đăng xuất + đổi account: JS bật/tắt bằng thuộc tính [hidden]. Vì các
@@ -848,9 +847,7 @@ body {
    Nằm dưới nội dung (`z-index: -1` trong khi body là `relative`) nên chữ,
    avatar, huy hiệu… vẫn nổi lên trên — không bị chìm ở cả 2 theme vì
    gradient lấy trực tiếp 2 màu Nitro của chính user (luôn là màu đậm).
-   ============================================================ */
-.up-pop::after,
-.profile-hero::after {
+   ============================================================ */.up-pop::after {
 	content: '';
 	position: absolute;
 	left: 0;
@@ -881,9 +878,7 @@ body {
 }
 /* Lưới an toàn: nếu THẺ có ảnh bìa thật mà `--theme-banner-h` vì lý do nào đó
    chưa được ghi (JS đo lúc panel còn `hidden`), lớp nền VẪN phải nằm dưới
-   banner — không bao giờ được phủ lên ảnh bìa. */
-.up-pop[data-banner-image='1']::after,
-.profile-hero[data-banner-image='1']::after {
+   banner — không bao giờ được phủ lên ảnh bìa. */.up-pop[data-banner-image='1']::after {
 	top: var(--theme-banner-h, 100%);
 }
 /* Giữ banner + body bo đúng góc bo của popup dù popup không còn cắt tràn */
@@ -971,9 +966,7 @@ body {
    Bro báo "lỗi viền đen mờ mờ đèn lên avt và tên": khi effect/frame trỏ vào URL
    tải lỗi, Chromium vẫn vẽ ICON ẢNH VỠ + nền xám/mép tối ở đúng kích thước phần
    tử → thành quầng đen nhoè quanh avatar và tên. `hidden` do JS đặt không đủ nếu
-   src còn sót. Chặn triệt để ở CSS. */
-.ph-effect[hidden],
-.up-pop-effect[hidden] {
+   src còn sót. Chặn triệt để ở CSS. */.up-pop-effect[hidden] {
 	display: none !important;
 }
 /* Layer effect đứng yên khi bật "giảm chuyển động" */
@@ -1012,9 +1005,7 @@ body {
      300/1200 = 25% kích thước gốc.
    ============================================================ */
 
-/* Khung #dpFrame/#phFrame = .profileFrameContainer */
-.dp-frame.custom-profile-frame,
-.ph-frame.custom-profile-frame {
+/* Khung #dpFrame/#phFrame = .profileFrameContainer */.dp-frame.custom-profile-frame {
 	position: absolute;
 	inset-inline-start: 0;
 	top: 0;
@@ -1047,9 +1038,7 @@ body {
    (Waves#85 — BRO: xoá Khung popout hoàn toàn, renderProfileFrame đã
    nhận `null` ở renderer.js; khối này giờ chỉ còn hiệu lực với HERO
    — nơi không khung. Trạng thái gốc before #84 đã restore lại bên dưới.
-   Giữ nguyên để không làm nhiễu các selector `.pf-frame-*` liên quan.) */
-.up-pop .dp-frame.custom-profile-frame,
-.up-pop .ph-frame.custom-profile-frame {
+   Giữ nguyên để không làm nhiễu các selector `.pf-frame-*` liên quan.) */.up-pop .dp-frame.custom-profile-frame {
 	--pf-fit: 999;
 	--pf-fit-x: 1;
 	--pf-shift: 0;
@@ -1070,9 +1059,7 @@ body {
    rộng bằng thẻ ⇒ cánh staple (cao ≈53% bề rộng) render 1172×625 ⇒ tràn xuống
    dưới đáy thẻ 174px. Nên bề rộng do JS tính (`--custom-profile-frame-width`)
    theo CHIỀU CAO thẻ, và khung được CANH GIỮA NGANG thẻ (trước đây neo mép
-   trái → lệch 35px sang trái). `soh` chỉ còn là phần nới thêm hai bên. */
-.dp-frame.custom-profile-frame .pf-frame-inner,
-.ph-frame.custom-profile-frame .pf-frame-inner {
+   trái → lệch 35px sang trái). `soh` chỉ còn là phần nới thêm hai bên. */.dp-frame.custom-profile-frame .pf-frame-inner {
 	position: absolute;
 	top: 0;
 	height: 100%;
@@ -1114,9 +1101,7 @@ body {
 
    Vá: kéo khung ra ĐÚNG MÉP NGOÀI thẻ (bù lại 1px viền) và cấp cho khung CHÍNH
    bán kính bo bằng thẻ ⇒ đường cong của khung trùng khít đường cong của thẻ.
-   ============================================================ */
-.dp-frame.custom-profile-frame,
-.ph-frame.custom-profile-frame {
+   ============================================================ */.dp-frame.custom-profile-frame {
 	--pf-radius: 0.75rem;
 	/* Bù 1px viền: mép khung trùng mép NGOÀI thẻ. */
 	inset-inline-start: -1px;
@@ -1192,11 +1177,7 @@ body {
    Đổi lại, chữ vẫn phải đọc được ⇒ giữ QUẦNG SÁNG (text-shadow) — đúng cách
    Discord làm cho chữ nằm trên banner: quầng bám theo NÉT CHỮ, không phải
    một hình chữ nhật đặc phía sau.
-   ============================================================ */
-.up-pop-name,
-.up-pop-badges,
-.profile-hero .ph-namerow,
-.profile-hero .ph-badges {
+   ============================================================ */.up-pop-name, .up-pop-badges {
 	background: none;
 	backdrop-filter: none;
 	-webkit-backdrop-filter: none;
@@ -1204,44 +1185,6 @@ body {
 	border-radius: 0;
 	width: auto;
 	max-width: 100%;
-}
-
-/* Waves 54 — BRO CHỐT: **KHÔNG QUẦNG, KHÔNG HÀO QUANG, Ở CẢ 2 THEME.**
-   *"TÊN KHI CHUYỂN SANG THEMES TRẮNG NÓ ĐANG CÓ AURA TRẮNG RẤT XẤU … KO CÓ AURA
-   HOÀN QUANG CỦA CẢ THEMES ĐEN LẪN TRẮNG"*.
-   Bản 51/52 đắp 3 lớp `drop-shadow` (2 tối + 1 trắng) lên tên và lên cả khung
-   bảng tên. Hệ quả: ở theme Sáng thành quầng trắng nhoè quanh chữ; ở theme Tối
-   thành quầng đen dày. Cả hai đều là "aura" — bỏ HẲN.
-   Độ đọc do CHÍNH NỀN THẬT bảo đảm: tên nằm trên artwork bảng tên / Nitro, đều
-   là nền tối, nên chữ sáng là đủ. Không cần quầng nào. */
-
-/* ============================================================
-   Waves 53 — `@username` + DÒNG ID: ĐỌC ĐƯỢC MÀ KHÔNG "THÔ".
-
-   Bro: *"phần @username và uid nó hiện rất thô"*. Bản 52 dùng
-   `-webkit-text-stroke` ⇒ viền trắng dày bao quanh từng con chữ, trông như chữ
-   bị bôi viền — THÔ đúng như bro nói. Đó cũng là cách sai: viền cứng không
-   thích ứng được với mọi màu Nitro.
-
-   ⇒ BỎ text-stroke. Dùng **màu chữ TÍNH TỪ CHÍNH MÀU NITRO của user**
-   (`--theme-fg` / `--theme-fg-soft`, JS tính theo độ sáng tương đối).
-   Bóng chữ do JS bật/tắt theo `--theme-text-shadow`: tương phản ≥ 7:1 thì
-   `none` (thêm quầng chỉ làm nhoè nét), mỏng hơn thì mới bật.
-   Không viền, không tấm nền, không "thô".
-   Không có theme_colors ⇒ rơi về token theme như cũ.
-   ============================================================ */
-.profile-hero .ph-username,
-.profile-hero .ph-userid {
-	-webkit-text-stroke: 0;
-	paint-order: normal;
-	color: var(--theme-fg, var(--fg-muted));
-	text-shadow: var(--theme-text-shadow, 0 1px 2px rgba(0, 0, 0, 0.38));
-}
-.profile-hero .ph-userid {
-	color: var(--theme-fg-soft, var(--fg-subtle));
-}
-.profile-hero .ph-userid svg {
-	color: var(--theme-fg-soft, var(--fg-subtle));
 }
 
 /* Các con TRỰC TIẾP của .up-pop phải NỔI LÊN TRÊN lớp nền Nitro
@@ -1274,7 +1217,6 @@ body {
 }
 /* Clan badge/tag giờ nằm TRONG nameplate pill (Waves 18) — .up-pop-clan cũ đã bỏ */
 .dp-clan-badge { width: 18px; height: 18px; flex-shrink: 0; }
-.ph-clan-badge { width: 20px; height: 20px; flex-shrink: 0; }
 .dp-clan-tag {
 	font-size: 0.66rem;
 	font-weight: 700;
@@ -1361,21 +1303,6 @@ body {
 }
 .page { display: none; }
 .page.active { display: flex; flex-direction: column; gap: 20px; }
-
-/* ---------- Hero card ---------- */
-.hero-card {
-	border: 1px solid var(--line);
-	border-radius: 1rem;
-	background: var(--card);
-	box-shadow: 0 0 0 1px transparent;
-	box-shadow: 0 0 0 1px color-mix(in oklab, var(--tint, var(--brand)) 30%, transparent);
-	padding: 40px 28px;
-	text-align: center;
-	display: flex;
-	flex-direction: column;
-	gap: 12px;
-	align-items: center;
-}
 .hero-title {
 	font-size: 1.6rem;
 	font-weight: 700;
@@ -1393,24 +1320,6 @@ body {
 	padding-top: 4px;
 }
 
-/* ---------- Profile hero (giữa trang, card Discord như kasumu) ---------- */
-.profile-hero {
-	position: relative; /* Waves 27b: BẮT BUỘC — để ::before (viền cầu vồng) bám
-	                       ĐÚNG khung card, không bị định vị theo ancestor xa hơn */
-	padding: 0;
-	text-align: left;
-	gap: 0;
-	align-items: stretch;
-	/* Waves 49d: KHÔNG `overflow:hidden` — khung hồ sơ phải tràn ra ngoài thẻ.
-	   Banner + đáy thẻ tự bo góc riêng bên dưới. */
-	overflow: visible;
-	border-radius: 1rem;
-	--tint: #8b5cf6;
-}
-/* Bo góc phần nội dung thẻ thay cho việc cắt tràn của thẻ */
-.profile-hero .ph-banner { border-radius: 1rem 1rem 0 0; }
-.profile-hero .ph-body { border-radius: 0 0 1rem 1rem; }
-
 /* Waves 28: VIỀN KHUNG PROFILE chính giữa lấy MÀU THEO BẢNG TÊN của user.
    Đúng yêu cầu bro: bảng tên đỏ → viền đỏ, xanh → viền xanh… KHÔNG rainbow.
    Không có nameplate → viền mặc định xanh thương hiệu (--np fallback). */
@@ -1418,38 +1327,6 @@ body {
 	0% { background-position: 0% 50%; }
 	50% { background-position: 100% 50%; }
 	100% { background-position: 0% 50%; }
-}
-.profile-hero::before {
-	content: '';
-	position: absolute;
-	inset: 0;
-	border-radius: inherit;
-	padding: 1.5px;
-	/* Mặc định: xanh thương hiệu. Có nameplate → renderer set --np theo palette. */
-	background: var(--card);
-	background: linear-gradient(135deg,
-		color-mix(in oklab, var(--np, #5865f2) 92%, #fff 8%),
-		var(--np, #5865f2) 45%,
-		color-mix(in oklab, var(--np, #5865f2) 70%, #000 30%));
-	background-size: 200% 200%;
-	animation: profileAura 5s ease-in-out infinite;
-	-webkit-mask:
-		linear-gradient(#000 0 0) content-box,
-		linear-gradient(#000 0 0);
-	-webkit-mask-composite: xor;
-	mask:
-		linear-gradient(#000 0 0) content-box,
-		linear-gradient(#000 0 0);
-	mask-composite: exclude;
-	pointer-events: none;
-	z-index: 4;
-}
-/* Quầng sáng nhẹ cùng màu bảng tên — có nameplate mới bật */
-.profile-hero.has-aura {
-	box-shadow: none;
-	box-shadow:
-		0 0 0 1px color-mix(in oklab, var(--np) 30%, transparent),
-		0 0 26px -10px color-mix(in oklab, var(--np) 75%, transparent);
 }
 
 /* ============================================================
@@ -1468,9 +1345,7 @@ body {
    Hệ số --pe-s do JS gán = avatarSize / 120 (neo theo avatar, vì thẻ hero
    nằm ngang — scale theo bề rộng thẻ sẽ cho effect cao gấp 5 lần thẻ).
    Toạ độ gốc trong canvas được nhân với --pe-s.
-   ============================================================ */
-.ph-effect,
-.up-pop-effect {
+   ============================================================ */.up-pop-effect {
 	position: absolute;
 	inset: 0;
 	width: 100%;
@@ -1480,16 +1355,7 @@ body {
 	/* --pe-s do JS gán = avatarSize / 120. Mặc định 1 cho an toàn. */
 	--pe-s: 1;
 }
-.ph-effect { z-index: 2; }
 .up-pop-effect { z-index: 2; }
-
-/* Effect là hiệu ứng TRANG TRÍ quanh hồ sơ → phải nằm gọn TRONG thẻ.
-   Thẻ phải để `overflow: visible` (khung frame cần tràn ra ngoài), nên
-   không thể clip bằng overflow. Dùng clip-path bo góc khớp thẻ:
-   nhờ vậy effect không bao giờ đè lên UI khác hay tràn khỏi hộp. */
-.ph-effect {
-	clip-path: inset(0 round 1rem);
-}
 .up-pop-effect {
 	clip-path: inset(0 round 0.75rem);
 }
@@ -1511,9 +1377,7 @@ body {
    giữa THẺ thì trên thẻ hero nằm ngang, avatar ở x=557..677 (tâm 617) còn
    tâm thẻ ở x=1088 → effect bị vẽ lệch Phải 471px, rơi vào vùng banner
    trống ⇒ "không thấy hiệu ứng gì" dù asset đã nạp đủ.
-   JS ghi `--pe-cx` = khoảng cách từ mép trái hộp effect tới TÂM AVATAR. */
-.ph-effect > .pe-layer,
-.up-pop-effect > .pe-layer {
+   JS ghi `--pe-cx` = khoảng cách từ mép trái hộp effect tới TÂM AVATAR. */.up-pop-effect > .pe-layer {
 	position: absolute;
 	width: calc(450px * var(--pe-s));
 	height: calc(880px * var(--pe-s));
@@ -1530,29 +1394,7 @@ body {
 	border: 0;
 }
 
-/* Ảnh chưa có src / nạp lỗi → KHÔNG vẽ gì (nếu không sẽ ra khối đen vỡ). */
-.ph-effect > .pe-layer:not([src]),
-.ph-effect > .pe-layer[src=''],
-.up-pop-effect > .pe-layer:not([src]),
-.up-pop-effect > .pe-layer[src=''] { display: none !important; }
-
-/* ============================================================
-   CHẾ ĐỘ LÁT Ô — dùng cho CẢ HAI thẻ khi tỉ lệ thẻ lệch tỉ lệ canvas.
-
-   Canvas effect gốc 450×880 (DỌC 0.51). Thẻ hero NẰM NGANG 4:1, thẻ popout
-   gần VUÔNG (1.08) — cả hai đều khác xa 0.51 ⇒ vẽ MỘT lần chỉ phủ được một
-   lát cắt, phần còn lại TRỐNG. Lát `cols × rows` ô lấp kín thẻ.
-   Số ô do JS suy từ rect THẬT của từng user/cỡ cửa sổ (không hardcode).
-   ============================================================ */
-
-/* --- HERO (giữa): hộp bám ĐÚNG khung BANNER, không trùm dải tên/id ---
-   Bro: "ướm vào đó từng phần cho nó vừa khít khung chữ nhật". */
-.ph-effect.pe-tiled {
-	top: 0;
-	left: 0;
-	height: var(--pe-box-h, 168px);
-	overflow: hidden;
-}
+/* Ảnh chưa có src / nạp lỗi → KHÔNG vẽ gì (nếu không sẽ ra khối đen vỡ). */.up-pop-effect > .pe-layer:not([src]), .up-pop-effect > .pe-layer[src=''] { display: none !important; }
 
 /* --- POPOUT (trái): phủ TOÀN THẺ ---
    Bro: "tôi cần nó bao trùm hết cái khung, ví dụ hiệu ứng lá rơi thì phải từ
@@ -1561,27 +1403,21 @@ body {
 	overflow: hidden;
 }
 
-/* Mỗi layer GỐC: cỡ theo Ô, không còn công thức neo cũ. */
-.ph-effect.pe-tiled > .pe-layer,
-.up-pop-effect.pe-tiled > .pe-layer {
+/* Mỗi layer GỐC: cỡ theo Ô, không còn công thức neo cũ. */.up-pop-effect.pe-tiled > .pe-layer {
 	width: var(--pe-tile-w, 450px);
 	height: var(--pe-tile-h, 880px);
 	left: 0;
 	top: 0;
 	object-fit: cover;
 }
-/* Mỗi Ô NHÂN BẢN = khung chứa, dịch đúng (cột × rộng, hàng × cao). */
-.ph-effect > .pe-tile-slot,
-.up-pop-effect > .pe-tile-slot {
+/* Mỗi Ô NHÂN BẢN = khung chứa, dịch đúng (cột × rộng, hàng × cao). */.up-pop-effect > .pe-tile-slot {
 	position: absolute;
 	left: calc(var(--pe-tile-c, 0) * var(--pe-tile-w, 450px));
 	top: calc(var(--pe-tile-r, 0) * var(--pe-tile-h, 880px));
 	width: var(--pe-tile-w, 450px);
 	height: var(--pe-tile-h, 880px);
 	pointer-events: none;
-}
-.ph-effect > .pe-tile-slot > .pe-layer,
-.up-pop-effect > .pe-tile-slot > .pe-layer {
+}.up-pop-effect > .pe-tile-slot > .pe-layer {
 	position: absolute;
 	left: 0;
 	top: 0;
@@ -1593,61 +1429,11 @@ body {
 	user-select: none;
 	background: none;
 	border: 0;
-}
-.ph-effect > .pe-tile-slot > .pe-layer:not([src]),
-.ph-effect > .pe-tile-slot > .pe-layer[src=''],
-.up-pop-effect > .pe-tile-slot > .pe-layer:not([src]),
-.up-pop-effect > .pe-tile-slot > .pe-layer[src=''] { display: none !important; }
+}.up-pop-effect > .pe-tile-slot > .pe-layer:not([src]), .up-pop-effect > .pe-tile-slot > .pe-layer[src=''] { display: none !important; }
 
 /* Giảm chuyển động → đứng yên. */
 .pe-static > .pe-layer,
 .pe-static > .pe-tile-slot > .pe-layer { animation: none !important; }
-
-/* Waves 49c: PROFILE FRAME trong hero — mô hình 1200 ảo scale về thẻ hồ sơ.
-   Cùng thuật toán .dp-frame nhưng hệ số scale lấy từ bề rộng thẻ (672/1200). */
-.ph-frame.custom-profile-frame {
-	z-index: 5;
-}
-
-.ph-banner {
-	height: 168px;
-	/* Waves 42/46: KHÔNG hardcode tím đậm (#4c1d95) — ở chế độ Sáng nó giữ nguyên
-	   nền tối khiến tên/id bị chìm. Dùng token gradient theo theme; token
-	   --banner-c đổi theo theme ở khối [data-theme="light"]. */
-	background: linear-gradient(
-		120deg,
-		var(--banner-a, var(--brand-strong)),
-		var(--banner-b, var(--brand)) 55%,
-		var(--banner-c, var(--brand-strong))
-	);
-	background-size: cover;
-	background-position: center;
-	position: relative;
-	/* Waves 54 — cắt tràn để ảnh bìa ôm đúng góc bo (xem `.up-pop-banner`). */
-	overflow: hidden;
-}
-/* Waves 54 — BRO CHỐT: *"phần ảnh bìa tôi thấy nó vẫn bị màu NITRO đè lên gây
-   rất xấu"*. ⇒ ẢNH BÌA KHÔNG ĐƯỢC PHỦ MÀU NITRO NỮA.
-
-   Bản 49 phủ `--theme-gradient` lên banner: 100% khi không có ảnh, và **30%
-   khi CÓ ảnh** (`.ph-banner[data-banner-image='1']::before`). Chính lớp 30% đó
-   là "màu Nitro đè lên ảnh bìa". Nitro chỉ được tồn tại Ở DƯỚI banner (lớp
-   `::after` của thẻ) — đúng câu bro chốt từ Waves 50.
-   ⇒ Khi CÓ ảnh: tắt hẳn lớp phủ. Khi KHÔNG có ảnh: gradient Nitro vẫn là nền
-   thay thế (đúng Discord — không có ảnh thì lấy màu làm nền). */
-.ph-banner::before {
-	content: '';
-	position: absolute;
-	inset: 0;
-	background: var(--theme-gradient, none);
-	opacity: var(--theme-active, 0);
-	transition: opacity 0.25s ease;
-	pointer-events: none;
-	z-index: 1;
-}
-.ph-banner[data-banner-image='1']::before {
-	opacity: 0;
-}
 /* Waves 55 — DẢI GIAO NHAU "MỜ MỜ" GIỮA ẢNH BÌA ↔ MÀU NITRO.
    Bro (2 lần, CẢ popout + hero): *"giữa màu nitro và khung ảnh bìa phía sau
    chưa có sự hiệu ứng giao nhau là mờ mờ"* và *"CẢ PHẦN GIAO NHAU GIỮA MÀU
@@ -1666,9 +1452,7 @@ body {
      - Dải KHÔNG BAO GIỜ trong suốt ở phía dưới (nơi nền là BỀ MẶT THẺ) ⇒ không
        thể sinh dải trắng ở chế độ Sáng (bẫy của Waves 53).
 
-   Chiều cao NHỎ (26px) để chỉ là "tan mờ", không phải dải màu. */
-.ph-banner::after,
-.up-pop-banner::after {
+   Chiều cao NHỎ (26px) để chỉ là "tan mờ", không phải dải màu. */.up-pop-banner::after {
 	content: '';
 	position: absolute;
 	left: 0;
@@ -1686,326 +1470,6 @@ body {
 	transition: opacity 0.25s ease;
 	pointer-events: none;
 	z-index: 2;
-}
-.ph-banner.default {
-	background: linear-gradient(120deg, rgba(139, 92, 246, 0.55), rgba(0, 107, 180, 0.4));
-}
-
-/* ============================================================================
-   Waves 46b — LOGO ORB TO Ở CHÍNH GIỮA (bản sửa).
-   Vòng 46 đặt orb thành lớp phủ `.ph-orbbig` absolute giữa thẻ → nó nhô lên
-   giữa banner, bro gọi đúng là "tự nhiên lòi logo orb phía trên". Sai chỗ.
-   Nay: orb LỚN nằm ĐÚNG TRONG LUỒNG BỐ CỤC, là ảnh của chính ô avatar ở tâm
-   thẻ hero. Không còn lớp phủ lơ lửng, không còn `padding-top` giả để né.
-   Ảnh `orb-logo-big.png` phải là RGBA nền trong suốt THẬT (xem
-   tools/cutout-orb-alpha.py — bản gốc còn nguyên một màn đen alpha=128).
-   ========================================================================== */
-.ph-avatar-orb {
-	width: 100%;
-	height: 100%;
-	object-fit: contain;
-	display: block;
-	pointer-events: none;
-	-webkit-user-drag: none;
-	user-select: none;
-	/* Bóng theo token → chế độ Sáng không bị viền đen nặng. */
-	filter: drop-shadow(0 6px 16px var(--orb-shadow, rgba(0, 0, 0, 0.5)));
-}
-/* Khi có ảnh orb thật thì ẩn hình người mặc định; nếu ảnh lỗi/không có thì
-   JS gỡ class `.has-orb` để hình người quay lại (không bao giờ ô trống). */
-.ph-avatar.has-orb .ph-avatar-fallback { display: none; }
-.ph-avatar.has-orb {
-	background: transparent;
-	border-color: var(--card);
-	box-shadow: none;
-}
-/* Avatar có avatar Discord thật → ảnh orb nhường chỗ hoàn toàn. */
-.ph-avatar.has-photo .ph-avatar-orb { display: none; }
-.ph-body {
-	display: flex;
-	align-items: flex-end;
-	gap: 16px;
-	padding: 0 24px 20px;
-	margin-top: -34px;
-	position: relative;
-	/* Waves 49d: nội dung thẻ nằm TRÊN khung hồ sơ (khung z-index 4) — đúng
-	   thứ tự lớp Discord: base 0 < middle 2 < top 3 < FRAME 4 < above-frame 5.
-	   Avatar/tên là "above-frame" nên phải cao hơn khung. */
-	z-index: 5;
-}
-.ph-banner { z-index: 1; }
-.ph-avatarwrap {
-	position: relative;
-	flex-shrink: 0;
-	/* Waves 46c — LOGO ORB TO HƠN (bro: "cho cái logo orb to ra tí nữa vẫn bé quá").
-     92px → 116px. Ô avatar là thứ chặn kích thước orb (orb là ảnh CỦA ô này),
-     nên muốn orb to thì phải nới chính ô. 116px vẫn nằm gọn trong bề rộng thẻ
-     (~640px) và không lấn sang khối chữ bên phải (xem `.ph-meta`). */
-	width: 116px;
-}
-/* Halo mờ sau avatar — chỗ giáp avt/banner mềm như kasumu */
-.ph-avatarwrap::before {
-	content: '';
-	position: absolute;
-	inset: -14px;
-	border-radius: 50%;
-	background: radial-gradient(circle, var(--card) 40%, transparent 72%);
-	background: radial-gradient(circle, color-mix(in oklab, var(--card) 80%, transparent) 40%, transparent 72%);
-	filter: blur(6px);
-	z-index: 0;
-	pointer-events: none;
-}
-.ph-avatar {
-	width: 116px;
-	height: 116px;
-	border-radius: 50%;
-	background: var(--ink-700);
-	/* Waves 49c: vòng avatar dùng token riêng --avatar-ring.
-	   Trước đây là `6px solid var(--card)` = #090b13 gần đen → khi khung
-	   artwork nằm ngay sau, vòng này đọc thành ĐƯỜNG VIỀN ĐEN quanh avatar.
-	   Dùng bề mặt sáng hơn (--surface-high) để thành "lỗ khoét" đúng nghĩa. */
-	border: 6px solid var(--avatar-ring, var(--card));
-	color: var(--fg-subtle);
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	overflow: hidden;
-	position: relative;
-	/* Waves 46/49c: bóng đổ trang trí, đã hạ độ đậm — xem --avatar-shadow. */
-	box-shadow: var(--avatar-shadow, 0 6px 16px rgba(0, 0, 0, 0.3));
-}
-.ph-avatar.is-default { background: #5865f2; }
-.ph-avatar svg { width: 52px; height: 52px; }
-.ph-avatar-img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
-.ph-decoration {
-	position: absolute;
-	inset: -12px;
-	pointer-events: none;
-	z-index: 3;
-}
-.ph-decoration img { width: 100%; height: 100%; object-fit: contain; }
-.ph-id {
-	display: flex;
-	flex-direction: column;
-	gap: 4px;
-	min-width: 0;
-	flex: 1;
-	padding-bottom: 4px;
-}
-.ph-namerow {
-	display: flex;
-	align-items: center;
-	gap: 8px;
-	flex-wrap: wrap;
-}
-.ph-display {
-	font-size: 1.45rem;
-	font-weight: 800;
-	letter-spacing: -0.02em;
-	/* Waves 54 — cùng lý do với `.dp-display`: màu chữ theo NỀN THẬT.
-	   Waves 55 — `--np-fg` chỉ khi CÓ plate thật (xem khối `[data-theme="light"]`
-	   phía dưới); ở đây để `--theme-fg`/`--fg` lo phần còn lại. */
-	color: var(--theme-fg, var(--np-fg, var(--fg)));
-	white-space: nowrap;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	max-width: 100%;
-}
-
-/* ============================================================
-   WAVES 48 — KIỂU TÊN HIỂN THỊ (Discord Display Name Styles)
-   ------------------------------------------------------------
-   Toàn bộ quy tắc dưới đây CHÉP từ CSS thật của Discord
-   (`/assets/163466.f72dfe4baba00e7d.css`), chỉ đổi tên class hash
-   sang thuộc tính `data-dns-effect` để không phụ thuộc bản build.
-
-   Font + các biến `--custom-display-name-styles-*` do JS đặt inline
-   (JS dùng đúng công thức `$0` / `lZ` của Discord để chống chìm màu).
-   ============================================================ */
-
-.ph-display.dns-active {
-	display: inline-flex;
-	max-width: 100%;
-	min-width: 0;
-	opacity: var(--custom-display-name-styles-font-opacity, 1);
-	perspective: 1px;
-	position: relative;
-	text-indent: 0;
-	z-index: 0;
-	white-space: var(--custom-display-name-styles-wrap, nowrap);
-	background-repeat: repeat;
-	/* Hiệu ứng Pop/Toon vẽ bóng bằng ::before lệch xuống dưới → không được cắt */
-	overflow: visible;
-	text-overflow: clip;
-	/* Bóng mặc định của nameplate làm bẩn gradient → tắt, dùng quầng riêng */
-	text-shadow: none;
-}
-
-/* ---------- SOLID ---------- */
-.ph-display[data-dns-effect='solid'] {
-	color: var(--custom-display-name-styles-main-color);
-}
-
-/* ---------- GRADIENT ---------- */
-.ph-display[data-dns-effect='gradient'] {
-	background: linear-gradient(to bottom right, var(--custom-display-name-styles-gradient-stops));
-	background-clip: text;
-	-webkit-background-clip: text;
-	background-size: 100% auto;
-	color: transparent;
-	-webkit-text-fill-color: transparent;
-}
-
-/* ---------- PRISM (dải màu chạy ngang) ---------- */
-.ph-display[data-dns-effect='prism'] {
-	background-image: linear-gradient(90deg, var(--custom-display-name-styles-prism-stops));
-	background-clip: text;
-	-webkit-background-clip: text;
-	background-position-x: 0;
-	background-repeat: repeat;
-	background-size: var(--custom-display-name-styles-prism-cycle) auto;
-	color: transparent;
-	-webkit-text-fill-color: transparent;
-	animation: dns-prism-scroll 2s linear infinite;
-}
-
-/* ---------- NEON ---------- */
-.ph-display[data-dns-effect='neon'] {
-	--custom-neon-shadow-radius: calc(4px + 0.12em);
-	paint-order: stroke fill;
-	-webkit-text-stroke-width: calc(1px + 0.04em);
-	-webkit-text-stroke-color: var(--custom-display-name-styles-neon-stroke-color);
-	color: #fff;
-	margin: calc(var(--custom-neon-shadow-radius) * -1);
-	padding: var(--custom-neon-shadow-radius);
-	position: relative;
-	text-shadow: 0 0 var(--custom-neon-shadow-radius) var(--custom-display-name-styles-main-color);
-	animation: dns-neon-flicker 4s cubic-bezier(0.24, 0.31, 0.36, 0.93) infinite;
-}
-
-/* ---------- TOON ---------- */
-.ph-display[data-dns-effect='toon'] {
-	--custom-toon-stroke-width: calc(1.6px + 0.04em);
-	--custom-toon-margin: calc(var(--custom-toon-stroke-width) * -1);
-	paint-order: stroke fill;
-	position: relative;
-	-webkit-text-stroke-width: var(--custom-toon-stroke-width);
-	-webkit-text-stroke-color: var(--custom-display-name-styles-toon-stroke-color);
-	color: var(--custom-display-name-styles-toon-stroke-color);
-	margin-inline: var(--custom-toon-margin);
-	margin-bottom: var(--custom-toon-margin);
-	padding-bottom: var(--custom-toon-stroke-width);
-	padding-inline: var(--custom-toon-stroke-width);
-}
-.ph-display[data-dns-effect='toon']::before {
-	background: linear-gradient(
-		180deg,
-		#fff 0,
-		var(--custom-display-name-styles-light-2-color) 8%,
-		var(--custom-display-name-styles-light-1-color) 15%,
-		var(--custom-display-name-styles-main-color) 25%,
-		var(--custom-display-name-styles-light-2-color) 45%,
-		var(--custom-display-name-styles-main-color) 55%,
-		#fff 75%,
-		var(--custom-display-name-styles-light-2-color) 83%,
-		var(--custom-display-name-styles-light-1-color) 90%,
-		var(--custom-display-name-styles-main-color) 100%
-	);
-	background-clip: text;
-	-webkit-background-clip: text;
-	background-size: 100% 400%;
-	content: attr(data-username-with-effects);
-	inset: 0;
-	padding-inline: var(--custom-toon-stroke-width);
-	padding-bottom: var(--custom-toon-margin);
-	position: absolute;
-	-webkit-text-fill-color: transparent;
-	-webkit-text-stroke-width: 0;
-	-webkit-text-stroke-color: transparent;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: var(--custom-display-name-styles-wrap, nowrap);
-	animation: dns-toon 4s cubic-bezier(0.44, 0.29, 0.48, 1) infinite;
-}
-
-/* ---------- POP ---------- */
-.ph-display[data-dns-effect='pop'] {
-	--custom-pop-stroke-width: calc(1.2px + 0.04em);
-	--custom-pop-bottom-translate_3d: 0.08em;
-	color: #fff;
-	display: inline-block;
-	paint-order: stroke fill;
-	position: relative;
-	vertical-align: top;
-	-webkit-text-stroke-width: var(--custom-pop-stroke-width);
-	-webkit-text-stroke-color: var(--custom-display-name-styles-dark-2-color);
-	margin-bottom: calc(var(--custom-pop-stroke-width) * -1 - var(--custom-pop-bottom-translate_3d));
-	margin-inline-start: calc(var(--custom-pop-stroke-width) * -1);
-	padding-bottom: calc(var(--custom-pop-stroke-width) + var(--custom-pop-bottom-translate_3d));
-	padding-inline-start: var(--custom-pop-stroke-width);
-	animation: dns-pop-main 4s cubic-bezier(0.44, 0.29, 0.48, 1) infinite;
-}
-.ph-display[data-dns-effect='pop']::before {
-	bottom: calc(var(--custom-pop-bottom-translate_3d) * -1 - var(--custom-pop-stroke-width));
-	color: var(--custom-display-name-styles-main-color);
-	content: attr(data-username-with-effects);
-	inset-inline-start: var(--custom-pop-stroke-width);
-	margin-inline-start: calc(var(--custom-pop-stroke-width) * -1);
-	padding-inline-start: var(--custom-pop-stroke-width);
-	position: absolute;
-	top: 0;
-	width: calc(100% - var(--custom-pop-stroke-width));
-	z-index: -1;
-	-webkit-text-stroke-width: var(--custom-pop-stroke-width);
-	-webkit-text-stroke-color: transparent;
-	background: linear-gradient(
-		to bottom left,
-		var(--custom-display-name-styles-light-1-color) 0,
-		var(--custom-display-name-styles-light-1-color) 6%,
-		var(--custom-display-name-styles-main-color) 20%,
-		var(--custom-display-name-styles-main-color) 50%,
-		var(--custom-display-name-styles-light-1-color) 56%,
-		var(--custom-display-name-styles-main-color) 70%,
-		var(--custom-display-name-styles-main-color) 100%
-	);
-	background-clip: text;
-	-webkit-background-clip: text;
-	background-position: 100% 0;
-	background-size: 200% 200%;
-	transform: translate3d(0, var(--custom-pop-bottom-translate_3d), 0);
-	-webkit-text-fill-color: transparent;
-	overflow: hidden;
-	text-decoration: none;
-	text-overflow: ellipsis;
-	white-space: var(--custom-display-name-styles-wrap, nowrap);
-	animation: dns-pop-shadow 4s cubic-bezier(0.44, 0.29, 0.48, 1) infinite;
-}
-
-/* ---------- GUMMY (từng ký tự nhún) ---------- */
-.ph-display[data-dns-effect='gummy'] {
-	--custom-gummy-squish-headroom: 0.12em;
-	font-kerning: none;
-	font-variant-ligatures: none;
-	margin-block: calc(var(--custom-gummy-squish-headroom) * -1);
-	padding-block: var(--custom-gummy-squish-headroom);
-}
-.ph-display[data-dns-effect='gummy'] .dns-gummy-letter {
-	display: inline-block;
-	white-space: pre;
-	animation: dns-gummy-squish 4s cubic-bezier(0.44, 0.29, 0.48, 1) infinite;
-	animation-delay: calc(var(--dns-letter-index, 0) * 50ms);
-}
-
-/* ---------- Quầng tương phản dự phòng ----------
-   JS đã tự nâng sáng màu theo đúng hàm `lZ` của Discord. Quầng này chỉ bật khi
-   sau khi nâng vẫn chưa đạt 3:1 (nền quá xấu) — không đổi màu gốc. */
-.ph-display[data-dns-lift='1'] {
-	filter: drop-shadow(0 0 1px rgba(6, 9, 16, 0.92)) drop-shadow(0 0 1px rgba(6, 9, 16, 0.92))
-		drop-shadow(0 1px 2px rgba(6, 9, 16, 0.7));
-}
-:root[data-theme='dark'] .ph-display[data-dns-lift='1'] {
-	filter: drop-shadow(0 0 1px rgba(255, 255, 255, 0.9)) drop-shadow(0 0 1px rgba(255, 255, 255, 0.9))
-		drop-shadow(0 1px 2px rgba(0, 0, 0, 0.85));
 }
 
 /* ---------- @keyframes chép nguyên từ Discord ---------- */
@@ -2104,11 +1568,6 @@ body {
 	28% {
 		transform: scaleX(0.96) scaleY(1.04);
 	}
-}
-
-/* Nền Sáng: bỏ bóng trắng của nameplate — nó làm nhoè gradient */
-:root[data-theme='light'] .ph-nameplate .ph-display.dns-active {
-	text-shadow: none;
 }
 
 /* ============================================================
@@ -2306,69 +1765,9 @@ body {
 }
 
 /* Tôn trọng giảm chuyển động: giữ nguyên màu/gradient, chỉ dừng animation */
-@media (prefers-reduced-motion: reduce) {
-	.ph-display.dns-active,
-	.ph-display.dns-active::before,
-	.ph-display.dns-active .dns-gummy-letter,
-	.dp-display.dns-active,
-	.dp-display.dns-active::before,
-	.dp-display.dns-active .dns-gummy-letter,
-	.up-name.dns-active,
-	.up-name.dns-active::before,
-	.up-name.dns-active .dns-gummy-letter {
+@media (prefers-reduced-motion: reduce) {.dp-display.dns-active, .dp-display.dns-active::before, .dp-display.dns-active .dns-gummy-letter, .up-name.dns-active, .up-name.dns-active::before, .up-name.dns-active .dns-gummy-letter {
 		animation: none !important;
 	}
-}
-.ph-username {
-	font-family: var(--font-mono);
-	font-size: 0.8rem;
-	color: var(--fg-muted);
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
-	/* Waves 52 — BRO CHỐT: *"cấm lớp layer phía sau … phần @user … và cả id
-	   user nữa nó đang có một lớp layer phía sau đấy xóa hẳn"*.
-	   ⇒ BỎ HẲN chip nền (`color-mix(--card 88%)`) + `backdrop-filter` + viền +
-	   đệm. Chữ "thả" trực tiếp trên artwork; đọc được nhờ quầng bám nét chữ
-	   (nhóm drop-shadow ở khối Waves 51). */
-	width: fit-content;
-	max-width: 100%;
-	padding: 0;
-	border-radius: 0;
-	background: none;
-	border: none;
-	backdrop-filter: none;
-	-webkit-backdrop-filter: none;
-}
-/* Waves 17: dòng ID Discord — chip mono kasumu kiểu well */
-.ph-userid {
-	display: inline-flex;
-	align-items: center;
-	gap: 6px;
-	width: fit-content;
-	margin-top: 2px;
-	/* Waves 52 — bỏ hẳn lớp nền phía sau dòng ID (bro: "xóa hẳn"). */
-	padding: 0;
-	border-radius: 0;
-	border: none;
-	background: none;
-	backdrop-filter: none;
-	-webkit-backdrop-filter: none;
-	font-family: var(--font-mono);
-	font-size: 0.72rem;
-	color: var(--fg-subtle);
-	letter-spacing: 0.02em;
-}
-.ph-userid svg {
-	width: 12px;
-	height: 12px;
-	flex-shrink: 0;
-	color: var(--fg-subtle);
-}
-.ph-userid span {
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
 }
 
 /* ---------- Modal xác nhận ĐĂNG XUẤT (Waves 15) ---------- */
@@ -2502,68 +1901,6 @@ body {
 	border-radius: var(--radius-field);
 }
 .btn-ghost:hover { background: var(--tint-10); color: var(--fg); }
-.ph-clan-badge { width: 22px; height: 22px; }
-
-/* ---------- Nameplate (Waves 17): KIỂU KASUMU CHIP — khung tên collectible ----------
-   Pill bo tròn viền line, nền ink-950 mờ + tint màu palette Discord, asset nameplate
-   phủ sau tên. Chuẩn kasumu .chip/.well: border line + nền ink-950 alpha. */
-.ph-nameplate {
-	position: relative;
-	display: inline-flex;
-	align-items: center;
-	gap: 8px;
-	/* Waves 54 — BRO CHỐT: *"XÓA NGAY KHUNG XANH XANH NÀY TRONG PROFLIES TRÁI"*.
-	   Viền pill do CHÍNH ARTWORK BẢNG TÊN vẽ (Discord xuất ra ảnh đã có khung bo).
-	   Ta đắp thêm 1 viền CSS nữa ⇒ **hai khung lồng nhau**. Tệ hơn: `--np` chỉ được
-	   set khi user CÓ bảng tên; không có thì rơi về `#8b5cf6` (TÍM) ⇒ đúng "khung
-	   xanh xanh" bro thấy. ⇒ BỎ HẲN viền + quầng CSS. Hình pill chỉ còn do
-	   artwork lo; không có artwork thì chữ thả trần (đúng ý bro từ Waves 51). */
-	padding: 6px 15px;
-	border-radius: 999px;
-	/* Waves 55 — KHÔI PHỤC KHUNG BO TRÒN QUANH TÊN + LOGO.
-	   Bro: *"mày đã cắt mất luôn khung bo tròn hiệu ứng ở tên và logo rồi"*.
-
-	   Bẫy của Waves 54 (giải được, KHÔNG lặp lại): viền lấy `var(--np, #8b5cf6)`
-	   ⇒ user KHÔNG có bảng tên rơi về TÍM cứng ⇒ "khung xanh xanh" vô cớ.
-
-	   Nay thứ tự ưu tiên màu viền HOÀN TOÀN ĐỘNG:
-	     `--np-ring` (JS set theo palette bảng tên thật, nếu có)
-	     → `--theme-b` (màu Nitro TRÊN CÙNG của chính user — luôn có khi có
-        theme_colors, và khớp đúng dải giao nhau ngay trên đầu tên)
-	     → KHÔNG có viền (`transparent`) khi user không có cả hai ⇒ không bao
-        giờ có viền màu bịa.
-	   Viền vẽ bằng `box-shadow`/`border` mảnh, KHÔNG nền đục ⇒ không vi phạm
-	   luật "cấm tấm nền đặc sau chữ". */
-	border: transparent;
-	border: 1.5px solid
-		var(--np-ring, color-mix(in sRGB, var(--theme-b, transparent) 78%, transparent));
-	background: none;
-	box-shadow: none;
-	box-shadow:
-		0 0 0 1px color-mix(in sRGB, var(--np-ring, var(--theme-b, transparent)) 22%, transparent),
-		0 2px 10px -4px color-mix(in sRGB, var(--np-ring, var(--theme-b, transparent)) 55%, transparent);
-	overflow: hidden;
-	isolation: isolate;
-	max-width: 100%;
-	backdrop-filter: none;
-	-webkit-backdrop-filter: none;
-}
-/* Ảnh/video nameplate phủ TRỌN khung phía sau chữ (như Discord: nền trước, chữ sau) */
-.ph-nameplate .np-media {
-	position: absolute;
-	inset: 0;
-	width: 100%;
-	height: 100%;
-	object-fit: cover;
-	opacity: 0.85;
-	z-index: -1;
-	pointer-events: none;
-}
-.ph-nameplate .ph-display {
-	/* Mặc định là quầng TỐI (đúng cho theme Tối, chữ trắng). JS ghi đè
-	   `--np-shadow` theo mực thật khi có bảng tên — xem npInkFor(). */
-	text-shadow: var(--np-shadow, 0 1px 6px rgba(0, 0, 0, 0.6));
-}
 /* Clan badge + tag nằm TRONG khung bo tròn nameplate (bao trùm cả tên lẫn tag) */
 .ph-np-clan {
 	display: inline-flex;
@@ -2571,9 +1908,7 @@ body {
 	gap: 6px;
 	flex-shrink: 0;
 }
-/* ---------- Huy hiệu (badges) trích từ token — xếp cạnh chữ (Discord style) ---------- */
-.ph-badges,
-.up-pop-badges {
+/* ---------- Huy hiệu (badges) trích từ token — xếp cạnh chữ (Discord style) ---------- */.up-pop-badges {
 	display: inline-flex;
 	align-items: center;
 	flex-wrap: wrap;
@@ -2591,27 +1926,6 @@ body {
 }
 .user-badge:hover {
 	transform: scale(1.15);
-}
-/* Avatar ring hiệu ứng — conic xoay theo màu palette nameplate (bật khi user có hiệu ứng) */
-.ph-avatarwrap.has-effect::after {
-	content: '';
-	position: absolute;
-	inset: -5px;
-	border-radius: 50%;
-	background: var(--card);
-	background: conic-gradient(
-		from 0deg,
-		transparent 0%,
-		color-mix(in oklab, var(--np-ring, var(--theme-b, transparent)) 90%, transparent) 25%,
-		transparent 50%,
-		color-mix(in oklab, var(--np-ring, var(--theme-b, transparent)) 90%, transparent) 75%,
-		transparent 100%
-	);
-	filter: blur(3px);
-	opacity: 0.95;
-	z-index: -1;
-	animation: npRingSpin 4s linear infinite;
-	pointer-events: none;
 }
 @keyframes npRingSpin {
 	to { transform: rotate(360deg); }
@@ -4725,7 +4039,6 @@ body {
 	}
 	/* Tín hiệu tiến trình: KHÔNG tắt, chỉ làm chậm cho dễ chịu */
 	.snake-spin { animation-duration: 1.6s !important; }
-	.profile-hero::before { animation-duration: 10s !important; }
 	/* Thẻ trôi vào: giữ nhưng nhanh gọn */
 	.qcard.qin, .qdone.qin { animation-duration: 0.24s !important; }
 }
@@ -4757,18 +4070,6 @@ body {
 		min-height: 0;
 		gap: 14px;
 	}
-
-	/* Waves 23 + 27: hero giữ ảnh bìa ĐẦY ĐỦ (không cắt) — banner cao 168px như
-	   mặc định, avatar to, chừa chỗ cho hiệu ứng bảng tên.
-	   Waves 46c — bro chạy 1080p nên ĐÂY mới là kích thước orb thật bro nhìn thấy;
-	   khối này từng siết avatar về 86px (nhỏ hơn cả mặc định 92px) nên orb vẫn bé
-	   dù đã nới ở trên. Nâng lên 120px — orb to rõ mà hero vẫn cao y cũ
-	   (banner 168px + thân thẻ co giãn, không làm tràn màn). */
-	.profile-hero { flex: 0 0 auto; }
-	.profile-hero .ph-banner { height: 168px; }
-	.profile-hero .ph-body { margin-top: -34px; padding: 0 20px 16px; gap: 14px; }
-	.profile-hero .ph-avatarwrap { width: 120px; }
-	.profile-hero .ph-avatar { width: 120px; height: 120px; border-width: 6px; }
 	.stats-row { flex: 0 0 auto; }
 
 	/* Danh sách nhiệm vụ chiếm toàn bộ khoảng trống còn lại */
@@ -4929,12 +4230,7 @@ body {
 }
 [data-theme="light"] .up-sub { color: var(--fg-subtle); }
 
-/* --- Card / panel --- */
-[data-theme="light"] .card,
-[data-theme="light"] .hero-card,
-[data-theme="light"] .console-card,
-[data-theme="light"] .side-balance,
-[data-theme="light"] .up-pop {
+/* --- Card / panel --- */[data-theme="light"] .card, [data-theme="light"] .console-card, [data-theme="light"] .side-balance, [data-theme="light"] .up-pop {
 	background: var(--card);
 	border-color: var(--line);
 	box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05), 0 10px 28px -20px rgba(15, 23, 42, 0.3);
@@ -4991,27 +4287,6 @@ body {
 [data-theme="light"] .btn-danger { background: rgba(220, 38, 38, 0.10); color: var(--danger-soft); border-color: rgba(220, 38, 38, 0.28); }
 [data-theme="light"] .btn-danger:hover:not(:disabled) { background: rgba(220, 38, 38, 0.18); }
 [data-theme="light"] .btn-secondary { background: var(--tint-06); color: var(--fg); }
-
-/* --- Hồ sơ / banner --- */
-/* Waves 42: banner hồ sơ ở chế độ Sáng dùng tông SÁNG hơn (không còn #4c1d95
-   tím đen) — nhờ vậy tên/id/nhãn trên đó không bị chìm. */
-[data-theme="light"] .ph-banner {
-	--banner-a: #8b5cf6;
-	--banner-b: #a78bfa;
-	--banner-c: #7c3aed;
-}
-[data-theme="light"] .ph-banner.default { background: linear-gradient(120deg, var(--brand), var(--brand-strong)); }
-/* Waves 54 — theme Sáng KHÔNG còn viền/quầng riêng cho bảng tên.
-   Bản 52 phải "giữ viền ở chế độ Sáng" vì lúc đó viền CSS LÀ khung pill. Nay
-   khung pill do artwork vẽ, viền CSS đã bỏ hẳn (xem `.ph-nameplate`) ⇒ không
-   còn gì để override. Chỉ giữ `background: none` cho chắc. */
-[data-theme="light"] .ph-nameplate {
-	background: none;
-}
-/* Waves 54 — BRO CHỐT: *"KO CÓ AURA HOÀN QUANG CỦA CẢ THEMES ĐEN LẪN TRẮNG"*.
-   Bản 51 đắp `drop-shadow(0 0 2px rgba(255,255,255,.95))` cho tên ở theme Sáng
-   ⇒ đúng cái "AURA TRẮNG RẤT XẤU" bro chỉ. BỎ. */
-[data-theme="light"] .ph-display { color: var(--np-fg, var(--theme-fg, #10131c)); }
 /* Waves 55 — BRO #83: *"khi tao đổi account bot mặc định và chuyển sang chế độ
    trắng có rất nhiều font vẫn đang ở trong chế độ trắng để rồi chìm màu"*.
 
@@ -5027,16 +4302,9 @@ body {
 
    ⇒ `--np-fg` CHỈ phát huy khi holder THỰC SỰ có plate hiển thị (`.has-plate`,
    do chính JS gán). Không có ⇒ rơi về `--theme-fg` (chữ tính từ Nitro) rồi
-   `--fg` của theme ⇒ hết trắng trôi ở MỌI tài khoản. */
-[data-theme="light"] .ph-display,
-[data-theme="light"] .dp-clan-tag,
-[data-theme="light"] .up-tag,
-[data-theme="light"] .ph-tag {
+   `--fg` của theme ⇒ hết trắng trôi ở MỌI tài khoản. */[data-theme="light"] .dp-clan-tag, [data-theme="light"] .up-tag, [data-theme="light"] .ph-tag {
 	color: var(--theme-fg, var(--fg, #10131c));
-}
-[data-theme="light"] .ph-nameplate.has-plate .ph-display:not(.dns-active),
-[data-theme="light"] .up-nameplate.has-plate .dp-display:not(.dns-active),
-[data-theme="light"] .up-nameplate.has-plate .up-name:not(.dns-active) {
+}[data-theme="light"] .up-nameplate.has-plate .dp-display:not(.dns-active), [data-theme="light"] .up-nameplate.has-plate .up-name:not(.dns-active) {
 	/* Wave#134 — THỨ TỰ ƯU TIÊN PHẢI ĐÚNG THỨ TỰ LỚP NỀN THẬT:
 	   1) `--theme-fg`: khi user có dải màu Nitro, CẢ MẶT THẺ được sơn bằng dải
 	      đó (đo: nameRelTop 142px nằm TRONG --theme-banner-h 168px) → nền dưới
@@ -5055,12 +4323,6 @@ body {
 	   RẤT XẤU"). Fallback cũng là none cho chắc. */
 	text-shadow: var(--np-shadow, none);
 }
-/* Waves 53 — ở chế độ Sáng vẫn phải ưu tiên màu chữ TÍNH TỪ MÀU NITRO
-   (`--theme-fg*`) khi user có theme_colors; không có thì mới dùng token theme. */
-[data-theme="light"] .ph-username { color: var(--theme-fg, var(--fg-muted)); }
-[data-theme="light"] .ph-userid,
-[data-theme="light"] .ph-userid span { color: var(--theme-fg-soft, var(--fg-subtle)); }
-[data-theme="light"] .ph-sub { color: var(--fg-subtle); }
 /* Waves 54 — tag clan ở theme Sáng: KHÔNG ép `--fg` (đen) nữa, vì tag nằm trên
    artwork bảng tên tối / Nitro tối ⇒ đen trên tối = chìm (đúng lỗi "WUWA chìm
    màu"). Theo nền thật như `.dp-clan-tag`. */
@@ -5566,35 +4828,6 @@ body {
 .up-pop-logout:hover { background: var(--danger); color: #fff; border-color: var(--danger); }
 .up-pop-logout-ico { flex-shrink: 0; }
 
-/* ---------- GUEST: avatar Discord (xanh) thay cho ORB khi chưa đăng nhập ---------- */
-.profile-hero.is-discord-guest .ph-avatar { background: #5865f2; }
-.profile-hero.is-discord-guest .ph-avatar::before {
-	content: "";
-	position: absolute;
-	inset: 0;
-	background:
-		radial-gradient(120% 120% at 30% 20%, rgba(255,255,255,0.30), transparent 55%),
-		#5865f2;
-	border-radius: 50%;
-}
-/* Chữ "Đăng nhập tài khoản Discord" dưới avatar (nút bấm thật, không phải ORB) */
-.ph-login-hint {
-	margin-top: 10px;
-	display: inline-flex;
-	align-items: center;
-	gap: 8px;
-	padding: 8px 14px;
-	border-radius: 999px;
-	background: #5865f2;
-	color: #fff;
-	font-size: 0.82rem;
-	font-weight: 700;
-	letter-spacing: 0.01em;
-	box-shadow: 0 8px 24px -10px rgba(88,101,242,0.7);
-}
-.ph-login-hint svg { width: 20px; height: 20px; }
-.ph-login-hint .mono { font-weight: 600; }
-
 /* ---------- Wave#88: MODAL "ĐỔI TÀI KHOẢN" (bo tròn lớn, 2 mục) ---------- */
 .acc-switch-card {
 	width: min(520px, 100%);
@@ -5833,7 +5066,6 @@ body {
 [data-theme="light"] .acc-cfg-ring { opacity: 0.55; }
 [data-theme="light"] .acc-cfg-tokenrow { background: #ffffff; border-color: rgba(15,23,42,0.14); }
 [data-theme="light"] .up-pop-switch { background: var(--ink-600); border-color: rgba(15,23,42,0.2); }
-[data-theme="light"] .ph-login-hint { background: #5865f2; }
 
 /* ==========================================================================
    Wave#96 (bro lệnh) — MÀN "ĐANG ĐĂNG NHẬP" (login veil) khi CHUYỂN ACCOUNT.
@@ -6250,10 +5482,7 @@ body.lite *::after {
 	backdrop-filter: none !important;
 	-webkit-backdrop-filter: none !important;
 }
-body.lite .animate-rise { animation: none !important; }
-body.lite .qcard,
-body.lite .card,
-body.lite .hero-card { box-shadow: none; }
+body.lite .animate-rise { animation: none !important; }body.lite .qcard, body.lite .card { box-shadow: none; }
 body.lite .login-veil-spin,
 body.lite .claim-pill-spin { animation-duration: 1.6s; }
 
@@ -6469,9 +5698,6 @@ body.lite .claim-pill-spin { animation-duration: 1.6s; }
 	.qcard:hover .qcard-banner img { transform: scale(1.04); }
 	.qdone:hover .qmedia { transform: scale(1.04); }
 }
-/* Phase 4 — Khung profile hero CHÍNH GIỮA: chỉ đổi KHUNG NGOÀI (viền + bóng),
-   không đụng banner/avatar/decoration/nameplate/clan hay ::before của nó. */
-.profile-hero { border-color: var(--line-strong); box-shadow: 0 20px 40px -20px var(--orb-shadow); }
 /* Reduced motion cho đợt 2-4 (nối tiếp block Phase 1, không tắt tín hiệu tiến trình). */
 @media (prefers-reduced-motion: reduce) {
 	.nav-item, .stat-card, .qcard-banner img, .qdone .qmedia, .qcard-act { transition: none; }
@@ -6521,8 +5747,7 @@ body.lite .claim-pill-spin { animation-duration: 1.6s; }
 .nav-item.active .nav-ico { color: var(--brand-bright); }
 .up-row { background: var(--well); padding: 12px; border-radius: 12px; }
 .main-wrap { background: var(--ink-950); }
-.content { gap: 20px; }
-.card, .hero-card, .console-card { background: var(--card); border: 1px solid var(--line-strong); border-radius: 16px; box-shadow: 0 12px 28px -16px var(--orb-shadow); }
+.content { gap: 20px; }.card, .console-card { background: var(--card); border: 1px solid var(--line-strong); border-radius: 16px; box-shadow: 0 12px 28px -16px var(--orb-shadow); }
 .card-title { font-size: 20px; letter-spacing: -0.02em; font-weight: 800; }
 /* --- Stat cards: big number + icon + label --- */
 .stat-card { background: var(--card); border: 1px solid var(--line-strong); border-radius: 16px; padding: 20px; gap: 12px; }
@@ -6581,8 +5806,6 @@ body.lite .claim-pill-spin { animation-duration: 1.6s; }
 .topbar { background: var(--ink-900); border-bottom: 1px solid var(--line-strong); }
 .topbar-btn { background: var(--card); border: 1px solid var(--line-strong); color: var(--fg-muted); }
 #btnSound:not(.is-muted) { background: var(--brand); color: var(--brand-ink); border-color: var(--brand); }
-/* --- Profile hero: OUTER frame only --- */
-.profile-hero { border: 1px solid var(--line-strong); border-radius: 20px; box-shadow: 0 20px 40px -20px var(--orb-shadow); }
 /* --- Reduced motion: extend to the new effects; progress signals kept --- */
 @media (prefers-reduced-motion: reduce) {
 	.qcard, .qdone, .stat-card, .nav-item, .topbar-btn, .btn, .qcard-banner img, .qdone .qmedia, .qcard-act, .modal-card, .toast.show { transition: none; animation: none; }
@@ -6666,14 +5889,12 @@ body.lite .claim-pill-spin { animation-duration: 1.6s; }
 	.nav-item { transition: none; }
 }
 /* ============================================================
-   NEO-BRUTALIST P2 — Shell, hero two-column, bento dashboard
+   NEO-BRUTALIST P2 — Shell, bento dashboard
    (W16-W20). Sidebar position kept (absolute, z-index 40) and
    topbar position kept (fixed, z-index 40) — only their surfaces
-   change, so no button is ever covered. Hero two-column is a
-   grid on #pageQuest only when the hero is actually visible
-   (:has + :not([hidden])); when the hero is hidden the page keeps
-   its normal single column. .profile-hero inner is NOT touched:
-   only its outer frame. Orb data comes from the existing
+   change, so no button is ever covered. FIX26-A: the central
+   profile card was deleted entirely; the top is now only the
+   existing .stats-row (balance + log), full width. Orb data comes from the existing
    .stats-row (.side-balance / .console-card) — no new numbers,
    no simulated money, confirmed vs estimated stay separate as
    the app already renders them.
@@ -6681,7 +5902,6 @@ body.lite .claim-pill-spin { animation-duration: 1.6s; }
 .sidebar { background: var(--neo-surface); }
 .side-inner { padding: 16px; gap: 16px; }
 .topbar { border-bottom: 2px solid var(--neo-line); box-shadow: 4px 4px 0 var(--neo-shadow); background: var(--neo-surface); }
-.profile-hero { border: 2px solid var(--neo-line); border-radius: 20px; box-shadow: 4px 4px 0 var(--neo-shadow); }
 .card { border: 2px solid var(--neo-line); border-radius: 20px; box-shadow: 4px 4px 0 var(--neo-shadow); background: var(--neo-surface); }
 .console-card { border: 2px solid var(--neo-line); border-radius: 20px; box-shadow: 4px 4px 0 var(--neo-shadow); background: var(--neo-surface); }
 .stat-card { border: 2px solid var(--neo-line); border-radius: 20px; box-shadow: 4px 4px 0 var(--neo-shadow); background: var(--neo-surface); }
@@ -6690,12 +5910,6 @@ body.lite .claim-pill-spin { animation-duration: 1.6s; }
 .stats-tile-value { font-size: 32px; font-weight: 800; }
 .stats-tile-label { font-weight: 800; font-size: 14px; }
 .config-card { border: 2px solid var(--neo-line); border-radius: 20px; box-shadow: 4px 4px 0 var(--neo-shadow); background: var(--neo-surface); }
-@media (min-width: 1024px) {
-	#pageQuest:has(> .profile-hero:not([hidden])) { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; align-items: start; }
-	#pageQuest:has(> .profile-hero:not([hidden])) > .profile-hero { grid-column: 1; }
-	#pageQuest:has(> .profile-hero:not([hidden])) > .stats-row { grid-column: 2; grid-row: 1; flex-direction: column; }
-	#pageQuest:has(> .profile-hero:not([hidden])) > .quests-card { grid-column: 1 / -1; }
-}
 /* ============================================================
    NEO-BRUTALIST P3 — Quest cards (W21-W25). Layout: banner,
    title/description full width, reward + ring, then a bordered
@@ -6782,3 +5996,21 @@ body.lite .claim-pill-spin { animation-duration: 1.6s; }
 	.qcard { transition: none; }
 	.qdone { transition: none; }
 }
+
+/* ============================================================
+   FIX26-A — Top moi sau khi xoa the profile giua (F1-F4).
+   Top chi con 2 khung: .stats-row (So du kha dung + Nhat ky
+   hoat dong), 2 cot bang nhau, cung chieu cao (grid stretch),
+   khoang cach toi .quests-card co dinh 16px qua gap cua
+   #pageQuest. Top dong bang: chieu cao cua no chi phu thuoc
+   vao noi dung co dinh (so du) + khung log co max-height va
+   cuon noi bo, khong phu thuoc chieu cao danh sach quest,
+   nen doi tab / doi danh sach khong dich / thu nho top.
+   Khong doi z-index, khong doi thu bac toolbar, khong class
+   moi, khong mau tho, spacing tren thang 16px.
+   ============================================================ */
+#pageQuest { display: block; gap: 16px; }
+#pageQuest > .stats-row { grid-template-columns: 1fr 1fr; gap: 16px; align-items: stretch; }
+#pageQuest > .stats-row > * { min-width: 0; }
+#pageQuest > .quests-card { margin-top: 0; }
+body[data-page="quest"] .page.active { gap: 16px; }

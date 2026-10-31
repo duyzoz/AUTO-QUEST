@@ -208,69 +208,7 @@
 				<main class="content">
 					<!-- ============ PAGE: AUTO QUEST ============ -->
 					<section class="page active" id="pageQuest" role="tabpanel">
-						<!-- Profile card CHÍNH GIỮA (Waves 15: duy nhất 1 hero, cân bằng, có decoration bolt vào tên) -->
-						<div class="hero-card profile-hero animate-rise" id="heroProfile" hidden>
-							<!-- Waves 44: phải có sẵn class `default` trong HTML — luật
-							     `:has(.ph-banner:not(.default))` dùng để đổi chữ sang
-							     trắng khi có banner thật; thiếu class này thì lúc mới
-							     dựng trang chữ bị trắng trên nền trắng (1:1). -->
-							<!-- Waves 49c: PROFILE EFFECT trong hero — cũng phải là <div>
-							     (xem chú thích ở #dpEffect: con của <img> không được layout). -->
-							<div class="ph-effect" id="phEffect" aria-hidden="true" hidden></div>
-							<div class="ph-banner default" id="phBanner"></div>
-							<div class="ph-body">
-								<div class="ph-avatarwrap" id="phAvatarwrap">
-									<!-- Waves 49: PROFILE FRAME ôm sát avatar hero -->
-									<div class="ph-frame" id="phFrame" aria-hidden="true"></div>
-									<div class="ph-avatar" id="phAvatar">
-										<!-- Waves 46b — LOGO ORB TO Ở CHÍNH GIỮA.
-										     Trước đây orb là một lớp phủ `.ph-orbbig` đặt absolute
-										     giữa thẻ, nên nó "lòi" lên trên banner (bro:
-										     "sao tự nhiên lòi logo orb phía trên"). Nay orb
-										     LỚN chính là ẢNH ĐẠI DIỆN ở tâm thẻ — đúng vị trí
-										     chính giữa, không còn lớp phủ lơ lửng.
-										     Ảnh nền trong suốt thật (RGBA, đã tách nền). -->
-										<img
-											class="ph-avatar-orb"
-											id="phAvatarOrb"
-											src="assets/orb-logo-big.png"
-											alt=""
-											draggable="false"
-										/>
-										<svg class="ph-avatar-fallback" viewBox="0 0 24 24" width="34" height="34" fill="currentColor" aria-hidden="true"><path d="M12 12c2.7 0 4.8-2.2 4.8-4.9S14.7 2.3 12 2.3 7.2 4.4 7.2 7.1 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.9v2.4h19.2v-2.4c0-3.3-6.4-4.9-9.6-4.9z"/></svg>
-									</div>
-									<div class="ph-decoration" id="phDecoration" aria-hidden="true"></div>
-								</div>
-								<div class="ph-id">
-									<div class="ph-namerow">
-										<!-- Nameplate: khung bo tròn BAO TRÙM cả tên + clan badge + clan tag (Discord profile popup style) -->
-										<span class="ph-nameplate" id="phNameplate">
-											<h2 class="ph-display" id="phDisplay">Chưa đăng nhập</h2>
-											<span class="ph-np-clan">
-												<img class="ph-clan-badge" id="phClanBadge" alt="" hidden />
-												<span class="dp-clan-tag ph-tag" id="phClanTag" hidden></span>
-											</span>
-										</span>
-										<!-- Toàn bộ huy hiệu trích từ token (Nitro, HypeSquad, Active Dev...) xếp cạnh chữ -->
-										<span class="ph-badges" id="phBadges" hidden></span>
-									</div>
-									<p class="ph-username mono" id="phUsername">Dán token ở Cài đặt để hiển thị profile Discord</p>
-									<!-- Wave#87 (bro lệnh): guest = NÚT "Đăng nhập tài khoản Discord"
-									     (avatar Discord xanh + icon), KHÔNG phải ZoZ ORB.
-									     JS ẩn khi đã đăng nhập. -->
-									<button class="ph-login-hint" id="phLoginHint" type="button" hidden>
-										<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.317 4.3698a19.7913 19.7913 0 0 0-4.8851-1.5152.0741.0741 0 0 0-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 0 0-.0785-.037 19.7363 19.7363 0 0 0-4.8852 1.515.0699.0699 0 0 0-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 0 0 .0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 0 0 .0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 0 0-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 0 1-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 0 1 .0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 0 1 .0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 0 1-.0066.1276 12.2986 12.2986 0 0 1-1.873.8914.0766.0766 0 0 0-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 0 1 .0842-.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 0 0 .0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 0 0-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.4189-2.1568 2.4189Z"/></svg>
-										<span>Đăng nhập tài khoản Discord</span>
-									</button>
-									<p class="ph-userid mono" id="phUserId" hidden>
-										<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 16V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h13a2 2 0 0 0 2-2Z"/><path d="m7 9 3 3-3 3"/><path d="M13 15h4"/></svg>
-										<span>ID: <span id="phUserIdValue">—</span></span>
-									</p>
-								</div>
-							</div>
-						</div>
-
-												<!-- ============ HÀNG THẺ: SỐ DƯ + NHẬT KÝ (Waves 22) ============ -->
+						<!-- ============ HÀNG THẺ: SỐ DƯ + NHẬT KÝ (Waves 22) ============ -->
 						<div class="stats-row">
 							<!-- SỐ DƯ KHẢ DỤNG — NỀN XANH EMERALD như tiền (kasumi money card) -->
 							<div class="side-balance animate-rise stagger-1" id="sideBalance" data-state="guest">

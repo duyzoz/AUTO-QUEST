@@ -344,11 +344,10 @@ check('Overhaul Phase 2-4 (CSS only): khung profile ngoài, khung ảnh quest, n
 	assert(/\.stat-card:hover \{ transform: translateY\(-2px\)/.test(css), 'thiếu thẻ thống kê nổi khi hover');
 	assert(/\.qcard-banner \{ background: var\(--well\)/.test(css), 'khung banner quest phải nền token, không gradient tối');
 	assert(/\.qcard:hover \.qcard-banner img \{ transform: scale\(1\.04\)/.test(css), 'thiếu zoom ảnh banner khi hover');
-	assert(/\.profile-hero \{ border-color: var\(--line-strong\)/.test(css), 'khung profile hero phải viền token mạnh + bóng');
-	assert(html.includes('id="heroProfile"') && html.includes('id="phAvatarwrap"'), 'thẻ profile hero giữa phải còn nguyên');
-	assert(/@keyframes dns-prism-scroll/.test(css) && /@keyframes dns-pop-main/.test(css), 'keyframes Discord của profile phải còn nguyên');
+	assert(!html.includes('id="heroProfile"'), 'FIX26-A: heroProfile da xoa, khong duoc quay lai');
+	assert(/@keyframes dns-prism-scroll/.test(css) && /@keyframes dns-pop-main/.test(css), 'keyframes Discord cua popout/sidebar phai con nguyen');
 	assert(/\.up-row[\s\S]{0,500}border: none/.test(css), 'up-row sidebar profile phải giữ không viền (lệnh Wave#87)');
-	return 'Phase 2-4 CSS-only: nav/stat/quest/profile-frame, Discord effects intact';
+	return 'Phase 2-4 CSS-only: nav/stat/quest, hero removed, Discord effects intact';
 });
 
 check('Motion + sound Phase 1: token chuyển động, nút bấm, WebAudio tự tổng hợp, mặc định tắt', () => {
@@ -1033,12 +1032,12 @@ check('MAJOR REDESIGN: shell + quest cards + stat cards + topbar sound, no new c
 	assert(/\.stat-value \{ font-size: 32px;/.test(major), 'số thống kê mới phải 32px');
 	assert(/\.nav-item\.active \{[^}]*border-color: var\(--brand\)/.test(major), 'nav active phải viền brand + bar');
 	assert(/#btnSound:not\(\.is-muted\) \{[^}]*background: var\(--brand\)/.test(major), 'nút loa bật phải nền brand');
-	assert(html.includes('id="btnSound"') && html.includes('id="heroProfile"'), 'btnSound + heroProfile phải còn');
+	assert(html.includes('id="btnSound"') && !html.includes('id="heroProfile"'), 'btnSound phai con, heroProfile da xoa');
 	assert(!/navAccount/.test(css + html), 'navAccount đã xóa, không được quay lại');
 	return 'banner/title/act/stat/nav/sound markers đủ, không navAccount';
 });
 
-check('MAJOR REDESIGN: section mới chỉ dùng token, spacing trên thang, không phá hero/up-row/dns', () => {
+check('MAJOR REDESIGN: section mới chỉ dùng token, spacing trên thang, hero da xoa, up-row/dns nguyen', () => {
 	const css = read(path.join(APP, 'styles.css'));
 	const major = css.slice(css.indexOf('MAJOR REDESIGN'));
 	const code = major.replace(/\/\*[\s\S]*?\*\//g, '');
@@ -1100,15 +1099,16 @@ check('NEO P1: neo tokens both themes + button/chip/tab/modal sticker language',
 });
 
 
-check('NEO P2: shell bento + hero two-column (hero visible only) + stats bento', () => {
+check('FIX26-A: hero da xoa, top chi con 2 khung bang nhau, gap 16px, up-row con', () => {
 	const css = read(path.join(APP, 'styles.css'));
-	const neo = css.slice(css.indexOf('NEO-BRUTALIST P2'));
-	assert(/\.card \{[^}]*box-shadow: 4px 4px 0 var\(--neo-shadow\)/.test(neo), 'card bento co bong cung');
-	assert(/#pageQuest:has\(> \.profile-hero:not\(\[hidden\]\)\)/.test(neo), 'hero 2 cot chi khi hero hien');
-	assert(/\.stats-tile-value \{[^}]*font-size: 32px/.test(neo), 'bento tile so lon 32px');
-	assert(!/\.profile-hero\s+\./.test(neo), 'khong duoc cham vao noi that hero');
-	assert(!/\.up-row \{[^}]*border/.test(neo), 'up-row giu borderless');
-	return 'shell bento + hero 2 cot + stats bento';
+	const html = read(INDEX);
+	const js = read(path.join(APP, 'renderer.js'));
+	assert(!/heroProfile/.test(html + js + css), 'heroProfile phai = 0 trong web/app');
+	assert(!/\.profile-hero\s*\{/.test(css), 'khong con rule .profile-hero');
+	assert(/#pageQuest > \.stats-row \{[^}]*grid-template-columns: 1fr 1fr/.test(css), 'top 2 khung bang nhau 1fr 1fr');
+	assert(/#pageQuest \{[^}]*gap: 16px/.test(css), 'gap top -> quest co dinh 16px');
+	assert(html.includes('id="upRow"') && html.includes('id="sideBalance"') && html.includes('id="consoleCard"'), 'up-row + so du + nhat ky phai con');
+	return 'hero xoa sach + top 2 khung + gap 16px + up-row con';
 });
 
 
@@ -1147,7 +1147,7 @@ check('NEO P5: full audit — token-only, scale, hero/up-row/dns intact, no copy
 	const neo = css.slice(css.indexOf('NEO-BRUTALIST P0'));
 	const code = neo.replace(/\/\*[\s\S]*?\*\//g, '');
 	assert(!/#[0-9a-fA-F]{3,8}\b/.test(code) && !/rgba?\(/.test(code), 'NEO khong co mau tho');
-	assert(!/\.profile-hero\s+\./.test(neo), 'hero inner khong bi cham');
+	assert(!/heroProfile/.test(read(INDEX) + css), 'heroProfile da xoa sach');
 	assert(!/\.up-row \{[^}]*border/.test(neo), 'up-row giu borderless');
 	assert(!/z-index\s*:/.test(code), 'NEO khong doi z-index');
 	const html = read(INDEX);

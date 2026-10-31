@@ -88,23 +88,7 @@ const ui = {
 	dpEffect: el('dpEffect'),
 	dpFrame: el('dpFrame'),
 	// Hero trung tâm: guest vs profile (Waves 15: guest hero đã bỏ, chỉ còn profile)
-	heroProfile: el('heroProfile'),
-	phBanner: el('phBanner'),
-	phAvatarwrap: el('phAvatarwrap'),
-	phAvatar: el('phAvatar'),
-	phAvatarOrb: el('phAvatarOrb'),
-	phDecoration: el('phDecoration'),
 	// Waves 49: profile effect + frame trong hero
-	phEffect: el('phEffect'),
-	phFrame: el('phFrame'),
-	phDisplay: el('phDisplay'),
-	phNameplate: el('phNameplate'),
-	phUsername: el('phUsername'),
-	phUserId: el('phUserId'),
-	phUserIdValue: el('phUserIdValue'),
-	phBadges: el('phBadges'),
-	phClanBadge: el('phClanBadge'),
-	phClanTag: el('phClanTag'),
 	// Số dư ORB (card emerald trong khu Auto Orb)
 	sideBalance: el('sideBalance'),
 	orbBalance: el('orbBalance'),
@@ -232,7 +216,6 @@ const ui = {
 	btnTokenEyeText: el('btnTokenEyeText'),
 	btnTokenCopy: el('btnTokenCopy'),
 	// Guest "Đăng nhập Discord" (hero giữa) — nút nhấn thật.
-	phLoginHint: el('phLoginHint'),
 	console: el('console'),
 	logCount: el('logCount'),
 	tabActive: el('tabActive'),
@@ -1596,31 +1579,6 @@ const ORB_ICON_SRC = 'assets/orb-logo-big.png';
    ảnh nạp được thật sự. Ảnh hỏng → gỡ class, hình người mặc định quay lại.
    Ảnh gốc bro đưa còn nguyên MÀN ĐEN alpha=128 phủ toàn khung; đã tách nền
    thật bằng tools/cutout-orb-alpha.py (alpha=0 ở vùng ngoài đĩa orb). */
-let heroOrbOk = null; // null = chưa biết, true/false = kết quả nạp ảnh
-
-function syncHeroOrb() {
-	const avatarEl = ui.phAvatar;
-	const orbImg = ui.phAvatarOrb;
-	if (!avatarEl || !orbImg) return;
-	const hasPhoto = avatarEl.classList.contains('has-photo');
-	if (hasPhoto) {
-		avatarEl.classList.remove('has-orb');
-		return;
-	}
-	const apply = (ok) => {
-		heroOrbOk = ok;
-		avatarEl.classList.toggle('has-orb', ok);
-	};
-	if (heroOrbOk !== null) return apply(heroOrbOk);
-	if (orbImg.complete) return apply(orbImg.naturalWidth > 0);
-	orbImg.addEventListener(
-		'load',
-		() => apply(orbImg.naturalWidth > 0),
-		{ once: true },
-	);
-	orbImg.addEventListener('error', () => apply(false), { once: true });
-}
-
 /* Waves 44 — thương hiệu CỘNG ĐỒNG hiển thị khi CHƯA đăng nhập.
    Bro: "bro xóa đi replace lại bằng ZoZ Community nhé; nếu user không có ảnh bìa
    và avt thì bro để mặc định như này". Tên + khai báo đặt 1 chỗ để đổi dễ. */
@@ -5160,7 +5118,6 @@ function renderDiscordProfile(user) {
 	//   Bro: "phải có màu ở chỗ 2 khung này … làm background cho từng khung".
 	const hasTheme = Array.isArray(themeColors) && themeColors.length >= 2;
 	applyThemeColors(themeColors, ui.dpBanner, ui.upPop);
-	applyThemeColors(themeColors, ui.phBanner, ui.heroProfile);
 	if (hasTheme) {
 		const tshadow = themeTextShadow();
 		for (const el of [ui.upName, ui.dpDisplay, ui.dpUsername]) {
@@ -5199,17 +5156,13 @@ function renderDiscordProfile(user) {
 		const badgeSrc = `${CDN}/clan-badges/${clan.guildId || '0'}/${clan.badge}.png?size=32`;
 		ui.dpClanBadge.src = badgeSrc;
 		ui.dpClanBadge.hidden = false;
-		ui.phClanBadge.src = badgeSrc;
-		ui.phClanBadge.hidden = false;
-		for (const tagEl of [ui.dpClanTag, ui.phClanTag, ui.upClanTag]) {
+		for (const tagEl of [ui.dpClanTag, ui.upClanTag]) {
 			tagEl.textContent = clan.tag || '';
 			tagEl.hidden = !clan.tag;
 		}
 	} else {
 		ui.dpClanBadge.hidden = true;
 		ui.dpClanTag.hidden = true;
-		ui.phClanBadge.hidden = true;
-		ui.phClanTag.hidden = true;
 		ui.upClanTag.hidden = true;
 	}
 
@@ -5217,83 +5170,9 @@ function renderDiscordProfile(user) {
 	// Waves 22: bỏ hẳn dòng "Đóng khung quản lý" trong popup (chỉ giữ cho khách đăng nhập)
 	ui.dpBadge.hidden = true;
 
-	// ---- Hero giữa trang (Waves 15/16): BẮT BUỘC hiện khi đăng nhập ----
-	ui.heroProfile.hidden = false;
-	ui.phDisplay.textContent = display;
-	// Waves 48: áp KIỂU TÊN HIỂN THỊ thật của Discord (font + hiệu ứng + màu).
-	loadDisplayNameStyle(display, id);
-	ui.phUsername.textContent = username ? `@${username}` : '';
-	// Waves 17: dòng ID Discord thật (user.id từ API)
-	ui.phUserId.hidden = !id;
-	ui.phUserIdValue.textContent = id || '—';
-	ui.phAvatar.innerHTML = '';
-	ui.phAvatar.classList.toggle('is-default', !(avatar && id));
-	if (avatar && id) {
-		const ext = avatar.startsWith('a_') ? 'gif' : 'png';
-		const img = document.createElement('img');
-		img.src = `${CDN}/avatars/${id}/${avatar}.${ext}?size=160`;
-		img.alt = '';
-		img.className = 'ph-avatar-img';
-		ui.phAvatar.appendChild(img);
-		ui.phAvatar.classList.add('has-photo');
-	} else {
-		// Waves 41: avatar mặc định Discord (xám trung tính), không nền tím.
-		const idx = id ? Number((BigInt(id) >> 22n) % 6n) || 0 : 0;
-		const img = document.createElement('img');
-		img.src = `${CDN}/embed/avatars/${idx}.png`;
-		img.alt = '';
-		img.className = 'ph-avatar-img';
-		img.addEventListener('error', () => img.remove(), { once: true });
-		ui.phAvatar.appendChild(img);
-		ui.phAvatar.classList.add('has-photo');
-	}
-	// Waves 46b: nếu user KHÔNG có ảnh đại diện thật thì giữ LOGO ORB TO làm
-	// "mặt" của thẻ hero — đây mới đúng ý bro "logo orb to ở chính giữa".
-	// Ảnh phải nạp được (naturalWidth>0) mới bật; hỏng thì rơi về hình người.
-	syncHeroOrb();
-	// Wave#87: đã đăng nhập → BỎ class guest + Ẩn nút "Đăng nhập tài khoản Discord".
-	ui.heroProfile.classList.remove('is-discord-guest');
-	ui.heroProfile.dataset.state = 'logged-in';
-	ui.phAvatar.classList.remove('is-discord-guest');
-	if (ui.phLoginHint) ui.phLoginHint.hidden = true;
-	ui.phBanner.classList.remove('default');
-	// Waves 49: ưu tiên profileBanner (từ /users/@me/profile) rồi banner (từ /users/@me)
-	const heroBanner = profileBanner || banner;
-	let phHasImg = false;
-	if (heroBanner && id) {
-		const ext = heroBanner.startsWith('a_') ? 'gif' : 'png';
-		ui.phBanner.style.background = `center / cover no-repeat url('${CDN}/banners/${id}/${heroBanner}.${ext}?size=600')`;
-		phHasImg = true;
-	} else if (accentColor) {
-		ui.phBanner.style.background = linearGradientFromHex(intToHex(accentColor));
-	} else {
-		ui.phBanner.style.background = '';
-		ui.phBanner.classList.add('default');
-	}
-	ui.phBanner.dataset.bannerImage = phHasImg ? '1' : '';
-	ui.heroProfile.dataset.bannerImage = phHasImg ? '1' : '';
-	/* Waves 50 — BRO CHỐT: "loại bỏ triệt để khung ở giữa" + "LOẠI BỎ TRIỆT ĐỂ
-	   HIỆU ỨNG Ở BÊN KHUNG CHÍNH VÀ CẢ KHUNG".
-
-	   ⇒ Thẻ hero GIỮA trang KHÔNG vẽ khung, KHÔNG vẽ hiệu ứng hồ sơ nữa. Chỉ
-	   còn profile BÊN TRÁI (popout) mang khung + hiệu ứng. Avatar, tên, banner,
-	   decoration… vẫn nguyên — bro cấm xoá mấy thứ đó.
-
-	   Vẫn phải DỌN SẠCH node hero để lần trước không sót lại. */
-	renderProfileEffect(null, ui.phEffect, 'hero');
-	renderProfileFrame(null, ui.phFrame, 'hero');
-	ui.phDecoration.innerHTML = '';
-	if (avatarDecoration && id) {
-		const decoImg = document.createElement('img');
-		decoImg.src = `${CDN}/avatar-decoration-presets/${avatarDecoration}.png?size=96&passthrough=true`;
-		decoImg.alt = '';
-		ui.phDecoration.appendChild(decoImg);
-	}
-
 	// ---- NAMEPLATE CHUẨN DISCORD (Waves 16/18) ----
 	// Waves 22: CHỈ hero giữa trang dùng nameplate. Popup quản lý để tên TRẦN
 	// (bro yêu cầu bỏ hiệu ứng bảng tên bên trong khung quản lý).
-	applyNameplate(user.nameplate, ui.phNameplate);
 	applyNameplate(null, ui.dpNameplate); // dọn sạch hiệu ứng bảng tên trong popup
 	// Waves 21: hiệu ứng bảng tên phủ lên KHUNG BO TRÒN NGOÀI của chip sidebar
 	applyChipNameplate(user.nameplate);
@@ -5302,30 +5181,8 @@ function renderDiscordProfile(user) {
 	//   - Có nameplate  → --np = màu palette (đỏ → viền đỏ, xanh → viền xanh…)
 	//   - Không có      → bỏ --np ⇒ CSS dùng viền mặc định (xanh thương hiệu)
 	//   CẤM rainbow khi user đã có nameplate (đúng yêu cầu bro).
-	applyProfileAura(user.nameplate);
-
-	// ---- HIỆU ỨNG AVATAR (Waves 18): user có nameplate/decoration → ring conic xoay quanh avatar ----
-	const hasEffect = !!(avatarDecoration || (user.nameplate && user.nameplate.asset));
-	ui.phAvatarwrap.classList.toggle('has-effect', hasEffect);
-	if (hasEffect) {
-		/* Ring avatar xoay lấy màu palette bảng tên (do applyNameplate set) —
-		   Waves 55: KHÔNG fallback tím. Không có palette ⇒ CSS rơi về màu Nitro
-		   `--theme-b` của chính user (luôn động, không bịa màu). */
-		const npRing = ui.phNameplate.style.getPropertyValue('--np-ring');
-		if (npRing) {
-			ui.phAvatarwrap.style.setProperty('--np', npRing);
-			ui.phAvatarwrap.style.setProperty('--np-ring', npRing);
-		} else {
-			ui.phAvatarwrap.style.removeProperty('--np');
-			ui.phAvatarwrap.style.removeProperty('--np-ring');
-		}
-	} else {
-		ui.phAvatarwrap.style.removeProperty('--np');
-		ui.phAvatarwrap.style.removeProperty('--np-ring');
-	}
 
 	// ---- TOÀN BỘ HUY HIỆU trích từ token (Waves 18): badges xếp cạnh tên ----
-	renderBadges(ui.phBadges, user.badges, user.premiumType);
 	renderBadges(ui.dpBadges, user.badges, user.premiumType);
 
 	// ---- Wave#88/#90: NÚT ĐĂNG XUẤT (đỏ) + ĐỔI TÀI KHOẢN — bật khi đã login ----
@@ -5562,7 +5419,7 @@ function applyThemeColors(colors, bannerEl, cardEl) {
 	   mép dưới banner (không chèn lên ảnh bìa). Banner có thể chưa có rect
 	   (thẻ đang ẩn) → fallback theo biến `--ph-banner-h` của CSS. */
 	if (cardEl) {
-		const banner = bannerEl || cardEl.querySelector('.ph-banner, .up-pop-banner');
+		const banner = bannerEl || cardEl.querySelector('.up-pop-banner');
 		const measure = () => {
 			/* `hidden` ⇒ rect = 0 ⇒ KHÔNG ghi 0px (sẽ đè mất giá trị đúng khi
 			   panel vừa hiện). Chỉ ghi khi đo được chiều cao THẬT. */
@@ -5576,7 +5433,7 @@ function applyThemeColors(colors, bannerEl, cardEl) {
 				const fade = Math.min(30, Math.max(16, Math.round(h * 0.28)));
 				bannerEl?.style.setProperty('--banner-fade-h', `${fade}px`);
 				cardEl.style.setProperty('--banner-fade-h', `${fade}px`);
-				const bw = bannerEl || cardEl.querySelector('.ph-banner, .up-pop-banner');
+				const bw = bannerEl || cardEl.querySelector('.up-pop-banner');
 				bw?.style.setProperty('--banner-fade-h', `${fade}px`);
 			}
 		};
@@ -5722,9 +5579,9 @@ function renderProfileEffect(profileEffect, imgEl, mode) {
 	   Neo vẫn tính theo AVATAR cho popout (chủ thể), còn hero thì lát kín thẻ.
 	   Cả hai đều suy từ dữ liệu thật của TỪNG user — không hardcode gì. */
 	const applyScale = () => {
-		const card = imgEl.closest('.hero-card, .up-pop, .profile-hero');
+		const card = imgEl.closest('.up-pop');
 		const av = card
-			? card.querySelector('.ph-avatar, .dp-avatar, .up-pop-avatarwrap, .up-pop-avatar')
+			? card.querySelector('.dp-avatar, .up-pop-avatarwrap, .up-pop-avatar')
 			: null;
 		const hostRect = imgEl.getBoundingClientRect();
 		const avRect = av ? av.getBoundingClientRect() : null;
@@ -5746,7 +5603,7 @@ function renderProfileEffect(profileEffect, imgEl, mode) {
 			   canvas bằng `object-fit: cover` ⇒ 4 phần ghép kín hình chữ
 			   nhật và co giãn theo MỌI cỡ thẻ/cửa sổ/cỡ chữ — không hardcode. */
 			const bannerEl = card
-				? card.querySelector('.ph-banner, .dp-banner, .up-pop-banner')
+				? card.querySelector('.dp-banner, .up-pop-banner')
 				: null;
 			const bannerRect = bannerEl ? bannerEl.getBoundingClientRect() : null;
 			const boxW = bannerRect && bannerRect.width > 0 ? bannerRect.width : hostRect.width;
@@ -5986,11 +5843,11 @@ function renderProfileFrame(frameData, frameEl, mode) {
 
 	// Waves 49d — KHUNG PHẢI PHỦ CẢ THẺ HỒ SƠ (đúng Discord: `.profileFrameContainer`
 	// có `inset:0; width:100%; height:100%` của THẺ, không phải ô avatar).
-	// Trong HTML #dpFrame/#phFrame đang nằm trong avatarwrap → phải CHUYỂN nó lên
+	// Trong HTML #dpFrame đang nằm trong avatarwrap → phải CHUYỂN nó lên
 	// làm con trực tiếp của thẻ (ngay sau banner) để `100%` = bề rộng/cao thẻ.
-	const card = frameEl.closest('.up-pop, .profile-hero, .hero-card') || null;
+	const card = frameEl.closest('.up-pop') || null;
 	if (card && frameEl.parentElement !== card) {
-		const banner = card.querySelector(':scope > .up-pop-banner, :scope > .ph-banner');
+		const banner = card.querySelector(':scope > .up-pop-banner');
 		if (banner && banner.nextSibling) card.insertBefore(frameEl, banner.nextSibling);
 		else card.appendChild(frameEl);
 	}
@@ -6592,27 +6449,6 @@ function tokenOf(user) {
  *   - Không có      → viền mặc định xanh thương hiệu (--np bị xoá).
  * Đây là điều bro yêu cầu: "user dùng hiệu ứng bảng tên gì thì cấp ngay khung màu đó".
  */
-function applyProfileAura(nameplate) {
-	if (!ui.heroProfile) return;
-	if (!nameplate || !nameplate.asset) {
-		ui.heroProfile.classList.remove('has-aura');
-		ui.heroProfile.removeAttribute('data-np-real'); // Wave#96
-		ui.heroProfile.style.removeProperty('--np');
-		return;
-	}
-	/* Wave#96 (bro lệnh): XOÁ fallback tím lại một lần nữa — cùng gốc "khung
-	   xanh xanh". Chỉ gắn aura khi có palette THẬT. */
-	const hex = NAMEPLATE_PALETTES[nameplate.palette];
-	if (!hex) {
-		ui.heroProfile.classList.remove('has-aura');
-		ui.heroProfile.removeAttribute('data-np-real');
-		ui.heroProfile.style.removeProperty('--np');
-		return;
-	}
-	ui.heroProfile.style.setProperty('--np', hex);
-	ui.heroProfile.setAttribute('data-np-real', '1');
-	ui.heroProfile.classList.add('has-aura');
-}
 
 function linearGradientFromHex(hex) {
 	// Gradient dọc từ màu accent → đậm dần (giống Discord khi user không có banner)
@@ -6760,8 +6596,7 @@ function resetDiscordProfile() {
 	ui.dpBanner.classList.add('default');
 	// Waves 49: dọn profile effect + frame + theme colors (cả 2 panel).
 	if (ui.dpEffect) { ui.dpEffect.hidden = true; ui.dpEffect.src = ''; ui.dpEffect.classList.remove('is-looping'); }
-	if (ui.phEffect) { ui.phEffect.hidden = true; ui.phEffect.src = ''; ui.phEffect.classList.remove('is-looping'); }
-	for (const fr of [ui.dpFrame, ui.phFrame]) {
+	for (const fr of [ui.dpFrame]) {
 		if (!fr) continue;
 		fr.innerHTML = '';
 		fr.hidden = true;
@@ -6779,7 +6614,7 @@ function resetDiscordProfile() {
 			fr.style.removeProperty(v);
 		}
 	}
-	for (const b of [ui.dpBanner, ui.phBanner]) {
+	for (const b of [ui.dpBanner]) {
 		if (!b) continue;
 		b.style.removeProperty('--theme-a');
 		b.style.removeProperty('--theme-b');
@@ -6788,7 +6623,7 @@ function resetDiscordProfile() {
 		b.style.removeProperty('--theme-banner-h');
 		delete b.dataset.bannerImage;
 	}
-	for (const c of [ui.upPop, ui.heroProfile]) {
+	for (const c of [ui.upPop]) {
 		if (!c) continue;
 		c.style.removeProperty('--theme-a');
 		c.style.removeProperty('--theme-b');
@@ -6808,50 +6643,7 @@ function resetDiscordProfile() {
 	// Về trạng thái guest: đóng pop
 	ui.upPop.hidden = true;
 	ui.upRow.setAttribute('aria-expanded', 'false');
-	// Hero giữa trang → HIỆN thẻ ZoZ Community (Waves 44: trước đây ẩn hẳn).
-	ui.heroProfile.hidden = false;
-	ui.heroProfile.dataset.state = 'guest';
-	ui.phDisplay.textContent = ZOZ_NAME;
-	// Waves 47: khách không có style → trả tên về mặc định của app.
-	clearDisplayNameStyle();
-	ui.phUsername.textContent = ZOZ_TAG;
-	ui.phUserId.hidden = true;
-	ui.phUserIdValue.textContent = '—';
-	ui.phAvatar.innerHTML = '';
-	/* Wave#87: guest = avatar Discord MẶC ĐỊNH (nền #5865f2 do CSS
-	   `.profile-hero.is-discord-guest .ph-avatar`), KHÔNG phải logo ORB.
-	   Class phải nằm trên THẺ HERO (#heroProfile) — đúng như selector CSS —
-	   KHÔNG phải trên chính .ph-avatar (bẫy: đặt sai chỗ ⇒ CSS không khớp). */
-	ui.heroProfile.classList.add('is-discord-guest');
-	ui.phAvatar.classList.remove('is-discord-guest');
-	ui.phAvatar.insertAdjacentHTML('beforeend', defaultAvatarSvg(34));
-	ui.phAvatar.classList.remove('has-photo');
-	if (ui.phLoginHint) ui.phLoginHint.hidden = false;
-	/* Wave#87: khách TUYỆT ĐỐI không ORB — "mặt" thẻ là avatar Discord xanh.
-	   KHÔNG gọi syncHeroOrb() ở nhánh guest: nó sẽ bật lại class `has-orb`
-	   (ảnh orb-logo-big.png vẫn nằm trong DOM) ⇒ orb lộ ra sau nền xanh. */
-	heroOrbOk = false;
-	ui.phAvatar.classList.remove('has-orb');
-	/* Wave#88/89: trả thẻ tài khoản trong Cài đặt về guest + ẩn 4 nút tài khoản. */
-	refreshCfgCard(null);
-	applyAccountButtons();
-	ui.phDecoration.innerHTML = '';
-	ui.phClanBadge.hidden = true;
-	ui.phClanTag.hidden = true;
-	ui.phBanner.innerHTML = '';
-	ui.phBanner.style.background = '';
-	ui.phBanner.classList.add('default');
-	// Waves 49: dọn hero effect + frame
-	if (ui.phEffect) { ui.phEffect.hidden = true; ui.phEffect.src = ''; }
-	if (ui.phFrame) ui.phFrame.innerHTML = '';
-	// Waves 18: dọn huy hiệu + hiệu ứng avatar
-	ui.phBadges.innerHTML = '';
-	ui.phBadges.hidden = true;
-	ui.dpBadges.innerHTML = '';
-	ui.dpBadges.hidden = true;
-	ui.phAvatarwrap.classList.remove('has-effect');
 	// Waves 28: bỏ viền màu bảng tên khi đăng xuất → về viền mặc định
-	applyProfileAura(null);
 	// Waves 21: dọn chip tài khoản sidebar (decoration + khung nameplate + tag)
 	ui.upDeco.style.backgroundImage = '';
 	ui.upAvatarwrap.classList.remove('has-deco');
@@ -7013,10 +6805,6 @@ for (const btn of [ui.btnSwitchAccount, ui.btnSwitchAccountRow, ui.btnAccCfgSwit
 			}
 		});
 	}
-}
-/* Wave#87 — nút "Đăng nhập tài khoản Discord" ở hero guest. */
-if (ui.phLoginHint) {
-	ui.phLoginHint.addEventListener('click', () => openAccSw());
 }
 /* Wave#88 — popup "Đổi tài khoản": dán / hiện-ẩn / hướng dẫn / copy script / thêm. */
 if (ui.accSwitchModal) {
@@ -9236,13 +9024,12 @@ function dnsRegisterFont(family, dataUrl, weight) {
 
 /** Mọi chỗ hiển thị TÊN người dùng — phải ĐỒNG BỘ cùng một kiểu.
  *  Waves 49b: bro báo khung profiles TRÁI giữ font cũ, không khớp profile CHÍNH.
- *  Nguyên nhân: `applyDisplayNameStyle` cứng `ui.phDisplay`. Nay áp cho cả 3:
- *    ui.phDisplay  — tên lớn giữa trang (hero)
+ *  Nguyên nhân: kiểu tên từng không đồng bộ giữa các khung. Nay áp đồng bộ cho:
  *    ui.dpDisplay  — tên trong khung popout/sidebar
  *    ui.upName     — tên trên chip user ở đáy sidebar
  *  Bỏ phần tử không tồn tại; giữ thứ tự để hiệu ứng gummy tách chữ đúng. */
 function dnsTargets() {
-	const list = [ui.phDisplay, ui.dpDisplay, ui.upName].filter(Boolean);
+	const list = [ui.dpDisplay, ui.upName].filter(Boolean);
 	// Khử trùng (phòng khi 2 id trỏ cùng một node).
 	return [...new Set(list)];
 }
@@ -9402,33 +9189,6 @@ function applyBotProfile(u) {
 	ui.dpClanTag.hidden = true;
 	ui.dpBadge.hidden = false;
 	ui.dpBadgeText.textContent = 'Đổi tài khoản';
-	// Hero giữa trang: hiện ở chế độ "bot" (không có banner cá nhân → nền mặc định).
-	ui.heroProfile.hidden = false;
-	ui.heroProfile.dataset.state = 'bot';
-	ui.phDisplay.textContent = name;
-	// Waves 48: bot cũng có thể có kiểu tên hiển thị riêng.
-	loadDisplayNameStyle(name, u.id);
-	ui.phUsername.textContent = u.username ? `@${u.username}` : 'Hồ sơ bot';
-	ui.phUserId.hidden = false;
-	ui.phUserIdValue.textContent = u.id;
-	if (avHash && avId) {
-		ui.phAvatar.innerHTML = '';
-		const img = document.createElement('img');
-		img.className = 'ph-avatar-img';
-		img.src = discordAvatarSrc({ id: avId, avatar: avHash }, 160);
-		img.alt = '';
-		ui.phAvatar.appendChild(img);
-	} else {
-		ui.phAvatar.innerHTML = defaultAvatarSvg(34);
-	}
-	ui.phDecoration.innerHTML = '';
-	ui.phClanBadge.hidden = true;
-	ui.phClanTag.hidden = true;
-	ui.phBanner.innerHTML = '';
-	ui.phBanner.style.background = '';
-	ui.phBanner.classList.add('default');
-	ui.phBadges.innerHTML = '';
-	ui.phBadges.hidden = true;
 }
 
 /* ============================================================================
@@ -9923,10 +9683,10 @@ window.__aqDiag = {
 		lastAuthedToken = '';
 		return api.authCheck(t);
 	},
-	applyAura: (np) => applyProfileAura(np),
+	applyAura: () => ({ ok: false, message: 'central profile card removed' }),
 	nameplateState: () => {
 		const out = [];
-		for (const sel of ['.ph-nameplate', '.up-row']) {
+		for (const sel of ['.up-row']) {
 			const host = document.querySelector(sel);
 			const v = host && host.querySelector('video.np-media');
 			const i = host && host.querySelector('img.np-media');
