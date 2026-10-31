@@ -681,6 +681,32 @@ function toast(message, isError = false) {
 
 /* ---------------- State Management ---------------- */
 
+/* FIX64-P3 (W35): ly do dang TEXT cho nut dang bi khoa — title (tooltip
+   desktop) + aria-label (trinh doc man hinh doc ca nhan + ly do). Chi set
+   text, khong doi trang thai disabled, khong doi nhan hien (hang nut canh
+   tab rat chat, doi nhan se vo layout). Trang thai chay/dung/dang dung van
+   hien qua nhan tung the + pill claim + log. */
+function setBtnReason(btn, reason) {
+	if (!btn) return;
+	if (reason) {
+		btn.title = reason;
+		const label = btn.querySelector('.side-act-text');
+		const base = label ? label.textContent.trim() : '';
+		btn.setAttribute('aria-label', base ? `${base} — ${reason}` : reason);
+	} else {
+		btn.title = '';
+		btn.removeAttribute('aria-label');
+	}
+}
+function syncMainButtonReasons() {
+	const en = currentLang === 'en';
+	const busy = state === 'starting' || state === 'running' || state === 'stopping' || state === 'scanning';
+	const hasToken = !!(ui.token && ui.token.value.trim());
+	if (ui.btnScan) setBtnReason(ui.btnScan, ui.btnScan.disabled ? (busy ? (en ? 'Busy — wait for the current run to finish before scanning.' : 'Đang chạy — chờ xong đợt hiện tại mới quét được.') : (!hasToken ? (en ? 'No account token yet — paste your account token first.' : 'Chưa có token tài khoản — dán token tài khoản trước.') : '')) : '');
+	if (ui.btnStart) setBtnReason(ui.btnStart, ui.btnStart.disabled ? (busy ? (en ? 'Busy — wait for the current run to finish.' : 'Đang chạy — chờ xong đợt hiện tại.') : (selected.size === 0 ? (en ? 'No quest selected — tick quests in the To do tab.' : 'Chưa chọn nhiệm vụ nào — tích chọn ở tab Chưa làm.') : '')) : '');
+	if (ui.btnStop) setBtnReason(ui.btnStop, ui.btnStop.disabled ? (state === 'stopping' ? (en ? 'Stopping — wait for running quests to stop.' : 'Đang dừng — chờ các nhiệm vụ dừng hẳn.') : (en ? 'No quest is running.' : 'Không có nhiệm vụ nào đang chạy.')) : '');
+}
+
 function setBusyFlags() {
 	// Waves 42: nút "Dừng" phải bấm được khi CÓ nhiệm vụ đang chạy, dù tiến
 	// trình đang ở trạng thái nào. Trước đây nút chỉ mở theo `state` của tiến
@@ -697,6 +723,7 @@ function setBusyFlags() {
 	ui.btnStart.disabled = busy || selected.size === 0;
 	// Wave#111: "Nhận tất cả" khoá theo tiến trình/tiến trình nhận hàng loạt.
 	if (ui.btnClaimAll) ui.btnClaimAll.disabled = bulkClaimBusy || state !== 'idle';
+	syncMainButtonReasons();
 }
 
 /** Đếm số nhiệm vụ đang thực sự chạy (nguồn sự thật cho nút Dừng). */
@@ -1233,13 +1260,14 @@ function emptyMsg(kind) {
 				? 'No quests yet — press <strong>Scan quests</strong> to load.'
 				: 'Chưa có nhiệm vụ nào — bấm <strong>Quét nhiệm vụ</strong> để tải.';
 		case 'active':
-			return en ? 'No unfinished quests.' : 'Không còn nhiệm vụ nào chưa làm.';
+			// FIX64-P3 (W39): cau tron ven + hanh dong goi y, khong chi bao rong.
+			return en ? 'No unfinished quests — press Scan quests to load more.' : 'Không còn nhiệm vụ nào chưa làm — bấm Quét nhiệm vụ để tải thêm.';
 		case 'claimable':
-			return en ? 'No quests awaiting claim.' : 'Không có nhiệm vụ nào chờ nhận thưởng.';
+			return en ? 'No quests awaiting claim — finish a quest in To do, then come back.' : 'Không có nhiệm vụ nào chờ nhận thưởng — hoàn thành nhiệm vụ ở tab Chưa làm rồi quay lại.';
 		case 'done':
-			return en ? 'No claimed quests yet.' : 'Chưa nhận thưởng nhiệm vụ nào.';
+			return en ? 'No claimed quests yet — claim a reward in Unclaimed to record it here.' : 'Chưa nhận thưởng nhiệm vụ nào — nhận thưởng ở tab Chưa nhận để ghi vào đây.';
 		case 'filter':
-			return en ? 'No quests match the current filter.' : 'Không có nhiệm vụ nào khớp bộ lọc.';
+			return en ? 'No quests match the current filter — try loosening the filter or clearing the search.' : 'Không có nhiệm vụ nào khớp bộ lọc — thử nới bộ lọc hoặc xoá tìm kiếm.';
 		default:
 			return '';
 	}
@@ -1726,6 +1754,7 @@ function buildQuestCard(q) {
 					<span class="qcard-kicker"></span>
 					<span class="qcard-title"></span>
 					<span class="qcard-desc"></span>
+					<span class="qcard-prog"></span>
 				</div>
 			</div>
 		</div>
@@ -1843,7 +1872,10 @@ function updateQuestFoot(node, q) {
 				? 'Discord rejected heartbeat (401) — play the game in the real Discord client; the app tracks progress via scans.'
 				: 'Heartbeat bị Discord từ chối (401) — mở game trong Discord thật và chơi, app theo dõi tiến độ qua quét.'
 			: '';
-		const diagText = formatClaimDiag(q, en) || blockedText;
+		// FIX64-P3 (W37): ly do claim loi phai hien NGAY TREN THE (nut chi
+		// noi "Thu lai"), khong chi trong toast/log de roi troi mat.
+		// Thu tu: chan doan claim > bi chan heartbeat > claimError that.
+		const diagText = formatClaimDiag(q, en) || blockedText || (q.claimError ? String(q.claimError) : '');
 		if (diagEl.textContent !== diagText) diagEl.textContent = diagText;
 	}
 	node.classList.add('has-foot');
@@ -1865,6 +1897,7 @@ function updateQuestCard(node, q) {
 			kicker: node.querySelector('.qcard-kicker'),
 			title: node.querySelector('.qcard-title'),
 			desc: node.querySelector('.qcard-desc'),
+			prog: node.querySelector('.qcard-prog'),
 			ring: node.querySelector('.qring-fg'),
 			pct: node.querySelector('.qcard-pct'),
 			check: node.querySelector('input[data-quest-check]'),
@@ -1921,20 +1954,23 @@ function updateQuestCard(node, q) {
 			logo.alt = '';
 			logo.loading = 'lazy';
 			logo.decoding = 'async';
-			let triedAppIcon = questAssetUrl(q.logotype) || questAssetUrl(q.gameTile) ? false : true;
+			// FIX64-P3 (W32): chi coi la "da thu icon app" khi logoUrl CHINH
+			// LA icon app (hoac khong co icon app). Truoc day co nay chi
+			// nhin logotype/game_tile goc: neu logoUrl la bien the dark/light
+			// ma anh do 404 trong khi 2 truong goc rong, code bo luon logo
+			// ma khong thu icon app (luon co). Listener KHONG once: lan loi
+			// 1 doi sang icon app, lan loi 2 (icon app cung hong) thi go logo
+			// chu khong de lai anh vo.
 			const fallback = appIconUrl(q.appId, q.appIcon);
-			logo.addEventListener(
-				'error',
-				() => {
-					if (!triedAppIcon && fallback && logo.src !== fallback) {
-						triedAppIcon = true;
-						logo.src = fallback;
-					} else {
-						logo.remove();
-					}
-				},
-				{ once: true },
-			);
+			let triedAppIcon = !fallback || logoUrl === fallback;
+			logo.addEventListener('error', () => {
+				if (!triedAppIcon && fallback && logo.src !== fallback) {
+					triedAppIcon = true;
+					logo.src = fallback;
+				} else {
+					logo.remove();
+				}
+			});
 			logo.src = logoUrl;
 			banner.appendChild(logo);
 		}
@@ -2010,6 +2046,20 @@ function updateQuestCard(node, q) {
 
 	const descText = questDesc(q);
 	if (r.desc.textContent !== descText) r.desc.textContent = descText;
+
+	// FIX64-P3 (W33): phut DA CAY / CAN — chi tu so that secondsDone /
+	// secondsNeeded (heartbeat/scan gui ve), khong uoc tinh, khong so ao.
+	// Quest khong co secondsNeeded thi de trong (CSS an khi :empty).
+	if (r.prog) {
+		const needSecs = Number(q.secondsNeeded) || 0;
+		const progText =
+			needSecs > 0
+				? en
+					? `Played ${Math.floor((Number(q.secondsDone) || 0) / 60)}/${Math.ceil(needSecs / 60)} min`
+					: `Đã cày ${Math.floor((Number(q.secondsDone) || 0) / 60)}/${Math.ceil(needSecs / 60)} phút`
+				: '';
+		if (r.prog.textContent !== progText) r.prog.textContent = progText;
+	}
 
 	// ---- Vòng tiến độ + % ----
 	const pct = questPct(q);
@@ -2751,17 +2801,24 @@ function renderQuests() {
 	// để CSS dùng content-visibility (không render tile ngoài khung nhìn).
 	if (ui.questListDone) {
 		ui.questListDone.classList.toggle('virtual', countDone > 55);
-		if (doneSort !== 'claimed') {
-			const doneNodes = Array.from(ui.questListDone.querySelectorAll('.qdone'));
-			doneNodes.sort((a, b) => {
-				const qa = quests.get(a.dataset.questId) || {};
-				const qb = quests.get(b.dataset.questId) || {};
-				if (doneSort === 'orbs') return (Number(qb.orbs) || 0) - (Number(qa.orbs) || 0);
-				if (doneSort === 'name') return String(qa.name || qa.gameTitle || '').localeCompare(String(qb.name || qb.gameTitle || ''));
-				return String(qb.claimedAt || '').localeCompare(String(qa.claimedAt || ''));
-			});
-			for (const n of doneNodes) ui.questListDone.appendChild(n);
-		}
+		// FIX64-P3 (W38): 'claimed' nghia la "Moi nhan nhat" nhung truoc day
+		// nhanh nay KHONG sap xep gi ca — tile giu thu tu quet (first-seen),
+		// quest vua nhan xong khong len dau. Nay sap that theo claimedAt
+		// giam dan, quest chua co claimedAt xuong cuoi.
+		const doneNodes = Array.from(ui.questListDone.querySelectorAll('.qdone'));
+		doneNodes.sort((a, b) => {
+			const qa = quests.get(a.dataset.questId) || {};
+			const qb = quests.get(b.dataset.questId) || {};
+			if (doneSort === 'orbs') return (Number(qb.orbs) || 0) - (Number(qa.orbs) || 0);
+			if (doneSort === 'name') return String(qa.name || qa.gameTitle || '').localeCompare(String(qb.name || qb.gameTitle || ''));
+			const da = String(qa.claimedAt || '');
+			const db = String(qb.claimedAt || '');
+			if (!da && !db) return 0;
+			if (!da) return 1;
+			if (!db) return -1;
+			return db.localeCompare(da);
+		});
+		for (const n of doneNodes) ui.questListDone.appendChild(n);
 	}
 	// Waves#196: nhóm theo game ở tab Chưa làm — header nhóm + thu gọn.
 	try {
@@ -2893,6 +2950,14 @@ function syncQuestTools(visNew, visTotal, countAll) {
 	ui.btnClaimAll.hidden = !show;
 	if (!show) return;
 	ui.btnClaimAll.disabled = bulkClaimBusy || state !== 'idle';
+	// FIX64-P3 (W35): ly do khoa cho "Nhan tat ca" (text trong nut da co
+	// so dem khi dang nhan; title them ly do khi khoa vi dang chay).
+	if (ui.btnClaimAll.disabled) {
+		const en = currentLang === 'en';
+		ui.btnClaimAll.title = bulkClaimBusy
+			? (en ? 'Claiming — wait for this batch to finish.' : 'Đang nhận thưởng — chờ xong đợt này.')
+			: (en ? 'Busy — wait for the current run to finish before claiming all.' : 'Đang chạy — chờ xong đợt hiện tại mới nhận tất cả.');
+	} else ui.btnClaimAll.title = '';
 	ui.btnClaimAll.textContent = bulkClaimBusy
 		? `Đang nhận… ${bulkClaimDone}/${bulkClaimTotal}`
 		: `Nhận tất cả (${visNew})`;
@@ -2923,11 +2988,17 @@ function updateSelectionUi() {
 	}
 	ui.selectedOrbs.textContent = selected.size > 0 ? `(+${selOrbs} Orbs)` : '';
 	try { refreshGameSelect(); } catch {}
+	// FIX64-P3 (W35): duong nay (tich/bỏ tich the) khong qua setBusyFlags
+	// nen cap nhat ly do khoa rieng, chi set text.
+	try { syncMainButtonReasons(); } catch {}
 }
 
 // Waves#231: chọn tất cả quest của một game trong tab Chưa làm, không
 // chọn game khác, và chỉ chọn quest đang khớp bộ lọc + chọn được.
-function gameLabelOf(q) { return String(q.gameTitle || q.publisher || q.name || '').trim(); }
+// FIX64-P3 (W34): cung chuoi voi groupGameKey (gameTitle -> application ->
+// name). Truoc day dung publisher lam du phong nen cung 1 quest co the
+// hien ten game khac nhau giua "chon theo game" va tieu de nhom game.
+function gameLabelOf(q) { return String(q.gameTitle || q.application || q.name || '').trim(); }
 function refreshGameSelect() {
 	if (!ui.gameSelect) return;
 	const prev = ui.gameSelect.value;
@@ -3854,7 +3925,8 @@ async function runClaim(quest, captchaMeta) {
 		queueRemove(id);
 		return 'error';
 	} catch (err) {
-		const msg = (err && err.message) || 'Lỗi không xác định khi gọi Discord.';
+		// FIX64-P3 (W37): khong de loi chung chung — noi ro buoc + buoc tiep.
+		const msg = (err && err.message) || 'Không liên lạc được với Discord khi nhận thưởng — kiểm tra mạng rồi bấm Thử lại.';
 		upsertQuest(id, { claimBusy: false, claimPhase: '', claimError: msg });
 		appendLog(`[Lỗi] Nhận "${quest.name || ''}" thất bại: ${msg}`, 'stderr');
 		toast(`Nhận thất bại: ${msg}`, true);

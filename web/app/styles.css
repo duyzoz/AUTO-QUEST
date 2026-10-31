@@ -6114,3 +6114,15 @@ body[data-page="quest"] .page.active { flex: none; }
 	pointer-events: none;
 }
 .qdone-state svg { width: 12px; height: 12px; }
+
+/* ============================================================
+   FIX64-P3 (W31-W40, 2026-10-31) — Cards / progress / claim.
+   Chi them 1 class moi: .qcard-prog (dong "Da cay x/y phut" tren the,
+   W33). Moi thu khac la audit (xem test FIX64-P3): banner placeholder
+   HB-FIX, chuoi logo khong Orb, %/bar tu seconds that, chon theo game,
+   nut claim, sap xep, empty state, wrap tron ven deu da co — khong
+   doi z-index, khong mau tho (chi var(--fg-muted)), font-size 12px
+   tren thang spacing, an khi :empty de khong chiem cho.
+   ============================================================ */
+.qcard-prog { font-size: 12px; color: var(--fg-muted); }
+.qcard-prog:empty { display: none; }

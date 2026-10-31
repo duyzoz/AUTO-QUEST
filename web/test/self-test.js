@@ -1328,6 +1328,44 @@ check('FIX64-P2: top giu nguyen, gap trang 28px + gap 2 khung top 20px, mobile x
 	return 'gap 28px + top gap 20px + log cuon noi bo + mobile 1 cot + vien 2 theme';
 });
 
+check('FIX64-P3: the / tien do / claim (W31-W40)', () => {
+	const js = read(path.join(APP, 'renderer.js'));
+	const css = read(path.join(APP, 'styles.css'));
+	// W31 (audit, giu HB-FIX): placeholder banner + an khi co img, khong Orb.
+	assert(js.includes('qcard-banner-fallback') && js.includes('banner.prepend(ph)'), 'thieu placeholder banner');
+	assert(/\.qcard-banner:has\(img\) \.qcard-banner-fallback \{[^}]*display: none/.test(css), 'placeholder phai an khi co img');
+	// W32 (fix): logoUrl la icon app thi khong thu lai; bien the dark/light
+	// 404 phai roi ve icon app; loi lan 2 go logo (listener khong once).
+	assert(js.includes('let triedAppIcon = !fallback || logoUrl === fallback;'), 'logo fallback phai tinh theo logoUrl === fallback');
+	const logoBlock = js.slice(js.indexOf('let triedAppIcon'), js.indexOf('logo.src = logoUrl;'));
+	assert(!logoBlock.includes('once: true'), 'logo error listener khong duoc once (lan 2 phai go logo)');
+	assert(/function questLogoUrl[\s\S]{0,900}return appIconUrl\(q\.appId, q\.appIcon\)/.test(js), 'questLogoUrl ket bang appIcon, khong Orb');
+	assert(!/function questLogoUrl[\s\S]{0,900}orb-logo/.test(js), 'questLogoUrl khong duoc tra logo Orb');
+	// W33 (fix): dong phut da cay/can tu seconds that + CSS token, an khi rong.
+	assert(js.includes('qcard-prog') && js.includes('Đã cày') && js.includes('secondsDone') && js.includes('secondsNeeded'), 'thieu dong phut da cay/can tu seconds that');
+	assert(/\.qcard-prog \{[^}]*font-size: 12px[^}]*color: var\(--fg-muted\)/.test(css), 'qcard-prog phai token + 12px');
+	assert(/\.qcard-prog:empty \{[^}]*display: none/.test(css), 'qcard-prog rong phai an');
+	// W34 (fix): chon theo game cung chuoi voi nhom game (application, khong publisher).
+	assert(js.includes('function gameLabelOf(q) { return String(q.gameTitle || q.application || q.name'), 'gameLabelOf phai giong groupGameKey');
+	assert(js.includes('gameLabelOf(q) !== g'), 'handler chon game phai loc dung game');
+	// W35 (fix): nut chinh co ly do khoa dang text (title + aria-label).
+	assert(js.includes('function syncMainButtonReasons') && js.includes('btnScan.disabled') && js.includes('Chưa có token tài khoản'), 'thieu ly do khoa cho nut Quet/Auto/Dung');
+	// W36 (audit): claim thanh cong -> status claimed (render chuyen sang tab Da lam).
+	assert(js.includes("status: 'claimed'") && js.includes("act = 'claimed'"), 'claim thanh cong phai ve claimed');
+	// W37 (fix): claimError hien tren the + fallback loi khong chung chung.
+	assert(js.includes('blockedText || (q.claimError'), 'claimError phai hien tren the');
+	assert(js.includes('Không liên lạc được với Discord khi nhận thưởng') && !js.includes("'Lỗi không xác định khi gọi Discord.'"), 'khong de fallback loi chung chung');
+	// W38 (fix): sap 'Moi nhan nhat' sap that theo claimedAt giam dan, chua co xuong cuoi.
+	assert(js.includes('return db.localeCompare(da);'), 'sap Da lam phai theo claimedAt giam dan');
+	// W39 (fix): empty state 3 tab la cau tron ven + hanh dong goi y.
+	assert(js.includes('bấm Quét nhiệm vụ để tải thêm') && js.includes('hoàn thành nhiệm vụ ở tab Chưa làm') && js.includes('nhận thưởng ở tab Chưa nhận'), 'empty state 3 tab phai co cau + hanh dong');
+	// W40 (audit): the cao auto + title/desc wrap tron ven + cuon tu nhien trang.
+	assert(/\.qcard \{[^}]*height: auto/.test(css), 'the phai height auto');
+	assert(/\.qcard-title \{[^}]*overflow: visible[^}]*-webkit-line-clamp: unset/.test(css), 'title phai wrap tron ven');
+	assert(/body\[data-page="quest"\] \.main-wrap \{[^}]*overflow-y: auto/.test(css), 'trang quest phai cuon tu nhien');
+	return 'logo fallback + phut that + chon game + ly do khoa + claimError tren the + sap claimedAt + empty co hanh dong + wrap tron ven';
+});
+
 /* ── In kết quả ────────────────────────────────────────────────────────── */
 for (const r of results) {
 	const tag = r.ok ? 'PASS' : 'FAIL';
