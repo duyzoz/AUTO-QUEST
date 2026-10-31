@@ -702,6 +702,10 @@ function switchTab(tab) {
 	// Wave#111: chuyển tab phải tính lại thanh chọn + nút "Nhận tất cả"
 	// theo bộ lọc hiện tại (không chỉ dựa vào việc lưới có thẻ hay không).
 	renderQuests();
+	// FIX26 F11: chi cuon khi khung quest nam ngoai viewport (block nearest)
+	// — khong nhay ve dau trang, khong nhay xuong cuoi trang.
+	const qc = document.querySelector('.quests-card');
+	if (qc && typeof qc.scrollIntoView === 'function') qc.scrollIntoView({ block: 'nearest' });
 }
 
 ui.tabActive.addEventListener('click', () => switchTab('active'));

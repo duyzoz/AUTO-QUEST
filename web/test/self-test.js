@@ -1111,6 +1111,19 @@ check('FIX26-A: hero da xoa, top chi con 2 khung bang nhau, gap 16px, up-row con
 	return 'hero xoa sach + top 2 khung + gap 16px + up-row con';
 });
 
+check('FIX26-BC: quest khong bi go, tab khong dich, dem tab co dinh', () => {
+	const css = read(path.join(APP, 'styles.css'));
+	const bc = css.slice(css.indexOf('FIX26-BC'));
+	const js = read(path.join(APP, 'renderer.js'));
+	assert(/body\[data-page="quest"\] \.main-wrap \{[^}]*overflow-y: auto/.test(bc), 'trang quest phai cuon tu nhien, khong khoa viewport');
+	assert(/#pageQuest > \.quests-card \{[^}]*flex: none/.test(bc), 'quests-card flex none, no theo noi dung');
+	assert(/#pageQuest \.quests-card \.quest-list \{[^}]*padding-bottom: 16px/.test(bc), 'the cuoi co padding-bottom');
+	assert(/#pageQuest \.qstate\.is-empty \{[^}]*min-height: 120px/.test(bc), 'khung rong co min-height on dinh');
+	assert(/\.tab-count \{[^}]*min-width: 28px/.test(bc), 'chip dem tab rong co dinh 28px');
+	assert(/scrollIntoView\(\{ block: 'nearest' \}\)/.test(js), 'doi tab chi cuon nearest, khong nhay dau/cuoi trang');
+	return 'cuon tu nhien + the cuoi du + dem 28px + tab nearest';
+});
+
 
 check('NEO P3: quest card v2 — progress bar, state sticker, done neo, toolbar', () => {
 	const css = read(path.join(APP, 'styles.css'));

@@ -6014,3 +6014,28 @@ body.lite .claim-pill-spin { animation-duration: 1.6s; }
 #pageQuest > .stats-row > * { min-width: 0; }
 #pageQuest > .quests-card { margin-top: 0; }
 body[data-page="quest"] .page.active { gap: 16px; }
+
+/* ============================================================
+   FIX26-BC — Khung quest khong bi go, tab khong dich layout
+   (F5-F11). Goc cat khung o man desktop cao: media
+   (min-height 900px) khoa trang quest vao viewport
+   (overflow hidden + height 100% + flex min-height 0) nen
+   danh sach bi nen trong khung thay vi no theo noi dung.
+   O day tra lai cuon tu nhien cua trang: main-wrap cuon doc,
+   .content/.page/quests-card/quest-list deu flex none, danh
+   sach no theo noi dung, the cuoi co padding-bottom 16px.
+   F8: khung rong co min-height on dinh. F9: hang tab/toolbar/
+   tim kiem flex none, khong co lai khi doi danh sach. F10:
+   chip dem tab rong co dinh 28px + so tabular. F6/F7: the
+   height auto + luoi 3/2/1 da co tu NEO P0, o day khang dinh
+   lai, khong class moi, spacing tren thang.
+   ============================================================ */
+body[data-page="quest"] .main-wrap { overflow-y: auto; overflow-x: hidden; }
+body[data-page="quest"] .content { height: auto; min-height: 0; }
+body[data-page="quest"] .page.active { flex: none; }
+#pageQuest > .quests-card { flex: none; min-height: 320px; }
+#pageQuest .quests-card .quest-list { flex: none; padding-bottom: 16px; }
+#pageQuest .quests-card .qcard { height: auto; }
+#pageQuest .quest-head, #pageQuest .quest-tools, #pageQuest .quest-advanced, #pageQuest .select-tools { flex: 0 0 auto; }
+#pageQuest .qstate.is-empty { min-height: 120px; }
+.tab-count { min-width: 28px; box-sizing: border-box; display: inline-flex; justify-content: center; font-variant-numeric: tabular-nums; }
