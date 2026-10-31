@@ -1149,6 +1149,23 @@ check('FIX26-E: bo sound rieng moi thao tac, WebAudio tu tong hop, mac dinh OFF'
 	return '15 tieng rieng + phan loai click + khong file';
 });
 
+check('FIX26-F: log cao co dinh + wrap tron ven, mobile xep chong, khong mau tho moi', () => {
+	const css = read(path.join(APP, 'styles.css'));
+	const f = css.slice(css.indexOf('FIX26-F'));
+	const mobile = read(path.join(APP, 'mobile.css'));
+	const js = read(path.join(APP, 'renderer.js'));
+	assert(/\.console-card \.console \{[^}]*height: 88px/.test(f), 'khung log cao co dinh 88px');
+	assert(/\.u229-body \{[^}]*-webkit-line-clamp: unset/.test(f), 'bo cap 2 dong cua log');
+	const fit = js.slice(js.indexOf('function fitLogBody'));
+	assert(!/slice\(0, mid\)/.test(fit) && fit.includes('logBodyHtml(text)'), 'fitLogBody khong cat text nua');
+	assert(/FIX26-F/.test(mobile) && /#pageQuest > \.stats-row \{[^}]*grid-template-columns: 1fr/.test(mobile), 'mobile: top xep chong 1 cot');
+	assert(/\.qcard-banner \{[^}]*height: 120px/.test(css), 'banner quest 120px desktop');
+	assert(/\.qcard-banner \{[^}]*height: 96px/.test(mobile), 'banner quest 96px mobile');
+	const fixAll = css.slice(css.indexOf('FIX26-A')).replace(/\/\*[\s\S]*?\*\//g, '');
+	assert(!/#[0-9a-fA-F]{3,8}\b/.test(fixAll) && !/rgba?\(/.test(fixAll), 'FIX26 khong mau tho moi');
+	return 'log 88px + wrap du + mobile 1 cot + banner 120/96 + token-only';
+});
+
 
 check('NEO P3: quest card v2 — progress bar, state sticker, done neo, toolbar', () => {
 	const css = read(path.join(APP, 'styles.css'));

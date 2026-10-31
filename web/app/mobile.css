@@ -950,3 +950,15 @@ html {
 @media (max-width: 560px) {
 	.qgrid-done { grid-template-columns: 1fr; }
 }
+
+/* FIX26-F (F22): mobile — 2 khung top xep chong, khung quest full width,
+   khong cuon ngang. Ngoai le duy nhat: man rat hep (<=360px) hang sticker
+   duoc wrap + cao tu do de khong tran viewport 320px; tu 361px tro len
+   hang sticker giu co dinh 32px khong wrap theo F14. */
+@media (max-width: 1023px) {
+	#pageQuest > .stats-row { grid-template-columns: 1fr; }
+	#pageQuest > .quests-card { width: 100%; min-width: 0; }
+}
+@media (max-width: 360px) {
+	.neo-sticker-row { flex-wrap: wrap; height: auto; }
+}

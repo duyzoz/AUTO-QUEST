@@ -6056,3 +6056,16 @@ body[data-page="quest"] .page.active { flex: none; }
 .neo-sticker-row { height: 32px; flex-wrap: nowrap; overflow: hidden; }
 .neo-rotator-row { display: flex; align-items: center; height: 32px; padding: 4px; overflow: hidden; }
 .neo-sticker.neo-rotator { display: inline-grid; }
+
+/* ============================================================
+   FIX26-F — Can doi tong + QA (F19-F24). F19: khung log cao
+   co dinh 88px + cuon noi bo, top dong bang hoan toan.
+   F24: bo cap 2 dong cua .u229-body (CSS) + fitLogBody (JS):
+   dong log wrap tron ven, khong cat "…"; khung .u229 van
+   max-height + cuon noi bo nen khong day khung cao len.
+   F20/F21/F23: khong can doi code — content max-width va
+   banner 120px/96px da co, top dung token cu, khong mau moi
+   (kiem chung bang test ben duoi). F22 o mobile.css.
+   ============================================================ */
+.console-card .console { height: 88px; max-height: 88px; min-height: 88px; overflow-y: auto; }
+.u229-body { display: block; -webkit-line-clamp: unset; overflow: visible; }

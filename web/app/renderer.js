@@ -927,38 +927,14 @@ function isOrbWinLine(line) {
 	return /(đã nhận|nhận được|thành công|\+\s*\d)/i.test(s);
 }
 
-/** Ghi nội dung dòng log và CẮT GỌN CÓ DẤU "…" nếu vượt quá 2 dòng.
- *  Bro: "1 dòng text nếu quá dài thì chỉ nên gói gọn lại trong 2 dòng hoặc giản
- *  lược nó lại hoặc ...".
- *  CSS `-webkit-line-clamp: 2` chỉ CẮT — nó không cho biết là đã cắt (và với
- *  `white-space: pre-wrap` dấu "…" tự động có thể không hiện). Vì vậy ở đây ta
- *  tự tìm độ dài vừa 2 dòng rồi thêm "…" — người đọc biết chắc là còn nữa.
- *  Tìm bằng tìm-kiếm-nhị-phân trên chuỗi RAW (mỗi lần dựng lại HTML từ raw nên
- *  không bao giờ cắt vào giữa thẻ <span>). */
+/** Ghi nội dung dòng log DAY DU, khong cat gon (FIX26 F24).
+ *  Quyet dinh nay THAY THE cap 2 dong cu (Waves 46e): Ethan duyet
+ *  F24 — dong log phai wrap tron ven, khong cat bang dau "…".
+ *  Khung .u229 van giu max-height + cuon noi bo nen khung khong
+ *  bao gio bi day cao len vi dong dai. */
 function fitLogBody(body, text) {
-	/* PHẢI TẮT CLAMP khi đo: với `-webkit-line-clamp`, Chromium kẹp LUÔN cả
-	   `scrollHeight` về đúng 2 dòng → `scrollHeight <= clientHeight` luôn đúng →
-	   tưởng "không tràn" và không bao giờ thêm "…" (đã mắc đúng lỗi này: probe
-	   báo "dòng dài KHÔNG có dấu …"). Tắt clamp một nhịp để lấy chiều cao THẬT,
-	   đo xong bật lại ngay trong cùng một frame nên không thấy nháy. */
 	body.style.webkitLineClamp = 'unset';
 	body.innerHTML = logBodyHtml(text);
-	const lineH = parseFloat(getComputedStyle(body).lineHeight) || 16;
-	const maxH = Math.round(lineH * 2) + 1;
-	if (body.scrollHeight <= maxH) {
-		body.style.webkitLineClamp = '';
-		return;
-	}
-	let lo = 0;
-	let hi = text.length;
-	while (lo < hi) {
-		const mid = (lo + hi + 1) >> 1;
-		body.innerHTML = logBodyHtml(`${text.slice(0, mid)}…`);
-		if (body.scrollHeight <= maxH) lo = mid;
-		else hi = mid - 1;
-	}
-	body.innerHTML = logBodyHtml(`${text.slice(0, lo).trimEnd()}…`);
-	body.style.webkitLineClamp = '';
 }
 
 function appendLog(line, stream) {
