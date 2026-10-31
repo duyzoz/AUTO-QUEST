@@ -199,6 +199,18 @@ class QuestManager {
         }
         return String(quest.config?.application?.id ?? '');
     }
+    /**
+     * HB-DIAG (2026-10-31): chỉ làm giàu dòng log lỗi heartbeat — KHÔNG đổi
+     * cách chạy, nhịp, payload hay ngưỡng fail. Chỉ ghi thêm mã HTTP, mã lỗi
+     * Discord, quest, task và application_id đã gửi, để lần chạy sau nhìn log
+     * là biết Discord từ chối vì gì. Không ghi token, không ghi mã thưởng.
+     */
+    static heartbeatDiag(err, ctx) {
+        const status = err?.status ?? err?.response?.status ?? '?';
+        const code = err?.code ?? err?.response?.data?.code ?? '?';
+        const msg = err?.message || String(err);
+        return `status=${status} code=${code} quest=${ctx.questId} task=${ctx.taskName} appId=${ctx.applicationId} endpoint=${ctx.endpoint} msg=${msg}`;
+    }
     /** Nhận thưởng công khai (bot.ts gọi trực tiếp thay vì đụng redeemQuest private flow). */
     claimReward(quest) {
         return this.redeemQuest(quest);
@@ -864,7 +876,7 @@ class QuestManager {
             catch (err) {
                 consecutiveErrors++;
                 const msg = err?.message || String(err);
-                console.warn(`[Cảnh báo] Lỗi gửi tín hiệu heartbeat "${applicationName}" (${consecutiveErrors}/5): ${msg}`);
+                console.warn(`[Cảnh báo] Lỗi gửi tín hiệu heartbeat "${applicationName}" (${consecutiveErrors}/5): ${QuestManager.heartbeatDiag(err, { questId: QuestManager.getQuestId(quest), taskName, applicationId, endpoint: 'heartbeat' })}`);
                 if (consecutiveErrors >= 5) {
                     this.failQuest(quest, questName, `Mất tín hiệu liên tục: ${msg}`);
                     return;
@@ -926,7 +938,7 @@ class QuestManager {
             catch (err) {
                 consecutiveErrors++;
                 const msg = err?.message || String(err);
-                console.warn(`[Cảnh báo] Lỗi console-heartbeat (${consecutiveErrors}/5): ${msg}`);
+                console.warn(`[Cảnh báo] Lỗi console-heartbeat (${consecutiveErrors}/5): ${QuestManager.heartbeatDiag(err, { questId: QuestManager.getQuestId(quest), taskName, applicationId, endpoint: 'console-heartbeat' })}`);
                 if (consecutiveErrors >= 5) {
                     this.failQuest(quest, questName, `Console heartbeat lỗi liên tục: ${msg}`);
                     return;
@@ -987,7 +999,7 @@ class QuestManager {
             catch (err) {
                 consecutiveErrors++;
                 const msg = err?.message || String(err);
-                console.warn(`[Cảnh báo] Lỗi mobile-heartbeat (${consecutiveErrors}/5): ${msg}`);
+                console.warn(`[Cảnh báo] Lỗi mobile-heartbeat (${consecutiveErrors}/5): ${QuestManager.heartbeatDiag(err, { questId: QuestManager.getQuestId(quest), taskName, applicationId, endpoint: 'mobile-heartbeat' })}`);
                 if (consecutiveErrors >= 5) {
                     this.failQuest(quest, questName, `Mobile heartbeat lỗi liên tục: ${msg}`);
                     return;
@@ -1157,7 +1169,7 @@ class QuestManager {
             catch (err) {
                 consecutiveErrors++;
                 const msg = err?.message || String(err);
-                console.warn(`[Cảnh báo] Lỗi gửi tín hiệu hoạt động "${applicationName}" (${consecutiveErrors}/5): ${msg}`);
+                console.warn(`[Cảnh báo] Lỗi gửi tín hiệu hoạt động "${applicationName}" (${consecutiveErrors}/5): ${QuestManager.heartbeatDiag(err, { questId: QuestManager.getQuestId(quest), taskName, applicationId: streamKey, endpoint: 'heartbeat' })}`);
                 if (consecutiveErrors >= 5) {
                     this.failQuest(quest, questName, `Lỗi tín hiệu liên tục: ${msg}`);
                     return;

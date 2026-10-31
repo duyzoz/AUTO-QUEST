@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "version": "2.0.0",
-  "createdAt": "2026-10-31T05:22:32.926Z",
+  "createdAt": "2026-10-31T06:09:41.349Z",
   "files": {
     "index.html": "WKgOb5Tjtxd2wHChU/rVsu7v7J/xhwduWq8zF96BN2k=",
     "renderer.js": "p5METQiXk/JkxAaZX1Lx7hyOJ4mBctXAcJQk2zpmbiI=",
@@ -14,6 +14,6 @@
     "web/display-name-style.js": "OcvXwY1y4EhxeZa1qsbcZhNSEFJ2nagPGLcRmf7plMI=",
     "web/bridge.js": "qQ6pU43AfXSVm1IedWYfy3h+UJT95Xlk3nlxvbpz8Zc=",
     "web/engine-worker.js": "o62nfrB87JeqnW0sVqyc+BTaCQLyCDIrvQvjK8hdlNY=",
-    "web/engine-bundle.js": "h4Eie172ZsdnTuYTzQ0ql59cR4Sgq4HYkw/BJ95yeHs="
+    "web/engine-bundle.js": "wmRS3azzgALaE6fUMi1ZnTPFdQrlPucLu/1YUdmJJ98="
   }
 }

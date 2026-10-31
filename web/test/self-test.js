@@ -1212,6 +1212,19 @@ check('NEO P5: full audit — token-only, scale, hero/up-row/dns intact, no copy
 	return 'audit P5 sach';
 });
 
+check('HB-DIAG: log loi heartbeat ghi status/code/appId/task, khong doi cach chay', () => {
+	const qm = read(path.join(WEB, 'engine', 'src', 'questManager.js'));
+	assert(qm.includes('static heartbeatDiag(err, ctx)'), 'thieu helper heartbeatDiag');
+	assert(/heartbeatDiag\(err, \{[^}]*endpoint: 'heartbeat'/.test(qm), 'desktop heartbeat phai ghi diag');
+	assert(/heartbeatDiag\(err, \{[^}]*endpoint: 'console-heartbeat'/.test(qm), 'console heartbeat phai ghi diag');
+	assert(/heartbeatDiag\(err, \{[^}]*endpoint: 'mobile-heartbeat'/.test(qm), 'mobile heartbeat phai ghi diag');
+	assert(qm.includes("status=${status} code=${code}"), 'diag phai co status + code');
+	assert(!/heartbeatDiag[\s\S]{0,400}token/i.test(qm), 'diag khong duoc ghi token');
+	const bundle = read(path.join(WEB, 'engine-bundle.js'));
+	assert(bundle.includes('heartbeatDiag'), 'bundle phai chua diag moi');
+	return 'diag 4 endpoint + status/code/appId/task, khong token';
+});
+
 /* ── In kết quả ────────────────────────────────────────────────────────── */
 for (const r of results) {
 	const tag = r.ok ? 'PASS' : 'FAIL';
