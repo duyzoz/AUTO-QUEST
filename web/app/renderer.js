@@ -562,6 +562,44 @@ function playSuccess() {
 }
 function playError() { if (soundEnabled) playTone(180, 0.14, 'sine', 0.06, 0); }
 function playToggle() { if (soundEnabled) { playTone(520, 0.08, 'sine', 0.06, 0); playTone(780, 0.08, 'sine', 0.06, 0.06); } }
+/* FIX26-E: bo sound rieng theo tung loai thao tac — tat ca deu la song
+   WebAudio tu tong hop trong code, KHONG file am thanh, KHONG lay cua
+   bat ky trang nao. Moi tieng khac nhau ro bang cao do / kieu song /
+   nhịp, khong chi khac am luong. Giu playClick/playSuccess/playError
+   cu de khong doi hanh vi cu; cac tieng moi chi them vao. */
+function playSweep(from, to, dur, type, gain) {
+	if (!soundEnabled) return;
+	const ctx = ensureAudioCtx();
+	if (!ctx) return;
+	try {
+		const t0 = ctx.currentTime;
+		const osc = ctx.createOscillator();
+		const g = ctx.createGain();
+		osc.type = type || 'sine';
+		osc.frequency.setValueAtTime(from, t0);
+		osc.frequency.exponentialRampToValueAtTime(to, t0 + dur);
+		g.gain.setValueAtTime(0.0001, t0);
+		g.gain.exponentialRampToValueAtTime(gain || 0.06, t0 + 0.01);
+		g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+		osc.connect(g); g.connect(ctx.destination);
+		osc.start(t0); osc.stop(t0 + dur + 0.05);
+	} catch { /* am thanh tuy chon */ }
+}
+function playTab() { if (soundEnabled) playTone(620, 0.07, 'triangle', 0.05, 0); }
+function playSelect() { if (soundEnabled) playTone(1000, 0.04, 'triangle', 0.04, 0); }
+function playFilter() { if (soundEnabled) playTone(900, 0.05, 'sine', 0.04, 0); }
+function playScanStart() { playSweep(400, 900, 0.25, 'sine', 0.06); }
+function playScanDone() { if (soundEnabled) { playTone(880, 0.12, 'sine', 0.07, 0); playTone(1174, 0.14, 'sine', 0.07, 0.08); } }
+function playQuestAct() { if (soundEnabled) { playTone(700, 0.07, 'triangle', 0.05, 0); playTone(1050, 0.07, 'triangle', 0.05, 0.05); } }
+function playAuto() { if (soundEnabled) { playTone(440, 0.08, 'triangle', 0.05, 0); playTone(660, 0.08, 'triangle', 0.05, 0.06); } }
+function playStop() { if (soundEnabled) playTone(330, 0.10, 'triangle', 0.05, 0); }
+function playModalOpen() { if (soundEnabled) { playTone(440, 0.06, 'sine', 0.05, 0); playTone(660, 0.06, 'sine', 0.05, 0.05); } }
+function playModalClose() { if (soundEnabled) { playTone(660, 0.06, 'sine', 0.05, 0); playTone(440, 0.06, 'sine', 0.05, 0.05); } }
+function playSoundOn() { if (soundEnabled) { playTone(520, 0.08, 'sine', 0.06, 0); playTone(780, 0.08, 'sine', 0.06, 0.06); playTone(1040, 0.10, 'sine', 0.06, 0.12); } }
+function playSoundOff() { if (soundEnabled) { playTone(780, 0.08, 'sine', 0.06, 0); playTone(520, 0.10, 'sine', 0.06, 0.06); } }
+function playDragPickup() { if (soundEnabled) playTone(350, 0.05, 'triangle', 0.05, 0); }
+function playDragDrop() { if (soundEnabled) playTone(500, 0.06, 'triangle', 0.05, 0); }
+function playHover() { if (soundEnabled) playTone(1400, 0.03, 'sine', 0.02, 0); }
 function refreshSoundButton() {
 	if (!ui.btnSound) return;
 	ui.btnSound.classList.toggle('is-muted', !soundEnabled);
@@ -577,9 +615,10 @@ function setSoundEnabled(on) {
 if (ui.btnSound) {
 	ui.btnSound.addEventListener('click', () => {
 		const willEnable = !soundEnabled;
-		if (!willEnable) playClick();
-		setSoundEnabled(willEnable);
-		if (willEnable) playToggle();
+		// FIX26-E: tieng bat/tat khac nhau; tieng tat phai phat khi loa
+		// van dang bat (truoc khi setSoundEnabled(false) khoa am thanh).
+		if (willEnable) { setSoundEnabled(true); playSoundOn(); }
+		else { playSoundOff(); setSoundEnabled(false); }
 	});
 }
 refreshSoundButton();
@@ -590,19 +629,46 @@ function initNeoDrag() {
 	const el = document.querySelector('[data-neo-drag]');
 	if (!el) return;
 	let sx = 0, sy = 0, dx = 0, dy = 0, dragging = false;
-	el.addEventListener('pointerdown', (ev) => { dragging = true; sx = ev.clientX - dx; sy = ev.clientY - dy; el.setPointerCapture(ev.pointerId); el.style.cursor = 'grabbing'; });
+	el.addEventListener('pointerdown', (ev) => { dragging = true; sx = ev.clientX - dx; sy = ev.clientY - dy; el.setPointerCapture(ev.pointerId); el.style.cursor = 'grabbing'; playDragPickup(); });
 	el.addEventListener('pointermove', (ev) => { if (!dragging) return; dx = ev.clientX - sx; dy = ev.clientY - sy; el.style.transform = `translate(${dx}px, ${dy}px)`; });
-	const endDrag = () => { dragging = false; el.style.cursor = 'grab'; };
+	const endDrag = () => { if (dragging) playDragDrop(); dragging = false; el.style.cursor = 'grab'; };
 	el.addEventListener('pointerup', endDrag);
 	el.addEventListener('pointercancel', endDrag);
 }
 initNeoDrag();
-/* Click chung cho mọi nút (đã lọc nút bị khóa): tiếng click chỉ kêu khi âm thanh đang bật,
-   nên không cần sửa từng handler — và không đổi hành vi nào của nút. */
+/* FIX26-E: click chung phan loai theo nut — moi loai thao tac mot tieng
+   rieng, cham dut tinh trang moi nut deu cung 1 tieng click. Khong doi
+   hanh vi nao cua nut, chi them am thanh. */
 document.addEventListener('click', (ev) => {
 	const btn = ev.target && ev.target.closest ? ev.target.closest('button') : null;
 	if (!btn || btn.disabled || btn.id === 'btnSound') return;
+	if (btn.classList.contains('tab-btn')) { playTab(); return; }
+	if (btn.classList.contains('qcard-act')) { playQuestAct(); return; }
+	if (btn.id === 'btnScan') { playScanStart(); return; }
+	if (btn.id === 'btnStart') { playAuto(); return; }
+	if (btn.id === 'btnStop') { playStop(); return; }
 	playClick();
+});
+/* FIX26-E: chon quest / doi bo loc co tieng rieng (change, khong phai click). */
+document.addEventListener('change', (ev) => {
+	const t = ev.target;
+	if (!t || !t.closest) return;
+	if (t.closest('.qcard-check')) { playSelect(); return; }
+	if (t.tagName === 'SELECT') { playFilter(); }
+});
+/* FIX26-E: tieng hover chi tren desktop (pointer fine), rat ngan, am luong
+   thap, chi khi loa da bat; chi phat khi sang nut khac hoac sau 500ms de
+   khong keu lien tuc khi lia chuot trong cung mot nut. */
+let lastHoverBtn = null, lastHoverTime = 0;
+document.addEventListener('mouseover', (ev) => {
+	if (!soundEnabled) return;
+	if (!window.matchMedia || !window.matchMedia('(pointer: fine)').matches) return;
+	const btn = ev.target && ev.target.closest ? ev.target.closest('button') : null;
+	if (!btn || btn.disabled) return;
+	const now = Date.now();
+	if (btn === lastHoverBtn && now - lastHoverTime < 500) return;
+	lastHoverBtn = btn; lastHoverTime = now;
+	playHover();
 });
 
 function toast(message, isError = false) {
@@ -1146,6 +1212,7 @@ function finishLoader(total, breakdown) {
 	if (!progEl) {
 		// chưa từng có dòng tiến trình → chỉ ghi tổng kết
 		if (total) writeScanSummary(total, breakdown, 0);
+		if (total) playScanDone();
 		return;
 	}
 	scanTotal = total || scanTotal;
@@ -1175,6 +1242,8 @@ function finishLoader(total, breakdown) {
 		dropProgress();
 		writeScanSummary(scanTotal, breakdown, secs);
 	}, wait);
+	// FIX26-E: quet that su xong (finishLoader) moi co tieng chime rieng.
+	playScanDone();
 }
 
 function writeScanSummary(total, breakdown, secs) {
@@ -4788,12 +4857,14 @@ function openAccSw() {
 		renderAccountList();
 	}
 	if (t) t.focus();
+	playModalOpen();
 }
 
 /** Đóng popup "Đổi tài khoản" (và modal xác nhận nếu đang mở). */
 function closeAccSw() {
 	if (ui.accSwitchModal) ui.accSwitchModal.hidden = true;
 	if (ui.accConfirmSwitchModal) ui.accConfirmSwitchModal.hidden = true;
+	playModalClose();
 }
 
 /** Modal XÁC NHẬN "Bạn có muốn chuyển tài khoản sang @…/UID ?". */
@@ -6753,9 +6824,11 @@ function openLogoutModal() {
 	}
 	ui.logoutModal.hidden = false;
 	ui.btnLogoutConfirm.focus();
+	playModalOpen();
 }
 function closeLogoutModal() {
 	ui.logoutModal.hidden = true;
+	playModalClose();
 }
 async function confirmLogout() {
 	closeLogoutModal();

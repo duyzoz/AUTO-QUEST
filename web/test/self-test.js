@@ -1138,6 +1138,17 @@ check('FIX26-D: marquee khong cat tu dau, sticker moi tu 1 lan', () => {
 	return 'marquee fade + sticker 1 tu + rotator co nen';
 });
 
+check('FIX26-E: bo sound rieng moi thao tac, WebAudio tu tong hop, mac dinh OFF', () => {
+	const js = read(path.join(APP, 'renderer.js'));
+	for (const fn of ['playTab', 'playSelect', 'playFilter', 'playScanStart', 'playScanDone', 'playQuestAct', 'playAuto', 'playStop', 'playModalOpen', 'playModalClose', 'playSoundOn', 'playSoundOff', 'playDragPickup', 'playDragDrop', 'playHover', 'playSweep']) {
+		assert(js.includes('function ' + fn + '('), 'thieu tieng ' + fn);
+	}
+	assert(js.includes('playSoundOn()') && js.includes('playSoundOff()'), 'nut loa phai dung tieng bat/tat rieng');
+	assert(js.includes("btn.classList.contains('tab-btn')") && js.includes("btn.id === 'btnScan'"), 'click chung phai phan loai tab/scan');
+	assert(!/\.mp3|\.wav|\.ogg/.test(js), 'khong file am thanh, chi synth');
+	return '15 tieng rieng + phan loai click + khong file';
+});
+
 
 check('NEO P3: quest card v2 — progress bar, state sticker, done neo, toolbar', () => {
 	const css = read(path.join(APP, 'styles.css'));
