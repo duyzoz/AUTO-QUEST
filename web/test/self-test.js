@@ -1099,6 +1099,18 @@ check('NEO P1: neo tokens both themes + button/chip/tab/modal sticker language',
 	return 'token 2 theme + nut/chip/tab/modal neo';
 });
 
+
+check('NEO P2: shell bento + hero two-column (hero visible only) + stats bento', () => {
+	const css = read(path.join(APP, 'styles.css'));
+	const neo = css.slice(css.indexOf('NEO-BRUTALIST P2'));
+	assert(/\.card \{[^}]*box-shadow: 4px 4px 0 var\(--neo-shadow\)/.test(neo), 'card bento co bong cung');
+	assert(/#pageQuest:has\(> \.profile-hero:not\(\[hidden\]\)\)/.test(neo), 'hero 2 cot chi khi hero hien');
+	assert(/\.stats-tile-value \{[^}]*font-size: 32px/.test(neo), 'bento tile so lon 32px');
+	assert(!/\.profile-hero\s+\./.test(neo), 'khong duoc cham vao noi that hero');
+	assert(!/\.up-row \{[^}]*border/.test(neo), 'up-row giu borderless');
+	return 'shell bento + hero 2 cot + stats bento';
+});
+
 /* ── In kết quả ────────────────────────────────────────────────────────── */
 for (const r of results) {
 	const tag = r.ok ? 'PASS' : 'FAIL';

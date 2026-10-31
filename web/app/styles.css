@@ -6665,3 +6665,34 @@ body.lite .claim-pill-spin { animation-duration: 1.6s; }
 	.tab-btn { transition: none; }
 	.nav-item { transition: none; }
 }
+/* ============================================================
+   NEO-BRUTALIST P2 — Shell, hero two-column, bento dashboard
+   (W16-W20). Sidebar position kept (absolute, z-index 40) and
+   topbar position kept (fixed, z-index 40) — only their surfaces
+   change, so no button is ever covered. Hero two-column is a
+   grid on #pageQuest only when the hero is actually visible
+   (:has + :not([hidden])); when the hero is hidden the page keeps
+   its normal single column. .profile-hero inner is NOT touched:
+   only its outer frame. Orb data comes from the existing
+   .stats-row (.side-balance / .console-card) — no new numbers,
+   no simulated money, confirmed vs estimated stay separate as
+   the app already renders them.
+   ============================================================ */
+.sidebar { background: var(--neo-surface); }
+.side-inner { padding: 16px; gap: 16px; }
+.topbar { border-bottom: 2px solid var(--neo-line); box-shadow: 4px 4px 0 var(--neo-shadow); background: var(--neo-surface); }
+.profile-hero { border: 2px solid var(--neo-line); border-radius: 20px; box-shadow: 4px 4px 0 var(--neo-shadow); }
+.card { border: 2px solid var(--neo-line); border-radius: 20px; box-shadow: 4px 4px 0 var(--neo-shadow); background: var(--neo-surface); }
+.console-card { border: 2px solid var(--neo-line); border-radius: 20px; box-shadow: 4px 4px 0 var(--neo-shadow); background: var(--neo-surface); }
+.stat-card { border: 2px solid var(--neo-line); border-radius: 20px; box-shadow: 4px 4px 0 var(--neo-shadow); background: var(--neo-surface); }
+.stats-tiles { gap: 16px; }
+.stats-tile { border: 2px solid var(--neo-line); border-radius: 16px; box-shadow: 4px 4px 0 var(--neo-shadow); background: var(--neo-surface); padding: 16px; }
+.stats-tile-value { font-size: 32px; font-weight: 800; }
+.stats-tile-label { font-weight: 800; font-size: 14px; }
+.config-card { border: 2px solid var(--neo-line); border-radius: 20px; box-shadow: 4px 4px 0 var(--neo-shadow); background: var(--neo-surface); }
+@media (min-width: 1024px) {
+	#pageQuest:has(> .profile-hero:not([hidden])) { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+	#pageQuest:has(> .profile-hero:not([hidden])) > .profile-hero { grid-column: 1; }
+	#pageQuest:has(> .profile-hero:not([hidden])) > .stats-row { grid-column: 2; grid-row: 1; flex-direction: column; }
+	#pageQuest:has(> .profile-hero:not([hidden])) > .quests-card { grid-column: 1 / -1; }
+}
