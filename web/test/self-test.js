@@ -1789,31 +1789,99 @@ check('OVERLAP: orb de mep hero trai + sponsor cung hang + nhan Chay Ngay', () =
 	// (1) Rename: nhan moi co, nhan cu het trong renderer.
 	assert(js.includes("'Chạy Ngay'") && js.includes("'Run now'"), 'thieu nhan Chay Ngay / Run now');
 	assert(!js.includes('Phát Ngay') && !js.includes('Play now'), 'renderer van con nhan cu Phat Ngay / Play now');
-	// (2) Template: orb trong banner (truoc than the), khong con hang main rieng,
-	// JS dua orb xuong cuoi banner de ve tren media theo DOM order (khong z-index moi).
-	assert(!js.includes('<div class="qcard-main">'), 'template van con hang qcard-main rieng (orb phai vao banner)');
+	// (2) Template (ORBFIX): orb trong hang in-flow .qcard-overlap nam giua
+	// banner va than the, khong con trong banner, khong con hang main rieng;
+	// JS KHONG duoc keo orb ve banner nua.
+	assert(!js.includes('<div class="qcard-main">'), 'template van con hang qcard-main rieng');
 	const tplReward = js.indexOf('<div class="qcard-reward">');
+	const tplOverlap = js.indexOf('<div class="qcard-overlap">');
 	const tplBody = js.indexOf('<div class="qcard-body">');
-	assert(tplReward > 0 && tplBody > tplReward, 'orb phai nam trong banner, truoc than the');
-	assert(/banner\.appendChild\(r\.reward\)/.test(js), 'JS phai dua orb xuong cuoi banner de ve tren media');
-	// (3) Cascade thang that: banner khong cat, orb tuyet doi de mep trai, the van cat mep ngoai.
+	assert(tplOverlap > 0 && tplReward > tplOverlap && tplBody > tplReward, 'orb phai nam trong hang overlap giua banner va than the');
+	assert(!/banner\.appendChild\(r\.reward\)/.test(js), 'JS khong duoc keo orb ve banner (orb o hang in-flow)');
+	const tplPub = js.indexOf('<div class="qcard-pub">');
+	assert(tplPub > tplOverlap && tplPub < tplBody, 'dong quang ba phai nam trong hang overlap, ben phai orb');
+	// (3) Cascade thang that (ORBFIX): banner khong cat + tuong doi (phong
+	// thu), orb in-flow khong absolute, hang overlap keo am -35px + dem
+	// trai/phai 16px, the van cat mep ngoai.
 	const elBanner = shotEl(['qcard-banner']);
 	const elReward = shotEl(['qcard-reward']);
-	const ancReward = [shotEl(['qcard-banner']), shotEl(['qcard'])];
-	assert(shotWin(rules, elBanner, 'light', [shotEl(['qcard'])], 'overflow') === 'visible', 'banner phai overflow visible de orb tran xuong khong bi cat');
-	assert(shotWin(rules, elReward, 'light', ancReward, 'position') === 'absolute', 'orb phai absolute trong banner');
-	assert(shotWin(rules, elReward, 'light', ancReward, 'left') === '16px', 'orb phai sat trai 16px');
-	assert(shotWin(rules, elReward, 'light', ancReward, 'bottom') === '-35px', 'orb phai bottom -35px (tam tren mep duoi hero)');
+	const ancOverlap = [shotEl(['qcard-overlap']), shotEl(['qcard'])];
+	assert(shotWin(rules, elBanner, 'light', [shotEl(['qcard'])], 'overflow') === 'visible', 'banner phai overflow visible');
+	assert(shotWin(rules, elBanner, 'light', [shotEl(['qcard'])], 'position') === 'relative', 'banner phai position relative (phong thu)');
+	assert(shotWin(rules, elReward, 'light', ancOverlap, 'position') !== 'absolute', 'orb khong duoc absolute (phai in-flow)');
+	assert(shotWin(rules, elReward, 'light', ancOverlap, 'position') === 'relative', 'orb giu relative de vong ring neo dung (khong static)');
+	assert(shotWin(rules, shotEl(['qcard-overlap']), 'light', [shotEl(['qcard'])], 'margin-top') === '-35px', 'hang overlap phai margin-top -35px (tam orb tren mep hero)');
+	assert(shotWin(rules, shotEl(['qcard-overlap']), 'light', [shotEl(['qcard'])], 'padding-left') === '16px', 'hang overlap phai padding-left 16px (orb goc trai, khong vuot mep)');
+	assert(shotWin(rules, shotEl(['qcard-overlap']), 'light', [shotEl(['qcard'])], 'padding-right') === '16px', 'hang overlap phai padding-right 16px');
 	assert(shotWin(rules, shotEl(['qcard']), 'light', [], 'overflow') === 'hidden', 'the van overflow hidden de cat mep ngoai');
-	// (4) Hero tu bo tron goc tren; sponsor cung hang ben phai orb; than the bot padding tren.
+	assert(!/\.qcard-banner \.qcard-reward\s*\{[^}]*position:\s*absolute/.test(css), 'khong con rule orb absolute trong banner');
+	// (4) Hero tu bo tron goc tren; sponsor trong hang overlap ben phai orb
+	// (khong padding-left 80px nua), chu nam tron tren nen toi duoi mep hero;
+	// than the giu padding tren 12px.
 	assert(/\.qcard-banner-hero, \.qcard-banner-video \{[^}]*border-radius: 20px 20px 0 0/.test(css), 'anh/video hero phai tu bo tron goc tren 20px');
-	assert(shotWin(rules, shotEl(['qcard-pub']), 'light', [shotEl(['qcard-body']), shotEl(['qcard'])], 'padding-left') === '80px', 'dong quang ba phai padding-left 80px (ben phai orb)');
+	assert(shotWin(rules, shotEl(['qcard-pub']), 'light', ancOverlap, 'padding-left') !== '80px', 'dong quang ba khong con padding-left 80px (da o ben phai orb trong hang overlap)');
+	assert(shotWin(rules, shotEl(['qcard-pub']), 'light', ancOverlap, 'align-self') === 'flex-end', 'dong quang ba phai align-self flex-end (chu tron tren nen toi duoi mep hero)');
 	const ancBody = [{ tag: 'div', classes: [], attrs: {}, id: 'pageQuest' }, shotEl(['qcard'])];
-	assert(shotWin(rules, shotEl(['qcard-body']), 'light', ancBody, 'padding-top') === '12px', 'than the phai padding-top 12px de dong quang ba nam giua nua duoi orb');
+	assert(shotWin(rules, shotEl(['qcard-body']), 'light', ancBody, 'padding-top') === '12px', 'than the phai padding-top 12px');
 	// (5) Dong nhat: mot khoi orb duy nhat trong template, khong class orb dong theo quest.
 	assert((js.match(/<div class="qcard-reward">/g) || []).length === 1, 'template phai co dung mot khoi orb (hinh hoc dong nhat moi the)');
 	assert(!/qcard-reward-\$\{/.test(js) && !/['"]qcard-reward-['"]\s*\+/.test(js), 'khong duoc class orb dong theo quest (chi class tinh qcard-reward-art cho phep)');
-	return 'orb de mep hero trai + sponsor cung hang + Chay Ngay + hinh hoc dong nhat (gioi han: assert tinh, khong phai render trinh duyet that)';
+	return 'orb in-flow de mep hero trai + sponsor cung hang + Chay Ngay + hinh hoc dong nhat (gioi han: assert tinh, khong phai render trinh duyet that)';
+});
+
+check('ORBFLOW: orb in-flow khong the vuot mep ngang the (ke ca cot dau tien)', () => {
+	const js = read(path.join(APP, 'renderer.js'));
+	const css = read(path.join(APP, 'styles.css'));
+	const rules = shotParseRules(css);
+	// Hang overlap la flex item in-flow cua the (flex column): thu tu
+	// template banner -> overlap -> body, khong phan tu tuyet doi nao.
+	const tplBanner = js.indexOf('<div class="qcard-banner">');
+	const tplOverlap = js.indexOf('<div class="qcard-overlap">');
+	const tplBody = js.indexOf('<div class="qcard-body">');
+	assert(tplBanner > 0 && tplOverlap > tplBanner && tplBody > tplOverlap, 'thu tu template phai la banner -> overlap -> body');
+	assert(!/\.qcard-overlap\s*\{[^}]*position:\s*absolute/.test(css), 'hang overlap khong duoc absolute');
+	assert(!/\.qcard-overlap\s*\{[^}]*left:\s*-/.test(css), 'hang overlap khong duoc left am');
+	// Hinh hoc chong vuot mep: orb co dinh 70px khong co (flex 0 0 auto),
+	// hang co dem 2 ben + min-width 0, sponsor co lai duoc (flex 1 + min-width 0).
+	const elOverlap = shotEl(['qcard-overlap']);
+	const ancCard = [shotEl(['qcard'])];
+	assert(shotWin(rules, elOverlap, 'light', ancCard, 'display') === 'flex', 'hang overlap phai display flex');
+	assert(shotWin(rules, elOverlap, 'light', ancCard, 'min-width') === '0', 'hang overlap phai min-width 0 (khong doi rong vuot the)');
+	assert(shotWin(rules, shotEl(['qcard-reward']), 'light', [elOverlap, shotEl(['qcard'])], 'flex') === '0 0 auto', 'orb phai flex 0 0 auto (khong co, khong gian)');
+	assert(shotWin(rules, shotEl(['qcard-reward']), 'light', [elOverlap, shotEl(['qcard'])], 'width') === '70px', 'orb phai rong dung 70px');
+	assert(shotWin(rules, shotEl(['qcard-pub']), 'light', [elOverlap, shotEl(['qcard'])], 'flex') === '1 1 auto', 'sponsor phai flex 1 1 auto (co lai trong hang)');
+	assert(shotWin(rules, shotEl(['qcard-pub']), 'light', [elOverlap, shotEl(['qcard'])], 'min-width') === '0', 'sponsor phai min-width 0');
+	return 'hang overlap in-flow + orb co dinh 70px + dem 16px 2 ben + sponsor co lai (gioi han: assert tinh, khong phai render trinh duyet that)';
+});
+
+check('RUNRETRY: bam Chay Ngay xoa co chan + the chan phan biet chua nhan vs da nhan', () => {
+	const js = read(path.join(APP, 'renderer.js'));
+	const qm = read(path.join(WEB, 'engine', 'src', 'questManager.js'));
+	const bundle = read(path.join(WEB, 'engine-bundle.js'));
+	// (1) Nhanh play phai xoa co chan TRUOC startRun.
+	const playAt = js.indexOf("if (act === 'play')");
+	assert(playAt > 0, 'thieu nhanh play');
+	const claimAt = js.indexOf("if (act === 'claim'", playAt);
+	assert(claimAt > playAt, 'khong xac dinh duoc cuoi nhanh play');
+	const playRegion = js.slice(playAt, claimAt);
+	const clearAt = playRegion.indexOf('quest.heartbeatBlocked = false');
+	assert(clearAt > 0, 'nhanh play phai xoa quest.heartbeatBlocked = false');
+	assert(playRegion.includes('quest.heartbeatBlockedAt = 0'), 'nhanh play phai xoa heartbeatBlockedAt');
+	assert(playRegion.includes("quest.heartbeatBlockedReason = ''"), 'nhanh play phai xoa heartbeatBlockedReason');
+	assert(playRegion.indexOf('startRun(') > clearAt, 'xoa co chan phai xay ra TRUOC startRun');
+	assert(!/enrollQuest|api\.enroll/.test(playRegion), 'nhanh play khong duoc tu enroll (chi huong dan)');
+	// (2) Chan doan the chan phan biet enrolled === false.
+	assert(js.includes('q.enrolled === false'), 'chan doan phai re nhanh q.enrolled === false');
+	assert(js.includes('chưa được nhận trong Discord thật'), 'thieu huong dan chua nhan (VI)');
+	assert(js.includes('has not been accepted in real Discord'), 'thieu huong dan chua nhan (EN)');
+	assert(js.includes('mở game trong Discord thật và chơi'), 'huong dan da nhan (VI) phai giu nguyen');
+	// (3) Engine gui enrolled: payload chan + muc inventory + bundle.
+	const enrolledUses = (qm.match(/enrolled: typeof quest\.isEnrolledQuest/g) || []).length;
+	assert(enrolledUses >= 2, `engine phai gui enrolled o ca payload chan va muc inventory (thay ${enrolledUses})`);
+	assert(bundle.includes('isEnrolledQuest'), 'bundle engine phai chua isEnrolledQuest (da rebuild)');
+	assert(js.includes('enrolled: typeof item.enrolled'), 'map inventory phai truyen enrolled co dieu kien (khong de undefined xoa gia tri cu)');
+	assert(js.includes('enrolled: typeof d.enrolled'), 'handler chan phai truyen enrolled co dieu kien tu payload');
+	return 'play xoa co chan truoc startRun + chan doan 2 truong hop + engine gui enrolled';
 });
 
 /* ── In kết quả ────────────────────────────────────────────────────────── */

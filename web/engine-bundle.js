@@ -877,6 +877,11 @@ class QuestManager {
             questAppId,
             message: lastMsg,
             reason: 'Discord từ chối heartbeat (401) cả appId task lẫn appId quest — mở game trong Discord thật và chơi, app sẽ theo dõi tiến độ qua quét.',
+            // ORBFIX: trạng thái nhận quest thật (user_status.enrolled_at)
+            // để UI phân biệt "chưa nhận quest" với "đã nhận nhưng 401".
+            // Phòng thủ: getQuestCardData còn được gọi với object thuần
+            // (mock test) không có method — lúc đó đọc thẳng userStatus.
+            enrolled: typeof quest.isEnrolledQuest === 'function' ? quest.isEnrolledQuest() : Boolean(quest.userStatus?.enrolled_at),
             secondsDone,
             secondsNeeded,
         });
@@ -1079,6 +1084,10 @@ class QuestManager {
             // "Đã làm" hiện đúng "nhận bao nhiêu, lúc nào" khi rê chuột.
             orbs: orbCount,
             claimedAt: quest.userStatus?.claimed_at || null,
+            // ORBFIX: trạng thái nhận quest thật — UI dùng để hướng dẫn
+            // thẻ bị chặn heartbeat (chưa nhận vs đã nhận nhưng 401).
+            // Phòng thủ như payload chặn: object thuần không có method.
+            enrolled: typeof quest.isEnrolledQuest === 'function' ? quest.isEnrolledQuest() : Boolean(quest.userStatus?.enrolled_at),
             // Wave#102: payload claim của UI phải giống engine — gửi nguyên trạng
             // traffic metadata (undefined thì JSON bỏ field, KHÔNG đổi thành null).
             traffic_metadata_raw: quest.raw?.traffic_metadata_raw,

@@ -6351,19 +6351,27 @@ body[data-page="quest"] .page.active { flex: 1 1 auto; min-height: 0; }
    va orb (nam trong the) khong bi cat. */
 .qcard-banner { overflow: visible; }
 .qcard-banner-hero, .qcard-banner-video { border-radius: 20px 20px 0 0; }
-/* Orb de mep: hop 70px dat tuyet doi, tam dung tren mep duoi hero
-   (bottom -35px = nua hop 70px, nua tren hero nua duoi than the),
-   trai 16px. Vong + % giu nguyen cach can giua trong hop 70px
-   cua SHOTFIX nen van dong tam, khong lech. */
-.qcard-banner .qcard-reward { position: absolute; left: 16px; bottom: -35px; width: 70px; height: 70px; }
+/* ORBFIX: orb de mep bang IN-FLOW, khong absolute — hang .qcard-overlap
+   la flex item cua .qcard (flex column) nam ngay sau banner: margin-top
+   -35px keo hang len sao cho tam hop orb 70px dung tren mep duoi hero
+   (nua tren hero, nua duoi than the); padding trai/phai 16px nen orb
+   khong bao gio vuot mep ngang the, ke ca cot dau tien. Hang ve sau
+   banner theo DOM order nen orb ve tren art hero (khong z-index moi).
+   .qcard-reward GIU position:relative (khong absolute): vong .qring
+   absolute can khung reward lam goc toa do — relative khong offset van
+   la in-flow binh thuong; dat static se lam vong neo vao .qcard.
+   Sponsor align-self:flex-end de chu nam tron tren nen toi cua than
+   the (duoi mep hero), khong de len art hero — dam bao tuong phan. */
+.qcard-banner { position: relative; overflow: visible; }
+.qcard-overlap { display: flex; align-items: center; gap: 16px; min-width: 0; margin-top: -35px; padding-left: 16px; padding-right: 16px; }
+.qcard-overlap .qcard-reward { position: relative; flex: 0 0 auto; width: 70px; height: 70px; }
+.qcard-overlap .qcard-pub { flex: 1 1 auto; min-width: 0; align-self: flex-end; }
 /* Logo game nang len khoi vung orb de (orb chiem 35px tren mep)
    de khong bi orb che khi logo nam goc trai duoi banner. */
 .qcard-logo { bottom: 44px; }
-/* Hang quang ba cung hang voi nua duoi orb: than the bot padding
-   tren xuong 12px de dong chu nam giua nua duoi orb (tam ~18px
-   duoi mep), padding trai 80px (64 orb + 16 gap) de chu bat dau
-   ben phai orb. Selector #pageQuest thang rule mobile
-   .qcard-body padding 16px (do dac hieu), khong phu thuoc thu
-   tu file. */
+/* ORBFIX: dong quang ba khong con padding trai 80px nua — no nam
+   trong hang .qcard-overlap ngay ben phai orb (gap 16px). Than the
+   giu padding tren 12px lam khoang cach toi detail. Selector
+   #pageQuest thang rule mobile .qcard-body padding 16px (do dac
+   hieu), khong phu thuoc thu tu file. */
 #pageQuest .qcard-body { padding-top: 12px; padding-right: 16px; padding-bottom: 16px; padding-left: 16px; }
-.qcard-pub { padding-left: 80px; }

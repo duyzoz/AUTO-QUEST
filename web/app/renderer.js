@@ -1783,6 +1783,8 @@ function buildQuestCard(q) {
 		<div class="qcard-banner">
 			${checkHtml}
 			<span class="qcard-state"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="12" r="6"/></svg><span class="qcard-state-text"></span></span>
+		</div>
+		<div class="qcard-overlap">
 			<div class="qcard-reward">
 				<svg class="qring" viewBox="0 0 44 44" aria-hidden="true">
 					<circle class="qring-bg" cx="22" cy="22" r="20"></circle>
@@ -1791,8 +1793,6 @@ function buildQuestCard(q) {
 				<span class="qcard-reward-art"></span>
 				<span class="qcard-pct">0%</span>
 			</div>
-		</div>
-		<div class="qcard-body">
 			<div class="qcard-pub">
 				<span class="qcard-pub-l">
 					<span class="qcard-pub-caption">${en ? 'Promoted by' : 'Được quảng bá bởi'}</span>
@@ -1801,6 +1801,8 @@ function buildQuestCard(q) {
 				</span>
 				<span class="qcard-end"></span>
 			</div>
+		</div>
+		<div class="qcard-body">
 			<div class="qcard-info">
 				<span class="qcard-kicker"></span>
 				<span class="qcard-title"></span>
@@ -1922,10 +1924,18 @@ function updateQuestFoot(node, q) {
 	if (diagEl) {
 		// FIX64-P0 wave 4: hướng dẫn bằng chữ (không chỉ màu) cho quest bị
 		// chặn heartbeat — dùng chung ô chẩn đoán sẵn có của thẻ.
+		// ORBFIX: hướng dẫn của thẻ bị chặn phân biệt theo trạng thái nhận
+		// quest (enrolled) — q.enrolled lấy từ engine (xem payload
+		// quest:heartbeat-blocked + mục inventory); undefined = chưa rõ
+		// thì giữ hướng dẫn chung cũ, không đoán là chưa nhận.
 		const blockedText = q.heartbeatBlocked
-			? en
-				? 'Discord rejected heartbeat (401) — play the game in the real Discord client; the app tracks progress via scans.'
-				: 'Heartbeat bị Discord từ chối (401) — mở game trong Discord thật và chơi, app theo dõi tiến độ qua quét.'
+			? q.enrolled === false
+				? en
+					? 'This quest has not been accepted in real Discord — open real Discord, accept this quest there, then press "Run now" again.'
+					: 'Nhiệm vụ này chưa được nhận trong Discord thật — mở Discord thật, nhận nhiệm vụ này ở đó, rồi bấm "Chạy Ngay" lại.'
+				: en
+					? 'Discord rejected heartbeat (401) — play the game in the real Discord client; the app tracks progress via scans.'
+					: 'Heartbeat bị Discord từ chối (401) — mở game trong Discord thật và chơi, app theo dõi tiến độ qua quét.'
 			: '';
 		// FIX64-P3 (W37): ly do claim loi phai hien NGAY TREN THE (nut chi
 		// noi "Thu lai"), khong chi trong toast/log de roi troi mat.
@@ -2093,10 +2103,10 @@ function updateQuestCard(node, q) {
 			logo.src = logoUrl;
 			banner.appendChild(logo);
 		}
-		// OVERLAP: orb phải vẽ trên cùng media banner (thứ tự DOM, không
-		// z-index mới) — hero/logo thêm sau template sẽ vẽ trên orb nếu
-		// không đưa orb xuống cuối; appendChild node đã cuối là no-op.
-		if (r.reward) banner.appendChild(r.reward);
+		// ORBFIX: orb KHONG con trong banner — no nam trong hang in-flow
+		// .qcard-overlap ngay sau banner (margin am keo len mep hero),
+		// nen khong duoc keo no ve banner nua. Hang ve sau banner theo
+		// DOM order nen orb van ve tren art hero (khong z-index moi).
 		node.dataset.bannerDiag = heroMedia ? '' : bannerReason;
 	}
 
@@ -2870,7 +2880,7 @@ function renderQuests() {
 		// Waves#159: dữ liệu + bộ lọc không đổi thì không cập nhật lại
 		// node (giữ ảnh đã nạp, giữ vị trí cuộn, tránh nháy toàn lưới).
 		const filterSig = `${questFilter}|${questQuery}|${currentTab}|${doneRewardFilter}|${doneSort}`;
-		const sig = [q.status, q.orbs, q.claimedAt, q.rewardKind, q.rewardAsset, q.rewardCode ? 'code' : '', q.logotype, q.logotypeDark, q.logotypeLight, q.gameTile, q.name, q.gameTitle, q.flag, q.claimPhase, q.claimBusy, q.claimError, q.claimErrorAt, q.heartbeatBlocked, q.heartbeatBlockedAt, q.questErrorMsg, q.questErrorAt, q.running, q.secondsDone, q.secondsNeeded, q.task, filterSig].join('|');
+		const sig = [q.status, q.orbs, q.claimedAt, q.rewardKind, q.rewardAsset, q.rewardCode ? 'code' : '', q.logotype, q.logotypeDark, q.logotypeLight, q.gameTile, q.name, q.gameTitle, q.flag, q.claimPhase, q.claimBusy, q.claimError, q.claimErrorAt, q.heartbeatBlocked, q.heartbeatBlockedAt, q.enrolled, q.questErrorMsg, q.questErrorAt, q.running, q.secondsDone, q.secondsNeeded, q.task, filterSig].join('|');
 		if (questRenderSig.get(id) !== sig) {
 			questRenderSig.set(id, sig);
 			if (kind === 'card') updateQuestCard(node, q);
@@ -4368,6 +4378,13 @@ function onQuestActClick(e) {
 		// Đang có đợt chạy khác thì không chồng đợt mới: chỉ chọn quest + báo.
 		e.preventDefault();
 		e.stopPropagation();
+		// ORBFIX: bấm "Chạy Ngay" trên quest từng bị chặn heartbeat phải xoá
+		// cờ chặn NGAY LÚC BẤM (trước startRun) để đợt thử lại hiện rõ,
+		// không bị thẻ chặn cũ che mất — dư thừa cũng vô hại vì sự kiện
+		// run-start của engine cũng xoá cờ này (xem case quest đang chạy).
+		quest.heartbeatBlocked = false;
+		quest.heartbeatBlockedAt = 0;
+		quest.heartbeatBlockedReason = '';
 		const runBusy = state === 'starting' || state === 'running' || state === 'stopping' || state === 'scanning';
 		selected.clear();
 		selected.add(String(quest.id));
@@ -4569,6 +4586,11 @@ async function handleEvent(evt) {
 					rewardName: item.rewardName || '',
 					// Waves 43: thời điểm NHẬN THẬT để ô "Đã làm" hiện đúng "lúc nào".
 					claimedAt: item.claimedAt || null,
+					// ORBFIX: trạng thái ĐÃ NHẬN quest trong Discord thật (engine
+					// gửi kèm từ user_status.enrolled_at) — dùng để hướng dẫn
+					// thẻ bị chặn heartbeat; chỉ ghi đè khi engine gửi boolean,
+					// không để undefined của cache cũ xoá giá trị đã biết.
+					enrolled: typeof item.enrolled === 'boolean' ? item.enrolled : (prev ? prev.enrolled : undefined),
 					// Waves 32: platform THẬT (Discord cần đúng giá trị khi claim).
 					platform: typeof item.platform === 'number' ? item.platform : 0,
 					// Wave#102: traffic metadata Discord cấp lúc enroll — claim tay
@@ -4698,6 +4720,10 @@ async function handleEvent(evt) {
 				flag: '',
 				heartbeatBlocked: true,
 				heartbeatBlockedReason: d.reason || d.message || 'Discord từ chối heartbeat (401) — mở game trong Discord thật và chơi, app sẽ theo dõi tiến độ qua quét.',
+				// ORBFIX: trạng thái nhận quest kèm theo payload chặn (engine
+				// tính từ user_status.enrolled_at) — chỉ ghi đè khi boolean,
+				// không để payload thiếu field xoá giá trị đã biết.
+				enrolled: typeof d.enrolled === 'boolean' ? d.enrolled : q.enrolled,
 				secondsDone: typeof d.secondsDone === 'number' ? d.secondsDone : q.secondsDone,
 				secondsNeeded: typeof d.secondsNeeded === 'number' ? d.secondsNeeded : q.secondsNeeded,
 			});
@@ -8487,6 +8513,9 @@ function stripInventoryItem(item) {
 		rewardIsVideo: item.rewardIsVideo === true,
 		rewardName: item.rewardName || '',
 		claimedAt: item.claimedAt || null,
+		// ORBFIX: giữ trạng thái nhận quest trong cache để hướng dẫn thẻ
+		// bị chặn không mất sau khi tải lại trang (boolean, không phải code).
+		enrolled: item.enrolled,
 		platform: typeof item.platform === 'number' ? item.platform : 0,
 	};
 }
