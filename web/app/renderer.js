@@ -1783,6 +1783,14 @@ function buildQuestCard(q) {
 		<div class="qcard-banner">
 			${checkHtml}
 			<span class="qcard-state"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="12" r="6"/></svg><span class="qcard-state-text"></span></span>
+			<div class="qcard-reward">
+				<svg class="qring" viewBox="0 0 44 44" aria-hidden="true">
+					<circle class="qring-bg" cx="22" cy="22" r="20"></circle>
+					<circle class="qring-fg" cx="22" cy="22" r="20"></circle>
+				</svg>
+				<span class="qcard-reward-art"></span>
+				<span class="qcard-pct">0%</span>
+			</div>
 		</div>
 		<div class="qcard-body">
 			<div class="qcard-pub">
@@ -1793,22 +1801,12 @@ function buildQuestCard(q) {
 				</span>
 				<span class="qcard-end"></span>
 			</div>
-			<div class="qcard-main">
-				<div class="qcard-reward">
-					<svg class="qring" viewBox="0 0 44 44" aria-hidden="true">
-						<circle class="qring-bg" cx="22" cy="22" r="20"></circle>
-						<circle class="qring-fg" cx="22" cy="22" r="20"></circle>
-					</svg>
-					<span class="qcard-reward-art"></span>
-					<span class="qcard-pct">0%</span>
-				</div>
-				<div class="qcard-info">
-					<span class="qcard-kicker"></span>
-					<span class="qcard-title"></span>
-					<span class="qcard-mult"></span>
-					<span class="qcard-desc"></span>
-					<span class="qcard-prog"></span>
-				</div>
+			<div class="qcard-info">
+				<span class="qcard-kicker"></span>
+				<span class="qcard-title"></span>
+				<span class="qcard-mult"></span>
+				<span class="qcard-desc"></span>
+				<span class="qcard-prog"></span>
 			</div>
 		</div>
 		<!-- Waves 31: hàng nút trạng thái — Chưa làm (khoá) / Nhận (bấm được) / Đã nhận -->
@@ -1825,7 +1823,7 @@ function buildQuestCard(q) {
 
 /* Waves 31: nội dung + hành vi nút trạng thái theo đúng trạng thái thật của quest.
    - todo      → "Chưa làm"      (disabled, không bấm)
-   - play      → "Phát Ngay"     (GRID-DISCORD: chọn riêng quest + chạy Auto)
+   - play      → "Chạy Ngay"     (GRID-DISCORD: chọn riêng quest + chạy Auto)
    - claimable → "Nhận N Orbs"   (bấm → claim thật, captcha thì mở modal)
    - busy      → "Đang nhận…"    (đang gọi Discord)
    - claimed   → "Đã nhận"       (tick xanh, không bấm)
@@ -1902,12 +1900,12 @@ function updateQuestFoot(node, q) {
 		act = 'todo';
 		label = en ? 'Working…' : 'Đang cày…';
 	} else if (canSelectQuest(q)) {
-		// GRID-DISCORD: nút "Phát Ngay" kiểu Discord cho quest chưa chạy mà
+		// GRID-DISCORD: nút "Chạy Ngay" kiểu Discord cho quest chưa chạy mà
 		// chọn được — bấm = chọn riêng quest này + chạy Auto bằng đúng đường
 		// startRun của nút Auto ORBs (xem nhánh 'play' trong onQuestActClick).
 		// Quest thủ công (không chọn được) giữ nguyên nút "Chưa làm" khoá.
 		act = 'play';
-		label = en ? 'Play now' : 'Phát Ngay';
+		label = en ? 'Run now' : 'Chạy Ngay';
 	} else {
 		act = 'todo';
 		label = en ? 'To do' : 'Chưa làm';
@@ -1954,6 +1952,7 @@ function updateQuestCard(node, q) {
 		node._r ||
 		(node._r = {
 			banner: node.querySelector('.qcard-banner'),
+			reward: node.querySelector('.qcard-reward'),
 			state: node.querySelector('.qcard-state-text'),
 			bar: node.querySelector('.neo-bar-fill'),
 			barWrap: node.querySelector('.neo-bar'),
@@ -2094,6 +2093,10 @@ function updateQuestCard(node, q) {
 			logo.src = logoUrl;
 			banner.appendChild(logo);
 		}
+		// OVERLAP: orb phải vẽ trên cùng media banner (thứ tự DOM, không
+		// z-index mới) — hero/logo thêm sau template sẽ vẽ trên orb nếu
+		// không đưa orb xuống cuối; appendChild node đã cuối là no-op.
+		if (r.reward) banner.appendChild(r.reward);
 		node.dataset.bannerDiag = heroMedia ? '' : bannerReason;
 	}
 
@@ -4360,7 +4363,7 @@ function onQuestActClick(e) {
 		return;
 	}
 	if (act === 'play') {
-		// GRID-DISCORD: "Phát Ngay" = chọn RIÊNG quest này rồi chạy Auto bằng
+		// GRID-DISCORD: "Chạy Ngay" = chọn RIÊNG quest này rồi chạy Auto bằng
 		// đúng đường startRun của nút Auto ORBs — không thêm logic engine nào.
 		// Đang có đợt chạy khác thì không chồng đợt mới: chỉ chọn quest + báo.
 		e.preventDefault();

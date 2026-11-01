@@ -1512,10 +1512,10 @@ check('GRID-DISCORD: luoi 3 cot + khung cuon noi bo + the Discord + cam lech Orb
 	assert(js.includes('qcard-mult'), 'thieu span badge nhan tren the');
 	assert(/q\.multiplier|q\.rewardMultiplier/.test(js), 'badge nhan phai doc he so tu du lieu, khong bia');
 	// Nut Phat Ngay: nhan + hanh vi play that (khong phai nut chet).
-	assert(js.includes("'Phát Ngay'"), 'thieu nhan Phat Ngay');
-	assert(/act = 'play'/.test(js), 'thieu act play cho nut Phat Ngay');
+	assert(js.includes("'Chạy Ngay'"), 'thieu nhan Chay Ngay');
+	assert(/act = 'play'/.test(js), 'thieu act play cho nut Chay Ngay');
 	assert(/act === 'play'/.test(js), 'thieu nhanh click play');
-	assert(/\.qcard-act\[data-act="play"\] \{[^}]*cursor: pointer/.test(grid), 'nut Phat Ngay phai bam duoc (pointer)');
+	assert(/\.qcard-act\[data-act="play"\] \{[^}]*cursor: pointer/.test(grid), 'nut Chay Ngay phai bam duoc (pointer)');
 	// Cam lech: vong + orb + video + logo.
 	assert(/\.qcard-reward \{[^}]*width: 70px; height: 70px/.test(grid), 'hop reward phai 70px de dong tam vong');
 	assert(/\.qcard-reward-art \{[^}]*width: 64px; height: 64px; aspect-ratio: 1 \/ 1/.test(grid), 'art Orb phai 64px ti le 1/1');
@@ -1526,7 +1526,7 @@ check('GRID-DISCORD: luoi 3 cot + khung cuon noi bo + the Discord + cam lech Orb
 	// P0/P2 khong duoc pha.
 	assert(js.includes('Cần chơi trong Discord') && js.includes('heartbeatBlocked'), 'khong duoc pha heartbeat-blocked (P0)');
 	assert(css.includes('gap: 28px'), 'khong duoc pha gap 28px (P2)');
-	return 'luoi 3 cot + khung cuon noi bo + the toi Discord + Phat Ngay that + cam lech';
+	return 'luoi 3 cot + khung cuon noi bo + the toi Discord + Chay Ngay that + cam lech';
 });
 
 check('CLAIM-MANUAL: callback captcha chỉ lưu token chờ, chỉ nút Gửi mới gửi', () => {
@@ -1727,7 +1727,7 @@ check('SHOTFIX-W16: luật thắng thật (đặc hiệu + thứ tự) cho thẻ
 		assert(shotContrast(kick, bg) !== null && shotContrast(kick, bg) >= 4.5, `theme ${theme}: kicker (${kick}) trên nền thẻ (${bg}) phải đạt 4.5:1`);
 		assert(shotContrast(title, bg) !== null && shotContrast(title, bg) >= 4.5, `theme ${theme}: tiêu đề trên nền thẻ phải đạt 4.5:1`);
 		assert(shotContrast(desc, bg) !== null && shotContrast(desc, bg) >= 4.5, `theme ${theme}: mô tả trên nền thẻ phải đạt 4.5:1`);
-		assert(shotContrast(playFg, playBg) !== null && shotContrast(playFg, playBg) >= 4.5, `theme ${theme}: nút Phát Ngay (${playFg} trên ${playBg}) phải đạt 4.5:1`);
+		assert(shotContrast(playFg, playBg) !== null && shotContrast(playFg, playBg) >= 4.5, `theme ${theme}: nút Chạy Ngay (${playFg} trên ${playBg}) phải đạt 4.5:1`);
 		assert(claimFg === (theme === 'light' ? '#ffffff' : '#042f2b'), `theme ${theme}: nút claim phải dùng chữ brand-ink, đang là ${claimFg}`);
 	}
 	return 'thẻ tối thắng ở cả 2 theme + tương phản nút/tựa/mô tả đạt 4.5:1';
@@ -1747,10 +1747,10 @@ check('SHOTFIX-W17: hồi quy 5 lỗi ảnh chụp — banner, nút, cắt chữ
 	assert(js.includes('không trả ảnh hero') && js.includes('không hợp lệ') && js.includes('tải lỗi'), 'fallback phải ghi lý do đủ 3 trường hợp');
 	assert(/\.qcard-banner:has\(video\) \.qcard-banner-fallback \{ display: none; \}/.test(css), 'fallback phải ẩn khi có video hero');
 	assert(/\.qcard-banner-hero \{[^}]*object-fit: cover/.test(css) && /\.qcard-banner-video \{[^}]*object-fit: cover/.test(css), 'ảnh/video hero phải full-bleed cover');
-	// (b) Nút: Phát Ngay bấm được, claimable nhận thưởng, thủ công khóa.
-	assert(/act = 'play'/.test(js) && /act === 'play'/.test(js), 'thiếu nhánh nút Phát Ngay');
+	// (b) Nút: Chạy Ngay bấm được, claimable nhận thưởng, thủ công khóa.
+	assert(/act = 'play'/.test(js) && /act === 'play'/.test(js), 'thiếu nhánh nút Chạy Ngay');
 	const disLine = (js.match(/btn\.disabled = [^\n]+/) || [])[0] || '';
-	assert(disLine.includes("act === 'todo'") && !disLine.includes('play'), 'nút Phát Ngay không được nằm trong diện disabled');
+	assert(disLine.includes("act === 'todo'") && !disLine.includes('play'), 'nút Chạy Ngay không được nằm trong diện disabled');
 	assert(/act = 'claim'/.test(js), 'thiếu nhánh nút nhận thưởng');
 	assert(/r\.check\.disabled = !canSelectQuest\(q\)/.test(js), 'quest thủ công phải khóa checkbox theo canSelectQuest');
 	// (c) Cắt chữ: thắng cascade cho main/info/title/desc/kicker/foot.
@@ -1780,6 +1780,40 @@ check('SHOTFIX-W17: hồi quy 5 lỗi ảnh chụp — banner, nút, cắt chữ
 	// (e) Class mới phải được định nghĩa (luật no-unknown-classes).
 	assert(/\.qcard-banner-hero \{/.test(css) && /\.qcard-banner-video \{/.test(css), 'class banner mới phải được định nghĩa trong styles.css');
 	return 'banner chữ ký + hero video + nút đúng trạng thái + hết cắt chữ + khung giữ nguyên (giới hạn: assert tĩnh, không phải render trình duyệt thật)';
+});
+
+check('OVERLAP: orb de mep hero trai + sponsor cung hang + nhan Chay Ngay', () => {
+	const js = read(path.join(APP, 'renderer.js'));
+	const css = read(path.join(APP, 'styles.css'));
+	const rules = shotParseRules(css);
+	// (1) Rename: nhan moi co, nhan cu het trong renderer.
+	assert(js.includes("'Chạy Ngay'") && js.includes("'Run now'"), 'thieu nhan Chay Ngay / Run now');
+	assert(!js.includes('Phát Ngay') && !js.includes('Play now'), 'renderer van con nhan cu Phat Ngay / Play now');
+	// (2) Template: orb trong banner (truoc than the), khong con hang main rieng,
+	// JS dua orb xuong cuoi banner de ve tren media theo DOM order (khong z-index moi).
+	assert(!js.includes('<div class="qcard-main">'), 'template van con hang qcard-main rieng (orb phai vao banner)');
+	const tplReward = js.indexOf('<div class="qcard-reward">');
+	const tplBody = js.indexOf('<div class="qcard-body">');
+	assert(tplReward > 0 && tplBody > tplReward, 'orb phai nam trong banner, truoc than the');
+	assert(/banner\.appendChild\(r\.reward\)/.test(js), 'JS phai dua orb xuong cuoi banner de ve tren media');
+	// (3) Cascade thang that: banner khong cat, orb tuyet doi de mep trai, the van cat mep ngoai.
+	const elBanner = shotEl(['qcard-banner']);
+	const elReward = shotEl(['qcard-reward']);
+	const ancReward = [shotEl(['qcard-banner']), shotEl(['qcard'])];
+	assert(shotWin(rules, elBanner, 'light', [shotEl(['qcard'])], 'overflow') === 'visible', 'banner phai overflow visible de orb tran xuong khong bi cat');
+	assert(shotWin(rules, elReward, 'light', ancReward, 'position') === 'absolute', 'orb phai absolute trong banner');
+	assert(shotWin(rules, elReward, 'light', ancReward, 'left') === '16px', 'orb phai sat trai 16px');
+	assert(shotWin(rules, elReward, 'light', ancReward, 'bottom') === '-35px', 'orb phai bottom -35px (tam tren mep duoi hero)');
+	assert(shotWin(rules, shotEl(['qcard']), 'light', [], 'overflow') === 'hidden', 'the van overflow hidden de cat mep ngoai');
+	// (4) Hero tu bo tron goc tren; sponsor cung hang ben phai orb; than the bot padding tren.
+	assert(/\.qcard-banner-hero, \.qcard-banner-video \{[^}]*border-radius: 20px 20px 0 0/.test(css), 'anh/video hero phai tu bo tron goc tren 20px');
+	assert(shotWin(rules, shotEl(['qcard-pub']), 'light', [shotEl(['qcard-body']), shotEl(['qcard'])], 'padding-left') === '80px', 'dong quang ba phai padding-left 80px (ben phai orb)');
+	const ancBody = [{ tag: 'div', classes: [], attrs: {}, id: 'pageQuest' }, shotEl(['qcard'])];
+	assert(shotWin(rules, shotEl(['qcard-body']), 'light', ancBody, 'padding-top') === '12px', 'than the phai padding-top 12px de dong quang ba nam giua nua duoi orb');
+	// (5) Dong nhat: mot khoi orb duy nhat trong template, khong class orb dong theo quest.
+	assert((js.match(/<div class="qcard-reward">/g) || []).length === 1, 'template phai co dung mot khoi orb (hinh hoc dong nhat moi the)');
+	assert(!/qcard-reward-\$\{/.test(js) && !/['"]qcard-reward-['"]\s*\+/.test(js), 'khong duoc class orb dong theo quest (chi class tinh qcard-reward-art cho phep)');
+	return 'orb de mep hero trai + sponsor cung hang + Chay Ngay + hinh hoc dong nhat (gioi han: assert tinh, khong phai render trinh duyet that)';
 });
 
 /* ── In kết quả ────────────────────────────────────────────────────────── */

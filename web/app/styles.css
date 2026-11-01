@@ -6225,7 +6225,7 @@ body[data-page="quest"] .page.active { flex: 1 1 auto; min-height: 0; }
    text), không có text thì ẩn hẳn, không chiếm chỗ, không badge giả. */
 .qcard-mult { display: inline-flex; align-items: center; padding: 4px 8px; border-radius: 12px; border: 1px solid var(--media-line); background: var(--tint-08); color: var(--media-fg); font-size: 12px; font-weight: 800; }
 .qcard-mult:empty { display: none; }
-/* Nút "Phát Ngay": cùng họ nút claim (viền brand, nền tint, chữ sáng
+/* Nút "Chạy Ngay": cùng họ nút claim (viền brand, nền tint, chữ sáng
    trên thẻ tối), con trỏ pointer — bấm được thật, không phải nút chết. */
 .qcard-act[data-act="play"] { cursor: pointer; border-color: var(--brand); background: var(--tint-08); color: var(--media-fg); }
 .qcard-act[data-act="play"]:hover { border-color: var(--brand-bright); transform: translateY(-1px); }
@@ -6324,3 +6324,46 @@ body[data-page="quest"] .page.active { flex: 1 1 auto; min-height: 0; }
 .qcard-banner-hero { width: 100%; height: 100%; object-fit: cover; display: block; }
 .qcard-banner-video { width: 100%; height: 100%; object-fit: cover; display: block; }
 .qcard-banner:has(video) .qcard-banner-fallback { display: none; }
+
+/* ============================================================
+   OVERLAP (2026-11-01) — The Discord dang giong anh Ethan gui:
+   hero tren cung, orb 64px DE LEN mep duoi hero o goc trai,
+   dong quang ba cung hang ben phai orb, detail phia duoi, the
+   ngan lai dang chu nhat ngang thay vi doc nhu truoc.
+   Truoc day orb nam trong hang rieng o giua than the (.qcard-main)
+   nen the cao them mot hang va orb trong lech so voi hero.
+   Nay .qcard-reward doi vao trong banner, dat tuyet doi de len
+   mep duoi hero; dong quang ba (.qcard-pub) o dau than the,
+   lech phai de chu nam ben phai orb; detail (.qcard-info) xuong
+   duoi, full chieu ngang (rong hon 82px so voi truoc vi khong
+   con cot orb chen ngang) nen tieu de/mo ta gap it dong hon.
+   Khong mau tho, khong spacing le (16/12/80 tren thang; 35 la
+   nua hop orb 70px co san, 44 la 35 + 9 khe), khong z-index moi
+   (thu tu ve bang DOM order: JS dua orb xuong cuoi banner),
+   khong inline style moi, khong class la (class dung san).
+   Luu y: CSS .qcard-main cu van nam trong file nhung khong con
+   phan tu template nao dung no — giu lai de khong xao tron cac
+   test cascade SHOTFIX-W17, don dep sau trong mot dot rieng.
+   ============================================================ */
+/* Banner cho orb tran xuong: banner khong cat (overflow visible),
+   chinh anh/video hero tu bo tron goc tren theo khung the 20px;
+   the (.qcard) van overflow:hidden nen mep ngoai the van tron
+   va orb (nam trong the) khong bi cat. */
+.qcard-banner { overflow: visible; }
+.qcard-banner-hero, .qcard-banner-video { border-radius: 20px 20px 0 0; }
+/* Orb de mep: hop 70px dat tuyet doi, tam dung tren mep duoi hero
+   (bottom -35px = nua hop 70px, nua tren hero nua duoi than the),
+   trai 16px. Vong + % giu nguyen cach can giua trong hop 70px
+   cua SHOTFIX nen van dong tam, khong lech. */
+.qcard-banner .qcard-reward { position: absolute; left: 16px; bottom: -35px; width: 70px; height: 70px; }
+/* Logo game nang len khoi vung orb de (orb chiem 35px tren mep)
+   de khong bi orb che khi logo nam goc trai duoi banner. */
+.qcard-logo { bottom: 44px; }
+/* Hang quang ba cung hang voi nua duoi orb: than the bot padding
+   tren xuong 12px de dong chu nam giua nua duoi orb (tam ~18px
+   duoi mep), padding trai 80px (64 orb + 16 gap) de chu bat dau
+   ben phai orb. Selector #pageQuest thang rule mobile
+   .qcard-body padding 16px (do dac hieu), khong phu thuoc thu
+   tu file. */
+#pageQuest .qcard-body { padding-top: 12px; padding-right: 16px; padding-bottom: 16px; padding-left: 16px; }
+.qcard-pub { padding-left: 80px; }
