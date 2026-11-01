@@ -1369,6 +1369,16 @@ class QuestManager {
         const applicationName = quest.config.application?.name || '';
         const appId = QuestManager.getTaskApplicationId(quest, taskName);
         console.log(`▶ "${questName}" · ${taskLabel} (${taskName}) · ${orbs} Orbs · ${Math.floor(secondsDone)}/${secondsNeeded}`);
+        // ORBRING (2026-11-01): dong chan doan heartbeat ngay khi bat dau —
+        // in enrolled + task + ca 2 appId ra activity log (qua kenh console
+        // cua worker, giong cac dong warn heartbeat) de lan chay sau khong
+        // con phai doan nguyen nhan 401: chua nhan / da nhan / appId sai.
+        // Chi log, khong doi hanh vi chay, khong enroll, khong doi nguong.
+        if (kind === 'desktop' || kind === 'console' || kind === 'mobile') {
+            const questAppId = String(quest.config?.application?.id ?? '');
+            const enrolled = typeof quest.isEnrolledQuest === 'function' ? quest.isEnrolledQuest() : Boolean(quest.userStatus?.enrolled_at);
+            console.log(`[Chẩn đoán heartbeat] "${questName}" · enrolled=${enrolled ? 'yes' : 'no'} · task=${taskName} · appId task=${appId} · appId quest=${questAppId}`);
+        }
         (0, events_1.report)('quest:start', {
             id: questId,
             name: questName,

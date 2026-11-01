@@ -6375,3 +6375,21 @@ body[data-page="quest"] .page.active { flex: 1 1 auto; min-height: 0; }
    #pageQuest thang rule mobile .qcard-body padding 16px (do dac
    hieu), khong phu thuoc thu tu file. */
 #pageQuest .qcard-body { padding-top: 12px; padding-right: 16px; padding-bottom: 16px; padding-left: 16px; }
+/* ============================================================
+   ORBRING (2026-11-01) — % badge dinh vao vong tron, video dong tam vong.
+   Goc lech cu: .qcard-pct la flex item in-flow (position: static) nam
+   canh art 64px trong hop 70px, trong khi .qring absolute can giua hop
+   — nhom art+pill can giua theo nhom nen tam video lech khoi tam vong
+   (pill + gap ~48px chia doi). Nay: pct la badge absolute goc
+   duoi-phai cua vong, khong con trong luong; art la item in-flow duy
+   nhat, can giua hop bang flex cua reward — tam video == tam vong.
+   Badge vuot mep phai hop toi da 2px, sponsor bat dau sau gap 16px
+   cua hang overlap nen khong va cham (khe ho 14px). Badge hien luon
+   (opacity 1, khong con hover moi hien); hover khong doi vi tri.
+   Selector .qcard-overlap ... thang ca rule static cu va rule theme
+   Sang (cung do dac hieu, dung sau) — the toi SHOTFIX khong doi.
+   ============================================================ */
+.qcard-overlap .qcard-pct { position: absolute; right: -2px; bottom: -2px; top: auto; left: auto; transform: none; opacity: 1; width: auto; height: 28px; padding: 0 10px; background: var(--amber); color: var(--amber-ink); border-radius: 999px; font-size: 12px; box-shadow: none; pointer-events: none; }
+.qcard-overlap .qcard-reward:hover .qcard-pct { transform: none; opacity: 1; }
+[data-theme="light"] .qcard-overlap .qcard-pct { background: var(--amber); color: var(--amber-ink); }
+.qcard-overlap .qcard-reward-art { flex: 0 0 auto; width: 64px; height: 64px; margin: 0; }

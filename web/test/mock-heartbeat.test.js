@@ -62,6 +62,7 @@ function assert(cond, message) {
 
 /* Capture engine stdout events without hiding normal console output. */
 const events = [];
+const diagLines = [];
 const origWrite = process.stdout.write.bind(process.stdout);
 process.stdout.write = (chunk, ...rest) => {
 	for (const line of String(chunk).split('\n')) {
@@ -69,6 +70,7 @@ process.stdout.write = (chunk, ...rest) => {
 			const parsed = parseEventLine(line);
 			if (parsed) events.push(parsed);
 		}
+		if (line.includes('[Chẩn đoán heartbeat]')) diagLines.push(line);
 	}
 	return origWrite(chunk, ...rest);
 };
@@ -266,6 +268,31 @@ function makeManager(post) {
 		ok('heartbeat non-401 still fails', '500 errors failQuest at 5/5, no blocked state');
 	} catch (e) {
 		fail('heartbeat non-401 still fails', e.message);
+	}
+
+	/* (f) Enrolled diagnostic line at doingQuest start (ORBRING): one line
+	   with enrolled flag + task + both appIds, before the 401/blocked flow. */
+	try {
+		events.length = 0;
+		diagLines.length = 0;
+		const mgr = makeManager(async () => {
+			throw err401();
+		});
+		const q = makeQuest('900000000000000007');
+		await mgr.doingQuest(q, 20);
+		assert(
+			eventsOf('quest:heartbeat-blocked', '900000000000000007').length === 1,
+			'no blocked event after doingQuest 401 run',
+		);
+		assert(diagLines.length === 1, `expected exactly 1 enrolled diagnostic line, got ${diagLines.length}`);
+		const line = diagLines[0];
+		assert(line.includes('enrolled=yes'), `diagnostic line must say enrolled=yes, got: ${line}`);
+		assert(line.includes('PLAY_ON_DESKTOP'), `diagnostic line must name the task, got: ${line}`);
+		assert(line.includes(TASK_APP), `diagnostic line must carry task appId, got: ${line}`);
+		assert(line.includes(QUEST_APP), `diagnostic line must carry quest appId, got: ${line}`);
+		ok('heartbeat enrolled diagnostic', 'doingQuest start prints enrolled=yes + task + both appIds');
+	} catch (e) {
+		fail('heartbeat enrolled diagnostic', e.message);
 	}
 
 	process.stdout.write = origWrite;

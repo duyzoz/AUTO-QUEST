@@ -507,7 +507,7 @@ function notifySystem(title, body) {
 	try {
 		if (!('Notification' in window) || Notification.permission !== 'granted') return;
 		if (!document.hidden) return;
-		new Notification(title, { body, icon: DISCORD_ORB_POSTER, tag: 'autoquest', silent: true });
+		new Notification(title, { body, icon: orbPoster(DISCORD_ORB_SMALL), tag: 'autoquest', silent: true });
 	} catch {
 		/* trình duyệt chặn — bỏ qua */
 	}
@@ -1659,14 +1659,18 @@ function fmtShortDate(iso) {
 const DISCORD_ORB_CARD = 'https://cdn.discordapp.com/assets/content/d4fc1c99b3e3044530f08ede0156d1d43a13bf78f0f539e240b63f2d4dad3554.webm';
 const DISCORD_ORB_SMALL = 'https://cdn.discordapp.com/assets/content/864e5841fd9af8da3c50ad6d6220bee54e8c2da2d36d3c85d0a5ae95cdbf095e.webm';
 const DISCORD_ORB_CLAIMED = 'https://cdn.discordapp.com/assets/content/61aaaee4a0366652022b510d9aaa8a26d552ce8457679b0c28c5e2002484a5a6.webm';
-const DISCORD_ORB_POSTER = DISCORD_ORB_SMALL + '?format=webp';
+/* ORBRING: poster phai la anh tinh cua CHINH asset video do (dang
+   ?format=webp cua Discord CDN). Poster chung 864e truoc day lam anh
+   tinh hien sai bien the Orb so voi video dang chay — truoc khi phat,
+   khi loi, va khi reduced-motion khong autoplay. */
+const orbPoster = (src) => src + '?format=webp';
 function orbVideoEl(src, cls) {
 	const v = document.createElement('video');
 	v.className = cls;
 	v.muted = true;
 	v.playsInline = true;
 	v.preload = 'metadata';
-	v.poster = DISCORD_ORB_POSTER;
+	v.poster = orbPoster(src);
 	v.setAttribute('aria-hidden', 'true');
 	v.draggable = false;
 	if (!window.matchMedia || !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
@@ -1677,7 +1681,7 @@ function orbVideoEl(src, cls) {
 	v.addEventListener('error', () => {
 		const img = document.createElement('img');
 		img.className = v.className;
-		img.src = DISCORD_ORB_POSTER;
+		img.src = orbPoster(src);
 		img.alt = '';
 		img.setAttribute('aria-hidden', 'true');
 		img.draggable = false;

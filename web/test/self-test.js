@@ -1884,6 +1884,43 @@ check('RUNRETRY: bam Chay Ngay xoa co chan + the chan phan biet chua nhan vs da 
 	return 'play xoa co chan truoc startRun + chan doan 2 truong hop + engine gui enrolled';
 });
 
+check('ORBRING: video Orb dong tam vong tron + poster theo asset + log enrolled luc bat dau', () => {
+	const js = read(path.join(APP, 'renderer.js'));
+	const css = read(path.join(APP, 'styles.css'));
+	const qm = read(path.join(WEB, 'engine', 'src', 'questManager.js'));
+	const rules = shotParseRules(css);
+	const ancOverlap = [shotEl(['qcard-overlap']), shotEl(['qcard'])];
+	const ancReward = [shotEl(['qcard-reward']), shotEl(['qcard-overlap']), shotEl(['qcard'])];
+	// (1) % badge thang that o ca 2 theme: absolute goc duoi-phai, hien luon.
+	for (const theme of ['light', 'dark']) {
+		const el = shotEl(['qcard-pct']);
+		assert(shotWin(rules, el, theme, ancOverlap, 'position') === 'absolute', `pct phai absolute (theme ${theme})`);
+		assert(shotWin(rules, el, theme, ancOverlap, 'right') === '-2px', `pct phai right -2px (theme ${theme})`);
+		assert(shotWin(rules, el, theme, ancOverlap, 'bottom') === '-2px', `pct phai bottom -2px (theme ${theme})`);
+		assert(shotWin(rules, el, theme, ancOverlap, 'opacity') === '1', `pct phai hien luon (theme ${theme})`);
+		assert(shotWin(rules, el, theme, ancOverlap, 'height') === '28px', `pct phai cao 28px (theme ${theme})`);
+	}
+	// Badge khong va sponsor: badge vuot mep phai hop toi da 2px, hang overlap gap 16px.
+	assert(shotWin(rules, shotEl(['qcard-overlap']), 'light', [shotEl(['qcard'])], 'gap') === '16px', 'hang overlap phai gap 16px');
+	// (2) Art la item in-flow duy nhat, flex none 64px; vong absolute can giua 70px.
+	assert(shotWin(rules, shotEl(['qcard-reward-art']), 'light', ancReward, 'flex') === '0 0 auto', 'art phai flex 0 0 auto');
+	assert(shotWin(rules, shotEl(['qcard-reward-art']), 'light', ancReward, 'width') === '64px', 'art phai rong 64px');
+	assert(shotWin(rules, shotEl(['qring']), 'light', ancReward, 'position') === 'absolute', 'vong phai absolute');
+	assert(shotWin(rules, shotEl(['qring']), 'light', ancReward, 'width') === '70px', 'vong phai rong 70px');
+	assert(shotWin(rules, shotEl(['qring']), 'light', ancReward, 'left') === '50%', 'vong phai left 50%');
+	assert(shotWin(rules, shotEl(['qring']), 'light', ancReward, 'top') === '50%', 'vong phai top 50%');
+	// (3) Poster theo asset, khong con poster chung.
+	assert(!js.includes('DISCORD_ORB_POSTER'), 'khong con hang poster chung DISCORD_ORB_POSTER');
+	assert(js.includes('v.poster = orbPoster(src)'), 'poster video phai lay tu src');
+	assert(js.includes('img.src = orbPoster(src)'), 'anh fallback loi phai lay tu src');
+	assert(js.includes('orbPoster(DISCORD_ORB_SMALL)'), 'icon thong bao dung poster nho');
+	// (4) Log chan doan heartbeat luc bat dau (engine, kenh console worker).
+	assert(qm.includes('[Chẩn đoán heartbeat]'), 'thieu dong log chan doan heartbeat');
+	assert(qm.includes("enrolled=${enrolled ? 'yes' : 'no'}"), 'log chan doan phai co enrolled yes/no');
+	assert(qm.includes('appId task=${appId}') && qm.includes('appId quest=${questAppId}'), 'log chan doan phai co ca 2 appId');
+	return 'pct badge absolute goc duoi-phai + art dong tam vong + poster theo asset + log enrolled (gioi han: assert tinh/cascade, khong phai render trinh duyet that)';
+});
+
 /* ── In kết quả ────────────────────────────────────────────────────────── */
 for (const r of results) {
 	const tag = r.ok ? 'PASS' : 'FAIL';
