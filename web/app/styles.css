@@ -56,6 +56,11 @@
 	   để các test quét-màu-thô theo lát cắt (MAJOR/FIX26/NEO) không báo
 	   nhầm — token chỉ được phép nằm trong khối :root này. */
 	--media-card: #232428;
+	/* CARDV2: gradient fade cuoi banner — dinh nghia tron o :root (mau
+	   tho chi duoc phep trong dinh nghia token) de khoi CARDV2 cuoi
+	   file khong bi test quet-mau-tho theo lat cat bao nham. Khong
+	   dung color-mix vi Safari cu. */
+	--media-fade: linear-gradient(to top, rgb(35, 36, 40) 0%, rgba(35, 36, 40, 0.55) 48%, rgba(35, 36, 40, 0) 100%);
 	--media-fg: #f2f3f5;
 	--media-fg-muted: #b5bac1;
 	--media-line: rgba(255, 255, 255, 0.16);
@@ -5953,8 +5958,8 @@ body.lite .claim-pill-spin { animation-duration: 1.6s; }
    ============================================================ */
 .qcard-main { gap: 12px; }
 .qcard-foot { display: flex; flex-direction: column; gap: 12px; padding: 0 16px 16px; }
-.neo-bar { height: 12px; border: 2px solid var(--neo-line); border-radius: 12px; background: var(--neo-surface); overflow: hidden; }
-.neo-bar-fill { height: 100%; width: 0%; background: var(--neo-blue); transition: width 0.2s ease; }
+/* CARDV2: thanh tien do ngang .neo-bar da xoa khoi template — tien do
+   chi con o vong tron + badge % + dong "Da cay x/y phut". */
 .qcard-state { display: inline-flex; align-items: center; gap: 6px; border: 2px solid var(--neo-line); border-radius: 12px; box-shadow: 2px 2px 0 var(--neo-shadow); background: var(--neo-yellow); color: var(--neo-yellow-ink); font-weight: 800; padding: 4px 8px; }
 .qcard-state svg { width: 12px; height: 12px; }
 .qcard-state-text { font-weight: 800; }
@@ -5964,7 +5969,7 @@ body.lite .claim-pill-spin { animation-duration: 1.6s; }
 .quest-adv-toggle { border: 2px solid var(--neo-line); border-radius: 12px; box-shadow: 2px 2px 0 var(--neo-shadow); font-weight: 800; }
 .quest-adv-title { font-weight: 800; font-size: 14px; }
 @media (prefers-reduced-motion: reduce) {
-	.neo-bar-fill { transition: none; }
+	/* CARDV2: neo-bar-fill da xoa cung thanh ngang (khong con rule). */
 }
 /* ============================================================
    NEO-BRUTALIST P4 — Motion, micro-interactions, sound
@@ -6225,10 +6230,7 @@ body[data-page="quest"] .page.active { flex: 1 1 auto; min-height: 0; }
    text), không có text thì ẩn hẳn, không chiếm chỗ, không badge giả. */
 .qcard-mult { display: inline-flex; align-items: center; padding: 4px 8px; border-radius: 12px; border: 1px solid var(--media-line); background: var(--tint-08); color: var(--media-fg); font-size: 12px; font-weight: 800; }
 .qcard-mult:empty { display: none; }
-/* Nút "Chạy Ngay": cùng họ nút claim (viền brand, nền tint, chữ sáng
-   trên thẻ tối), con trỏ pointer — bấm được thật, không phải nút chết. */
-.qcard-act[data-act="play"] { cursor: pointer; border-color: var(--brand); background: var(--tint-08); color: var(--media-fg); }
-.qcard-act[data-act="play"]:hover { border-color: var(--brand-bright); transform: translateY(-1px); }
+/* CARDV2: nut play tren the ("Chay Ngay") da xoa — chi con nut claim. */
 .qcard-act[data-act="claim"], .qcard-act[data-act="retry"] { color: var(--media-fg); }
 
 /* --- CẤM LỆCH Orb: vòng 70px, art 64px, video contain 1/1, căn giữa thật.
@@ -6290,7 +6292,7 @@ body[data-page="quest"] .page.active { flex: 1 1 auto; min-height: 0; }
    chu sang tren nen tint mo nhu ban GRID. Nut claim/retry
    tra lai chu brand-ink goc (GRID doi sang chu media lam
    giam tuong phan tren nen brand o theme Toi). */
-.qcard-act[data-act="play"] { background: var(--brand); color: var(--brand-ink); border-color: var(--brand); cursor: pointer; }
+/* CARDV2: nut play tren the da xoa (xem ghi chu tren). */
 .qcard-act[data-act="claim"],
 .qcard-act[data-act="retry"] { color: var(--brand-ink); }
 
@@ -6298,7 +6300,6 @@ body[data-page="quest"] .page.active { flex: 1 1 auto; min-height: 0; }
    luat goc, lam thanh tien do neo-bar co lai thanh vach doc
    giua the. Stretch de thanh tien do luon day du chieu ngang. */
 .qcard-foot { align-items: stretch; }
-.qcard-foot .neo-bar { width: 100%; }
 
 /* W10/W12 — Het cat chu trai: main dang cot + can giua lam
    khoi info co lai theo noi dung roi tran ca 2 ben khi
@@ -6349,7 +6350,6 @@ body[data-page="quest"] .page.active { flex: 1 1 auto; min-height: 0; }
    chinh anh/video hero tu bo tron goc tren theo khung the 20px;
    the (.qcard) van overflow:hidden nen mep ngoai the van tron
    va orb (nam trong the) khong bi cat. */
-.qcard-banner { overflow: visible; }
 .qcard-banner-hero, .qcard-banner-video { border-radius: 20px 20px 0 0; }
 /* ORBFIX: orb de mep bang IN-FLOW, khong absolute — hang .qcard-overlap
    la flex item cua .qcard (flex column) nam ngay sau banner: margin-top
@@ -6362,19 +6362,10 @@ body[data-page="quest"] .page.active { flex: 1 1 auto; min-height: 0; }
    la in-flow binh thuong; dat static se lam vong neo vao .qcard.
    Sponsor align-self:flex-end de chu nam tron tren nen toi cua than
    the (duoi mep hero), khong de len art hero — dam bao tuong phan. */
-.qcard-banner { position: relative; overflow: visible; }
-.qcard-overlap { display: flex; align-items: center; gap: 16px; min-width: 0; margin-top: -35px; padding-left: 16px; padding-right: 16px; }
-.qcard-overlap .qcard-reward { position: relative; flex: 0 0 auto; width: 70px; height: 70px; }
-.qcard-overlap .qcard-pub { flex: 1 1 auto; min-width: 0; align-self: flex-end; }
-/* Logo game nang len khoi vung orb de (orb chiem 35px tren mep)
-   de khong bi orb che khi logo nam goc trai duoi banner. */
-.qcard-logo { bottom: 44px; }
-/* ORBFIX: dong quang ba khong con padding trai 80px nua — no nam
-   trong hang .qcard-overlap ngay ben phai orb (gap 16px). Than the
-   giu padding tren 12px lam khoang cach toi detail. Selector
-   #pageQuest thang rule mobile .qcard-body padding 16px (do dac
-   hieu), khong phu thuoc thu tu file. */
-#pageQuest .qcard-body { padding-top: 12px; padding-right: 16px; padding-bottom: 16px; padding-left: 16px; }
+/* CARDV2 (2026-11-01): hang .qcard-overlap da xoa — orb chuyen vao hang
+   detail (.qcard-detail) duoi dong quang ba; cac rule thay the nam o
+   khoi CARDV2 cuoi file (banner overflow hidden tro lai, logo xuong
+   goc duoi banner tren lop fade, sponsor la hang rieng duoi banner). */
 /* ============================================================
    ORBRING (2026-11-01) — % badge dinh vao vong tron, video dong tam vong.
    Goc lech cu: .qcard-pct la flex item in-flow (position: static) nam
@@ -6389,7 +6380,61 @@ body[data-page="quest"] .page.active { flex: 1 1 auto; min-height: 0; }
    Selector .qcard-overlap ... thang ca rule static cu va rule theme
    Sang (cung do dac hieu, dung sau) — the toi SHOTFIX khong doi.
    ============================================================ */
-.qcard-overlap .qcard-pct { position: absolute; right: -2px; bottom: -2px; top: auto; left: auto; transform: none; opacity: 1; width: auto; height: 28px; padding: 0 10px; background: var(--amber); color: var(--amber-ink); border-radius: 999px; font-size: 12px; box-shadow: none; pointer-events: none; }
-.qcard-overlap .qcard-reward:hover .qcard-pct { transform: none; opacity: 1; }
-[data-theme="light"] .qcard-overlap .qcard-pct { background: var(--amber); color: var(--amber-ink); }
-.qcard-overlap .qcard-reward-art { flex: 0 0 auto; width: 64px; height: 64px; margin: 0; }
+/* CARDV2: badge % + art orb doi scope sang .qcard-detail (khoi cuoi file)
+   — giu nguyen hinh hoc ORBRING (badge goc duoi-phai vong, art dong tam). */
+
+/* ============================================================
+   CARDV2 (2026-11-01) — the todo chi con detail, kieu Discord.
+   Thu tu the: banner (fade + logo nho) -> dong quang ba ->
+   hang detail (orb trai + 3 dong chu phai) -> chan claim (chi the
+   claim) -> chan doan. Khong nut the todo, khong thanh % ngang,
+   khong hang overlap de mep hero nua.
+   Luat ap dung (SKILL-UI-UX): token only (fade dung
+   --media-card-rgb dinh nghia o :root dau file, khong mau tho);
+   spacing tren thang (12/16/20/28/64); khong class la (moi class
+   deu dinh nghia o day); khong z-index moi (thu tu ve bang DOM
+   order: fade sau hero, logo sau fade; checkbox/state co z-index
+   san); tuong phan giu nguyen (nen toi media ca 2 theme, chu
+   media-fg); reduced-motion khong doi (orb/banner video poster
+   tinh khi giam chuyen dong); text dan hoi (info min-width 0,
+   wrap, khong nowrap); trang thai bang text+badge, khong chi mau.
+   ============================================================ */
+/* Banner cat tro lai (khong con orb tran xuong) — thang rule
+   overflow visible cu o khoi SHOTFIX (cung do dac hieu, dung sau). */
+.qcard-banner { overflow: hidden; }
+/* Lop mo cuoi banner: tu trong suot xuong mau nen the, cao 64px.
+   pointer-events none (trang tri, khong chan bam). */
+.qcard-banner-fade {
+	position: absolute;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	height: 64px;
+	background: var(--media-fade);
+	pointer-events: none;
+}
+/* Logo game nho tren lop fade, goc duoi-trai banner (khong con
+   nang 44px nhu thoi orb de mep). */
+.qcard-logo { bottom: 12px; left: 16px; max-height: 28px; }
+/* Dong quang ba la hang rieng ngay duoi banner, trai/phai ro rang. */
+.qcard-pub { padding: 12px 16px 0; }
+/* Hang detail: orb trai + khoi chu phai, orb can giua theo chieu
+   doc cua 3 dong chu (align-items center). */
+.qcard-detail { display: flex; align-items: center; gap: 16px; min-width: 0; }
+.qcard-detail .qcard-reward { position: relative; flex: 0 0 auto; width: 70px; height: 70px; }
+.qcard-detail .qcard-reward-art { flex: 0 0 auto; width: 64px; height: 64px; margin: 0; }
+/* Badge % ORBRING doi scope sang detail: absolute goc duoi-phai
+   vong, hien luon, khong day video lech tam vong. Khe ho toi
+   sponsor: badge vuot mep phai hop toi da 2px, sponsor nam duoi
+   hang detail nen khong va cham (khong con chung hang voi orb). */
+.qcard-detail .qcard-pct { position: absolute; right: -2px; bottom: -2px; top: auto; left: auto; transform: none; opacity: 1; width: auto; height: 28px; padding: 0 10px; background: var(--amber); color: var(--amber-ink); border-radius: 999px; font-size: 12px; box-shadow: none; pointer-events: none; }
+.qcard-detail .qcard-reward:hover .qcard-pct { transform: none; opacity: 1; }
+[data-theme="light"] .qcard-detail .qcard-pct { background: var(--amber); color: var(--amber-ink); }
+.qcard-detail .qcard-info { flex: 1 1 auto; }
+/* Dong tieu de + badge nhan chung mot hang (kieu Discord). */
+.qcard-title-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; min-width: 0; }
+.qcard-title { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.qcard-title-text { min-width: 0; overflow-wrap: anywhere; }
+.qcard-title-orb { display: inline-flex; flex: 0 0 auto; }
+.qcard-title-orb:empty { display: none; }
+.qcard-title-orb .orb-video { width: 20px; height: 20px; display: block; object-fit: contain; }

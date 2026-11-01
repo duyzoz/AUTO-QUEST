@@ -42,6 +42,7 @@ Module._load = function (request, ...args) {
 const { QuestManager } = require('../engine/src/questManager');
 const { Quest } = require('../engine/src/quest');
 const { isEventLine, parseEventLine } = require('../engine/src/events');
+const { setWebSocketCtor } = require('../engine/src/presence');
 
 const TASK_APP = '111111111111111111';
 const QUEST_APP = '222222222222222222';
@@ -293,6 +294,125 @@ function makeManager(post) {
 		ok('heartbeat enrolled diagnostic', 'doingQuest start prints enrolled=yes + task + both appIds');
 	} catch (e) {
 		fail('heartbeat enrolled diagnostic', e.message);
+	}
+
+	/* (g) CARDV2 presence: desktop run opens a gateway session whose
+	   Identify carries the game as a Playing activity, refreshes it with
+	   op 3 on READY, and closes the socket when the quest finishes
+	   (presence cleared, nothing left dangling into the next run). */
+	try {
+		events.length = 0;
+		class FakeSocket {
+			static instances = [];
+			constructor(url) {
+				this.url = url;
+				this.sent = [];
+				this.readyState = 0;
+				FakeSocket.instances.push(this);
+			}
+			send(data) {
+				this.sent.push(JSON.parse(data));
+			}
+			close() {
+				this.readyState = 3;
+				if (this.onclose) this.onclose();
+			}
+			simulateOpen() {
+				this.readyState = 1;
+				if (this.onopen) this.onopen();
+			}
+			simulateMessage(obj) {
+				if (this.onmessage) this.onmessage({ data: JSON.stringify(obj) });
+			}
+			simulateHello() {
+				this.simulateOpen();
+				this.simulateMessage({ op: 10, d: { heartbeat_interval: 41250 } });
+			}
+			simulateReady() {
+				this.simulateMessage({ op: 0, s: 1, t: 'READY', d: {} });
+			}
+		}
+		setWebSocketCtor(FakeSocket);
+		try {
+			const mgr = makeManager(async (url, opts) => {
+				if (url.endsWith('/claim-reward')) {
+					return { user_status: { ...statusDone(), claimed_at: new Date().toISOString() } };
+				}
+				return statusDone();
+			});
+			mgr.client.token = 'mock-token';
+			const q = makeQuest('900000000000000008');
+			const run = mgr.doingQuest(q, 20);
+			await new Promise((r) => setImmediate(r));
+			const sock = FakeSocket.instances[FakeSocket.instances.length - 1];
+			assert(sock, 'no gateway socket created for desktop run');
+			assert(String(sock.url).startsWith('wss://gateway.discord.gg/'), `unexpected gateway url: ${sock.url}`);
+			/* Hello + READY phai den lien nhau, khong await o giua:
+			   neu de loop chay xong (timeout da stub) roi moi gui READY
+			   thi phien da dong — dung hanh vi that (READY den trong
+			   mili-giay, loop chay hang phut). */
+			sock.simulateHello();
+			sock.simulateReady();
+			await run;
+			const identify = sock.sent.find((m) => m.op === 2);
+			assert(identify, 'gateway Identify was never sent');
+			assert(identify.d.intents === 0, 'gateway Identify must use intents 0');
+			assert(
+				Array.isArray(identify.d.presence.activities) &&
+					identify.d.presence.activities.some((a) => a.application_id === TASK_APP && a.type === 0),
+				`Identify presence must carry the game as Playing activity, got: ${JSON.stringify(identify.d.presence)}`,
+			);
+			assert(
+				sock.sent.some((m) => m.op === 3),
+				'no op 3 presence refresh after READY',
+			);
+			assert(sock.readyState === 3, 'gateway socket must close when the quest finishes');
+			/* READY den muon sau khi dong phai bi bo qua hoan toan:
+			   khong op 3 moi, khong timer heartbeat moi nao duoc tao. */
+			const sentBefore = sock.sent.length;
+			sock.simulateReady();
+			await new Promise((r) => setImmediate(r));
+			assert(sock.sent.length === sentBefore, 'late READY after close must not send anything');
+			ok('heartbeat gateway presence', 'Identify carries game Playing activity + op 3 refresh + socket closed on finish + late READY ignored');
+		} finally {
+			setWebSocketCtor(null);
+		}
+	} catch (e) {
+		setWebSocketCtor(null);
+		fail('heartbeat gateway presence', e.message);
+	}
+
+	/* (h) CARDV2: every 401 warn line carries the presence state at that
+	   tick (presence=... apps=[...]), so the next live run proves whether
+	   the game activity was active when Discord refused the heartbeat. */
+	let origErr = null;
+	try {
+		events.length = 0;
+		const warnLines = [];
+		origErr = process.stderr.write.bind(process.stderr);
+		process.stderr.write = (chunk, ...rest) => {
+			for (const line of String(chunk).split('\n')) {
+				if (line.includes('Lỗi gửi tín hiệu heartbeat')) warnLines.push(line);
+			}
+			return origErr(chunk, ...rest);
+		};
+		const mgr = makeManager(async () => {
+			throw err401();
+		});
+		const q = makeQuest('900000000000000009');
+		await mgr.doingQuest(q, 20);
+		process.stderr.write = origErr;
+		assert(warnLines.length >= 5, `expected >= 5 heartbeat warn lines, got ${warnLines.length}`);
+		assert(
+			warnLines.every((l) => l.includes('presence=') && l.includes('apps=[')),
+			`every 401 warn line must carry presence state, got: ${warnLines[0] || '(none)'}`,
+		);
+		ok('heartbeat 401 presence diagnostic', `${warnLines.length} warn lines, all carry presence state`);
+	} catch (e) {
+		try {
+			if (origErr) process.stderr.write = origErr;
+		} catch (_) {}
+		fail('heartbeat 401 presence diagnostic', e.message);
 	}
 
 	process.stdout.write = origWrite;

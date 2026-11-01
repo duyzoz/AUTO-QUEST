@@ -339,7 +339,7 @@ const i18nDict = {
 	'tab.new': ['Chưa nhận', 'Unclaimed'],
 	'tab.done': ['Đã làm', 'Done'],
 	'act.scan': ['Quét nhiệm vụ', 'Scan quests'],
-	'act.start': ['Auto ORBs', 'Auto ORBs'],
+	'act.start': ['Chạy', 'Run'],
 	'act.stop': ['Dừng', 'Stop'],
 	'act.search': ['Tìm nhiệm vụ, game, phần thưởng…', 'Search quests, games, rewards…'],
 	'act.claimAll': ['Nhận tất cả', 'Claim all'],
@@ -1783,41 +1783,48 @@ function buildQuestCard(q) {
 				<input type="checkbox" data-quest-check="${escapeHtml(q.id)}" aria-label="${en ? 'Select' : 'Chọn'} ${escapeHtml(q.name || '')}"${selectable ? '' : ' disabled'} />
 			</label>`;
 
+	// CARDV2 (2026-11-01): the todo chi con detail — khong nut hanh dong,
+	// khong thanh tien do ngang. Thu tu: banner (fade + logo nho) ->
+	// dong quang ba -> hang detail (orb ben trai + 3 dong chu ben phai)
+	// -> chan (CHI hien khi the co nut claim: cho nhan / dang nhan /
+	// mo Discord / thu lai / da nhan) -> chan doan. The todo khong co
+	// chan: trang thai nam o badge tren banner + dong chan doan.
 	node.innerHTML = `
 		<div class="qcard-banner">
 			${checkHtml}
 			<span class="qcard-state"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="12" r="6"/></svg><span class="qcard-state-text"></span></span>
 		</div>
-		<div class="qcard-overlap">
-			<div class="qcard-reward">
-				<svg class="qring" viewBox="0 0 44 44" aria-hidden="true">
-					<circle class="qring-bg" cx="22" cy="22" r="20"></circle>
-					<circle class="qring-fg" cx="22" cy="22" r="20"></circle>
-				</svg>
-				<span class="qcard-reward-art"></span>
-				<span class="qcard-pct">0%</span>
-			</div>
-			<div class="qcard-pub">
-				<span class="qcard-pub-l">
-					<span class="qcard-pub-caption">${en ? 'Promoted by' : 'Được quảng bá bởi'}</span>
-					<svg class="qcard-verified" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2 15 4.5 18.8 4.2 20.4 7.6 23.4 10.2 22.4 13.9 23.4 17.6 20.4 20.2 18.8 23.6 15 23.3 12 25.8 9 23.3 5.2 23.6 3.6 20.2 0.6 17.6 1.6 13.9 0.6 10.2 3.6 7.6 5.2 4.2 9 4.5z" transform="translate(0 -1.4) scale(.96)"/><path d="m10.6 15.2-2.7-2.7 1.2-1.2 1.5 1.5 4-4 1.2 1.2z" fill="#0b0c10"/></svg>
-					<b class="qcard-pub-name"></b>
-				</span>
-				<span class="qcard-end"></span>
-			</div>
+		<div class="qcard-pub">
+			<span class="qcard-pub-l">
+				<span class="qcard-pub-caption">${en ? 'Promoted by' : 'Được quảng bá bởi'}</span>
+				<svg class="qcard-verified" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2 15 4.5 18.8 4.2 20.4 7.6 23.4 10.2 22.4 13.9 23.4 17.6 20.4 20.2 18.8 23.6 15 23.3 12 25.8 9 23.3 5.2 23.6 3.6 20.2 0.6 17.6 1.6 13.9 0.6 10.2 3.6 7.6 5.2 4.2 9 4.5z" transform="translate(0 -1.4) scale(.96)"/><path d="m10.6 15.2-2.7-2.7 1.2-1.2 1.5 1.5 4-4 1.2 1.2z" fill="#0b0c10"/></svg>
+				<b class="qcard-pub-name"></b>
+			</span>
+			<span class="qcard-end"></span>
 		</div>
 		<div class="qcard-body">
-			<div class="qcard-info">
-				<span class="qcard-kicker"></span>
-				<span class="qcard-title"></span>
-				<span class="qcard-mult"></span>
-				<span class="qcard-desc"></span>
-				<span class="qcard-prog"></span>
+			<div class="qcard-detail">
+				<div class="qcard-reward">
+					<svg class="qring" viewBox="0 0 44 44" aria-hidden="true">
+						<circle class="qring-bg" cx="22" cy="22" r="20"></circle>
+						<circle class="qring-fg" cx="22" cy="22" r="20"></circle>
+					</svg>
+					<span class="qcard-reward-art"></span>
+					<span class="qcard-pct">0%</span>
+				</div>
+				<div class="qcard-info">
+					<span class="qcard-kicker"></span>
+					<span class="qcard-title-row">
+						<span class="qcard-title"><span class="qcard-title-orb"></span><span class="qcard-title-text"></span></span>
+						<span class="qcard-mult"></span>
+					</span>
+					<span class="qcard-desc"></span>
+					<span class="qcard-prog"></span>
+				</div>
 			</div>
 		</div>
-		<!-- Waves 31: hàng nút trạng thái — Chưa làm (khoá) / Nhận (bấm được) / Đã nhận -->
+		<!-- CARDV2: chan chi ton tai khi the co nut claim; the todo bi go chan o updateQuestFoot -->
 		<div class="qcard-foot">
-			<div class="neo-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div class="neo-bar-fill"></div></div>
 			<button type="button" class="qcard-act" data-act="todo" disabled></button>
 		</div>
 		<div class="qcard-diag"></div>
@@ -1827,13 +1834,15 @@ function buildQuestCard(q) {
 	return node;
 }
 
-/* Waves 31: nội dung + hành vi nút trạng thái theo đúng trạng thái thật của quest.
-   - todo      → "Chưa làm"      (disabled, không bấm)
-   - play      → "Chạy Ngay"     (GRID-DISCORD: chọn riêng quest + chạy Auto)
+/* CARDV2 (2026-11-01): the todo KHONG con nut hanh dong — chay bang
+   checkbox + nut "Chay (n)" tren thanh cong cu. Chan (.qcard-foot) CHI
+   ton tai khi the co nut claim; the todo bi go chan, trang thai chi
+   hien o badge tren banner + dong chan doan. Cac nut claim giu nguyen:
    - claimable → "Nhận N Orbs"   (bấm → claim thật, captcha thì mở modal)
    - busy      → "Đang nhận…"    (đang gọi Discord)
    - claimed   → "Đã nhận"       (tick xanh, không bấm)
    - error     → "Thử lại"       (claim lỗi, cho thử lại)
+   - open      → "Mở Discord để nhận" (captcha passive, sang Discord thật)
    KHÔNG tự cộng orbs — chỉ đổi trạng thái khi Discord trả OK thật. */
 const ACT_ICON = {
 	todo: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
@@ -1876,8 +1885,6 @@ function appendClaimDiag(quest, branch) {
 
 function updateQuestFoot(node, q) {
 	const r = node._r || {};
-	const btn = r.act;
-	if (!btn) return;
 	const en = currentLang === 'en';
 
 	let act;
@@ -1899,32 +1906,51 @@ function updateQuestFoot(node, q) {
 	} else if (q.status === 'claimable') {
 		act = 'claim';
 		label = q.orbs ? `${en ? 'Claim' : 'Nhận'} ${q.orbs} Orbs` : en ? 'Claim reward' : 'Nhận thưởng';
-	} else if (q.stopFlag) {
-		act = 'todo';
-		label = en ? 'Stopped' : 'Đã dừng';
-	} else if (q.running) {
-		act = 'todo';
-		label = en ? 'Working…' : 'Đang cày…';
-	} else if (canSelectQuest(q)) {
-		// GRID-DISCORD: nút "Chạy Ngay" kiểu Discord cho quest chưa chạy mà
-		// chọn được — bấm = chọn riêng quest này + chạy Auto bằng đúng đường
-		// startRun của nút Auto ORBs (xem nhánh 'play' trong onQuestActClick).
-		// Quest thủ công (không chọn được) giữ nguyên nút "Chưa làm" khoá.
-		act = 'play';
-		label = en ? 'Run now' : 'Chạy Ngay';
 	} else {
+		// CARDV2: the todo (ke ca dang chay / da dung / bi chan / thu cong)
+		// khong co nut — chi badge tren banner + chan doan ben duoi.
 		act = 'todo';
-		label = en ? 'To do' : 'Chưa làm';
+		label = '';
 	}
 
-	if (btn.dataset.act !== act) btn.dataset.act = act;
-	btn.disabled = act === 'todo' || act === 'claimed' || act === 'busy';
-	if (btn.dataset.label !== label) {
-		btn.dataset.label = label;
-		btn.innerHTML = `${ACT_ICON[act] || ''}<span>${escapeHtml(label)}</span>`;
-	}
-	if (btn.title !== label) btn.title = label;
+	// CARDV2: node tai dung qua questNodes — the doi tu todo sang
+	// claimable (va nguoc lai) phai tu tao / go chan, khong the dua vao
+	// template luc dau. Chan doan ben duoi chay moi truong hop (khong
+	// return som khi khong co nut).
 	const diagEl = r.diag;
+	const claimKind = act !== 'todo';
+	let btn = node.querySelector('.qcard-act');
+	if (!claimKind) {
+		const foot = node.querySelector('.qcard-foot');
+		if (foot) foot.remove();
+		r.act = null;
+		btn = null;
+	} else {
+		let foot = node.querySelector('.qcard-foot');
+		if (!foot) {
+			foot = document.createElement('div');
+			foot.className = 'qcard-foot';
+			const b = document.createElement('button');
+			b.type = 'button';
+			b.className = 'qcard-act';
+			b.dataset.act = 'todo';
+			b.disabled = true;
+			foot.appendChild(b);
+			if (diagEl) node.insertBefore(foot, diagEl);
+			else node.appendChild(foot);
+		}
+		btn = foot.querySelector('.qcard-act');
+		r.act = btn;
+	}
+	if (btn) {
+		if (btn.dataset.act !== act) btn.dataset.act = act;
+		btn.disabled = act === 'claimed' || act === 'busy';
+		if (btn.dataset.label !== label) {
+			btn.dataset.label = label;
+			btn.innerHTML = `${ACT_ICON[act] || ''}<span>${escapeHtml(label)}</span>`;
+		}
+		if (btn.title !== label) btn.title = label;
+	}
 	if (diagEl) {
 		// FIX64-P0 wave 4: hướng dẫn bằng chữ (không chỉ màu) cho quest bị
 		// chặn heartbeat — dùng chung ô chẩn đoán sẵn có của thẻ.
@@ -1935,8 +1961,8 @@ function updateQuestFoot(node, q) {
 		const blockedText = q.heartbeatBlocked
 			? q.enrolled === false
 				? en
-					? 'This quest has not been accepted in real Discord — open real Discord, accept this quest there, then press "Run now" again.'
-					: 'Nhiệm vụ này chưa được nhận trong Discord thật — mở Discord thật, nhận nhiệm vụ này ở đó, rồi bấm "Chạy Ngay" lại.'
+					? 'This quest has not been accepted in real Discord — open real Discord, accept this quest there, then press "Run" in the toolbar again.'
+					: 'Nhiệm vụ này chưa được nhận trong Discord thật — mở Discord thật, nhận nhiệm vụ này ở đó, rồi bấm "Chạy" ở thanh công cụ lại.'
 				: en
 					? 'Discord rejected heartbeat (401) — play the game in the real Discord client; the app tracks progress via scans.'
 					: 'Heartbeat bị Discord từ chối (401) — mở game trong Discord thật và chơi, app theo dõi tiến độ qua quét.'
@@ -1957,7 +1983,8 @@ function updateQuestFoot(node, q) {
 		const diagText = diagBase + diagTime;
 		if (diagEl.textContent !== diagText) diagEl.textContent = diagText;
 	}
-	node.classList.add('has-foot');
+	// CARDV2: has-foot chi dung khi chan that su ton tai (the claim).
+	node.classList.toggle('has-foot', !!node.querySelector('.qcard-foot'));
 }
 
 function updateQuestCard(node, q) {
@@ -1968,14 +1995,14 @@ function updateQuestCard(node, q) {
 			banner: node.querySelector('.qcard-banner'),
 			reward: node.querySelector('.qcard-reward'),
 			state: node.querySelector('.qcard-state-text'),
-			bar: node.querySelector('.neo-bar-fill'),
-			barWrap: node.querySelector('.neo-bar'),
 			pub: node.querySelector('.qcard-pub-name'),
 			pubCaption: node.querySelector('.qcard-pub-caption'),
 			end: node.querySelector('.qcard-end'),
 			art: node.querySelector('.qcard-reward-art'),
 			kicker: node.querySelector('.qcard-kicker'),
 			title: node.querySelector('.qcard-title'),
+			titleText: node.querySelector('.qcard-title-text'),
+			titleOrb: node.querySelector('.qcard-title-orb'),
 			mult: node.querySelector('.qcard-mult'),
 			desc: node.querySelector('.qcard-desc'),
 			prog: node.querySelector('.qcard-prog'),
@@ -2078,6 +2105,19 @@ function updateQuestCard(node, q) {
 		} else {
 			bannerReason = langEn ? 'Discord did not provide a hero image — showing the game initial.' : 'Discord không trả ảnh hero — đang hiện chữ cái.';
 		}
+		// CARDV2: lop mo cuoi banner (fade tu trong suot xuong mau nen
+		// the) — tao 1 lan, append SAU hero nhung TRUOC logo theo DOM
+		// order: fade ve tren art hero, logo (append sau) ve tren fade
+		// (khong z-index moi). Checkbox + badge trang thai co z-index
+		// san nen khong bi fade che. Fade pointer-events:none (trang
+		// tri, khong chan bam). Logo append sau fade nen logo luon tren.
+		let fade = banner.querySelector('.qcard-banner-fade');
+		if (!fade) {
+			fade = document.createElement('span');
+			fade.className = 'qcard-banner-fade';
+			fade.setAttribute('aria-hidden', 'true');
+		}
+		banner.appendChild(fade);
 		// Waves 42: logo THẬT của nhiệm vụ — ưu tiên logotype/game_tile, thiếu thì
 		// dùng icon application (luôn có). Nếu ảnh lỗi → thử tiếp icon app, cuối
 		// cùng mới bỏ (không hiện logo Orb sai nhiệm vụ).
@@ -2107,10 +2147,8 @@ function updateQuestCard(node, q) {
 			logo.src = logoUrl;
 			banner.appendChild(logo);
 		}
-		// ORBFIX: orb KHONG con trong banner — no nam trong hang in-flow
-		// .qcard-overlap ngay sau banner (margin am keo len mep hero),
-		// nen khong duoc keo no ve banner nua. Hang ve sau banner theo
-		// DOM order nen orb van ve tren art hero (khong z-index moi).
+		// CARDV2: orb KHONG con de mep hero — no nam trong hang detail
+		// duoi dong quang ba, nen khong duoc keo no ve banner nua.
 		node.dataset.bannerDiag = heroMedia ? '' : bannerReason;
 	}
 
@@ -2150,7 +2188,7 @@ function updateQuestCard(node, q) {
 	if (r.pub.textContent !== pubText) r.pub.textContent = pubText;
 	const countdown = formatExpiryCountdown(q.expiresAt);
 	const endText = q.expiresAt
-		? `${en ? 'Ends' : 'Kết thúc vào'} ${fmtShortDate(q.expiresAt)}${countdown ? ` · ${countdown}` : ''}`
+		? `${en ? 'Ends' : 'Kết thúc ngày'} ${fmtShortDate(q.expiresAt)}${countdown ? ` · ${countdown}` : ''}`
 		: '';
 	if (r.end.textContent !== endText) r.end.textContent = endText;
 
@@ -2177,9 +2215,22 @@ function updateQuestCard(node, q) {
 			: en
 				? 'Claim Discord reward'
 				: 'Nhận phần thưởng Discord');
-	if (r.title.textContent !== titleText) {
-		r.title.textContent = titleText;
-		r.title.title = titleText;
+	if (r.titleText && r.titleText.textContent !== titleText) r.titleText.textContent = titleText;
+	if (r.title) r.title.title = titleText;
+	// CARDV2: icon orb nho (20px) dau dong "Nhan X Orbs" kieu Discord —
+	// CHI cho quest Orbs (rewardKind != 'item' va co orbs); quest item
+	// khong duoc hien orb (luat §5.3: khong fallback Orb sai quest).
+	// Node tai dung theo id quest nen rewardKind khong doi giua cac lan
+	// update, nhung van don sach neu loai thuong doi (phong thu).
+	if (r.titleOrb) {
+		const orbQuest = q.rewardKind !== 'item' && !!q.orbs;
+		if (orbQuest && !r.titleOrb.dataset.built) {
+			r.titleOrb.dataset.built = '1';
+			r.titleOrb.appendChild(orbVideoEl(DISCORD_ORB_SMALL, 'orb-video orb-inline'));
+		} else if (!orbQuest && r.titleOrb.dataset.built) {
+			delete r.titleOrb.dataset.built;
+			r.titleOrb.textContent = '';
+		}
 	}
 
 	// GRID-DISCORD: badge nhân Orbs kiểu Discord ("Mở khóa 1,2x") — CHỈ hiện
@@ -2224,8 +2275,8 @@ function updateQuestCard(node, q) {
 	}
 	const pctText = `${pct}%`;
 	if (r.pct.textContent !== pctText) r.pct.textContent = pctText;
-	if (r.bar && r.bar.style.width !== `${pct}%`) r.bar.style.width = `${pct}%`;
-	if (r.barWrap) r.barWrap.setAttribute('aria-valuenow', String(pct));
+	// CARDV2: thanh tien do ngang da xoa khoi the — tien do chi con o
+	// vong tron + badge % + dong "Da cay x/y phut" ben duoi mo ta.
 
 	// ---- Checkbox ----
 	if (r.check) {
@@ -3115,7 +3166,11 @@ function syncQuestTools(visNew, visTotal, countAll) {
 
 function updateSelectionUi() {
 	ui.selectedCount.textContent = selected.size;
-	const label = selected.size > 0 ? `Auto ORBs (${selected.size})` : 'Auto ORBs';
+	// CARDV2: nut chay tren thanh cong cu chi con "Chay (n)" / "Run (n)"
+	// (n = so quest da tich). Nut "Dung" la nut RIENG (btnStop), khong
+	// phai toggle cua nut nay — giu nguyen.
+	const enSel = currentLang === 'en';
+	const label = selected.size > 0 ? `${enSel ? 'Run' : 'Chạy'} (${selected.size})` : enSel ? 'Run' : 'Chạy';
 	if (ui.btnStart.dataset.label !== label) {
 		ui.btnStart.dataset.label = label;
 		// Giữ nguyên SVG icon, chỉ đổi text node cuối
@@ -4376,33 +4431,10 @@ function onQuestActClick(e) {
 			});
 		return;
 	}
-	if (act === 'play') {
-		// GRID-DISCORD: "Chạy Ngay" = chọn RIÊNG quest này rồi chạy Auto bằng
-		// đúng đường startRun của nút Auto ORBs — không thêm logic engine nào.
-		// Đang có đợt chạy khác thì không chồng đợt mới: chỉ chọn quest + báo.
-		e.preventDefault();
-		e.stopPropagation();
-		// ORBFIX: bấm "Chạy Ngay" trên quest từng bị chặn heartbeat phải xoá
-		// cờ chặn NGAY LÚC BẤM (trước startRun) để đợt thử lại hiện rõ,
-		// không bị thẻ chặn cũ che mất — dư thừa cũng vô hại vì sự kiện
-		// run-start của engine cũng xoá cờ này (xem case quest đang chạy).
-		quest.heartbeatBlocked = false;
-		quest.heartbeatBlockedAt = 0;
-		quest.heartbeatBlockedReason = '';
-		const runBusy = state === 'starting' || state === 'running' || state === 'stopping' || state === 'scanning';
-		selected.clear();
-		selected.add(String(quest.id));
-		persistSelection();
-		renderQuests();
-		if (runBusy) {
-			toast(currentLang === 'en' ? 'Auto is already running — quest selected.' : 'Auto đang chạy — đã chọn quest này.', true);
-			return;
-		}
-		healAttempts = 0;
-		lastAutoHeal = 0;
-		startRun('run', { selectedQuests: [String(quest.id)] });
-		return;
-	}
+	// CARDV2: nhanh play ("Chay Ngay" tren the) da xoa — chay bang
+	// checkbox + nut "Chay (n)" tren thanh cong cu. Su kien run-start
+	// cua engine (case 'quest:start') van xoa co chan heartbeat khi
+	// dot chay moi bat dau, nen the chan cu khong che dot thu lai.
 	if (act === 'claim' || act === 'retry') {
 		e.preventDefault();
 		e.stopPropagation();

@@ -42,6 +42,7 @@ const REAL_MODULES = [
 	'src/interface.js',
 	'src/quest.js',
 	'src/questManager.js',
+	'src/presence.js',
 	'src/security.js',
 	'src/taskTypes.js',
 	'src/utils.js',

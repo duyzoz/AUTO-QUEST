@@ -6,12 +6,42 @@ const events_1 = require("./events");
 const quest_1 = require("./quest");
 const taskTypes_1 = require("./taskTypes");
 const utils_1 = require("./utils");
+const presence_1 = require("./presence");
 class QuestManager {
     quests = new Map();
     client;
     constructor(client, quests = []) {
         this.client = client;
         quests.forEach((quest) => this.quests.set(quest.id, quest));
+    }
+    /**
+     * CARDV2 — phien presence dung chung cho cac quest choi PC chay
+     * song song (nhieu activity trong 1 phien). Token lay tu client
+     * (shim web luon co this.token); khong co token hoac khong co
+     * WebSocket -> phien o trang thai 'unavailable' va moi thao tac
+     * la no-op, khong anh huong luong heartbeat cu.
+     */
+    presenceSession() {
+        if (this.presence) return this.presence;
+        let token = '';
+        try {
+            token = String((this.client && this.client.token) || '');
+        } catch (e) {}
+        let properties = null;
+        try {
+            const constants_1 = require("./constants");
+            properties = constants_1.Constants && constants_1.Constants.Properties ? constants_1.Constants.Properties : null;
+        } catch (e) {}
+        this.presence = new presence_1.PresenceSession({
+            token: token,
+            properties: properties,
+            log: (msg) => {
+                try {
+                    console.log(msg);
+                } catch (e) {}
+            },
+        });
+        return this.presence;
     }
     static async fromResponse(client, response, fetchExcludedQuests = true) {
         if (response.quest_enrollment_blocked_until !== null) {
@@ -747,7 +777,7 @@ class QuestManager {
         if (kind === 'desktop' || kind === 'console' || kind === 'mobile') {
             const questAppId = String(quest.config?.application?.id ?? '');
             const enrolled = typeof quest.isEnrolledQuest === 'function' ? quest.isEnrolledQuest() : Boolean(quest.userStatus?.enrolled_at);
-            console.log(`[Chẩn đoán heartbeat] "${questName}" · enrolled=${enrolled ? 'yes' : 'no'} · task=${taskName} · appId task=${appId} · appId quest=${questAppId}`);
+            console.log(`[Chẩn đoán heartbeat] "${questName}" · enrolled=${enrolled ? 'yes' : 'no'} · task=${taskName} · appId task=${appId} · appId quest=${questAppId} · ${this.presenceSession().describeShort()}`);
         }
         (0, events_1.report)('quest:start', {
             id: questId,
@@ -921,6 +951,20 @@ class QuestManager {
         const interval = Math.max(5, heartbeatIntervalS);
         const maxTicks = Math.ceil(secondsNeeded / interval) + 60;
         console.log(`Đang giả lập chơi "${applicationName}" cho "${questName}" (Thời gian yêu cầu: ${Math.ceil(secondsNeeded / 60)} phút, heartbeat ${interval}s)...`);
+        // CARDV2 — bao cao game dang chay qua gateway presence TRUOC
+        // nhip heartbeat dau tien (xem presence.js: nghi van so 1 cho
+        // 401 keo dai). Cho toi da 5s de identify gui xong; qua han
+        // van chay heartbeat cu (presence chi la tin hieu kem, khong
+        // chan luong). Presence go o finally ben duoi moi duong ve.
+        const presence = this.presenceSession();
+        let presenceState = 'off';
+        try {
+            presenceState = await presence.add(applicationId, applicationName);
+        } catch (e) {
+            presenceState = 'error';
+        }
+        console.log(`[Presence] "${applicationName}" (appId=${applicationId}): ${presence.describeShort()} (add -> ${presenceState})`);
+        try {
         let consecutiveErrors = 0;
         // FIX64-P0 wave 6: nhịp chờ sau 1 nhịp lỗi (2x, tối đa 60s), về nhịp
         // gốc ngay khi 1 nhịp thành công.
@@ -979,7 +1023,7 @@ class QuestManager {
                     catch (errFb) {
                         consecutiveErrors++;
                         const msg = errFb?.message || String(errFb);
-                        console.warn(`[Cảnh báo] Lỗi gửi tín hiệu heartbeat "${applicationName}" (${consecutiveErrors}/5) sau fallback appId=${questAppId} (appId task=${applicationId} bị 401) taskApps=[${taskApps.join(',')}]: ${QuestManager.heartbeatDiag(errFb, { questId: QuestManager.getQuestId(quest), taskName, applicationId: questAppId, endpoint: 'heartbeat' })}`);
+                        console.warn(`[Cảnh báo] Lỗi gửi tín hiệu heartbeat "${applicationName}" (${consecutiveErrors}/5) sau fallback appId=${questAppId} (appId task=${applicationId} bị 401) taskApps=[${taskApps.join(',')}] ${presence.describeShort()}: ${QuestManager.heartbeatDiag(errFb, { questId: QuestManager.getQuestId(quest), taskName, applicationId: questAppId, endpoint: 'heartbeat' })}`);
                         if (consecutiveErrors >= 5) {
                             this.blockHeartbeatQuest(quest, questName, taskName, 'heartbeat', applicationId, questAppId, msg, secondsNeeded);
                             return;
@@ -990,7 +1034,7 @@ class QuestManager {
                 else {
                     consecutiveErrors++;
                     const msg = err?.message || String(err);
-                    console.warn(`[Cảnh báo] Lỗi gửi tín hiệu heartbeat "${applicationName}" (${consecutiveErrors}/5): ${QuestManager.heartbeatDiag(err, { questId: QuestManager.getQuestId(quest), taskName, applicationId, endpoint: 'heartbeat' })}`);
+                    console.warn(`[Cảnh báo] Lỗi gửi tín hiệu heartbeat "${applicationName}" (${consecutiveErrors}/5) ${presence.describeShort()}: ${QuestManager.heartbeatDiag(err, { questId: QuestManager.getQuestId(quest), taskName, applicationId, endpoint: 'heartbeat' })}`);
                     if (consecutiveErrors >= 5) {
                         if (is401) {
                             this.blockHeartbeatQuest(quest, questName, taskName, 'heartbeat', applicationId, questAppId || applicationId, msg, secondsNeeded);
@@ -1020,6 +1064,14 @@ class QuestManager {
         }
         catch {
             /* ignore terminal heartbeat error */
+        }
+        }
+        finally {
+            // CARDV2: go activity khi het luong (hoan thanh / chan /
+            // fail) — de presence khong ket lai game cu sang dot sau.
+            try {
+                presence.remove(applicationId);
+            } catch (e) {}
         }
         await this.finishQuest(quest, questName);
     }
