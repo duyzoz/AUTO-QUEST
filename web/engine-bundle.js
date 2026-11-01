@@ -1581,19 +1581,30 @@ class QuestManager {
         const interval = Math.max(5, heartbeatIntervalS);
         const maxTicks = Math.ceil(secondsNeeded / interval) + 60;
         console.log(`Đang giả lập chơi "${applicationName}" cho "${questName}" (Thời gian yêu cầu: ${Math.ceil(secondsNeeded / 60)} phút, heartbeat ${interval}s)...`);
-        // CARDV2 — bao cao game dang chay qua gateway presence TRUOC
-        // nhip heartbeat dau tien (xem presence.js: nghi van so 1 cho
-        // 401 keo dai). Cho toi da 5s de identify gui xong; qua han
-        // van chay heartbeat cu (presence chi la tin hieu kem, khong
-        // chan luong). Presence go o finally ben duoi moi duong ve.
+        // HBCAP — presence-ready gate TRUOC nhip heartbeat dau tien:
+        // cho gateway READY + op 3 activity cua DUNG game nay gui xong
+        // (presence.waitForActivity), toi da 10s. Qua han van chay
+        // heartbeat REST cu va log presence=timeout de log chung minh
+        // truong hop nao da xay ra. Khong doi quy tac 5-nhip blocked,
+        // khong doi khoang nghi. Ly do: ban CARDV2 chi doi Identify
+        // GUI XONG nen nhip 1 van chay khi phien moi o 'connecting'
+        // (log live: presence=connecting o tick 1/5) — gate nay dong
+        // dung lo hong do. Presence go o finally ben duoi moi duong ve.
+        // Chi ap dung duong desktop-play nay: console/mobile khong
+        // dung presence (endpoint rieng, khong chia se duong nay).
         const presence = this.presenceSession();
+        const gateTimeoutMs = typeof this.presenceGateTimeoutMs === 'number' ? this.presenceGateTimeoutMs : presence_1.PRESENCE_GATE_TIMEOUT_MS;
         let presenceState = 'off';
         try {
             presenceState = await presence.add(applicationId, applicationName);
+            presenceState = await presence.waitForActivity(applicationId, gateTimeoutMs);
         } catch (e) {
             presenceState = 'error';
         }
-        console.log(`[Presence] "${applicationName}" (appId=${applicationId}): ${presence.describeShort()} (add -> ${presenceState})`);
+        console.log(`[Presence] "${applicationName}" (appId=${applicationId}): ${presence.describeShort()} (gate -> ${presenceState})`);
+        if (presenceState === 'timeout') {
+            console.log(`[Presence] "${applicationName}": gate TIMEOUT sau ${gateTimeoutMs}ms — chay heartbeat REST, presence=timeout.`);
+        }
         try {
         let consecutiveErrors = 0;
         // FIX64-P0 wave 6: nhịp chờ sau 1 nhịp lỗi (2x, tối đa 60s), về nhịp
@@ -2234,9 +2245,17 @@ const OP_HEARTBEAT = 1;
 const OP_IDENTIFY = 2;
 const OP_PRESENCE = 3;
 const OP_HELLO = 10;
-const ADD_TIMEOUT_MS = 5000;
 const MAX_RECONNECTS = 5;
 const RECONNECT_DELAY_MS = 5000;
+/* HBCAP (2026-11-01): presence-ready gate — nhip heartbeat dau tien
+   chi gui SAU KHI gateway READY + op 3 activity cua dung game do
+   da gui xong. Timeout gioi han (mac dinh 10s): qua han van chay
+   heartbeat REST cu va log presence=timeout, khong treo luong quest.
+   Ly do: ban CARDV2 chi doi Identify GUI XONG (sendIdentify tu set
+   state='ready'), nen nhip 1 van co the chay khi phien moi chi o
+   'connecting' — dung nhu log live cua Ethan (presence=connecting
+   o tick 1/5). */
+const PRESENCE_GATE_TIMEOUT_MS = 10000;
 
 let WsCtorOverride = null;
 function setWebSocketCtor(fn) {
@@ -2265,7 +2284,14 @@ class PresenceSession {
 		this.hbTimer = null;
 		this.reconnects = 0;
 		this.wantActivities = false;
-		this._identifyWaiters = [];
+		/* HBCAP: nguoi doi gate — moi muc { appId, resolve }. Chi giai
+		   quyet khi READY (ke ca reconnect), khi phien chet, hoac khi
+		   timeout rieng cua tung waiter het han. */
+		this._activityWaiters = [];
+		/* HBCAP: true chi khi READY cua phien HIEN TAI da den va op 3
+		   da gui xong. Reset moi lan connect()/close() — READY cua
+		   phien cu khong duoc chung minh cho phien moi. */
+		this.presenceConfirmed = false;
 		this._reconnectTimer = null;
 		/* CARDV2: chet that sau close() cuoi — tin nhan gateway den
 		   muon (vi du READY den sau khi quest xong trong tich tac)
@@ -2290,42 +2316,64 @@ class PresenceSession {
 		return out;
 	}
 
-	waitIdentify() {
+	/* HBCAP — presence-ready gate. Chi resolve 'ready' khi phien HIEN
+	   TAI da READY, op 3 da gui, va appId nay co trong activities.
+	   Cac trang thai cuoi (unavailable/closed/off) resolve ngay, khong
+	   doi. Dang connecting/identifying thi doi toi da timeoutMs, het
+	   han resolve 'timeout' (nguoi goi van chay heartbeat REST cu).
+	   Khong bao gio treo, khong bao gio nem loi. */
+	waitForActivity(appId, timeoutMs) {
 		const self = this;
+		appId = String(appId || '');
+		const timeout = typeof timeoutMs === 'number' && timeoutMs > 0 ? timeoutMs : PRESENCE_GATE_TIMEOUT_MS;
 		return new Promise((resolve) => {
-			if (self.state === 'ready') {
+			if (self.state === 'ready' && self.presenceConfirmed && self.activities.has(appId)) {
+				resolve('ready');
+				return;
+			}
+			if (self.state === 'unavailable' || self.state === 'closed' || self.state === 'off') {
 				resolve(self.state);
 				return;
 			}
-			self._identifyWaiters.push(resolve);
-			setTimeout(() => {
-				const i = self._identifyWaiters.indexOf(resolve);
-				if (i !== -1) self._identifyWaiters.splice(i, 1);
-				resolve(self.state);
-			}, ADD_TIMEOUT_MS);
+			const waiter = { appId: appId, resolve: resolve, timer: null };
+			waiter.timer = setTimeout(() => {
+				const i = self._activityWaiters.indexOf(waiter);
+				if (i !== -1) self._activityWaiters.splice(i, 1);
+				resolve('timeout');
+			}, timeout);
+			self._activityWaiters.push(waiter);
 		});
 	}
 
-	flushIdentifyWaiters() {
-		const waiters = this._identifyWaiters;
-		this._identifyWaiters = [];
+	_notifyActivityWaiters(result) {
+		const waiters = this._activityWaiters;
+		this._activityWaiters = [];
 		for (let i = 0; i < waiters.length; i++) {
 			try {
-				waiters[i](this.state);
+				if (waiters[i].timer) clearTimeout(waiters[i].timer);
+			} catch (e) {}
+			try {
+				waiters[i].resolve(result);
 			} catch (e) {}
 		}
 	}
 
+	/* HBCAP: add() CHI khoi dong phien va tra ve trang thai hien tai
+	   ngay lap tuc — khong doi READY o day. Viec doi READY + op 3
+	   thuoc ve waitForActivity() (gate o questManager) de timeout
+	   cua gate la gioi han duy nhat truoc nhip heartbeat dau tien. */
 	add(appId, name) {
 		appId = String(appId || '');
 		if (!appId) return Promise.resolve(this.state);
 		this.activities.set(appId, String(name || ''));
 		this.wantActivities = true;
-		if (this.state === 'ready') {
+		if (this.state === 'ready' && this.presenceConfirmed) {
 			this.sendPresence();
 			return Promise.resolve(this.state);
 		}
-		if (this.state === 'connecting') return this.waitIdentify();
+		if (this.state === 'connecting' || this.state === 'identifying' || this.state === 'ready') {
+			return Promise.resolve(this.state);
+		}
 		if (!this.token) {
 			this.state = 'unavailable';
 			return Promise.resolve(this.state);
@@ -2336,7 +2384,7 @@ class PresenceSession {
 			return Promise.resolve(this.state);
 		}
 		this.connect(Ctor);
-		return this.waitIdentify();
+		return Promise.resolve(this.state);
 	}
 
 	remove(appId) {
@@ -2353,7 +2401,9 @@ class PresenceSession {
 	connect(Ctor) {
 		const self = this;
 		this.dead = false;
+		this.presenceConfirmed = false;
 		this.state = 'connecting';
+		this.log('[Presence] gateway: connecting');
 		this.seq = null;
 		let ws;
 		try {
@@ -2361,7 +2411,7 @@ class PresenceSession {
 		} catch (e) {
 			this.state = 'closed';
 			this.log('[Presence] khong mo duoc gateway: ' + (e && e.message ? e.message : String(e)));
-			this.flushIdentifyWaiters();
+			this._notifyActivityWaiters('closed');
 			return;
 		}
 		this.ws = ws;
@@ -2381,10 +2431,15 @@ class PresenceSession {
 			} else if (msg.op === OP_DISPATCH) {
 				if (msg.s != null) self.seq = msg.s;
 				if (msg.t === 'READY') {
+					/* HBCAP: CHI day moi la 'ready' that — READY cua
+					   phien hien tai da den, op 3 gui ngay sau do.
+					   Gate (waitForActivity) chi mo khi toi day. */
 					self.state = 'ready';
+					self.presenceConfirmed = true;
 					self.startHeartbeat();
 					self.sendPresence();
-					self.flushIdentifyWaiters();
+					self.log('[Presence] gateway: ready (da gui op 3 activity)');
+					self._notifyActivityWaiters('ready');
 				}
 			} else if (msg.op === OP_HEARTBEAT) {
 				self.sendGatewayHeartbeat();
@@ -2396,6 +2451,7 @@ class PresenceSession {
 		ws.onclose = function () {
 			self.clearHeartbeat();
 			self.ws = null;
+			self.presenceConfirmed = false;
 			if (self.wantActivities && self.reconnects < MAX_RECONNECTS) {
 				self.reconnects += 1;
 				self.state = 'connecting';
@@ -2406,12 +2462,14 @@ class PresenceSession {
 					if (Next && self.wantActivities) self.connect(Next);
 					else {
 						self.state = 'closed';
-						self.flushIdentifyWaiters();
+						self.log('[Presence] gateway: closed');
+						self._notifyActivityWaiters('closed');
 					}
 				}, RECONNECT_DELAY_MS);
 			} else {
 				self.state = self.wantActivities ? 'closed' : 'off';
-				self.flushIdentifyWaiters();
+				self.log('[Presence] gateway: ' + self.state);
+				self._notifyActivityWaiters(self.state);
 			}
 		};
 	}
@@ -2436,11 +2494,14 @@ class PresenceSession {
 		try {
 			this.ws.send(JSON.stringify(payload));
 		} catch (e) {}
-		/* Identify da mang activity theo — coi nhu da gui xong ke ca
-		   khi READY den muon: khong doi READY moi cho heartbeat chay. */
-		this.state = 'ready';
-		this.startHeartbeat();
-		this.flushIdentifyWaiters();
+		/* HBCAP: Identify CHI mang activity theo trong payload — no
+		   KHONG chung minh phien da READY. Trang thai chi chuyen
+		   sang 'ready' khi dispatch READY den (xem onmessage), va
+		   gate chi mo o do. Truoc day dong nay tu set ready +
+		   flush waiter ngay khi Identify gui xong, nen nhip heartbeat
+		   dau tien van chay duoc khi phien moi o 'connecting'. */
+		this.state = 'identifying';
+		this.log('[Presence] gateway: identifying (da gui Identify)');
 	}
 
 	sendPresence() {
@@ -2482,6 +2543,8 @@ class PresenceSession {
 
 	close() {
 		this.dead = true;
+		this.presenceConfirmed = false;
+		this._notifyActivityWaiters('off');
 		this.clearHeartbeat();
 		if (this._reconnectTimer) {
 			try {
@@ -2502,6 +2565,7 @@ class PresenceSession {
 
 exports.PresenceSession = PresenceSession;
 exports.setWebSocketCtor = setWebSocketCtor;
+exports.PRESENCE_GATE_TIMEOUT_MS = PRESENCE_GATE_TIMEOUT_MS;
 
 };
 

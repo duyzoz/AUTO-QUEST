@@ -951,19 +951,30 @@ class QuestManager {
         const interval = Math.max(5, heartbeatIntervalS);
         const maxTicks = Math.ceil(secondsNeeded / interval) + 60;
         console.log(`Đang giả lập chơi "${applicationName}" cho "${questName}" (Thời gian yêu cầu: ${Math.ceil(secondsNeeded / 60)} phút, heartbeat ${interval}s)...`);
-        // CARDV2 — bao cao game dang chay qua gateway presence TRUOC
-        // nhip heartbeat dau tien (xem presence.js: nghi van so 1 cho
-        // 401 keo dai). Cho toi da 5s de identify gui xong; qua han
-        // van chay heartbeat cu (presence chi la tin hieu kem, khong
-        // chan luong). Presence go o finally ben duoi moi duong ve.
+        // HBCAP — presence-ready gate TRUOC nhip heartbeat dau tien:
+        // cho gateway READY + op 3 activity cua DUNG game nay gui xong
+        // (presence.waitForActivity), toi da 10s. Qua han van chay
+        // heartbeat REST cu va log presence=timeout de log chung minh
+        // truong hop nao da xay ra. Khong doi quy tac 5-nhip blocked,
+        // khong doi khoang nghi. Ly do: ban CARDV2 chi doi Identify
+        // GUI XONG nen nhip 1 van chay khi phien moi o 'connecting'
+        // (log live: presence=connecting o tick 1/5) — gate nay dong
+        // dung lo hong do. Presence go o finally ben duoi moi duong ve.
+        // Chi ap dung duong desktop-play nay: console/mobile khong
+        // dung presence (endpoint rieng, khong chia se duong nay).
         const presence = this.presenceSession();
+        const gateTimeoutMs = typeof this.presenceGateTimeoutMs === 'number' ? this.presenceGateTimeoutMs : presence_1.PRESENCE_GATE_TIMEOUT_MS;
         let presenceState = 'off';
         try {
             presenceState = await presence.add(applicationId, applicationName);
+            presenceState = await presence.waitForActivity(applicationId, gateTimeoutMs);
         } catch (e) {
             presenceState = 'error';
         }
-        console.log(`[Presence] "${applicationName}" (appId=${applicationId}): ${presence.describeShort()} (add -> ${presenceState})`);
+        console.log(`[Presence] "${applicationName}" (appId=${applicationId}): ${presence.describeShort()} (gate -> ${presenceState})`);
+        if (presenceState === 'timeout') {
+            console.log(`[Presence] "${applicationName}": gate TIMEOUT sau ${gateTimeoutMs}ms — chay heartbeat REST, presence=timeout.`);
+        }
         try {
         let consecutiveErrors = 0;
         // FIX64-P0 wave 6: nhịp chờ sau 1 nhịp lỗi (2x, tối đa 60s), về nhịp

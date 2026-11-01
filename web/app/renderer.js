@@ -114,6 +114,8 @@ const ui = {
 	captchaTargetSub: el('captchaTargetSub'),
 	btnCaptchaCancel: el('btnCaptchaCancel'),
 	btnCaptchaRetry: el('btnCaptchaRetry'),
+	btnCaptchaReload: el('btnCaptchaReload'),
+	captchaReloadRow: el('captchaReloadRow'),
 	captchaVeilClick: el('captchaModal'),
 	// Nav
 	navQuest: el('navQuest'),
@@ -1973,10 +1975,14 @@ function updateQuestFoot(node, q) {
 		// loi engine (quest:error). FIX64-P4 (W50): kem thoi gian xay ra
 		// (gio:phut) — the loi ma khong co thoi gian thi khong biet loi
 		// moi hay tu phien truoc.
-		const mainDiag = formatClaimDiag(q, en) || blockedText || (q.claimError ? String(q.claimError) : '') || (q.questErrorMsg ? String(q.questErrorMsg) : '');
+		// HBCAP: canh bao passive truoc-gui len dau chuoi chan doan —
+		// truong rieng, khong qua claimError de khong bien the todo
+		// thanh nut 'Thu lai' (act chi xet claimBusy/claimOpenDiscord/
+		// claimError/claimed/claimable o tren, khong xet truong nay).
+		const mainDiag = (q.captchaPassiveWarn ? String(q.captchaPassiveWarn) : '') || formatClaimDiag(q, en) || blockedText || (q.claimError ? String(q.claimError) : '') || (q.questErrorMsg ? String(q.questErrorMsg) : '');
 		const bannerDiag = (node.dataset && node.dataset.bannerDiag) || '';
 		const diagBase = mainDiag || bannerDiag;
-		const diagAt = q.claimErrorAt || q.heartbeatBlockedAt || q.questErrorAt || 0;
+		const diagAt = q.captchaPassiveWarnAt || q.claimErrorAt || q.heartbeatBlockedAt || q.questErrorAt || 0;
 		const diagTime = mainDiag && diagAt
 			? ` · ${new Date(diagAt).toLocaleTimeString(en ? 'en-US' : 'vi-VN', { hour: '2-digit', minute: '2-digit' })}`
 			: '';
@@ -3501,6 +3507,7 @@ function upsertQuest(id, patch, opts = {}) {
 	// heartbeatBlocked chi co noi dung thi khong biet loi tu luc nao. Dong
 	// dau thoi gian o day (1 cho duy nhat) thay vi sua tung cho goi upsert.
 	if (patch && typeof patch.claimError === 'string' && patch.claimError && !patch.claimErrorAt) patch.claimErrorAt = Date.now();
+	if (patch && typeof patch.captchaPassiveWarn === 'string' && patch.captchaPassiveWarn && !patch.captchaPassiveWarnAt) patch.captchaPassiveWarnAt = Date.now();
 	if (patch && patch.heartbeatBlocked === true && !patch.heartbeatBlockedAt) patch.heartbeatBlockedAt = Date.now();
 	Object.assign(quests.get(id), patch);
 	if (opts.defer) {
@@ -3558,6 +3565,15 @@ let captchaCtx = null; // { quest, captcha, widgetId, pendingToken }
 // pendingToken bị xóa, hint về trạng thái chờ tick, không bao giờ gửi token cũ.
 const CAPTCHA_HINT_IDLE = 'Tick vào ô xác minh bên trên, giải thử thách nếu hiện, rồi bấm "Gửi xác minh ngay" để gửi kết quả nhận thưởng.';
 const CAPTCHA_HINT_READY = 'Đã có kết quả xác minh — bấm "Gửi xác minh ngay" để gửi.';
+// HBCAP — canh bao token passive TRUOC khi gui (xem onCaptchaTokenReady):
+// noi dung noi that muc do chac chan — day la suy luan tu su kien
+// open-callback (khong hien thu thach), khong phai phan tich chuoi
+// token (tien to P1_ la phien ban token, ca token giai that cung mang
+// no, nen KHONG dung no de phan loai). Ban EN qua hcaptchaText().
+const CAPTCHA_PASSIVE_WARN_VI = 'Token xác minh này về mà không hiện thử thách nào — rất có thể là token passive, Discord thường từ chối loại này. Bấm "Tải lại hộp xác minh" để lấy phiên mới, rồi tick lại và chờ thử thách hiện ra.';
+const CAPTCHA_PASSIVE_WARN_EN = 'This verification token arrived without any challenge being shown — it is likely a passive token, which Discord usually rejects. Press "Reload verification" for a fresh session, then tick again and wait for a challenge to appear.';
+const CAPTCHA_PASSIVE_DIAG_VI = 'Cảnh báo: token xác minh dạng passive (không hiện thử thách) — chưa gửi, hãy tải lại hộp xác minh.';
+const CAPTCHA_PASSIVE_DIAG_EN = 'Warning: passive verification token (no challenge shown) — not sent yet, reload the verification box.';
 let lastCaptchaSubmit = null; // Chẩn đoán claim: { source, delayMs } — KHÔNG chứa token.
 let hcaptchaLoading = null;
 let captchaWarmStarted = false;
@@ -3753,9 +3769,13 @@ function closeCaptchaModal() {
 		}
 	}
 	if (ui.captchaWidget) ui.captchaWidget.innerHTML = '';
+	// HBCAP: canh bao passive chi co y nghia khi modal dang mo — dong
+	// modal thi xoa khoi the de khong hien canh bao cu sau nay.
+	const closingQuest = captchaCtx ? captchaCtx.quest : null;
 	captchaCtx = null;
 	if (ui.captchaModal) ui.captchaModal.hidden = true;
 	setCaptchaError('');
+	if (closingQuest) upsertQuest(closingQuest.id, { captchaPassiveWarn: '', captchaPassiveWarnAt: 0 });
 }
 
 /**
@@ -3770,6 +3790,12 @@ async function openCaptchaModal(quest, captcha) {
 		pendingToken: null,
 		openedAt: Date.now(),
 		theme: document.documentElement.dataset.theme === 'light' ? 'light' : 'dark',
+		// HBCAP: challengeShown = open-callback cua hCaptcha da ban trong
+		// phien nay (co thu thach hien ra); passiveToken/passiveWarned
+		// xem onCaptchaTokenReady / onCaptchaRetryClick.
+		challengeShown: false,
+		passiveToken: false,
+		passiveWarned: false,
 	};
 	if (!ui.captchaModal) return;
 
@@ -3796,6 +3822,9 @@ async function openCaptchaModal(quest, captcha) {
 	if (ui.captchaHint) ui.captchaHint.textContent = CAPTCHA_HINT_IDLE;
 	if (ui.captchaLoading) ui.captchaLoading.hidden = false;
 	if (ui.btnCaptchaRetry) ui.btnCaptchaRetry.disabled = true;
+	// HBCAP: hang tai lai an mac dinh, chi hien khi token passive.
+	if (ui.captchaReloadRow) ui.captchaReloadRow.hidden = true;
+	if (ui.btnCaptchaReload) ui.btnCaptchaReload.textContent = hcaptchaText('Tải lại hộp xác minh', 'Reload verification');
 	ui.captchaModal.hidden = false;
 
 	const service = captcha && captcha.service ? captcha.service : 'hcaptcha';
@@ -3863,6 +3892,19 @@ async function openCaptchaModal(quest, captcha) {
 		// rqdata → Discord xác minh sai → captcha-required / 403·10008.
 		...(captcha.rqdata ? { rqdata: captcha.rqdata } : {}),
 		callback: (token) => onCaptchaTokenReady(token),
+		// HBCAP — dau hieu passive THAT (docs.hcaptcha.com/configuration):
+		// open-callback chi ban khi "user display of a challenge starts".
+		// Token ve ma ca phien chua tung ban open-callback = khong co
+		// thu thach nao hien ra = tu dong cho qua (passive), khong loi
+		// giai — dung truong hop Discord tu choi o log live. Co nay
+		// CHI latch len (khong reset o close-callback): neu thu thach
+		// da hien roi user tat di, token sau do van co the tu giai that;
+		// reset latch o day se bao nham token giai that thanh passive
+		// (false positive hai hon false negative — false negative chi
+		// ve duong cu, khong lam gi them).
+		'open-callback': () => {
+			if (captchaCtx) captchaCtx.challengeShown = true;
+		},
 		'error-callback': () => setCaptchaError('hCaptcha báo lỗi khi tải. Bấm "Thử lại" hoặc tải lại ô xác minh.'),
 		'expired-callback': () => {
 			// Waves 41: hCaptcha "passive" token sống rất ngắn (vài chục giây). Khi nó
@@ -3870,7 +3912,16 @@ async function openCaptchaModal(quest, captcha) {
 			// Trước đây chỉ báo lỗi mà không tự làm mới → user thấy "dead link" lặp lại.
 			// CLAIM-MANUAL: token chờ (nếu có) hết hiệu lực cùng phiên — xóa để
 			// không bao giờ gửi token cũ, hint về trạng thái chờ tick lại.
-			if (captchaCtx) captchaCtx.pendingToken = null;
+			// HBCAP: phien moi = co passive cu het hieu luc — xoa luon
+			// canh bao tren the + an hang tai lai.
+			if (captchaCtx) {
+				captchaCtx.pendingToken = null;
+				captchaCtx.passiveToken = false;
+				captchaCtx.passiveWarned = false;
+				captchaCtx.challengeShown = false;
+				if (captchaCtx.quest) upsertQuest(captchaCtx.quest.id, { captchaPassiveWarn: '', captchaPassiveWarnAt: 0 });
+			}
+			if (ui.captchaReloadRow) ui.captchaReloadRow.hidden = true;
 			if (ui.captchaHint) ui.captchaHint.textContent = CAPTCHA_HINT_IDLE;
 			appendLog('[Cảnh báo] Phiên xác minh hết hạn — đã reset hộp, chờ người dùng tick lại.', 'warn');
 			setCaptchaError('Phiên xác minh hết hạn — tick lại ô bên trên để lấy phiên mới.');
@@ -3942,9 +3993,36 @@ function onCaptchaTokenReady(token) {
 	if (!captchaCtx || !token) return;
 	if (captchaCtx.submitted) return; // Đã gửi rồi — token tới sau không làm gì.
 	captchaCtx.pendingToken = token;
-	if (ui.captchaHint) ui.captchaHint.textContent = CAPTCHA_HINT_READY;
+	// HBCAP — bao ve truoc-gui (pre-send guard), giu nguyen cua
+	// CLAIM-MANUAL (callback chi luu cho, khong tu gui):
+	// token ve ma ca phien chua tung hien thu thach (challengeShown
+	// false) = token passive, Discord thuong tu choi. KHONG gui im
+	// lang roi moi bao loi nhu truoc — canh bao NGAY trong modal +
+	// tren the, hien nut tai lai, va nut Gui VAN MO (chu dich) de
+	// user tu quyet sau canh bao. Ly do khong khoa nut Gui: phat
+	// hien dua tren su kien widget (open-callback) chu khong phai
+	// thuoc tinh cua token; neu hCaptcha khong ban su kien o cau
+	// hinh sitekey nao do, khoa nut se ket user o token co the
+	// dung duoc — canh bao + tai lai ngan duoc loi gui im lang
+	// ma khong cuop quyen gui. (Khong phan loai bang chuoi token:
+	// tien to P1_ la phien ban token, ca token giai that cung mang no.)
+	const passive = !captchaCtx.challengeShown;
+	captchaCtx.passiveToken = passive;
+	if (passive) {
+		captchaCtx.passiveWarned = true;
+		if (ui.captchaHint) ui.captchaHint.textContent = hcaptchaText(CAPTCHA_PASSIVE_WARN_VI, CAPTCHA_PASSIVE_WARN_EN);
+		if (ui.captchaReloadRow) ui.captchaReloadRow.hidden = false;
+		// Canh bao len the TRUOC khi gui — dung truong rieng, KHONG
+		// dung claimError (claimError se bien the todo thanh nut
+		// 'Thu lai' o updateQuestFoot — CARDV2 cam nut tren the todo).
+		if (captchaCtx.quest) upsertQuest(captchaCtx.quest.id, { captchaPassiveWarn: hcaptchaText(CAPTCHA_PASSIVE_DIAG_VI, CAPTCHA_PASSIVE_DIAG_EN), captchaPassiveWarnAt: Date.now() });
+		appendLog('[Hệ thống] Token xác minh về mà không hiện thử thách nào — có thể là token passive, Discord thường từ chối. Chưa gửi: bấm "Tải lại hộp xác minh" để lấy phiên mới, hoặc bấm "Gửi xác minh ngay" nếu vẫn muốn thử.', 'system');
+	} else {
+		if (ui.captchaHint) ui.captchaHint.textContent = CAPTCHA_HINT_READY;
+		if (ui.captchaReloadRow) ui.captchaReloadRow.hidden = true;
+		appendLog('[Hệ thống] Đã có kết quả xác minh — chờ bạn bấm "Gửi xác minh ngay" để gửi.', 'system');
+	}
 	if (ui.btnCaptchaRetry) ui.btnCaptchaRetry.disabled = false;
-	appendLog('[Hệ thống] Đã có kết quả xác minh — chờ bạn bấm "Gửi xác minh ngay" để gửi.', 'system');
 }
 
 /** Nút "Gửi xác minh ngay" → gọi lại claim kèm captcha_key (2A). Cửa gửi DUY NHẤT. */
@@ -3993,7 +4071,55 @@ function onCaptchaRetryClick() {
 		setCaptchaError('Chưa có kết quả xác minh. Tick vào ô bên trên, giải thử thách nếu hiện, rồi bấm lại nút này.');
 		return;
 	}
+	// HBCAP — cua passive cho ca duong getResponse (callback khong ban):
+	// token tu duong nay ma ca phien chua tung hien thu thach thi cung
+	// la passive. Lan bam dau tien CHI canh bao (hint + the + hang tai
+	// lai) chu khong gui — bam lan 2 sau canh bao moi gui (quyet co
+	// chu dich cua user). Duong callback binh thuong da canh bao o
+	// onCaptchaTokenReady (passiveWarned true) nen bam la gui ngay.
+	const passiveNow = captchaCtx.pendingToken ? !!captchaCtx.passiveToken : !captchaCtx.challengeShown;
+	if (passiveNow && !captchaCtx.passiveWarned) {
+		captchaCtx.passiveToken = true;
+		captchaCtx.passiveWarned = true;
+		if (ui.captchaHint) ui.captchaHint.textContent = hcaptchaText(CAPTCHA_PASSIVE_WARN_VI, CAPTCHA_PASSIVE_WARN_EN);
+		if (ui.captchaReloadRow) ui.captchaReloadRow.hidden = false;
+		if (captchaCtx.quest) upsertQuest(captchaCtx.quest.id, { captchaPassiveWarn: hcaptchaText(CAPTCHA_PASSIVE_DIAG_VI, CAPTCHA_PASSIVE_DIAG_EN), captchaPassiveWarnAt: Date.now() });
+		appendLog('[Hệ thống] Token xác minh này có thể là token passive (không hiện thử thách) — chưa gửi. Bấm "Tải lại hộp xác minh" để lấy phiên mới, hoặc bấm "Gửi xác minh ngay" lần nữa nếu vẫn muốn thử.', 'system');
+		return;
+	}
 	onCaptchaSolved(token, 'manual');
+}
+
+/** Nút "Tải lại hộp xác minh" (HBCAP) — reset phiên widget để lấy token
+    mới (phiên mới mới có cơ hội hiện thử thách), xóa token + cờ passive
+    cũ để không bao giờ gửi token cũ. Không tự gửi gì cả. */
+function onCaptchaReloadClick() {
+	if (!captchaCtx) return;
+	const quest = captchaCtx.quest;
+	const captcha = captchaCtx.captcha;
+	let resetOk = false;
+	try {
+		if (captchaCtx.widgetId != null && window.hcaptcha && typeof window.hcaptcha.reset === 'function') {
+			window.hcaptcha.reset(captchaCtx.widgetId);
+			resetOk = true;
+		}
+	} catch {
+		/* widget đã bị gỡ — rơi về mở lại modal bên dưới */
+	}
+	captchaCtx.pendingToken = null;
+	captchaCtx.passiveToken = false;
+	captchaCtx.passiveWarned = false;
+	captchaCtx.challengeShown = false;
+	if (ui.captchaHint) ui.captchaHint.textContent = CAPTCHA_HINT_IDLE;
+	if (ui.captchaReloadRow) ui.captchaReloadRow.hidden = true;
+	if (ui.btnCaptchaRetry) ui.btnCaptchaRetry.disabled = true; // chờ token mới
+	if (quest) upsertQuest(quest.id, { captchaPassiveWarn: '', captchaPassiveWarnAt: 0 });
+	appendLog('[Hệ thống] Đã tải lại hộp xác minh — tick lại để lấy token mới.', 'system');
+	if (!resetOk) {
+		// Widget đã bị gỡ khỏi DOM: mở lại modal để dựng widget mới.
+		if (quest && captcha) openCaptchaModal(quest, captcha);
+		else setCaptchaError('Không tải lại được hộp — đóng modal rồi bấm nhận lại.');
+	}
 }
 
 /**
@@ -4020,6 +4146,10 @@ async function runClaim(quest, captchaMeta) {
 		claimBranch: '',
 		claimDiagSource: '',
 		claimDiagDelayMs: null,
+		// HBCAP: bat dau chay claim that thi canh bao passive truoc-gui
+		// het hieu luc (token da gui, cho ket qua that tu Discord).
+		captchaPassiveWarn: '',
+		captchaPassiveWarnAt: 0,
 		claimPhase:
 			currentLang === 'en'
 				? captchaMeta
@@ -4472,6 +4602,7 @@ if (ui.questListActive) ui.questListActive.addEventListener('click', (e) => {
 /* Nút trong modal captcha */
 if (ui.btnCaptchaCancel) ui.btnCaptchaCancel.addEventListener('click', closeCaptchaModal);
 if (ui.btnCaptchaRetry) ui.btnCaptchaRetry.addEventListener('click', onCaptchaRetryClick);
+if (ui.btnCaptchaReload) ui.btnCaptchaReload.addEventListener('click', onCaptchaReloadClick);
 if (ui.captchaVeilClick) ui.captchaVeilClick.addEventListener('click', (e) => {
 	if (e.target === ui.captchaModal) closeCaptchaModal();
 });

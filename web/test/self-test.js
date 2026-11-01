@@ -1902,6 +1902,62 @@ check('ORBRING: video Orb dong tam vong tron + poster theo asset + log enrolled 
 	return 'pct badge absolute goc duoi-phai + art dong tam vong + poster theo asset + log enrolled (gioi han: assert tinh/cascade, khong phai render trinh duyet that)';
 });
 
+check('HBCAP: presence-ready gate — nhip heartbeat dau tien doi READY + op 3', () => {
+	const pres = read(path.join(WEB, 'engine', 'src', 'presence.js'));
+	const qm = read(path.join(WEB, 'engine', 'src', 'questManager.js'));
+	// Gate API moi thay cho waitIdentify cu (chi doi Identify gui xong).
+	assert(!pres.includes('waitIdentify') && !pres.includes('flushIdentifyWaiters'), 'con sot waitIdentify/flushIdentifyWaiters cu');
+	assert(pres.includes('PRESENCE_GATE_TIMEOUT_MS = 10000'), 'thieu timeout gate 10s');
+	assert(pres.includes('waitForActivity(appId, timeoutMs)'), 'thieu waitForActivity');
+	assert(pres.includes('presenceConfirmed'), 'thieu co presenceConfirmed');
+	const sendId = pres.slice(pres.indexOf('sendIdentify()'), pres.indexOf('sendPresence()'));
+	assert(!sendId.includes("state = 'ready'"), 'sendIdentify khong duoc tu set ready (lo hong CARDV2)');
+	assert(pres.includes("msg.t === 'READY'") && pres.includes('presenceConfirmed = true'), 'READY moi duoc set ready + confirmed');
+	assert(qm.includes('waitForActivity(applicationId, gateTimeoutMs)'), 'doingPlayOnPlatformQuest phai goi gate truoc nhip 1');
+	assert(qm.includes('presence=timeout'), 'het timeout gate phai log presence=timeout');
+	assert(!qm.includes('Cho toi da 5s'), 'con sot comment gate 5s cu');
+	return 'READY + op 3 moi mo gate, timeout 10s ve REST, khong con Identify-gui-xong la ready';
+});
+
+check('HBCAP: bao ve truoc-gui token passive — canh bao + tai lai, khong tu gui', () => {
+	const js = read(path.join(APP, 'renderer.js'));
+	const html = read(INDEX);
+	// (1) Dau hieu passive that: open-callback cua hCaptcha (docs:
+	// ban khi challenge display starts), latch len, khong reset o close.
+	assert(/'open-callback'[\s\S]{0,160}?challengeShown = true/.test(js), 'renderOpts thieu open-callback latch challengeShown');
+	assert(!/'close-callback'[\s\S]{0,80}?challengeShown = false/.test(js), 'khong duoc reset latch o close-callback (false positive)');
+	// (2) Khong phan loai bang chuoi token: P1_ la phien ban token,
+	// ca token giai that cung mang no — phat hien gia la loi.
+	assert(!/startsWith\(['"]P1_/.test(js), 'cam phan loai token bang tien to P1_');
+	// (3) Token ready: passive -> canh bao + hang tai lai + diag the;
+	// giai that -> hint ready binh thuong; ca hai deu khong tu gui.
+	const readyFn = js.slice(js.indexOf('function onCaptchaTokenReady'), js.indexOf('function onCaptchaSolved'));
+	assert(!readyFn.includes('onCaptchaSolved('), 'callback token ready khong duoc tu gui (CLAIM-MANUAL)');
+	assert(readyFn.includes('captchaPassiveWarn') && readyFn.includes('captchaReloadRow'), 'nhanh passive phai canh bao + hien hang tai lai');
+	assert(readyFn.includes('CAPTCHA_PASSIVE_WARN_VI') && readyFn.includes('CAPTCHA_PASSIVE_WARN_EN'), 'thieu canh bao song ngu');
+	// (4) Nut Gui: duong getResponse cung qua cua passiveWarned truoc
+	// khi gui; lan bam dau chi canh bao, bam lan 2 moi gui.
+	const retryFn = js.slice(js.indexOf('function onCaptchaRetryClick'), js.indexOf('function onCaptchaReloadClick'));
+	assert(retryFn.includes('passiveNow') && retryFn.includes('passiveWarned'), 'nut Gui thieu cua passiveWarned cho duong getResponse');
+	// (5) Nut tai lai: ton tai trong HTML (hang rieng, class san co,
+	// khong CSS moi), co wiring + listener + reset + xoa token cu.
+	assert(/id="captchaReloadRow" hidden/.test(html), 'thieu hang nut tai lai (hidden mac dinh)');
+	assert(html.includes('id="btnCaptchaReload"'), 'thieu nut btnCaptchaReload');
+	assert(js.includes("btnCaptchaReload: el('btnCaptchaReload')") && js.includes("captchaReloadRow: el('captchaReloadRow')"), 'thieu wiring ui cho nut tai lai');
+	assert(js.includes("addEventListener('click', onCaptchaReloadClick)"), 'thieu listener nut tai lai');
+	const reloadFn = js.slice(js.indexOf('function onCaptchaReloadClick'), js.indexOf('/**', js.indexOf('function onCaptchaReloadClick') + 30));
+	assert(reloadFn.includes('hcaptcha.reset') && reloadFn.includes('pendingToken = null') && reloadFn.includes('challengeShown = false'), 'tai lai phai reset widget + xoa token/co cu');
+	// (6) Canh bao len the qua truong rieng, khong qua claimError
+	// (claimError se bien the todo thanh nut 'Thu lai' — CARDV2).
+	const foot = js.slice(js.indexOf('function updateQuestFoot'), js.indexOf('function updateQuestCard'));
+	const actPart = foot.slice(0, foot.indexOf('const diagEl'));
+	assert(!actPart.includes('captchaPassiveWarn'), 'captchaPassiveWarn khong duoc lot vao chon nut act');
+	assert(/const mainDiag = \(q\.captchaPassiveWarn/.test(js), 'chan doan the phai uu tien canh bao passive');
+	// (7) Het han / dong modal / bat dau claim that: xoa canh bao cu.
+	assert(js.includes('captchaPassiveWarn: '), 'thieu xoa canh bao passive khi het han/dong/bat dau claim');
+	return 'open-callback latch + canh bao truoc-gui + tai lai, Gui van mo co chu dich, the todo khong nut (gioi han: assert tinh, khong render trinh duyet that)';
+});
+
 /* ── In kết quả ────────────────────────────────────────────────────────── */
 for (const r of results) {
 	const tag = r.ok ? 'PASS' : 'FAIL';

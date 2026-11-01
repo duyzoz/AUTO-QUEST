@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "version": "2.0.0",
-  "createdAt": "2026-11-01T04:26:21.950Z",
+  "createdAt": "2026-11-01T04:53:00.443Z",
   "files": {
-    "index.html": "sqinc44OMg2qpDNO3XO0AmIshcngsgX6bwYnIjhZMOc=",
-    "renderer.js": "Ld1Y3dGY6nVFqXO4nqL6vBreGdLnthu0ripsgbVlh80=",
+    "index.html": "Z8wfVKoCpa05YPYablivBFsUYHZeDA66aTbhdZLISLs=",
+    "renderer.js": "L9BRmcllhoui9T9AQ3e0ZTJYZ80cCIw1WX3pEdU4cJY=",
     "styles.css": "fw3VfyuOdWvu0564mTRqxi3+bgNjlAreG2fXD6pTOZQ=",
     "mobile.css": "Bn9fL5T4LrW0qHzCHJ7TYZlLgMjLfK9pxrDmr22MZV8=",
     "fonts.css": "U4/m5jmHWyfQzMd2EDNkTD6WuO20V4R2+WQkLB8W8LU=",
@@ -14,6 +14,6 @@
     "web/display-name-style.js": "OcvXwY1y4EhxeZa1qsbcZhNSEFJ2nagPGLcRmf7plMI=",
     "web/bridge.js": "UL7XO1uFd1PvkDtLxw5ojYhHaAydkeH0AsQyBr10Zqk=",
     "web/engine-worker.js": "o62nfrB87JeqnW0sVqyc+BTaCQLyCDIrvQvjK8hdlNY=",
-    "web/engine-bundle.js": "t8h1VSbwrVXcQgaCVkTmWZs+X6dDp5DeEKHHs/aEtvQ="
+    "web/engine-bundle.js": "b6yu1fMr+w1kpVRbjYr2inEfZZDHZ9qn1+EzLboUNqY="
   }
 }

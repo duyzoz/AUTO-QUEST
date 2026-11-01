@@ -23,6 +23,10 @@
  *       sends ZERO heartbeats.
  *   (e) Non-401 errors still failQuest at 5/5 and never enter the
  *       blocked state (blocked is 401-specific).
+ *   (i) HBCAP presence-ready gate: no heartbeat tick before gateway
+ *       READY + op 3 for this game; transitions logged.
+ *   (j) HBCAP gate timeout: never-READY gateway still proceeds with
+ *       REST heartbeat and logs presence=timeout.
  *
  * Run: node web/test/mock-heartbeat.test.js (also wired into `npm test`)
  */
@@ -64,6 +68,7 @@ function assert(cond, message) {
 /* Capture engine stdout events without hiding normal console output. */
 const events = [];
 const diagLines = [];
+const presenceLines = [];
 const origWrite = process.stdout.write.bind(process.stdout);
 process.stdout.write = (chunk, ...rest) => {
 	for (const line of String(chunk).split('\n')) {
@@ -72,6 +77,7 @@ process.stdout.write = (chunk, ...rest) => {
 			if (parsed) events.push(parsed);
 		}
 		if (line.includes('[Chẩn đoán heartbeat]')) diagLines.push(line);
+		if (line.includes('[Presence]')) presenceLines.push(line);
 	}
 	return origWrite(chunk, ...rest);
 };
@@ -347,10 +353,10 @@ function makeManager(post) {
 			const sock = FakeSocket.instances[FakeSocket.instances.length - 1];
 			assert(sock, 'no gateway socket created for desktop run');
 			assert(String(sock.url).startsWith('wss://gateway.discord.gg/'), `unexpected gateway url: ${sock.url}`);
-			/* Hello + READY phai den lien nhau, khong await o giua:
-			   neu de loop chay xong (timeout da stub) roi moi gui READY
-			   thi phien da dong — dung hanh vi that (READY den trong
-			   mili-giay, loop chay hang phut). */
+			/* HBCAP: gate doi READY nen Hello + READY khong can den
+			   lien nhau nua — loop khong the chay truoc READY. Van
+			   mo phong lien nhau o day nhu hanh vi that (READY den
+			   trong mili-giay), gate se mo ngay khi READY + op 3 xong. */
 			sock.simulateHello();
 			sock.simulateReady();
 			await run;
@@ -413,6 +419,141 @@ function makeManager(post) {
 			if (origErr) process.stderr.write = origErr;
 		} catch (_) {}
 		fail('heartbeat 401 presence diagnostic', e.message);
+	}
+
+	/* (i) HBCAP presence-ready gate: nhip heartbeat dau tien doi
+	   gateway READY + op 3 activity cua DUNG game nay; khi phien
+	   moi o connecting/identifying thi khong co POST nao duoc gui,
+	   va cac chuyen trang thai duoc log theo kenh activity log. */
+	try {
+		events.length = 0;
+		presenceLines.length = 0;
+		class FakeSocket {
+			static instances = [];
+			constructor(url) {
+				this.url = url;
+				this.sent = [];
+				this.readyState = 0;
+				FakeSocket.instances.push(this);
+			}
+			send(data) {
+				this.sent.push(JSON.parse(data));
+			}
+			close() {
+				this.readyState = 3;
+				if (this.onclose) this.onclose();
+			}
+			simulateOpen() {
+				this.readyState = 1;
+				if (this.onopen) this.onopen();
+			}
+			simulateMessage(obj) {
+				if (this.onmessage) this.onmessage({ data: JSON.stringify(obj) });
+			}
+			simulateHello() {
+				this.simulateOpen();
+				this.simulateMessage({ op: 10, d: { heartbeat_interval: 41250 } });
+			}
+			simulateReady() {
+				this.simulateMessage({ op: 0, s: 1, t: 'READY', d: {} });
+			}
+		}
+		setWebSocketCtor(FakeSocket);
+		try {
+			let op3AtFirstCall = null;
+			let calls = 0;
+			const mgr = makeManager(async (url) => {
+				if (url.endsWith('/claim-reward')) {
+					return { user_status: { ...statusDone(), claimed_at: new Date().toISOString() } };
+				}
+				const sock = FakeSocket.instances[FakeSocket.instances.length - 1];
+				if (op3AtFirstCall === null && sock) op3AtFirstCall = sock.sent.some((m) => m.op === 3);
+				calls += 1;
+				return statusDone();
+			});
+			mgr.client.token = 'mock-token';
+			const q = makeQuest('900000000000000010');
+			const run = mgr.doingQuest(q, 20);
+			await new Promise((r) => setImmediate(r));
+			const sock = FakeSocket.instances[FakeSocket.instances.length - 1];
+			assert(sock, 'no gateway socket created for desktop run');
+			sock.simulateHello(); // Identify gui xong, van identifying — chua READY
+			await new Promise((r) => setTimeout(r, 50));
+			assert(calls === 0, `gate must hold first tick before READY, but ${calls} heartbeat call(s) already sent`);
+			sock.simulateReady(); // READY + op 3 -> gate mo
+			await run;
+			assert(op3AtFirstCall === true, 'op 3 activity must be sent before the first heartbeat tick');
+			assert(calls >= 1, 'no heartbeat call after gate opened');
+			assert(
+				eventsOf('quest:claim', '900000000000000010').some((e) => e.data.confirmed === true),
+				'quest did not claim after gate opened',
+			);
+			const joined = presenceLines.join('\n');
+			assert(
+				joined.includes('gateway: connecting') && joined.includes('gateway: identifying') && joined.includes('gateway: ready'),
+				`presence transitions missing, got: ${joined}`,
+			);
+			ok('heartbeat presence-ready gate', 'no tick before READY, op 3 before first tick, connecting->identifying->ready logged');
+		} finally {
+			setWebSocketCtor(null);
+		}
+	} catch (e) {
+		setWebSocketCtor(null);
+		fail('heartbeat presence-ready gate', e.message);
+	}
+
+	/* (j) HBCAP gate timeout: gateway khong bao gio READY -> het
+	   timeout gioi han thi van chay heartbeat REST cu (khong treo)
+	   va log presence=timeout de chung minh truong hop nay. */
+	try {
+		events.length = 0;
+		presenceLines.length = 0;
+		class FakeSocket {
+			static instances = [];
+			constructor(url) {
+				this.url = url;
+				this.sent = [];
+				this.readyState = 0;
+				FakeSocket.instances.push(this);
+			}
+			send(data) {
+				this.sent.push(JSON.parse(data));
+			}
+			close() {
+				this.readyState = 3;
+				if (this.onclose) this.onclose();
+			}
+		}
+		setWebSocketCtor(FakeSocket);
+		try {
+			let calls = 0;
+			const mgr = makeManager(async (url) => {
+				if (url.endsWith('/claim-reward')) {
+					return { user_status: { ...statusDone(), claimed_at: new Date().toISOString() } };
+				}
+				calls += 1;
+				return statusDone();
+			});
+			mgr.presenceGateTimeoutMs = 50;
+			mgr.client.token = 'mock-token';
+			const q = makeQuest('900000000000000011');
+			await mgr.doingQuest(q, 20);
+			assert(calls >= 1, 'gate timeout must still let heartbeat ticks proceed');
+			assert(
+				presenceLines.some((l) => l.includes('presence=timeout')),
+				`gate timeout line missing, got: ${presenceLines.join(' | ')}`,
+			);
+			assert(
+				eventsOf('quest:claim', '900000000000000011').some((e) => e.data.confirmed === true),
+				'quest did not claim after gate timeout',
+			);
+			ok('heartbeat presence gate timeout', 'proceeds after 50ms timeout, presence=timeout logged');
+		} finally {
+			setWebSocketCtor(null);
+		}
+	} catch (e) {
+		setWebSocketCtor(null);
+		fail('heartbeat presence gate timeout', e.message);
 	}
 
 	process.stdout.write = origWrite;
