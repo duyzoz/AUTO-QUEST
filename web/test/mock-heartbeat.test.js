@@ -46,7 +46,7 @@ Module._load = function (request, ...args) {
 const { QuestManager } = require('../engine/src/questManager');
 const { Quest } = require('../engine/src/quest');
 const { isEventLine, parseEventLine } = require('../engine/src/events');
-const { setWebSocketCtor } = require('../engine/src/presence');
+const { setWebSocketCtor, PresenceSession, PRESENCE_BUILD_MARKER } = require('../engine/src/presence');
 
 const TASK_APP = '111111111111111111';
 const QUEST_APP = '222222222222222222';
@@ -554,6 +554,79 @@ function makeManager(post) {
 	} catch (e) {
 		setWebSocketCtor(null);
 		fail('heartbeat presence gate timeout', e.message);
+	}
+
+	/* (k) ANYACCT gate timeout ghi dau vet: session khong bao gio READY
+	   -> waitForActivity het han -> describeShort mang fail=timeout
+	   (truoc day cac dong warn nhip sau chi noi presence=connecting
+	   mai ma khong noi gate da bo cuoc). */
+	try {
+		class FakeSocket {
+			constructor(url) {
+				this.url = url;
+				this.sent = [];
+				this.readyState = 0;
+			}
+			send(data) { this.sent.push(JSON.parse(data)); }
+			close() {
+				this.readyState = 3;
+				if (this.onclose) this.onclose();
+			}
+		}
+		setWebSocketCtor(FakeSocket);
+		try {
+			const logs = [];
+			const sess = new PresenceSession({ token: 'mock-token', log: (l) => logs.push(l) });
+			await sess.add(TASK_APP, 'Game');
+			const state = await sess.waitForActivity(TASK_APP, 50);
+			assert(state === 'timeout', `expected gate timeout, got ${state}`);
+			assert(sess.describeShort().includes('fail=timeout'), `describeShort must carry fail=timeout, got: ${sess.describeShort()}`);
+			assert(PRESENCE_BUILD_MARKER === 'presence-gate-v2', `build marker must be presence-gate-v2, got: ${PRESENCE_BUILD_MARKER}`);
+			sess.close();
+			ok('heartbeat gate timeout failure surfacing', 'waitForActivity timeout + describeShort fail=timeout + marker presence-gate-v2');
+		} finally {
+			setWebSocketCtor(null);
+		}
+	} catch (e) {
+		setWebSocketCtor(null);
+		fail('heartbeat gate timeout failure surfacing', e.message);
+	}
+
+	/* (l) ANYACCT close-code ghi dau vet: gateway dong voi code (vi du
+	   4004 = identify bi tu choi) -> log mang code + describeShort
+	   mang fail=close:4004 (truoc day onclose khong ghi code, onerror
+	   rong — khong co bang chung nao ve vi sao gateway chet). */
+	try {
+		class FakeSocket {
+			constructor(url) {
+				this.url = url;
+				this.sent = [];
+				this.readyState = 0;
+			}
+			send(data) { this.sent.push(JSON.parse(data)); }
+			close() {
+				this.readyState = 3;
+				if (this.onclose) this.onclose();
+			}
+		}
+		setWebSocketCtor(FakeSocket);
+		try {
+			const logs = [];
+			const sess = new PresenceSession({ token: 'mock-token', log: (l) => logs.push(l) });
+			await sess.add(TASK_APP, 'Game');
+			const sock = sess.ws;
+			assert(sock, 'no gateway socket created');
+			sock.onclose({ code: 4004, reason: 'Authentication failed' });
+			assert(logs.some((l) => l.includes('code=4004')), `close log must carry code=4004, got: ${logs.join(' | ')}`);
+			assert(sess.describeShort().includes('fail=close:4004'), `describeShort must carry fail=close:4004, got: ${sess.describeShort()}`);
+			sess.close();
+			ok('heartbeat gateway close code surfacing', 'onclose code=4004 logged + describeShort fail=close:4004');
+		} finally {
+			setWebSocketCtor(null);
+		}
+	} catch (e) {
+		setWebSocketCtor(null);
+		fail('heartbeat gateway close code surfacing', e.message);
 	}
 
 	process.stdout.write = origWrite;

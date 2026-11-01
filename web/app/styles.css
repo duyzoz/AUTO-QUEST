@@ -5865,9 +5865,16 @@ body.lite .claim-pill-spin { animation-duration: 1.6s; }
 .qcard-title { display: block; overflow: visible; white-space: normal; -webkit-line-clamp: unset; }
 .qcard-desc { display: block; overflow: visible; white-space: normal; -webkit-line-clamp: unset; }
 .qcard-info { min-width: 0; }
-.qcard-pub { flex-wrap: wrap; }
-.qcard-pub-l { min-width: 0; flex-wrap: wrap; }
-.qcard-pub-l b { white-space: normal; overflow: visible; }
+/* ANYACCT (2026-11-01): dong quang ba PHAI mot hang trai/phai o moi
+   chieu rong. Rule cu (flex-wrap: wrap + ten wrap day du) lam ngay
+   ket thuc roi xuong hang 2, can trai — dung nhu anh chup live
+   2026-11-01. Sua: khong wrap, caption khong wrap noi bo, ten dai
+   cat bang ellipsis (ten game day du van co o tieu de the), ngay
+   ket thuc giu flex-none nowrap ben phai. Khong class moi. */
+.qcard-pub { flex-wrap: nowrap; }
+.qcard-pub-l { min-width: 0; flex-wrap: nowrap; }
+.qcard-pub-caption { white-space: nowrap; flex: 0 0 auto; }
+.qcard-pub-l b { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .qcard-main { min-width: 0; }
 .qcard-foot { padding: 0 16px 16px; }
 .qgrid-done { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }

@@ -1404,10 +1404,14 @@ class QuestManager {
         // cua worker, giong cac dong warn heartbeat) de lan chay sau khong
         // con phai doan nguyen nhan 401: chua nhan / da nhan / appId sai.
         // Chi log, khong doi hanh vi chay, khong enroll, khong doi nguong.
+        // ANYACCT (2026-11-01): them marker phien ban code presence-gate —
+        // dong nay (qua LOG_KEEP) + dong marker Auto-start cua renderer la
+        // bang chung lan chay live dang chay code moi, khong phai bundle
+        // cache cu.
         if (kind === 'desktop' || kind === 'console' || kind === 'mobile') {
             const questAppId = String(quest.config?.application?.id ?? '');
             const enrolled = typeof quest.isEnrolledQuest === 'function' ? quest.isEnrolledQuest() : Boolean(quest.userStatus?.enrolled_at);
-            console.log(`[Chẩn đoán heartbeat] "${questName}" · enrolled=${enrolled ? 'yes' : 'no'} · task=${taskName} · appId task=${appId} · appId quest=${questAppId} · ${this.presenceSession().describeShort()}`);
+            console.log(`[Chẩn đoán heartbeat] "${questName}" · enrolled=${enrolled ? 'yes' : 'no'} · task=${taskName} · appId task=${appId} · appId quest=${questAppId} · ${this.presenceSession().describeShort()} · marker=${presence_1.PRESENCE_BUILD_MARKER}`);
         }
         (0, events_1.report)('quest:start', {
             id: questId,
@@ -2256,6 +2260,11 @@ const RECONNECT_DELAY_MS = 5000;
    'connecting' — dung nhu log live cua Ethan (presence=connecting
    o tick 1/5). */
 const PRESENCE_GATE_TIMEOUT_MS = 10000;
+/* ANYACCT (2026-11-01): marker phien ban code presence-gate — in vao
+   dong chan doan heartbeat cua engine + dong marker Auto-start cua
+   renderer, de lan chay live sau chung minh duoc dang chay code moi
+   (khong phai bundle cache cu — dung mo ho cua lan chay 13:31). */
+const PRESENCE_BUILD_MARKER = 'presence-gate-v2';
 
 let WsCtorOverride = null;
 function setWebSocketCtor(fn) {
@@ -2292,6 +2301,13 @@ class PresenceSession {
 		   da gui xong. Reset moi lan connect()/close() — READY cua
 		   phien cu khong duoc chung minh cho phien moi. */
 		this.presenceConfirmed = false;
+		/* ANYACCT: ly do gateway that bai gan nhat { kind, code,
+		   detail } — null khi chua co loi. kind: 'timeout' (gate het
+		   han), 'close' (gateway dong, kem code), 'transport-error'
+		   (loi WebSocket), 'connect-error' (khong mo duoc socket).
+		   Chi ma/ly do gateway tra — khong bao gio token. Xoa o
+		   add() khi bat dau phien moi va o READY khi phien song. */
+		this.lastFailure = null;
 		this._reconnectTimer = null;
 		/* CARDV2: chet that sau close() cuoi — tin nhan gateway den
 		   muon (vi du READY den sau khi quest xong trong tich tac)
@@ -2305,7 +2321,10 @@ class PresenceSession {
 	}
 
 	describeShort() {
-		return 'presence=' + this.state + ' apps=[' + Array.from(this.activities.keys()).join(',') + ']';
+		const base = 'presence=' + this.state + ' apps=[' + Array.from(this.activities.keys()).join(',') + ']';
+		if (!this.lastFailure) return base;
+		const code = this.lastFailure.code != null ? ':' + this.lastFailure.code : '';
+		return base + ' fail=' + this.lastFailure.kind + code;
 	}
 
 	buildActivities() {
@@ -2339,6 +2358,11 @@ class PresenceSession {
 			waiter.timer = setTimeout(() => {
 				const i = self._activityWaiters.indexOf(waiter);
 				if (i !== -1) self._activityWaiters.splice(i, 1);
+				/* ANYACCT: gate het han phai de lai dau vet — truoc day
+				   chi log presence=timeout o questManager, con cac dong
+				   warn nhip sau van chi noi presence=connecting mai
+				   ma khong noi gate da bo cuoc. */
+				if (self.state !== 'ready') self.lastFailure = { kind: 'timeout', code: null, detail: null };
 				resolve('timeout');
 			}, timeout);
 			self._activityWaiters.push(waiter);
@@ -2383,6 +2407,10 @@ class PresenceSession {
 			this.state = 'unavailable';
 			return Promise.resolve(this.state);
 		}
+		/* ANYACCT: phien moi thi dau vet loi cu het hieu luc — loi cua
+		   lan chay truoc khong duoc hien tren dong chan doan cua lan
+		   chay moi. Reconnect trong cung phien (onclose) giu nguyen. */
+		this.lastFailure = null;
 		this.connect(Ctor);
 		return Promise.resolve(this.state);
 	}
@@ -2410,6 +2438,7 @@ class PresenceSession {
 			ws = new Ctor(GATEWAY_URL);
 		} catch (e) {
 			this.state = 'closed';
+			this.lastFailure = { kind: 'connect-error', code: null, detail: null };
 			this.log('[Presence] khong mo duoc gateway: ' + (e && e.message ? e.message : String(e)));
 			this._notifyActivityWaiters('closed');
 			return;
@@ -2436,6 +2465,7 @@ class PresenceSession {
 					   Gate (waitForActivity) chi mo khi toi day. */
 					self.state = 'ready';
 					self.presenceConfirmed = true;
+					self.lastFailure = null;
 					self.startHeartbeat();
 					self.sendPresence();
 					self.log('[Presence] gateway: ready (da gui op 3 activity)');
@@ -2446,12 +2476,26 @@ class PresenceSession {
 			}
 		};
 		ws.onerror = function () {
-			/* onclose se xu ly tiep; khong log token, khong nem loi */
+			/* ANYACCT: truoc day onerror RONG — loi transport bi nuot
+			   tron, log live chi thay presence=connecting mai ma khong
+			   biet vi sao. Ghi dau vet + log (khong token, khong nem
+			   loi; onclose van xu ly reconnect/dong phien nhu cu). */
+			if (self.state !== 'ready') self.lastFailure = { kind: 'transport-error', code: null, detail: null };
+			self.log('[Presence] gateway: loi ket noi (transport error — cho onclose xu ly)');
 		};
-		ws.onclose = function () {
+		ws.onclose = function (ev) {
 			self.clearHeartbeat();
 			self.ws = null;
 			self.presenceConfirmed = false;
+			/* ANYACCT: ghi ma dong + ly do gateway tra (chi ma/ly do,
+			   khong token) — ma dong la bang chung chan doan quan
+			   trong nhat khi gateway khong bao gio ready (vi du 4004
+			   = identify bi tu choi, 1006 = mat ket noi bat thuong).
+			   ev co the undefined o mock — phong thu day du. */
+			const closeCode = ev && ev.code != null ? ev.code : null;
+			const closeReason = ev && ev.reason ? String(ev.reason).slice(0, 80) : '';
+			if (self.state !== 'off') self.lastFailure = { kind: 'close', code: closeCode, detail: closeReason || null };
+			if (closeCode != null) self.log('[Presence] gateway: closed (code=' + closeCode + (closeReason ? ' reason=' + closeReason : '') + ')');
 			if (self.wantActivities && self.reconnects < MAX_RECONNECTS) {
 				self.reconnects += 1;
 				self.state = 'connecting';
@@ -2566,6 +2610,7 @@ class PresenceSession {
 exports.PresenceSession = PresenceSession;
 exports.setWebSocketCtor = setWebSocketCtor;
 exports.PRESENCE_GATE_TIMEOUT_MS = PRESENCE_GATE_TIMEOUT_MS;
+exports.PRESENCE_BUILD_MARKER = PRESENCE_BUILD_MARKER;
 
 };
 

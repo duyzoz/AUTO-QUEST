@@ -774,10 +774,14 @@ class QuestManager {
         // cua worker, giong cac dong warn heartbeat) de lan chay sau khong
         // con phai doan nguyen nhan 401: chua nhan / da nhan / appId sai.
         // Chi log, khong doi hanh vi chay, khong enroll, khong doi nguong.
+        // ANYACCT (2026-11-01): them marker phien ban code presence-gate —
+        // dong nay (qua LOG_KEEP) + dong marker Auto-start cua renderer la
+        // bang chung lan chay live dang chay code moi, khong phai bundle
+        // cache cu.
         if (kind === 'desktop' || kind === 'console' || kind === 'mobile') {
             const questAppId = String(quest.config?.application?.id ?? '');
             const enrolled = typeof quest.isEnrolledQuest === 'function' ? quest.isEnrolledQuest() : Boolean(quest.userStatus?.enrolled_at);
-            console.log(`[Chẩn đoán heartbeat] "${questName}" · enrolled=${enrolled ? 'yes' : 'no'} · task=${taskName} · appId task=${appId} · appId quest=${questAppId} · ${this.presenceSession().describeShort()}`);
+            console.log(`[Chẩn đoán heartbeat] "${questName}" · enrolled=${enrolled ? 'yes' : 'no'} · task=${taskName} · appId task=${appId} · appId quest=${questAppId} · ${this.presenceSession().describeShort()} · marker=${presence_1.PRESENCE_BUILD_MARKER}`);
         }
         (0, events_1.report)('quest:start', {
             id: questId,

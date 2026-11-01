@@ -1875,14 +1875,16 @@ function formatClaimDiag(q, en) {
 	if (!branch) return '';
 	const source = CLAIM_DIAG_SOURCE[q.claimDiagSource] || { vi: 'không rõ', en: 'unknown' };
 	const delay = Number.isFinite(q.claimDiagDelayMs) ? ` · ${Math.round(q.claimDiagDelayMs)}ms` : '';
+	const age = Number.isFinite(q.claimDiagTokenAgeMs) ? (en ? ` · token ${Math.round(q.claimDiagTokenAgeMs)}ms old at submit` : ` · token ${Math.round(q.claimDiagTokenAgeMs)}ms tuổi lúc gửi`) : '';
 	return en
-		? `Claim diagnosis: ${branch.en} · token via ${source.en}${delay} from modal open to submit`
-		: `Chẩn đoán claim: ${branch.vi} · nguồn token: ${source.vi}${delay} từ lúc mở hộp tới lúc gửi`;
+		? `Claim diagnosis: ${branch.en} · token via ${source.en}${delay} from modal open to submit${age}`
+		: `Chẩn đoán claim: ${branch.vi} · nguồn token: ${source.vi}${delay} từ lúc mở hộp tới lúc gửi${age}`;
 }
 function appendClaimDiag(quest, branch) {
 	const src = lastCaptchaSubmit ? lastCaptchaSubmit.source : '';
 	const delay = lastCaptchaSubmit && Number.isFinite(lastCaptchaSubmit.delayMs) ? Math.round(lastCaptchaSubmit.delayMs) : null;
-	appendLog(`[Chẩn đoán claim] "${quest.name || ''}": nhánh=${branch} · nguồn token=${src || 'không rõ'}${delay == null ? '' : ` · ${delay}ms từ lúc mở hộp tới lúc gửi`}`, 'system');
+	const age = lastCaptchaSubmit && Number.isFinite(lastCaptchaSubmit.tokenAgeMs) ? Math.round(lastCaptchaSubmit.tokenAgeMs) : null;
+	appendLog(`[Chẩn đoán claim] "${quest.name || ''}": nhánh=${branch} · nguồn token=${src || 'không rõ'}${delay == null ? '' : ` · ${delay}ms từ lúc mở hộp tới lúc gửi`}${age == null ? '' : ` · token ${age}ms tuổi lúc gửi`}`, 'system');
 }
 
 function updateQuestFoot(node, q) {
@@ -3574,7 +3576,17 @@ const CAPTCHA_PASSIVE_WARN_VI = 'Token xác minh này về mà không hiện th�
 const CAPTCHA_PASSIVE_WARN_EN = 'This verification token arrived without any challenge being shown — it is likely a passive token, which Discord usually rejects. Press "Reload verification" for a fresh session, then tick again and wait for a challenge to appear.';
 const CAPTCHA_PASSIVE_DIAG_VI = 'Cảnh báo: token xác minh dạng passive (không hiện thử thách) — chưa gửi, hãy tải lại hộp xác minh.';
 const CAPTCHA_PASSIVE_DIAG_EN = 'Warning: passive verification token (no challenge shown) — not sent yet, reload the verification box.';
-let lastCaptchaSubmit = null; // Chẩn đoán claim: { source, delayMs } — KHÔNG chứa token.
+// ANYACCT — canh bao token CU truoc khi gui (xem onCaptchaRetryClick):
+// hCaptcha token chi song vai chuc giay den vai phut (ghi chu repo cu:
+// token "passive" song vai chuc giay); token callback ve tu >60s truoc
+// luc bam Gui thi lan bam dau CHI canh bao + hien hang tai lai, bam
+// lan 2 moi gui (quyet co chu dich, giong cua passive cua HBCAP).
+// Duong getResponse khong biet tuoi token nen khong canh bao cu — noi
+// that gioi han nay, khong doan tuoi.
+const CAPTCHA_STALE_WARN_VI = 'Kết quả xác minh này đã về từ hơn 60 giây trước — token hCaptcha có thể đã hết hạn, Discord thường từ chối token cũ. Bấm "Tải lại hộp xác minh" để lấy token mới, hoặc bấm "Gửi xác minh ngay" lần nữa nếu vẫn muốn thử token này.';
+const CAPTCHA_STALE_WARN_EN = 'This verification result arrived over 60 seconds ago — the hCaptcha token may have expired, and Discord usually rejects stale tokens. Press "Reload verification" for a fresh token, or press "Send verification now" again if you still want to try this one.';
+const CAPTCHA_STALE_AGE_MS = 60000;
+let lastCaptchaSubmit = null; // Chẩn đoán claim: { source, delayMs, tokenAgeMs } — KHÔNG chứa token.
 let hcaptchaLoading = null;
 let captchaWarmStarted = false;
 let captchaPreconnected = false;
@@ -3796,6 +3808,11 @@ async function openCaptchaModal(quest, captcha) {
 		challengeShown: false,
 		passiveToken: false,
 		passiveWarned: false,
+		// ANYACCT: pendingTokenAt = luc callback tra token (de do tuoi
+		// that luc gui); staleWarned = da canh bao token cu o lan bam
+		// Gui truoc (bam lan 2 moi gui).
+		pendingTokenAt: null,
+		staleWarned: false,
 	};
 	if (!ui.captchaModal) return;
 
@@ -3916,8 +3933,10 @@ async function openCaptchaModal(quest, captcha) {
 			// canh bao tren the + an hang tai lai.
 			if (captchaCtx) {
 				captchaCtx.pendingToken = null;
+				captchaCtx.pendingTokenAt = null;
 				captchaCtx.passiveToken = false;
 				captchaCtx.passiveWarned = false;
+				captchaCtx.staleWarned = false;
 				captchaCtx.challengeShown = false;
 				if (captchaCtx.quest) upsertQuest(captchaCtx.quest.id, { captchaPassiveWarn: '', captchaPassiveWarnAt: 0 });
 			}
@@ -3993,6 +4012,12 @@ function onCaptchaTokenReady(token) {
 	if (!captchaCtx || !token) return;
 	if (captchaCtx.submitted) return; // Đã gửi rồi — token tới sau không làm gì.
 	captchaCtx.pendingToken = token;
+	// ANYACCT: ghi luc token ve — delayMs cu (mo hop -> gui) phong dai
+	// tuoi token vi no gom ca thoi gian giai thu thach; tuoi that luc
+	// gui phai do tu luc token ve (live 2026-11-01: 195s mo->gui khong
+	// noi token cu bao nhieu, 20s thi chac chan khong phai het han).
+	captchaCtx.pendingTokenAt = Date.now();
+	captchaCtx.staleWarned = false;
 	// HBCAP — bao ve truoc-gui (pre-send guard), giu nguyen cua
 	// CLAIM-MANUAL (callback chi luu cho, khong tu gui):
 	// token ve ma ca phien chua tung hien thu thach (challengeShown
@@ -4029,9 +4054,13 @@ function onCaptchaTokenReady(token) {
 async function onCaptchaSolved(captchaToken, source = 'manual') {
 	if (!captchaCtx || !captchaToken) return;
 	if (captchaCtx.submitted) return; // Chỉ gửi 1 lần (callback lưu chờ + nút bấm không đua nhau).
+	// ANYACCT: tuoi token THAT luc gui = gui - luc callback tra token
+	// (khong phai mo hop -> gui). Duong getResponse khong co
+	// pendingTokenAt nen tuoi = null (noi that, khong doan).
+	const tokenAgeMs = captchaCtx.pendingTokenAt ? Date.now() - captchaCtx.pendingTokenAt : null;
 	captchaCtx.pendingToken = null;
 	captchaCtx.submitted = true;
-	lastCaptchaSubmit = { source, delayMs: captchaCtx.openedAt ? Date.now() - captchaCtx.openedAt : null };
+	lastCaptchaSubmit = { source, delayMs: captchaCtx.openedAt ? Date.now() - captchaCtx.openedAt : null, tokenAgeMs };
 	const { quest } = captchaCtx;
 	const captcha = captchaCtx.captcha;
 	appendLog('[Hệ thống] Đang gửi yêu cầu nhận thưởng kèm kết quả xác minh tới Discord…', 'system');
@@ -4087,6 +4116,18 @@ function onCaptchaRetryClick() {
 		appendLog('[Hệ thống] Token xác minh này có thể là token passive (không hiện thử thách) — chưa gửi. Bấm "Tải lại hộp xác minh" để lấy phiên mới, hoặc bấm "Gửi xác minh ngay" lần nữa nếu vẫn muốn thử.', 'system');
 		return;
 	}
+	// ANYACCT — cua token CU cho duong callback (biet tuoi token qua
+	// pendingTokenAt): token >60s thi lan bam dau CHI canh bao + hien
+	// hang tai lai, bam lan 2 moi gui (quyet co chu dich, giong cua
+	// passive cua HBCAP). Duong getResponse khong biet tuoi nen khong
+	// canh bao (noi that gioi han, khong doan tuoi).
+	if (captchaCtx.pendingToken && captchaCtx.pendingTokenAt && Date.now() - captchaCtx.pendingTokenAt > CAPTCHA_STALE_AGE_MS && !captchaCtx.staleWarned) {
+		captchaCtx.staleWarned = true;
+		if (ui.captchaHint) ui.captchaHint.textContent = hcaptchaText(CAPTCHA_STALE_WARN_VI, CAPTCHA_STALE_WARN_EN);
+		if (ui.captchaReloadRow) ui.captchaReloadRow.hidden = false;
+		appendLog('[Hệ thống] Kết quả xác minh này đã về từ hơn 60 giây trước — token có thể đã hết hạn nên chưa gửi. Bấm "Tải lại hộp xác minh" để lấy token mới, hoặc bấm "Gửi xác minh ngay" lần nữa nếu vẫn muốn thử token này.', 'system');
+		return;
+	}
 	onCaptchaSolved(token, 'manual');
 }
 
@@ -4107,8 +4148,10 @@ function onCaptchaReloadClick() {
 		/* widget đã bị gỡ — rơi về mở lại modal bên dưới */
 	}
 	captchaCtx.pendingToken = null;
+	captchaCtx.pendingTokenAt = null;
 	captchaCtx.passiveToken = false;
 	captchaCtx.passiveWarned = false;
+	captchaCtx.staleWarned = false;
 	captchaCtx.challengeShown = false;
 	if (ui.captchaHint) ui.captchaHint.textContent = CAPTCHA_HINT_IDLE;
 	if (ui.captchaReloadRow) ui.captchaReloadRow.hidden = true;
@@ -4146,6 +4189,7 @@ async function runClaim(quest, captchaMeta) {
 		claimBranch: '',
 		claimDiagSource: '',
 		claimDiagDelayMs: null,
+		claimDiagTokenAgeMs: null,
 		// HBCAP: bat dau chay claim that thi canh bao passive truoc-gui
 		// het hieu luc (token da gui, cho ket qua that tu Discord).
 		captchaPassiveWarn: '',
@@ -4218,6 +4262,7 @@ async function runClaim(quest, captchaMeta) {
 				claimBranch: '',
 				claimDiagSource: '',
 				claimDiagDelayMs: null,
+				claimDiagTokenAgeMs: null,
 				claimPhase: '',
 			});
 			sessionClaimCount += 1;
@@ -4244,20 +4289,31 @@ async function runClaim(quest, captchaMeta) {
 
 		if (res && res.captchaRequired) {
 			upsertQuest(id, { claimBusy: false, claimPhase: '' });
-			// Waves 37: CHỐNG LẶP VÔ TẬN. Nếu đã gửi token xác minh mà Discord VẪN
-			// đòi captcha → hCaptcha đang ở chế độ "passive" (token P1_/pd:0, KHÔNG
-			// có lời giải thử thách) nên Discord không công nhận. Mở lại modal chỉ
-			// tạo vòng lặp y như bro đã gặp. Nói THẬT lý do và dừng lại.
+			// ANYACCT: dong cu khang dinh token "passive (P1_/pd:0)" —
+			// SAI o dang tong quat: live 2026-11-01 user GIAI thu thach
+			// hien ro (Once Human 195s mo->gui, Melon 20s) ma van bi tu
+			// choi, dong cu van in. P1_ la phien ban token, khong phai
+			// chan doan; mo->gui phong dai tuoi token (gom ca thoi gian
+			// giai). Dong moi chi noi SU THAT: Discord tra status/code
+			// gi + token bao nhieu tuoi luc gui. Neu token tuoi <60s ma
+			// van bi tu choi thi het han KHONG phai nguyen nhan — nguyen
+			// nhan that (gioi han origin/phien phia Discord) van chua
+			// biet, can bang chung live tiep theo (status/code/tuoi).
+			// Mo lai modal chi tao vong lap nhu cu — dung lai o day.
 			if (captchaMeta && captchaMeta.captchaKey) {
+				const resStatus = res && res.status ? res.status : 'không rõ';
+				const resCode = res && res.code != null ? res.code : 'không rõ';
+				const tokenAge = lastCaptchaSubmit && Number.isFinite(lastCaptchaSubmit.tokenAgeMs) ? `${Math.round(lastCaptchaSubmit.tokenAgeMs)}ms` : 'không rõ';
 				const msg =
-					'Discord vẫn đòi xác minh dù đã gửi kết quả. hCaptcha trong môi trường này ' +
-					'tự cho qua (token "passive") nên Discord không công nhận. Hãy mở Discord chính chủ ' +
+					'Discord vẫn đòi xác minh dù đã gửi kết quả. ' +
+					`Discord trả HTTP ${resStatus} · code ${resCode} · token ${tokenAge} tuổi lúc gửi. ` +
+					'Đây là phản hồi thật từ Discord, không phải suy đoán loại token. Hãy mở Discord chính chủ ' +
 					'để nhận nhiệm vụ này.';
 				// Waves 40 (B): đổi nút thành "Mở Discord để nhận" (logic-only, UI giữ nguyên).
-				upsertQuest(id, { claimError: msg, claimOpenDiscord: true, claimBranch: 'captcha-still-required', claimDiagSource: lastCaptchaSubmit ? lastCaptchaSubmit.source : '', claimDiagDelayMs: lastCaptchaSubmit ? lastCaptchaSubmit.delayMs : null });
+				upsertQuest(id, { claimError: msg, claimOpenDiscord: true, claimBranch: 'captcha-still-required', claimDiagSource: lastCaptchaSubmit ? lastCaptchaSubmit.source : '', claimDiagDelayMs: lastCaptchaSubmit ? lastCaptchaSubmit.delayMs : null, claimDiagTokenAgeMs: lastCaptchaSubmit ? lastCaptchaSubmit.tokenAgeMs : null });
 				appendClaimDiag(quest, 'captcha-still-required');
 				appendLog(`[Cảnh báo] "${quest.name || ''}": Discord giữ nguyên yêu cầu xác minh — dừng vòng lặp.`, 'warn');
-				appendLog('[Hệ thống] hCaptcha trả token passive (P1_/pd:0) không có lời giải thử thách, nên Discord từ chối. Không phải lỗi token.', 'system');
+				appendLog(`[Hệ thống] Discord vẫn yêu cầu xác minh sau khi gửi token (HTTP ${resStatus} · code ${resCode} · token ${tokenAge} tuổi lúc gửi). Thông điệp Discord: ${res && res.message ? res.message : 'không kèm thông điệp'}.`, 'system');
 				toast('Discord chưa công nhận xác minh — hãy mở Discord để nhận nhiệm vụ này.', true);
 				queueRemove(id);
 				return 'captcha-rejected';
@@ -4308,14 +4364,16 @@ async function runClaim(quest, captchaMeta) {
 		}
 
 		// 🎮 403 code 10008 — Discord ăn captcha_key nhưng trả "Unknown Message".
-		// Waves 37: đo được khi gửi kèm captcha_rqdata + captcha_rqtoken thì Discord
-		// đổi từ `400 captcha-required` sang `403 10008`. Nghĩa là đã qua cổng
-		// captcha nhưng phía thưởng truy hồi lỗi (token vẫn là loại "passive" chưa
-		// được coi là đã giải). Nói rõ, KHÔNG mở lại modal (tránh lặp).
+		// ANYACCT: comment cu khang dinh token "van la loai passive chua
+		// duoc coi la da giai" — khong chung minh duoc (xem nhanh
+		// still-required: thu thach giai that van bi tu choi). Su that
+		// biet duoc: Discord da nhan captcha (doi tu 400 sang 403) nhung
+		// buoc trao thuong loi. Noi dung phan hoi that, KHONG mo lai
+		// modal (tranh lap).
 		if (res && res.status === 403 && (res.code === 10008 || /10008/.test(String(res.message || '')))) {
 			const msg =
 				'Discord đã nhận kết quả xác minh nhưng không thể trao thưởng (403 · 10008). ' +
-				'Phiên hCaptcha trong app chưa được coi là "đã giải". Hãy mở Discord chính chủ cho nhiệm vụ này.';
+				'Hãy mở Discord chính chủ cho nhiệm vụ này.';
 			upsertQuest(id, { claimBusy: false, claimPhase: '', claimError: msg, claimOpenDiscord: true, claimBranch: 'grant-403-10008', claimDiagSource: lastCaptchaSubmit ? lastCaptchaSubmit.source : '', claimDiagDelayMs: lastCaptchaSubmit ? lastCaptchaSubmit.delayMs : null });
 			appendClaimDiag(quest, 'grant-403-10008');
 			appendLog(`[Cảnh báo] "${quest.name || ''}": Discord trả 403 · 10008 (đã qua captcha, lỗi trao thưởng).`, 'warn');
@@ -4970,6 +5028,7 @@ async function handleEvent(evt) {
 					claimBranch: '',
 					claimDiagSource: '',
 					claimDiagDelayMs: null,
+					claimDiagTokenAgeMs: null,
 					orbs: d.orbs || q.orbs || 0,
 				});
 				appendLog(`[Cảnh báo] "${d.name || key}": ${d.reason || 'bị chặn xác minh.'}`, 'warn');
@@ -5517,23 +5576,67 @@ function resetQuestSessionForSwitch() {
 	}
 }
 
-/** "Xác Nhận": hiện veil → reset phiên → đặt active mới → ghi config → RELOAD. */
+/** "Xác Nhận": hiện veil → reset phiên → đặt active mới → ghi config → KIỂM CHỨNG → RELOAD.
+ * ANYACCT (2026-11-01): ban cu co 3 lo hong gop lai lam mat tai khoan
+ * (live 2026-11-01: tai khoan dich bien mat sau switch):
+ *  (D1) khong bao gio cap nhat activeIdxCache tu ket qua setActive —
+ *  saveConfig ngay sau do gui activeIdx CU, ghi de gia tri bridge vua
+ *  dat; (D2) catch {} nuot loi roi van reload — loi setActive/save
+ *  thanh trang thai cu/khong day du ma khong bao gi; (D3) saveConfig
+ *  ghi de mang accounts bang cache co the thieu (bridge da chan o
+ *  saveConfig — union khong bao gio ngan danh sach).
+ * Ban moi: setActive tra ok:false thi huy (khong reload); sau setActive
+ * nap lai cache tu bridge va doi chieu theo ID tai khoan dich (khong
+ * doi chieu theo idx — idx co the lech khi cache cu); ghi ban
+ * pendingSwitch truoc reload; sau save doc lai va kiem chung lan nua
+ * — chi reload khi tai khoan dich con trong danh sach VA la active.
+ * That bai o bat ky buoc nao: an veil, bao loi, GIU phien cu, KHONG
+ * xoa tai khoan nao, KHONG reload. */
 async function confirmSwitchAccount() {
 	const idx = pendingSwitchIdx;
 	if (idx < 0 || !accountsCache[idx]) return;
 	const a = accountsCache[idx];
+	const abortSwitch = (msg) => {
+		try { localStorage.removeItem('autoquest.pendingSwitch.v1'); } catch {}
+		if (ui.loginVeil) ui.loginVeil.hidden = true;
+		appendLog(`[Multiaccount] ${msg}`, 'warn');
+		toast(msg, true);
+	};
 	// BƯỚC 1 (bro chốt): hiện NGAY màn "Đang đăng nhập" — trước mọi việc khác.
 	showLoginVeil();
 	// BƯỚC 2: dọn phiên quét của account cũ ⇒ không đè lên account mới.
 	resetQuestSessionForSwitch();
 	try {
 		// BƯỚC 3: đổi active (main giải mã tokenEnc → ghi token chính).
-		await api.accountsSetActive(idx);
+		const setRes = await api.accountsSetActive(idx);
+		if (setRes && setRes.ok === false) {
+			abortSwitch('Đổi tài khoản thất bại (tài khoản đích không hợp lệ) — vẫn giữ tài khoản cũ, không mất tài khoản nào.');
+			return;
+		}
+		// BƯỚC 3b (ANYACCT): nap lai cache tu bridge (nguon dung that) va
+		// doi chieu theo ID — activeIdxCache cu khong duoc phep song sot
+		// toi buoc save (D1).
+		await loadAccountsCache();
+		let newIdx = accountsCache.findIndex((x) => x && x.id === a.id);
+		if (newIdx === -1 || activeIdxCache !== newIdx) {
+			abortSwitch('Đổi tài khoản chưa lưu được (bridge chưa nhận active mới) — vẫn giữ tài khoản cũ, không mất tài khoản nào.');
+			return;
+		}
 		// Wave#134: xin token qua tokenReveal() — đang trong cú click thật của user nên cổng mở.
 		const rev = typeof api.tokenReveal === 'function' ? await api.tokenReveal({ reason: 'account-switch' }) : null;
 		if (rev && rev.ok && rev.token && ui.token) ui.token.value = rev.token;
 		// BƯỚC 4: ghi config (kèm accounts/activeIdx để KHÔNG xoá danh sách).
 		await api.saveConfig(collectConfig());
+		// BƯỚC 4b (ANYACCT): ghi ban pendingSwitch TRUOC reload + doc lai
+		// va kiem chung — chi reload khi dich con trong danh sach VA la
+		// active. Ban ghi nay de boot sau reload tu kiem tra (xem init).
+		try { localStorage.setItem('autoquest.pendingSwitch.v1', JSON.stringify({ id: a.id, idx: newIdx, at: Date.now() })); } catch {}
+		await loadAccountsCache();
+		newIdx = accountsCache.findIndex((x) => x && x.id === a.id);
+		if (newIdx === -1 || activeIdxCache !== newIdx) {
+			abortSwitch('Đổi tài khoản chưa lưu trọn vẹn sau khi ghi — vẫn giữ tài khoản cũ, không mất tài khoản nào.');
+			return;
+		}
 		appendLog(`[Multiaccount] Chuyển sang @${a.username || a.id} — đang nạp lại client…`, 'system');
 		// BƯỚC 5 (Wave#96): "trong thời gian mờ mờ loading RENDER CÁC HIỆU ỨNG
 		// VÀO RAM rồi đợi mở ra load siêu mượt" ⇒ warm-up ảnh/asset TRƯỚC khi
@@ -5541,7 +5644,11 @@ async function confirmSwitchAccount() {
 		// trình duyệt để lúc client mở lại là hiện TỨC THÌ (0 network stall).
 		await warmUpAccountAssets(a);
 	} catch {
-		/* dù lỗi vẫn reload để đồng bộ trạng thái */
+		/* ANYACCT: loi bat ky buoc nao thi GIU phien cu, KHONG reload
+		   (ban cu reload bat chap — do la cach trang thai cu/thieu
+		   thanh trang thai that). */
+		abortSwitch('Đổi tài khoản gặp lỗi — vẫn giữ tài khoản cũ, không mất tài khoản nào.');
+		return;
 	}
 	window.location.reload();
 }
@@ -9346,7 +9453,7 @@ async function startRun(mode, extra = {}) {
 		startHeartbeat();
 		// FIX64-P0 wave 1: dấu hiệu phiên bản trong nhật ký — nhìn log là biết
 		// code mới đang chạy, không cần đoán theo deploy/cache.
-		appendLog('[Hệ thống] Heartbeat fallback đang bật: 401 appId task -> thử appId quest 1 lần/nhịp; 401 cả hai -> thẻ chuyển sang "Cần chơi trong Discord", không fail.', 'system');
+		appendLog('[Hệ thống] Heartbeat fallback đang bật: 401 appId task -> thử appId quest 1 lần/nhịp; 401 cả hai -> thẻ chuyển sang "Cần chơi trong Discord", không fail. · presence-gate-v2', 'system');
 		toast(`Đang chạy ${extra.selectedQuests?.length || 0} nhiệm vụ đã chọn...`);
 	}
 }
@@ -10301,8 +10408,13 @@ ui.btnOpenFolder.addEventListener('click', () => api.openDataFolder());
 
 /* Waves 24: KHÔNG đổ stdout của bot ra nhật ký nữa — đó chính là kiểu "sổ một đống
    chữ" mà bro chê. Tiến độ đã có loader riêng + thẻ nhiệm vụ tự cập nhật vòng %.
-   Chỉ giữ lại dòng LỖI / CẢNH BÁO để còn manh mối khi hỏng. */
-const LOG_KEEP = /(\[LỖI\]|❌|⚠|cảnh báo|lỗi |thất bại|rate.?limit|bị chặn|không thể)/i;
+   Chỉ giữ lại dòng LỖI / CẢNH BÁO để còn manh mối khi hỏng.
+   ANYACCT (2026-11-01): bo loc cu giu CHAT het dong chuyen trang thai
+   gateway + dong chan doan heartbeat (khong khop tu khoa nao) — log
+   live 13:31 vi the khong co dong transition/timeout nao, khong phai
+   vi gateway khong log. Mo rong co muc tieu: dong presence it (vai
+   dong/lan chay), khong phai log tien do on ao. */
+const LOG_KEEP = /(\[LỖI\]|❌|⚠|cảnh báo|lỗi |thất bại|rate.?limit|bị chặn|không thể|gateway|presence|timeout|chẩn đoán heartbeat)/i;
 
 api.onLog((payload) => {
 	const raw = String(payload.line ?? '').replace(/\u001b\[[0-9;]*m/g, '');
@@ -10411,6 +10523,24 @@ window.__aqDiag = {
 		const cfg = await api.getConfig();
 		// Wave#88: nạp cache tài khoản đã lưu (cho popup "Đổi tài khoản").
 		await loadAccountsCache();
+		/* ANYACCT (2026-11-01): kiem tra switch dang do sau reload — neu
+		   ban ghi pendingSwitch ton tai ma tai khoan dich khong con
+		   trong danh sach da luu thi bao ro (khong tu xoa them, khong
+		   tu khoi phuc token — nguoi dung tu dang nhap lai neu can).
+		   Xoa ban ghi du sao (chi kiem tra 1 lan). */
+		try {
+			const raw = localStorage.getItem('autoquest.pendingSwitch.v1');
+			if (raw) {
+				localStorage.removeItem('autoquest.pendingSwitch.v1');
+				const rec = JSON.parse(raw);
+				if (rec && rec.id && !accountsCache.some((x) => x && x.id === rec.id)) {
+					const warnMsg = cfg.lang === 'en'
+						? 'Account switch did not fully persist: the target account is missing from the saved list. No account was deleted by cleanup — re-add it if needed.'
+						: 'Chuyển tài khoản chưa lưu trọn vẹn: tài khoản đích không còn trong danh sách đã lưu. App không tự xoá thêm tài khoản nào — cần thì đăng nhập lại tài khoản đó.';
+					appendLog(`[Cảnh báo] ${warnMsg}`, 'warn');
+				}
+			}
+		} catch {}
 		// Waves 28: áp chế độ Sáng/Tối đã lưu TRƯỚC khi vẽ (tránh nháy sáng/tối)
 		applyTheme(themeMode === 'system' ? 'system' : (cfg.theme === 'light' ? 'light' : 'dark'), false);
 		// Waves #126/#129/#127: ngôn ngữ, chế độ nhẹ, tự khoá — áp trước khi vẽ.

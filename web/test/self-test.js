@@ -985,7 +985,10 @@ check('Wave chẩn đoán claim: thẻ ghi nhánh C/D + nguồn token + thời g
 	assert(/claimBranch: 'captcha-still-required'/.test(js), 'nhánh C phải ghi claimBranch');
 	assert(/claimBranch: 'grant-403-10008'/.test(js), 'nhánh D phải ghi claimBranch');
 	assert(/appendClaimDiag\(quest, 'captcha-still-required'\)/.test(js) && /appendClaimDiag\(quest, 'grant-403-10008'\)/.test(js), 'hai nhánh phải ghi log chẩn đoán');
-	assert(!/lastCaptchaSubmit[^;]*captchaToken/.test(js) && !/claimDiagToken/.test(js), 'chẩn đoán không được lưu token');
+	// ANYACCT: claimDiagTokenAgeMs chi luu TUOI token (so ms), khong
+	// luu token — ngoai le co chu dich khoi lenh cam cu (cam luu gia
+	// tri token, khong cam tuoi ms).
+	assert(!/lastCaptchaSubmit[^;]*captchaToken/.test(js) && !/claimDiagToken(?!AgeMs)/.test(js), 'chẩn đoán không được lưu token (chỉ tuổi ms được phép)');
 	assert(js.includes('qcard-diag') && /diag: node\.querySelector\('.qcard-diag'\)/.test(js), 'thẻ quest phải có dòng chẩn đoán và cache nó');
 	const m = css.match(/\.qcard-diag \{[^}]*\}/);
 	assert(m && /var\(--fg-muted\)/.test(m[0]) && !/#[0-9a-fA-F]{3,8}/.test(m[0]), 'dòng chẩn đoán phải dùng token màu, không màu thô');
@@ -1956,6 +1959,92 @@ check('HBCAP: bao ve truoc-gui token passive — canh bao + tai lai, khong tu gu
 	// (7) Het han / dong modal / bat dau claim that: xoa canh bao cu.
 	assert(js.includes('captchaPassiveWarn: '), 'thieu xoa canh bao passive khi het han/dong/bat dau claim');
 	return 'open-callback latch + canh bao truoc-gui + tai lai, Gui van mo co chu dich, the todo khong nut (gioi han: assert tinh, khong render trinh duyet that)';
+});
+
+check('ANYACCT: dong quang ba mot hang trai/phai o moi chieu rong', () => {
+	const css = read(path.join(APP, 'styles.css'));
+	const mobile = read(path.join(APP, 'mobile.css'));
+	const rules = shotParseRules(css);
+	// (1) Khong con rule wrap nao cho dong quang ba.
+	assert(!/\.qcard-pub \{[^}]*flex-wrap: wrap/.test(css), 'van con .qcard-pub flex-wrap wrap');
+	assert(!/\.qcard-pub-l b \{[^}]*white-space: normal/.test(css), 'van con .qcard-pub-l b white-space normal');
+	// (2) Luat thang that (dac hieu + thu tu, kieu SHOTFIX-W16): hang
+	// khong wrap, can trai/phai, ten cat ellipsis.
+	const ancCard = [shotEl(['qcard'])];
+	assert(shotWin(rules, shotEl(['qcard-pub']), 'light', ancCard, 'flex-wrap') === 'nowrap', 'hang quang ba thang phai nowrap');
+	assert(shotWin(rules, shotEl(['qcard-pub']), 'light', ancCard, 'justify-content') === 'space-between', 'hang quang ba thang phai space-between');
+	assert(shotWin(rules, shotEl(['qcard-pub-l']), 'light', ancCard, 'flex-wrap') === 'nowrap', 'nua trai thang phai nowrap');
+	const ancPub = [shotEl(['qcard-pub-l']), shotEl(['qcard-pub']), shotEl(['qcard'])];
+	assert(shotWin(rules, shotEl([], 'b'), 'light', ancPub, 'white-space') === 'nowrap', 'ten nha phat hanh thang phai nowrap');
+	assert(shotWin(rules, shotEl([], 'b'), 'light', ancPub, 'text-overflow') === 'ellipsis', 'ten dai thang phai cat ellipsis');
+	assert(/\.qcard-pub-caption \{[^}]*white-space: nowrap/.test(css), 'caption quang ba phai nowrap noi bo');
+	// (3) mobile.css khong ghi de dong quang ba.
+	assert(!/\.qcard-pub/.test(mobile), 'mobile.css khong duoc ghi de .qcard-pub');
+	return 'mot hang trai/phai (cascade thang) + ten cat ellipsis, gioi han: assert tinh/cascade, khong render trinh duyet that';
+});
+
+check('ANYACCT: doi tai khoan khong bao gio lam mat tai khoan da luu', () => {
+	const js = read(path.join(APP, 'renderer.js'));
+	const bridge = read(path.join(WEB, 'bridge.js'));
+	// (1) Bridge: plain save union, khong ngan danh sach.
+	assert(bridge.includes('accountsToSave') && bridge.includes('prevAccounts') && bridge.includes('have.has(p.id)'), 'saveConfig thieu union giu tai khoan cu');
+	// (2) Bridge: setActive idx sai tra ok:false, khong roi ve 0.
+	const setFn = bridge.slice(bridge.indexOf('accountsSetActive'), bridge.indexOf('start: startEngine'));
+	assert(setFn.includes('ok: false'), 'setActive idx sai phai tra ok:false');
+	assert(!setFn.includes('? idx : 0'), 'setActive khong duoc roi ve 0 im lang');
+	// (3) Renderer: switch xac minh truoc reload, that bai thi giu phien cu.
+	const swFn = js.slice(js.indexOf('async function confirmSwitchAccount'), js.indexOf('/**', js.indexOf('async function confirmSwitchAccount') + 30));
+	assert(swFn.indexOf('accountsSetActive') < swFn.indexOf('loadAccountsCache()'), 'switch phai nap lai cache tu bridge sau setActive');
+	assert(swFn.includes('findIndex') && swFn.includes('activeIdxCache !== newIdx'), 'switch phai doi chieu theo ID + active moi truoc reload');
+	assert(swFn.includes('pendingSwitch.v1') && swFn.includes("localStorage.setItem('autoquest.pendingSwitch.v1'"), 'switch phai ghi ban pendingSwitch truoc reload');
+	assert((swFn.match(/location\.reload\(\)/g) || []).length === 1, 'switch chi duoc reload dung 1 lan o cuoi khi xac minh xong');
+	assert(swFn.includes('abortSwitch('), 'switch that bai phai qua abortSwitch (an veil + bao loi + giu phien cu)');
+	const catchPart = swFn.slice(swFn.indexOf('} catch {'));
+	assert(catchPart.includes('abortSwitch') && !swFn.includes('dù lỗi vẫn reload'), 'catch khong duoc reload bat chap nhu cu');
+	// (4) Boot sau reload tu kiem tra ban pendingSwitch.
+	assert(js.includes("localStorage.getItem('autoquest.pendingSwitch.v1'") && js.includes('chưa lưu trọn vẹn'), 'boot phai kiem tra pendingSwitch + bao neu dich bien mat');
+	return 'union save + setActive ok:false + xac minh ID truoc reload + kiem tra boot, gioi han: assert duong code tinh, hanh vi IndexedDB khong chay trong harness Node';
+});
+
+check('ANYACCT: gateway that bai hien ly do + marker phien ban code', () => {
+	const js = read(path.join(APP, 'renderer.js'));
+	const pres = read(path.join(WEB, 'engine', 'src', 'presence.js'));
+	const qm = read(path.join(WEB, 'engine', 'src', 'questManager.js'));
+	// (1) Bo loc log khong chat dong gateway/chan doan nua.
+	const keepLine = js.slice(js.indexOf('const LOG_KEEP ='), js.indexOf('const LOG_KEEP =') + 300);
+	assert(keepLine.includes('gateway') && keepLine.includes('presence') && keepLine.includes('timeout') && keepLine.includes('chẩn đoán heartbeat'), 'LOG_KEEP thieu tu khoa gateway/presence/timeout/chan doan');
+	// (2) Presence ghi dau vet loi + log ma dong.
+	assert(pres.includes('lastFailure') && pres.includes('fail=') && pres.includes("kind: 'transport-error'") && pres.includes("kind: 'close'"), 'presence thieu lastFailure/transport-error/close');
+	assert(pres.includes('code=') && pres.includes('reason='), 'onclose phai log ma dong + ly do gateway tra');
+	assert(pres.includes("kind: 'timeout'"), 'gate timeout phai ghi lastFailure timeout');
+	// (3) Marker phien ban: engine + renderer cung mot chuoi.
+	const m = /PRESENCE_BUILD_MARKER = '([^']+)'/.exec(pres);
+	assert(m && pres.includes('exports.PRESENCE_BUILD_MARKER'), 'thieu export PRESENCE_BUILD_MARKER');
+	assert(qm.includes('marker=${presence_1.PRESENCE_BUILD_MARKER}'), 'dong chan doan heartbeat thieu marker');
+	assert(js.includes(m[1]), 'dong marker Auto-start cua renderer phai chua cung chuoi marker');
+	return 'LOG_KEEP mo + lastFailure/close-code + marker ' + m[1] + ' o ca engine lan renderer, gioi han: assert tinh, hanh vi gateway that chi chung minh qua mock (k)/(l) + log live';
+});
+
+check('ANYACCT: claim gui du truong + canh bao token cu + ly do that sau gui', () => {
+	const js = read(path.join(APP, 'renderer.js'));
+	const bridge = read(path.join(WEB, 'bridge.js'));
+	// (1) Bridge tra code that cua Discord cho ca 2 nhanh captcha.
+	assert(bridge.includes('captchaBlocked: true, captcha, status: res.status, code: data?.code'), 'captchaBlocked thieu code Discord');
+	assert(bridge.includes('captchaRequired: true, captcha, status: res.status, code: data?.code'), 'captchaRequired thieu code Discord');
+	// (2) Renderer do tuoi token that (tu luc callback tra token).
+	const readyFn = js.slice(js.indexOf('function onCaptchaTokenReady'), js.indexOf('function onCaptchaSolved'));
+	assert(readyFn.includes('pendingTokenAt = Date.now()'), 'onCaptchaTokenReady phai ghi pendingTokenAt');
+	const solvedFn = js.slice(js.indexOf('async function onCaptchaSolved'), js.indexOf('function onCaptchaRetryClick'));
+	assert(solvedFn.includes('tokenAgeMs'), 'onCaptchaSolved phai ghi tokenAgeMs vao lastCaptchaSubmit');
+	// (3) Cua token cu truoc khi gui (callback moi biet tuoi).
+	const retryFn = js.slice(js.indexOf('function onCaptchaRetryClick'), js.indexOf('function onCaptchaReloadClick'));
+	assert(retryFn.includes('CAPTCHA_STALE_AGE_MS') && retryFn.includes('staleWarned') && retryFn.includes('captchaReloadRow'), 'nut Gui thieu cua token cu (>60s: canh bao + tai lai, lan 2 moi gui)');
+	// (4) Nhanh still-required noi su that, khong doan passive.
+	assert(js.includes('Discord vẫn đòi xác minh dù đã gửi kết quả'), 'nhanh still-required phai giu cum mo dau (test cu #1306)');
+	assert(js.includes('resCode') && js.includes('tuổi lúc gửi'), 'nhanh still-required phai hien code Discord + tuoi token luc gui');
+	assert(!js.includes('trả token passive (P1_/pd:0) không có lời giải'), 'dong he thong generic passive phai bi xoa');
+	assert(!js.includes('chưa được coi là "đã giải"'), 'nhanh 403-10008 khong duoc khang dinh token chua giai');
+	return 'du truong + tuoi token + cua 60s + ly do that (status/code/tuoi), gioi han: assert tinh, grant that can lan chay live';
 });
 
 /* ── In kết quả ────────────────────────────────────────────────────────── */

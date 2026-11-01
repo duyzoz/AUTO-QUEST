@@ -1202,10 +1202,12 @@
 				// Waves#136: structured captcha fields but no sitekey — the
 				// widget cannot be rendered, so do not pretend a captcha
 				// modal can solve this. Report it as blocked per quest.
-				return { ok: false, captchaBlocked: true, captcha, status: res.status, message: 'Discord yêu cầu xác minh nhưng không cấp sitekey — mở Discord để nhận thủ công.' };
+				// ANYACCT: kem code that cua Discord de renderer hien ly
+				// do that thay vi doan.
+				return { ok: false, captchaBlocked: true, captcha, status: res.status, code: data?.code ?? null, message: 'Discord yêu cầu xác minh nhưng không cấp sitekey — mở Discord để nhận thủ công.' };
 			}
 			if (captcha) {
-				return { ok: false, captchaRequired: true, captcha, status: res.status, message: data?.message || 'Discord yêu cầu xác minh.' };
+				return { ok: false, captchaRequired: true, captcha, status: res.status, code: data?.code ?? null, message: data?.message || 'Discord yêu cầu xác minh.' };
 			}
 			return {
 				ok: false,
@@ -2334,6 +2336,25 @@
 		saveConfig: (config) =>
 			withConfigLock(async () => {
 				try {
+					/* ANYACCT (2026-11-01): plain save KHONG BAO GIO lam
+					   ngan danh sach tai khoan — save chi duoc them/cap
+					   nhat, chi accountsRemove moi duoc xoa. Ly do:
+					   confirmSwitchAccount cu gui accountsCache co the
+					   cu/thieu len save, lam mat tokenEnc cua tai khoan
+					   vang mat khoi mang (live 2026-11-01: tai khoan
+					   dich bien mat sau switch). Union theo id voi
+					   danh sach dang luu truoc khi ghi. */
+					let accountsToSave = config?.accounts;
+					if (Array.isArray(accountsToSave)) {
+						try {
+							const prevCfg = await kvGet('config');
+							const prevAccounts = prevCfg && Array.isArray(prevCfg.accounts) ? prevCfg.accounts : [];
+							if (prevAccounts.length > accountsToSave.length) {
+								const have = new Set(accountsToSave.map((a) => a && a.id));
+								for (const p of prevAccounts) if (p && p.id && !have.has(p.id)) accountsToSave = [...accountsToSave, p];
+							}
+						} catch {}
+					}
 					await writeConfig({
 						token: config?.token,
 						remember: config?.remember,
@@ -2344,7 +2365,7 @@
 						lang: config?.lang,
 						liteMode: config?.liteMode,
 						autoLockMin: config?.autoLockMin,
-						accounts: config?.accounts,
+						accounts: accountsToSave,
 						activeIdx: config?.activeIdx,
 					});
 					return { ok: true };
@@ -2412,11 +2433,18 @@
 		accountsSetActive: async (idx) => {
 			try {
 				return await mutateAccounts(({ accounts, activeIdx }) => {
-					const next = typeof idx === 'number' && idx >= 0 && idx < accounts.length ? idx : 0;
+					/* ANYACCT (2026-11-01): idx khong hop le thi BAO LOI,
+					   KHONG tu roi ve 0 nhu cu — roi ve 0 lam im lang
+					   kich hoat SAI tai khoan khi cache cua renderer da
+					   cu. Renderer phai huy switch (khong reload) khi
+					   nhan ok:false. */
+					if (typeof idx !== 'number' || idx < 0 || idx >= accounts.length) {
+						return { accounts, activeIdx, ok: false };
+					}
 					// Waves#141: do NOT return the token here. The renderer
 					// already calls tokenReveal() (gated on a real user gesture)
 					// after switching accounts; returning it here bypassed that gate.
-					return { accounts, activeIdx: next };
+					return { accounts, activeIdx: idx };
 				});
 			} catch (err) {
 				return { ok: false, message: err.message };
