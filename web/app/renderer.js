@@ -29,6 +29,7 @@ const ui = {
 	btnUserTokImport: el('btnUserTokImport'),
 	userTokNote: el('userTokNote'),
 	btnClearLog: el('btnClearLog'),
+	btnCopyLog: el('btnCopyLog'),
 	btnOpenFolder: el('btnOpenFolder'),
 	// Wave#108/#109: bảng dữ liệu & chẩn đoán
 	btnDataPanel: el('btnDataPanel'),
@@ -351,6 +352,10 @@ const i18nDict = {
 	'filter.urgent': ['Sắp hết hạn (3 ngày)', 'Expiring soon (3 days)'],
 	'log.title': ['Nhật ký hoạt động', 'Activity log'],
 	'log.clear': ['Xóa', 'Clear'],
+	'log.copy': ['Sao chép', 'Copy'],
+	'log.copied': ['Đã sao chép ✓', 'Copied ✓'],
+	'log.copyFail': ['Không sao chép được', 'Copy failed'],
+	'log.copyEmpty': ['Chưa có gì để sao chép', 'Nothing to copy'],
 	'balance.label': ['Số dư khả dụng', 'Available balance'],
 	'balance.guest': ['Đăng nhập để trích xuất Orb từ account', 'Sign in to read Orbs from your account'],
 	'settings.account': ['Cấu hình tài khoản', 'Account'],
@@ -8529,6 +8534,7 @@ function applyLang(lang, persist = true) {
 	}
 	langSet('#consoleCard .log-title', 'log.title');
 	if (ui.btnClearLog) ui.btnClearLog.textContent = t('log.clear');
+	if (ui.btnCopyLog) ui.btnCopyLog.textContent = t('log.copy');
 	langSet('#sideBalance .sb-label', 'balance.label');
 
 	langSet('#pageStats .card-title', 'stats.title');
@@ -10043,6 +10049,56 @@ ui.btnClearLog.addEventListener('click', () => {
 	dropLoader();
 	setLogCount('—');
 });
+
+/* COPYLOG (2026-11-01): nut "Sao chep" — sao chep TOAN BO nhat ky tu
+ * logText (kho trong bo nho, giu toi 1MB cuoi — xem appendLog) chu khong
+ * chi 400 dong DOM dang hien trong khung. Chi DOC logText: khong goi duong
+ * xoa (khong innerHTML='', khong logText=''), khong append dong moi — sao
+ * chep khong bao gio reset/xoa/cut ngan log. "Xoa" van la nut duy nhat
+ * xoa log. Log von khong chua secret, va duong sao chep khong them bat
+ * cu noi dung moi nao (chi copy nguyen van logText). */
+let copyLogTimer = null;
+function copyLogFlash(key) {
+	const btn = ui.btnCopyLog;
+	if (!btn) return;
+	if (copyLogTimer) clearTimeout(copyLogTimer);
+	btn.textContent = t(key);
+	copyLogTimer = setTimeout(() => {
+		btn.textContent = t('log.copy');
+		copyLogTimer = null;
+	}, 2000);
+}
+async function copyLogText() {
+	const text = logText;
+	if (!text) {
+		copyLogFlash('log.copyEmpty');
+		return;
+	}
+	try {
+		if (navigator.clipboard && navigator.clipboard.writeText) {
+			await navigator.clipboard.writeText(text);
+		} else {
+			// Fallback cho context khong co Async Clipboard API: textarea tam,
+			// dat ngoai man hinh (khong phai style trang tri, go ngay sau khi
+			// copy) de execCommand('copy') chon duoc noi dung.
+			const ta = document.createElement('textarea');
+			ta.value = text;
+			ta.setAttribute('readonly', '');
+			ta.style.position = 'fixed';
+			ta.style.opacity = '0';
+			document.body.appendChild(ta);
+			ta.select();
+			const ok = document.execCommand('copy');
+			ta.remove();
+			if (!ok) throw new Error('copy-fallback-failed');
+		}
+		copyLogFlash('log.copied');
+	} catch {
+		// Sao chep loi: chi bao bang chu tren nut, log giu nguyen tuyet doi.
+		copyLogFlash('log.copyFail');
+	}
+}
+if (ui.btnCopyLog) ui.btnCopyLog.addEventListener('click', copyLogText);
 
 /* ---------------- Wave#108/#109: Dữ liệu & chẩn đoán ---------------- */
 

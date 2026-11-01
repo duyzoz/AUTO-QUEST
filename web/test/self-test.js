@@ -2047,6 +2047,35 @@ check('ANYACCT: claim gui du truong + canh bao token cu + ly do that sau gui', (
 	return 'du truong + tuoi token + cua 60s + ly do that (status/code/tuoi), gioi han: assert tinh, grant that can lan chay live';
 });
 
+check('COPYLOG: nut Sao chep nhat ky — copy toan bo tu logText, khong bao gio xoa', () => {
+	const html = read(INDEX);
+	const js = read(path.join(APP, 'renderer.js'));
+	// (1) Nut nam trong header log, ngay truoc nut Xoa, dung class nut header co san.
+	const head = html.slice(html.indexOf('id="consoleCard"'), html.indexOf('id="console"'));
+	assert(head.includes('id="btnCopyLog"'), 'header log thieu nut btnCopyLog');
+	assert(head.indexOf('id="btnCopyLog"') < head.indexOf('id="btnClearLog"'), 'nut Sao chep phai dung canh nut Xoa');
+	assert(head.includes('class="ghost-btn log-clear" id="btnCopyLog"'), 'nut Sao chep phai dung class nut header co san (khong class moi, khong CSS moi)');
+	assert(js.includes("btnCopyLog: el('btnCopyLog')"), 'renderer thieu ui.btnCopyLog');
+	// (2) Handler copy doc tu logText (kho day du, khong chi DOM 400 dong).
+	const fn = js.slice(js.indexOf('async function copyLogText'), js.indexOf("ui.btnCopyLog.addEventListener('click', copyLogText)"));
+	assert(fn.includes('const text = logText'), 'handler copy phai doc tu logText');
+	assert(fn.includes('navigator.clipboard.writeText'), 'handler copy thieu Async Clipboard API');
+	assert(fn.includes("document.execCommand('copy')"), 'handler copy thieu fallback execCommand');
+	// (3) Handler KHONG BAO GIO xoa: khong goi duong xoa, khong append log moi.
+	assert(!fn.includes("logText = ''"), 'handler copy khong duoc gan logText rong');
+	assert(!fn.includes('ui.console.innerHTML'), 'handler copy khong duoc dung DOM log');
+	assert(!fn.includes('appendLog('), 'handler copy khong duoc them dong log moi');
+	// (4) Nhan song ngu + phan hoi thanh cong/loi/rong, nut Xoa van la duong xoa duy nhat.
+	assert(js.includes("'log.copy': ['Sao chép', 'Copy']"), 'thieu key log.copy');
+	assert(js.includes("'log.copied': ['Đã sao chép ✓', 'Copied ✓']"), 'thieu key log.copied');
+	assert(js.includes("'log.copyFail'"), 'thieu key log.copyFail');
+	assert(js.includes("'log.copyEmpty'"), 'thieu key log.copyEmpty');
+	assert(js.includes('copyLogFlash'), 'thieu phan hoi tam thoi tren nut');
+	const clearFn = js.slice(js.indexOf("ui.btnClearLog.addEventListener('click'"), js.indexOf('/* COPYLOG'));
+	assert(clearFn.includes("logText = ''"), 'nut Xoa van phai la duong xoa duy nhat');
+	return 'nut header + copy tu logText + fallback + khong xoa, gioi han: assert tinh (Node khong co clipboard/DOM), hanh vi that can lan bam live';
+});
+
 /* ── In kết quả ────────────────────────────────────────────────────────── */
 for (const r of results) {
 	const tag = r.ok ? 'PASS' : 'FAIL';
