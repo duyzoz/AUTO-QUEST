@@ -2076,6 +2076,53 @@ check('COPYLOG: nut Sao chep nhat ky — copy toan bo tu logText, khong bao gio 
 	return 'nut header + copy tu logText + fallback + khong xoa, gioi han: assert tinh (Node khong co clipboard/DOM), hanh vi that can lan bam live';
 });
 
+/* GWFIX (2026-11-01): CSP tung chan gateway — *.discord.com khong bao
+   duoc discord.gg, nen trinh duyet chan wss://gateway.discord.gg ngay luc
+   connect (transport error tuc thi) trong khi REST ve discord.com van OK.
+   Lo hong lot qua test #185 vi #185 chi quet host https://, khong quet
+   host wss://. Test nay khoa ca 2 scheme + khoa toan bo CSP con lai. */
+check('GWFIX: connect-src cho phep gateway discord.gg (https + wss), khong noi long directive khac', () => {
+	const html = read(INDEX);
+	const meta = html.match(/http-equiv="Content-Security-Policy"\s+content="([^"]+)"/);
+	assert(meta, 'không tìm thấy CSP');
+	const csp = meta[1];
+	// (1) Host gateway lay tu code that (presence.js), khong hard-code 2 noi.
+	const presence = read(path.join(WEB, 'engine', 'src', 'presence.js'));
+	const gw = presence.match(/GATEWAY_URL = 'wss:\/\/([^/?]+)/);
+	assert(gw, 'presence.js thieu GATEWAY_URL');
+	const host = gw[1];
+	const connect = csp.match(/connect-src([^;]*)/);
+	assert(connect, 'thiếu connect-src');
+	assert(connect[1].includes('https://' + host), 'connect-src thiếu https://' + host);
+	assert(connect[1].includes('wss://' + host), 'connect-src thiếu wss://' + host);
+	// (2) Moi host wss:// trong code ship (bridge + bundle) deu nam trong connect-src.
+	const wsHosts = new Set();
+	for (const file of [path.join(WEB, 'bridge.js'), path.join(WEB, 'engine-bundle.js')]) {
+		for (const m of read(file).matchAll(/wss:\/\/([a-z0-9.-]+)/g)) wsHosts.add(m[1]);
+	}
+	for (const h of wsHosts) {
+		assert(connect[1].includes('https://' + h) || connect[1].includes('wss://' + h), 'host wss:// ngoai connect-src: ' + h);
+	}
+	// (3) Khong directive nao khac thay doi: toan bo CSP phai dung y literal nay.
+	const expected = "default-src 'none'; script-src 'self' https://js.hcaptcha.com https://newassets.hcaptcha.com https://hcaptcha.com; worker-src 'self' blob: https://js.hcaptcha.com https://newassets.hcaptcha.com https://hcaptcha.com; style-src 'self' 'unsafe-inline' https://*.hcaptcha.com; frame-src https://*.hcaptcha.com https://newassets.hcaptcha.com; child-src blob: https://*.hcaptcha.com https://newassets.hcaptcha.com; connect-src 'self' https://discord.com https://*.discord.com https://cdn.discordapp.com https://*.discordsays.com https://*.hcaptcha.com https://hcaptcha.com https://newassets.hcaptcha.com https://gateway.discord.gg wss://gateway.discord.gg; img-src 'self' https://cdn.discordapp.com https://discord.com https://*.discord.com https://*.hcaptcha.com data: blob:; media-src https://cdn.discordapp.com https://discord.com https://*.discord.com; font-src 'self' data: https://*.hcaptcha.com; manifest-src 'self'; base-uri 'self'; object-src 'none'; form-action 'none'; upgrade-insecure-requests;";
+	assert(csp === expected, 'CSP thay doi ngoai phan them gateway (so sanh toan chuoi)');
+	// (4) Chi 1 dinh nghia CSP that: index.html; build-static/server chi trich tu meta.
+	const found = [];
+	const walk = (dir) => {
+		for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+			const p = path.join(dir, e.name);
+			if (e.isDirectory()) walk(p);
+			else if (/\.(html|js)$/.test(e.name) && read(p).includes('connect-src')) found.push(path.relative(ROOT, p));
+		}
+	};
+	for (const d of [APP, path.join(WEB, 'engine', 'src')]) walk(d);
+	for (const f of [path.join(WEB, 'build-static.js'), path.join(WEB, 'server.js'), path.join(WEB, 'bridge.js'), path.join(WEB, 'engine-bundle.js')]) {
+		if (read(f).includes('connect-src')) found.push(path.relative(ROOT, f));
+	}
+	assert(found.length === 1 && found[0] === path.join('web', 'app', 'index.html'), 'co dinh nghia connect-src ngoai index.html: ' + found.join(', '));
+	return 'gateway ' + host + ' (https + wss) + CSP con lai khoa literal, gioi han: assert tinh, hanh vi socket that can lan chay live';
+});
+
 /* ── In kết quả ────────────────────────────────────────────────────────── */
 for (const r of results) {
 	const tag = r.ok ? 'PASS' : 'FAIL';
