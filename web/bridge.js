@@ -683,7 +683,7 @@
 					ok: false,
 					message:
 						meRes.status === 401
-							? 'Token không còn hiệu lực, dán lại token.'
+							? 'Token không hợp lệ hoặc đã hết hạn.'
 							: meRes.status === 403
 								? 'Discord từ chối token này (403) — token có thể đã bị thu hồi.'
 								: `Discord trả lỗi ${meRes.status}.`,
@@ -851,10 +851,7 @@
 
 	/* ══════════════════════ 6. SỐ DƯ ORB ══════════════════════════ */
 
-	// Waves#157: dedupe concurrent fetchOrbs calls — scan + balance
-	// refresh used to fire the same 3 Discord requests twice at once.
-	let fetchOrbsInFlight = null;
-	async function fetchOrbsFresh(rawToken) {
+	async function fetchOrbs(rawToken) {
 		const clean = cleanToken(rawToken);
 		if (!clean) return { ok: false, message: 'Chưa có token.' };
 		try {
@@ -874,7 +871,6 @@
 				}).then(async (r) => ({ res: r, data: await r.json().catch(() => null) })).catch(() => null),
 			]);
 
-			for (const pair of [['wallet', walletRes], ['claimed-list', claimedRes], ['quests', allRes]]) { if (pair[1] && pair[1].res && pair[1].res.status === 429) note429(pair[0], pair[1].data); }
 			let balance = null;
 			let source = 'wallet';
 			// Waves#145: track each source separately so the UI can say
@@ -914,7 +910,7 @@
 				const status = walletRes?.res.status || claimedRes?.res.status || 0;
 				return {
 					ok: false,
-					message: status === 401 ? 'Token không còn hiệu lực, dán lại token.' : `Discord trả lỗi ${status || 'mạng'}.`,
+					message: status === 401 ? 'Token không hợp lệ.' : `Discord trả lỗi ${status || 'mạng'}.`,
 				};
 			}
 
@@ -943,17 +939,6 @@
 			return { ok: true, balance, pendingClaim, pendingUnknown, source, walletOk, claimedOk, questsOk, partial: source !== 'wallet' || pendingUnknown, totalQuests: claimedQuests.length };
 		} catch (err) {
 			return { ok: false, message: `Không kết nối được Discord: ${err.message}` };
-		}
-	}
-
-	async function fetchOrbs(rawToken) {
-		if (fetchOrbsInFlight) return fetchOrbsInFlight;
-		const p = fetchOrbsFresh(rawToken);
-		fetchOrbsInFlight = p;
-		try {
-			return await p;
-		} finally {
-			if (fetchOrbsInFlight === p) fetchOrbsInFlight = null;
 		}
 	}
 
@@ -1063,7 +1048,6 @@
 			const out = await task();
 			lastClaimAt = Date.now();
 			if (out && out.res && out.res.status === 429) {
-				note429('claim', out.data);
 				// Waves#142: respect the FULL retry_after, never cap it.
 				// If Discord did not give one, block for a safe 5s default
 				// instead of letting the next claim fire immediately.
@@ -1084,16 +1068,6 @@
 	   KHÔNG BAO GIỜ chứa token, captcha_key, captcha_rqdata, captcha_rqtoken
 	   hay session id đầy đủ — chỉ phần đầu đã che để đối chiếu. */
 	let lastClaimDiag = null;
-	/* Waves#181: chính sách 429 toàn cục — ghi lại lần 429 gần nhất
-	   (phạm vi + retry_after) để UI hiển thị thời gian chờ, không retry
-	   hung hăng. Scan/wallet/claimed-list/claim đều ghi vào đây. */
-	let last429Diag = null;
-	function note429(scope, data) {
-		const sec = Number(data && data.retry_after);
-		last429Diag = { scope: String(scope || ''), seconds: Number.isFinite(sec) && sec > 0 ? sec : 5, at: new Date().toISOString() };
-		return last429Diag;
-	}
-	function clearClaimDiagnostics() { lastClaimDiag = null; last429Diag = null; }
 	let captchaSessionAt = 0;
 	let captchaSessionMasked = '';
 	function maskDiagId(id) {
@@ -1128,7 +1102,6 @@
 			lastClaim: lastClaimDiag ? { ...lastClaimDiag, captchaSessionAgeSec: age } : null,
 			captchaSessionAgeSec: age,
 			captchaSession: captchaSessionMasked || null,
-			last429: last429Diag,
 		};
 	}
 
@@ -1202,12 +1175,10 @@
 				// Waves#136: structured captcha fields but no sitekey — the
 				// widget cannot be rendered, so do not pretend a captcha
 				// modal can solve this. Report it as blocked per quest.
-				// ANYACCT: kem code that cua Discord de renderer hien ly
-				// do that thay vi doan.
-				return { ok: false, captchaBlocked: true, captcha, status: res.status, code: data?.code ?? null, message: 'Discord yêu cầu xác minh nhưng không cấp sitekey — mở Discord để nhận thủ công.' };
+				return { ok: false, captchaBlocked: true, captcha, status: res.status, message: 'Discord yêu cầu xác minh nhưng không cấp sitekey — mở Discord để nhận thủ công.' };
 			}
 			if (captcha) {
-				return { ok: false, captchaRequired: true, captcha, status: res.status, code: data?.code ?? null, message: data?.message || 'Discord yêu cầu xác minh.' };
+				return { ok: false, captchaRequired: true, captcha, status: res.status, message: data?.message || 'Discord yêu cầu xác minh.' };
 			}
 			return {
 				ok: false,
@@ -1215,7 +1186,7 @@
 				code: data?.code ?? null,
 				message:
 					data?.message ||
-					(res.status === 401 ? 'Token không còn hiệu lực, dán lại token.' : `Discord trả lỗi ${res.status}.`),
+					(res.status === 401 ? 'Token không hợp lệ.' : `Discord trả lỗi ${res.status}.`),
 				raw: data,
 			};
 		} catch (err) {
@@ -1783,12 +1754,6 @@
 	}
 
 	/* ── #109: sao lưu mã hoá — PBKDF2-SHA256 200k + AES-256-GCM ──
-	   Waves#177 audit: export uses 200,000 iterations, import cap 2 MB,
-	   v2 SHA-256 checksum, version check. Import keeps the 10,000 floor
-	   so OLD backups still open; a file below 200,000 iterations is
-	   flagged (preview.kdfIterations) instead of rejected, and the UI
-	   warns to re-export it. Wrong password / corrupt files fail with a
-	   clear message and never crash (all decrypt paths are try/caught).
 	   File sao lưu chứa token nhưng đã mã hoá; mật khẩu KHÔNG được lưu ở đâu cả.
 	   `pendingBackup` chỉ sống trong RAM của tab, xoá ngay sau khi áp dụng/huỷ. */
 	const BACKUP_FORMAT = 'autoquest-backup';
@@ -1961,19 +1926,6 @@
 			if (!obj || obj.format !== BACKUP_FORMAT) {
 				return { ok: false, message: 'Đây không phải file sao lưu AUTO-QUEST.' };
 			}
-			// Waves#220: reject truncated/malformed envelopes before any
-				// crypto work — a missing data/iv/salt must fail here with a
-				// clear message, never throw deep inside decrypt and never
-				// touch stored data (pendingBackup stays null until success).
-			if (typeof obj.data !== 'string' || !obj.data) {
-				return { ok: false, message: 'File sao lưu thiếu phần dữ liệu mã hoá.' };
-			}
-			if (!obj.cipher || typeof obj.cipher.iv !== 'string' || !obj.cipher.iv) {
-				return { ok: false, message: 'File sao lưu thiếu IV mã hoá.' };
-			}
-			if (!obj.kdf || typeof obj.kdf.salt !== 'string' || !obj.kdf.salt) {
-				return { ok: false, message: 'File sao lưu thiếu salt KDF.' };
-			}
 			const version = Number(obj.version);
 			if (version !== 1 && version !== BACKUP_VERSION) {
 				return { ok: false, message: `Phiên bản sao lưu không hỗ trợ (${obj.version}).` };
@@ -2033,7 +1985,6 @@
 					hasToken: !!token,
 					version,
 					checksumOk,
-					kdfIterations: iterations,
 					hasExtras: Object.keys(extras).length > 0,
 					names: accounts.slice(0, 5).map((a) => a.username || a.id || '—'),
 				},
@@ -2336,25 +2287,6 @@
 		saveConfig: (config) =>
 			withConfigLock(async () => {
 				try {
-					/* ANYACCT (2026-11-01): plain save KHONG BAO GIO lam
-					   ngan danh sach tai khoan — save chi duoc them/cap
-					   nhat, chi accountsRemove moi duoc xoa. Ly do:
-					   confirmSwitchAccount cu gui accountsCache co the
-					   cu/thieu len save, lam mat tokenEnc cua tai khoan
-					   vang mat khoi mang (live 2026-11-01: tai khoan
-					   dich bien mat sau switch). Union theo id voi
-					   danh sach dang luu truoc khi ghi. */
-					let accountsToSave = config?.accounts;
-					if (Array.isArray(accountsToSave)) {
-						try {
-							const prevCfg = await kvGet('config');
-							const prevAccounts = prevCfg && Array.isArray(prevCfg.accounts) ? prevCfg.accounts : [];
-							if (prevAccounts.length > accountsToSave.length) {
-								const have = new Set(accountsToSave.map((a) => a && a.id));
-								for (const p of prevAccounts) if (p && p.id && !have.has(p.id)) accountsToSave = [...accountsToSave, p];
-							}
-						} catch {}
-					}
 					await writeConfig({
 						token: config?.token,
 						remember: config?.remember,
@@ -2365,7 +2297,7 @@
 						lang: config?.lang,
 						liteMode: config?.liteMode,
 						autoLockMin: config?.autoLockMin,
-						accounts: accountsToSave,
+						accounts: config?.accounts,
 						activeIdx: config?.activeIdx,
 					});
 					return { ok: true };
@@ -2433,18 +2365,11 @@
 		accountsSetActive: async (idx) => {
 			try {
 				return await mutateAccounts(({ accounts, activeIdx }) => {
-					/* ANYACCT (2026-11-01): idx khong hop le thi BAO LOI,
-					   KHONG tu roi ve 0 nhu cu — roi ve 0 lam im lang
-					   kich hoat SAI tai khoan khi cache cua renderer da
-					   cu. Renderer phai huy switch (khong reload) khi
-					   nhan ok:false. */
-					if (typeof idx !== 'number' || idx < 0 || idx >= accounts.length) {
-						return { accounts, activeIdx, ok: false };
-					}
+					const next = typeof idx === 'number' && idx >= 0 && idx < accounts.length ? idx : 0;
 					// Waves#141: do NOT return the token here. The renderer
 					// already calls tokenReveal() (gated on a real user gesture)
 					// after switching accounts; returning it here bypassed that gate.
-					return { accounts, activeIdx: idx };
+					return { accounts, activeIdx: next };
 				});
 			} catch (err) {
 				return { ok: false, message: err.message };
@@ -2488,7 +2413,6 @@
 		fetchOrbs,
 		claimQuest,
 		claimDiagnostics,
-		clearClaimDiagnostics,
 
 		debugRawQuests: async () => ({ ok: false, message: 'Không hỗ trợ trên bản web.' }),
 		debugClaimOne: async () => ({ ok: false, message: 'Không hỗ trợ trên bản web.' }),

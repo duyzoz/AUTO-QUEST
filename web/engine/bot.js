@@ -282,10 +282,6 @@ async function runSelectedQuests(questManager, quests) {
         return;
     }
     const totalOrbs = runnable.reduce((sum, q) => sum + questManager_1.QuestManager.getQuestOrbs(q), 0);
-    // FIX64-P0 wave 1: dấu hiệu phiên bản — nhìn log là biết code mới đang
-    // chạy (fallback 401 + trạng thái bị chặn thay vì fail), không cần đoán
-    // theo deploy/cache.
-    console.log('[FIX64-P0] Heartbeat fallback đang bật: 401 appId task -> thử appId quest 1 lần/nhịp; 401 cả hai -> thẻ chuyển sang "Cần chơi trong Discord", không fail.');
     console.log(`\n--- Cày ${runnable.length} nhiệm vụ ĐÃ NHẬN · tổng ${totalOrbs} Orbs (chậm rãi, tránh rate-limit) ---`);
     for (const q of runnable) {
         console.log(`  ▸ [${questManager_1.QuestManager.getTaskLabel(q)}] ${q.config.messages.quest_name} — ${questManager_1.QuestManager.getQuestOrbs(q)} Orbs — tiến độ ${Math.floor(questManager_1.QuestManager.getTaskProgress(q))}/${questManager_1.QuestManager.getTaskTarget(q)}`);
@@ -400,7 +396,7 @@ async function runQuestCycle() {
         // Wave#104: lỗi của MỘT lượt (mạng chập chờn, Discord 5xx) không được
         // giết cả chế độ treo. Chỉ token chết (401) mới dừng hẳn.
         if (err?.status === 401) {
-            (0, events_1.report)('fatal', { message: 'Token không còn hiệu lực, dán lại token (401).' });
+            (0, events_1.report)('fatal', { message: 'Token Discord không hợp lệ hoặc đã hết hạn (401).' });
             console.error('Token hết hiệu lực:', message);
             void shutdown(1);
             return;

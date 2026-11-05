@@ -33,11 +33,10 @@ const FILES = [
 ];
 
 function appVersion() {
-	// Phiên bản chỉ còn là metadata của build (đọc từ package.json);
-	// app không còn hiển thị hay dùng nó cho cập nhật.
 	try {
-		const pkg = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'package.json'), 'utf8'));
-		if (pkg.version) return pkg.version;
+		const src = fs.readFileSync(path.join(APP, 'renderer.js'), 'utf8');
+		const match = src.match(/const\s+APP_VERSION\s*=\s*'([^']+)'/);
+		if (match) return match[1];
 	} catch {
 		/* ignore */
 	}

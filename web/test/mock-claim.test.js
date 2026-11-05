@@ -203,25 +203,6 @@ async function runCase(label, fn) {
 		ok('403 code 10008', 'status 403, code 10008');
 	});
 
-	// ANYACCT (2026-11-01): captchaRequired/captchaBlocked phai kem code
-	// that cua Discord — renderer dung no de hien ly do that thay vi
-	// doan loai token (dong generic "passive" cu).
-	await runCase('ANYACCT captcha responses carry Discord code', async () => {
-		const calls = [];
-		const api = loadBridge(mockFetchFactory([
-			{ match: isClaim, status: 400, body: { message: 'You need to verify', code: 50035, captcha_sitekey: 'sitekey-mock', captcha_service: 'hcaptcha' } },
-		], calls));
-		const res = await api.claimQuest({ token: FAKE_TOKEN, quest: QUEST, questId: QUEST.id });
-		assert(res.captchaRequired === true && res.code === 50035, 'expected captchaRequired + code 50035, got ' + JSON.stringify(res));
-		const calls2 = [];
-		const api2 = loadBridge(mockFetchFactory([
-			{ match: isClaim, status: 400, body: { message: 'captcha required', code: 50035, captcha_key: 'key-mock', captcha_session_id: 'sess-mock' } },
-		], calls2));
-		const res2 = await api2.claimQuest({ token: FAKE_TOKEN, quest: QUEST, questId: QUEST.id });
-		assert(res2.captchaBlocked === true && res2.code === 50035, 'expected captchaBlocked + code 50035, got ' + JSON.stringify(res2));
-		ok('ANYACCT captcha responses carry Discord code', 'captchaRequired + captchaBlocked both carry code 50035');
-	});
-
 	// 8. 429 returns full retryAfter.
 	await runCase('429 returns full retry_after', async () => {
 		const calls = [];

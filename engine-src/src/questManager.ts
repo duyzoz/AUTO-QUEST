@@ -37,10 +37,10 @@ export class QuestManager implements Iterable<Quest> {
 			console.log(
 				`Tìm thấy ${response.excluded_quests.length} nhiệm vụ phụ/bổ sung. Đang nạp chi tiết để không xót nhiệm vụ...`,
 			);
-			// Waves#157: parallel excluded fetch, cap 4 per batch.
-			const pending = response.excluded_quests.filter((quest: any) => quest.id && !questManager.hasQuest(quest.id));
-			for (let i = 0; i < pending.length; i += 4) {
-				await Promise.all(pending.slice(i, i + 4).map((quest: any) => questManager.addExcludedQuest(quest.id)));
+			for (const quest of response.excluded_quests) {
+				if (quest.id && !questManager.hasQuest(quest.id)) {
+					await questManager.addExcludedQuest(quest.id);
+				}
 			}
 		}
 
@@ -358,37 +358,6 @@ export class QuestManager implements Iterable<Quest> {
 	 * - `rewardKind`: 'orbs' khi có orb_quantity, ngược lại 'item' (avatar decoration...).
 	 * - `rewardAsset`: asset ảnh/video của phần thưởng (chỉ có với reward dạng vật phẩm).
 	 */
-	/**
-	 * Waves#153 — defensive code-field scan (session memory only).
-	 * No code field is confirmed in this codebase's Discord payloads:
-	 * rewards here are orb_quantity / asset / asset_video / messages.
-	 * This scans a small whitelist of plausible code keys (top level and
-	 * one level of metadata/details) and returns the value + field name.
-	 * It never logs the value. If nothing matches, rewardCode is '' and
-	 * the UI must show the Discord quest-home link instead of a fake code.
-	 */
-	public static extractRewardCode(reward: any): { code: string; source: string } {
-		const KEYS = ['code', 'redeem_code', 'reward_code', 'external_code', 'gift_code', 'voucher_code', 'promo_code', 'promotion_code', 'redemption_code', 'key'];
-		const ok = (v: any): v is string => typeof v === 'string' && /^[A-Za-z0-9][A-Za-z0-9\-_]{3,127}$/.test(v.trim());
-		const scan = (obj: any): { code: string; source: string } | null => {
-			if (!obj || typeof obj !== 'object') return null;
-			for (const k of KEYS) {
-				if (ok(obj[k])) return { code: String(obj[k]).trim(), source: k };
-				}
-			for (const nest of ['metadata', 'details', 'data']) {
-				const inner = obj[nest];
-				if (inner && typeof inner === 'object') {
-					for (const k of KEYS) {
-						if (ok(inner[k])) return { code: String(inner[k]).trim(), source: `${nest}.${k}` };
-					}
-				}
-			}
-			return null;
-		};
-		if (!reward) return { code: '', source: '' };
-		return scan(reward) || { code: '', source: '' };
-	}
-
 	public static getQuestCardData(quest: Quest): {
 		hero: string;
 		heroVideo: string | null;
@@ -405,16 +374,6 @@ export class QuestManager implements Iterable<Quest> {
 		rewardTitle: string;
 		rewardAsset: string;
 		rewardIsVideo: boolean;
-		// Waves#151/#153/#155: theme variants, primary reward type, and a
-		// session-only redeem code if Discord actually returns one.
-		// rewardCode is NEVER logged or persisted by the engine.
-		logotypeDark: string;
-		logotypeLight: string;
-		gameTileDark: string;
-		gameTileLight: string;
-		rewardType: 'orbs' | 'avatar' | 'code' | 'other';
-		rewardCode: string;
-		rewardCodeSource: string;
 		rewardName: string;
 		platform: number;
 		orbs: number;
@@ -449,19 +408,12 @@ export class QuestManager implements Iterable<Quest> {
 
 		const rewardAsset = pick(itemReward?.asset, itemReward?.asset_video);
 		const rewardIsVideo = /\.mp4$/i.test(rewardAsset);
-		const codeFound = QuestManager.extractRewardCode(itemReward);
-		const rewardType: 'orbs' | 'avatar' | 'code' | 'other' =
-			codeFound.code ? 'code' : orbCount > 0 ? 'orbs' : itemReward ? 'avatar' : 'other';
 
 		return {
 			hero: pick(assets?.hero, assets?.quest_bar_hero, assets?.hero_video),
 			heroVideo: pick(assets?.hero_video) || null,
 			gameTile: pick(assets?.game_tile_dark, assets?.game_tile_light, assets?.game_tile),
-			gameTileDark: pick(assets?.game_tile_dark),
-			gameTileLight: pick(assets?.game_tile_light),
 			logotype: pick(assets?.logotype_dark, assets?.logotype_light, assets?.logotype),
-			logotypeDark: pick(assets?.logotype_dark),
-			logotypeLight: pick(assets?.logotype_light),
 			publisher: messages?.game_publisher || '',
 			gameTitle: messages?.game_title || '',
 			// Waves 42 — LOGO CHUẨN THEO TỪNG NHIỆM VỤ.
@@ -478,9 +430,6 @@ export class QuestManager implements Iterable<Quest> {
 			rewardTitle: orbCount > 0 ? `Nhận ${orbCount} Orbs` : `Nhận ${itemName}`,
 			rewardAsset,
 			rewardIsVideo,
-			rewardType,
-			rewardCode: codeFound.code,
-			rewardCodeSource: codeFound.source,
 			rewardName: orbCount > 0 ? `${orbCount} Discord Orbs` : itemName,
 			// Waves 32: platform THẬT từ rewards_config (Discord yêu cầu đúng giá trị này
 			// khi claim; gửi sai/0 có thể bị từ chối). Gửi kèm lên UI để claim dùng đúng.
@@ -1001,7 +950,6 @@ export class QuestManager implements Iterable<Quest> {
 		// that made no progress because Discord's time cap had not caught up.
 		let videoIterations = 0;
 		const maxVideoIterations = Math.ceil(Math.max(secondsNeeded, 0) / speed) + 600;
-		let lastMilestone = -1; // Waves#187
 		let stallIterations = 0;
 		const maxStallIterations = 60; // 60 x 7s = 420s without any progress
 		while (true) {
@@ -1038,11 +986,6 @@ export class QuestManager implements Iterable<Quest> {
 				completed = res.completed_at != null;
 				quest.updateUserStatus(res);
 				secondsDone = Math.min(secondsNeeded, timestamp);
-				/* Waves#187 (TS reference mirror): milestone logging only.
-				   Stop terminates the worker cleanly in the web runtime. */
-				const pct = secondsNeeded > 0 ? Math.floor((secondsDone / secondsNeeded) * 100) : 0;
-				const mile = pct >= 100 ? 100 : pct >= 75 ? 75 : pct >= 50 ? 50 : pct >= 25 ? 25 : -1;
-				if (mile !== lastMilestone && mile >= 0) { lastMilestone = mile; console.log(`Video "${questName}": ${mile}% (${secondsDone}/${secondsNeeded}s)`); }
 				report('quest:progress', {
 					id: QuestManager.getQuestId(quest),
 					name: questName,

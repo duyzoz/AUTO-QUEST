@@ -29,7 +29,6 @@ const ui = {
 	btnUserTokImport: el('btnUserTokImport'),
 	userTokNote: el('userTokNote'),
 	btnClearLog: el('btnClearLog'),
-	btnCopyLog: el('btnCopyLog'),
 	btnOpenFolder: el('btnOpenFolder'),
 	// Wave#108/#109: bảng dữ liệu & chẩn đoán
 	btnDataPanel: el('btnDataPanel'),
@@ -51,18 +50,12 @@ const ui = {
 	// Waves 28: chế độ Sáng/Tối
 	themeDark: el('themeDark'),
 	themeLight: el('themeLight'),
-	themeSystem: el('themeSystem'),
 	btnDrawer: el('btnDrawer'),
-	btnTopbarAccount: el('btnTopbarAccount'),
-	// Motion + sound (Phase 1): nút tắt/bật âm thanh ở topbar.
-	btnSound: el('btnSound'),
 	drawerOverlay: el('drawerOverlay'),
 	sidebar: el('sidebar'),
 	selectAll: el('selectAll'),
 	selectAllLabel: el('selectAllLabel'),
 	selectTools: el('selectTools'),
-	gameSelect: el('gameSelect'),
-	btnSelectGame: el('btnSelectGame'),
 	selectedLabel: el('selectedLabel'),
 	selectedCount: el('selectedCount'),
 	selectedOrbs: el('selectedOrbs'),
@@ -89,7 +82,23 @@ const ui = {
 	dpEffect: el('dpEffect'),
 	dpFrame: el('dpFrame'),
 	// Hero trung tâm: guest vs profile (Waves 15: guest hero đã bỏ, chỉ còn profile)
+	heroProfile: el('heroProfile'),
+	phBanner: el('phBanner'),
+	phAvatarwrap: el('phAvatarwrap'),
+	phAvatar: el('phAvatar'),
+	phAvatarOrb: el('phAvatarOrb'),
+	phDecoration: el('phDecoration'),
 	// Waves 49: profile effect + frame trong hero
+	phEffect: el('phEffect'),
+	phFrame: el('phFrame'),
+	phDisplay: el('phDisplay'),
+	phNameplate: el('phNameplate'),
+	phUsername: el('phUsername'),
+	phUserId: el('phUserId'),
+	phUserIdValue: el('phUserIdValue'),
+	phBadges: el('phBadges'),
+	phClanBadge: el('phClanBadge'),
+	phClanTag: el('phClanTag'),
 	// Số dư ORB (card emerald trong khu Auto Orb)
 	sideBalance: el('sideBalance'),
 	orbBalance: el('orbBalance'),
@@ -115,8 +124,6 @@ const ui = {
 	captchaTargetSub: el('captchaTargetSub'),
 	btnCaptchaCancel: el('btnCaptchaCancel'),
 	btnCaptchaRetry: el('btnCaptchaRetry'),
-	btnCaptchaReload: el('btnCaptchaReload'),
-	captchaReloadRow: el('captchaReloadRow'),
 	captchaVeilClick: el('captchaModal'),
 	// Nav
 	navQuest: el('navQuest'),
@@ -128,12 +135,20 @@ const ui = {
 	pageStats: el('pageStats'),
 	pageAbout: el('pageAbout'),
 	// Waves #117–#131
+	updateBar: el('updateBar'),
+	updateBarText: el('updateBarText'),
+	btnUpdateReload: el('btnUpdateReload'),
+	btnUpdateDismiss: el('btnUpdateDismiss'),
 	netBadge: el('netBadge'),
 	btnRecover: el('btnRecover'),
 	claimQueueChip: el('claimQueueChip'),
 	langSelect: el('langSelect'),
 	liteMode: el('liteMode'),
 	autoLockSelect: el('autoLockSelect'),
+	appVersion: el('appVersion'),
+	swVersion: el('swVersion'),
+	btnCheckUpdate: el('btnCheckUpdate'),
+	updateStatus: el('updateStatus'),
 	statsScope: el('statsScope'),
 	statsOrbs: el('statsOrbs'),
 	statsClaims: el('statsClaims'),
@@ -141,9 +156,6 @@ const ui = {
 	statsAvg: el('statsAvg'),
 	statsBars: el('statsBars'),
 	statsRecent: el('statsRecent'),
-	orbGoalInput: el('orbGoalInput'),
-	btnOrbGoalSave: el('btnOrbGoalSave'),
-	orbGoalProgress: el('orbGoalProgress'),
 	statsEmpty: el('statsEmpty'),
 	btnStatsCsv: el('btnStatsCsv'),
 	btnStatsClear: el('btnStatsClear'),
@@ -171,14 +183,6 @@ const ui = {
 	btnLogout2: el('btnLogout2'),
 	// Wave#88 (Multiaccount) — popup "Đổi tài khoản" + xác nhận.
 	accSwitchModal: el('accSwitchModal'),
-	accountSheetVeil: el('accountSheetVeil'),
-	sheetAvatar: el('sheetAvatar'),
-	sheetName: el('sheetName'),
-	sheetId: el('sheetId'),
-	sheetBalance: el('sheetBalance'),
-	btnSheetSwitch: el('btnSheetSwitch'),
-	btnSheetLogout: el('btnSheetLogout'),
-	btnSheetClose: el('btnSheetClose'),
 	accswToken: el('accswToken'),
 	accswPaste: el('accswPaste'),
 	accswToggle: el('accswToggle'),
@@ -219,6 +223,7 @@ const ui = {
 	btnTokenEyeText: el('btnTokenEyeText'),
 	btnTokenCopy: el('btnTokenCopy'),
 	// Guest "Đăng nhập Discord" (hero giữa) — nút nhấn thật.
+	phLoginHint: el('phLoginHint'),
 	console: el('console'),
 	logCount: el('logCount'),
 	tabActive: el('tabActive'),
@@ -237,40 +242,10 @@ const ui = {
 	// Wave#111: tìm kiếm · lọc · nhận tất cả
 	questTools: el('questTools'),
 	questSearch: el('questSearch'),
-	searchHistory: el('searchHistory'),
 	btnQuestSearchClear: el('btnQuestSearchClear'),
 	questFilter: el('questFilter'),
 	btnClaimAll: el('btnClaimAll'),
 	questFilterCount: el('questFilterCount'),
-	// Waves#161/#162/#167: công cụ riêng tab Đã làm
-	doneTools: el('doneTools'),
-	questDoneRewardFilter: el('questDoneRewardFilter'),
-	questDoneSort: el('questDoneSort'),
-	questPlatformFilter: el('questPlatformFilter'),
-	questTaskFilter: el('questTaskFilter'),
-	chkExpiringSoon: el('chkExpiringSoon'),
-	btnAdvancedFilters: el('btnAdvancedFilters'),
-	advancedFilterCount: el('advancedFilterCount'),
-	questAdvanced: el('questAdvanced'),
-	doneToolsAdvanced: el('doneToolsAdvanced'),
-	doneExportAdvanced: el('doneExportAdvanced'),
-	doneDateFrom: el('doneDateFrom'),
-	doneDateTo: el('doneDateTo'),
-	chkDoneUndated: el('chkDoneUndated'),
-	chkGroupGames: el('chkGroupGames'),
-	statsDateFrom: el('statsDateFrom'),
-	statsDateTo: el('statsDateTo'),
-	btnStatsHistoryCsv: el('btnStatsHistoryCsv'),
-	btnExportConfigFile: el('btnExportConfigFile'),
-	btnImportConfigFile: el('btnImportConfigFile'),
-	fileImportConfig: el('fileImportConfig'),
-	btnClearCdnCache: el('btnClearCdnCache'),
-	statsHistoryTable: el('statsHistoryTable'),
-	statsForecast: el('statsForecast'),
-	btnExportDoneCsv: el('btnExportDoneCsv'),
-	btnExportDoneJson: el('btnExportDoneJson'),
-	chkExportCodes: el('chkExportCodes'),
-	btnClearDoneCache: el('btnClearDoneCache'),
 	toast: el('toast'),
 };
 
@@ -317,6 +292,7 @@ const scanBuffer = [];
 /* ═══════════════════════════════════════════════════════════════════
    WAVES #117–#131 — trạng thái cục bộ
    ═══════════════════════════════════════════════════════════════════ */
+const APP_VERSION = '2.0.0';
 const HISTORY_KEY = 'autoquest.history.v1';
 const QUEUE_KEY = 'autoquest.claimQueue.v1';
 const HISTORY_MAX = 400;
@@ -342,7 +318,7 @@ const i18nDict = {
 	'tab.new': ['Chưa nhận', 'Unclaimed'],
 	'tab.done': ['Đã làm', 'Done'],
 	'act.scan': ['Quét nhiệm vụ', 'Scan quests'],
-	'act.start': ['Chạy', 'Run'],
+	'act.start': ['Auto ORBs', 'Auto ORBs'],
 	'act.stop': ['Dừng', 'Stop'],
 	'act.search': ['Tìm nhiệm vụ, game, phần thưởng…', 'Search quests, games, rewards…'],
 	'act.claimAll': ['Nhận tất cả', 'Claim all'],
@@ -352,16 +328,13 @@ const i18nDict = {
 	'filter.urgent': ['Sắp hết hạn (3 ngày)', 'Expiring soon (3 days)'],
 	'log.title': ['Nhật ký hoạt động', 'Activity log'],
 	'log.clear': ['Xóa', 'Clear'],
-	'log.copy': ['Sao chép', 'Copy'],
-	'log.copied': ['Đã sao chép ✓', 'Copied ✓'],
-	'log.copyFail': ['Không sao chép được', 'Copy failed'],
-	'log.copyEmpty': ['Chưa có gì để sao chép', 'Nothing to copy'],
 	'balance.label': ['Số dư khả dụng', 'Available balance'],
 	'balance.guest': ['Đăng nhập để trích xuất Orb từ account', 'Sign in to read Orbs from your account'],
 	'settings.account': ['Cấu hình tài khoản', 'Account'],
 	'settings.appearance': ['Giao diện', 'Appearance'],
 	'settings.lang': ['Ngôn ngữ giao diện', 'Interface language'],
 	'settings.optimize': ['Tối ưu & riêng tư', 'Performance & privacy'],
+	'settings.version': ['Phiên bản & cập nhật', 'Version & updates'],
 	'settings.themeDark': ['Tối', 'Dark'],
 	'settings.themeLight': ['Sáng', 'Light'],
 	'settings.lite': ['Chế độ nhẹ (máy yếu)', 'Lite mode (low-end device)'],
@@ -389,6 +362,8 @@ const i18nDict = {
 	'settings.interval60': ['Mỗi 60 phút', 'Every 60 minutes'],
 	'settings.folder': ['Thư mục cấu hình', 'Config folder'],
 	'settings.data': ['Dữ liệu & chẩn đoán', 'Data & diagnostics'],
+	'settings.versionApp': ['Ứng dụng', 'App'],
+	'settings.versionSw': ['Service Worker', 'Service Worker'],
 	'stats.title': ['Thống kê & lịch sử', 'Stats & history'],
 	'stats.orbs': ['Tổng Orb đã nhận', 'Total Orbs claimed'],
 	'stats.claims': ['Nhiệm vụ đã nhận', 'Quests claimed'],
@@ -402,6 +377,9 @@ const i18nDict = {
 		'Chưa có lịch sử nhận thưởng. Lịch sử được lưu cục bộ theo từng tài khoản.',
 		'No claim history yet. History is stored locally per account.',
 	],
+	'update.available': ['Đã có bản cập nhật mới.', 'A new version is available.'],
+	'update.now': ['Cập nhật', 'Update'],
+	'update.later': ['Để sau', 'Later'],
 	'lock.title': ['Đã khoá màn hình', 'Screen locked'],
 	'lock.desc': [
 		'Tiến trình vẫn chạy nền. Bấm nút bên dưới hoặc nhấn Enter để quay lại.',
@@ -473,6 +451,7 @@ const i18nDict = {
 	],
 	'logout.cancel': ['Huỷ', 'Cancel'],
 	'logout.confirm': ['Đăng xuất', 'Sign out'],
+	'common.checkUpdate': ['Kiểm tra cập nhật', 'Check for updates'],
 };
 
 function t(key) {
@@ -514,176 +493,11 @@ function notifySystem(title, body) {
 	try {
 		if (!('Notification' in window) || Notification.permission !== 'granted') return;
 		if (!document.hidden) return;
-		new Notification(title, { body, icon: orbPoster(DISCORD_ORB_SMALL), tag: 'autoquest', silent: true });
+		new Notification(title, { body, icon: 'assets/orb-logo.png', tag: 'autoquest', silent: true });
 	} catch {
 		/* trình duyệt chặn — bỏ qua */
 	}
 }
-
-
-/* ---------------- Motion + sound (Phase 1) — âm thanh tự tổng hợp ----------------
-   Nguyên tắc học từ web tham khảo, làm lại bằng đồ của mình, không copy file nhạc:
-   - KHÔNG có file nhạc nào. Mọi tiếng đều là sóng Oscillator của WebAudio,
-     tạo ngay lúc bấm — click ngắn, claim thành công là 2-3 nốt tăng dần, lỗi là nốt trầm.
-   - Mặc định TẮT. Chỉ khi user bấm nút loa thì mới bật, và AudioContext chỉ được
-     tạo sau tương tác đầu tiên của user (trình duyệt chặn autoplay trước đó).
-   - Chỉ là lớp UI: không đụng luồng quét/cày/claim, không lưu token/code, chỉ lưu
-     cờ bật/tắt (localStorage, key aq-sound-enabled) để lần sau khỏi bật lại.
-   - Tôn trọng prefers-reduced-motion ở CSS; tiếng thì tắt hẳn bằng nút loa. */
-const SOUND_KEY = 'aq-sound-enabled';
-let soundEnabled = false;
-try { soundEnabled = localStorage.getItem(SOUND_KEY) === '1'; } catch { /* storage chặn — mặc định tắt */ }
-let aqAudioCtx = null;
-function ensureAudioCtx() {
-	if (!soundEnabled) return null;
-	try {
-		if (!aqAudioCtx) aqAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
-		if (aqAudioCtx.state === 'suspended') aqAudioCtx.resume();
-		return aqAudioCtx;
-	} catch { return null; }
-}
-function playTone(freq, dur, type, gain, delay) {
-	const ctx = ensureAudioCtx();
-	if (!ctx) return;
-	try {
-		const t0 = ctx.currentTime + (delay || 0);
-		const osc = ctx.createOscillator();
-		const g = ctx.createGain();
-		osc.type = type || 'sine';
-		osc.frequency.setValueAtTime(freq, t0);
-		g.gain.setValueAtTime(0.0001, t0);
-		g.gain.exponentialRampToValueAtTime(gain || 0.06, t0 + 0.01);
-		g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
-		osc.connect(g);
-		g.connect(ctx.destination);
-		osc.start(t0);
-		osc.stop(t0 + dur + 0.05);
-	} catch { /* âm thanh là tùy chọn — lỗi thì im lặng */ }
-}
-function playClick() { if (soundEnabled) playTone(880, 0.06, 'triangle', 0.05, 0); }
-function playSuccess() {
-	if (!soundEnabled) return;
-	playTone(660, 0.12, 'sine', 0.07, 0);
-	playTone(880, 0.12, 'sine', 0.07, 0.07);
-	playTone(1320, 0.16, 'sine', 0.07, 0.14);
-}
-function playError() { if (soundEnabled) playTone(180, 0.14, 'sine', 0.06, 0); }
-/* FIX64-P5 (W53/W54): 2 tieng RIENG, khong file am thanh, WebAudio tong
-   hop nhu cac tieng cu, mac dinh TAT (chi phat khi soundEnabled).
-   - playQuestComplete: quest vua xong 100% (quest:done) — 4 not triangle
-     tang dan, khac playSuccess (3 not sine) va moi tieng cu.
-   - playClaimSuccess: Discord da xac nhan trao thuong (claim don + claim
-     hang loat) — 2 not sine cao ("coin"), khac playQuestComplete,
-     playSuccess, playScanDone, playSoundOn.
-   - playSuccess giu lai de tuong thich (self-test cu assert co ham), nhung
-     khong con duoc noi vao duong claim/completion nua.
-   - playError giu nguyen: 1 not tram 180Hz sine — thap nhat he thong,
-     khong trung not nao cua ho success, khong dung chung tieng click. */
-function playQuestComplete() {
-	if (!soundEnabled) return;
-	playTone(523, 0.10, 'triangle', 0.06, 0);
-	playTone(659, 0.10, 'triangle', 0.06, 0.09);
-	playTone(784, 0.12, 'triangle', 0.06, 0.18);
-	playTone(1046, 0.20, 'triangle', 0.07, 0.30);
-}
-function playClaimSuccess() {
-	if (!soundEnabled) return;
-	playTone(1318, 0.08, 'sine', 0.07, 0);
-	playTone(1760, 0.22, 'sine', 0.07, 0.07);
-}
-function playToggle() { if (soundEnabled) { playTone(520, 0.08, 'sine', 0.06, 0); playTone(780, 0.08, 'sine', 0.06, 0.06); } }
-/* FIX26-E: bo sound rieng theo tung loai thao tac — tat ca deu la song
-   WebAudio tu tong hop trong code, KHONG file am thanh, KHONG lay cua
-   bat ky trang nao. Moi tieng khac nhau ro bang cao do / kieu song /
-   nhịp, khong chi khac am luong. Giu playClick/playSuccess/playError
-   cu de khong doi hanh vi cu; cac tieng moi chi them vao. */
-function playSweep(from, to, dur, type, gain) {
-	if (!soundEnabled) return;
-	const ctx = ensureAudioCtx();
-	if (!ctx) return;
-	try {
-		const t0 = ctx.currentTime;
-		const osc = ctx.createOscillator();
-		const g = ctx.createGain();
-		osc.type = type || 'sine';
-		osc.frequency.setValueAtTime(from, t0);
-		osc.frequency.exponentialRampToValueAtTime(to, t0 + dur);
-		g.gain.setValueAtTime(0.0001, t0);
-		g.gain.exponentialRampToValueAtTime(gain || 0.06, t0 + 0.01);
-		g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
-		osc.connect(g); g.connect(ctx.destination);
-		osc.start(t0); osc.stop(t0 + dur + 0.05);
-	} catch { /* am thanh tuy chon */ }
-}
-function playTab() { if (soundEnabled) playTone(620, 0.07, 'triangle', 0.05, 0); }
-function playSelect() { if (soundEnabled) playTone(1000, 0.04, 'triangle', 0.04, 0); }
-function playFilter() { if (soundEnabled) playTone(900, 0.05, 'sine', 0.04, 0); }
-function playScanStart() { playSweep(400, 900, 0.25, 'sine', 0.06); }
-function playScanDone() { if (soundEnabled) { playTone(880, 0.12, 'sine', 0.07, 0); playTone(1174, 0.14, 'sine', 0.07, 0.08); } }
-function playQuestAct() { if (soundEnabled) { playTone(700, 0.07, 'triangle', 0.05, 0); playTone(1050, 0.07, 'triangle', 0.05, 0.05); } }
-function playAuto() { if (soundEnabled) { playTone(440, 0.08, 'triangle', 0.05, 0); playTone(660, 0.08, 'triangle', 0.05, 0.06); } }
-function playStop() { if (soundEnabled) playTone(330, 0.10, 'triangle', 0.05, 0); }
-function playModalOpen() { if (soundEnabled) { playTone(440, 0.06, 'sine', 0.05, 0); playTone(660, 0.06, 'sine', 0.05, 0.05); } }
-function playModalClose() { if (soundEnabled) { playTone(660, 0.06, 'sine', 0.05, 0); playTone(440, 0.06, 'sine', 0.05, 0.05); } }
-function playSoundOn() { if (soundEnabled) { playTone(520, 0.08, 'sine', 0.06, 0); playTone(780, 0.08, 'sine', 0.06, 0.06); playTone(1040, 0.10, 'sine', 0.06, 0.12); } }
-function playSoundOff() { if (soundEnabled) { playTone(780, 0.08, 'sine', 0.06, 0); playTone(520, 0.10, 'sine', 0.06, 0.06); } }
-function playHover() { if (soundEnabled) playTone(1400, 0.03, 'sine', 0.02, 0); }
-function refreshSoundButton() {
-	if (!ui.btnSound) return;
-	ui.btnSound.classList.toggle('is-muted', !soundEnabled);
-	ui.btnSound.setAttribute('aria-pressed', soundEnabled ? 'true' : 'false');
-	ui.btnSound.setAttribute('aria-label', soundEnabled ? 'Tắt âm thanh' : 'Bật âm thanh');
-	ui.btnSound.setAttribute('title', soundEnabled ? 'Âm thanh: bật' : 'Âm thanh: tắt');
-}
-function setSoundEnabled(on) {
-	soundEnabled = !!on;
-	try { localStorage.setItem(SOUND_KEY, soundEnabled ? '1' : '0'); } catch { /* ignore */ }
-	refreshSoundButton();
-}
-if (ui.btnSound) {
-	ui.btnSound.addEventListener('click', () => {
-		const willEnable = !soundEnabled;
-		// FIX26-E: tieng bat/tat khac nhau; tieng tat phai phat khi loa
-		// van dang bat (truoc khi setSoundEnabled(false) khoa am thanh).
-		if (willEnable) { setSoundEnabled(true); playSoundOn(); }
-		else { playSoundOff(); setSoundEnabled(false); }
-	});
-}
-refreshSoundButton();
-/* FIX26-E: click chung phan loai theo nut — moi loai thao tac mot tieng
-   rieng, cham dut tinh trang moi nut deu cung 1 tieng click. Khong doi
-   hanh vi nao cua nut, chi them am thanh. */
-document.addEventListener('click', (ev) => {
-	const btn = ev.target && ev.target.closest ? ev.target.closest('button') : null;
-	if (!btn || btn.disabled || btn.id === 'btnSound') return;
-	if (btn.classList.contains('tab-btn')) { playTab(); return; }
-	if (btn.classList.contains('qcard-act')) { playQuestAct(); return; }
-	if (btn.id === 'btnScan') { playScanStart(); return; }
-	if (btn.id === 'btnStart') { playAuto(); return; }
-	if (btn.id === 'btnStop') { playStop(); return; }
-	playClick();
-});
-/* FIX26-E: chon quest / doi bo loc co tieng rieng (change, khong phai click). */
-document.addEventListener('change', (ev) => {
-	const t = ev.target;
-	if (!t || !t.closest) return;
-	if (t.closest('.qcard-check')) { playSelect(); return; }
-	if (t.tagName === 'SELECT') { playFilter(); }
-});
-/* FIX26-E: tieng hover chi tren desktop (pointer fine), rat ngan, am luong
-   thap, chi khi loa da bat; chi phat khi sang nut khac hoac sau 500ms de
-   khong keu lien tuc khi lia chuot trong cung mot nut. */
-let lastHoverBtn = null, lastHoverTime = 0;
-document.addEventListener('mouseover', (ev) => {
-	if (!soundEnabled) return;
-	if (!window.matchMedia || !window.matchMedia('(pointer: fine)').matches) return;
-	const btn = ev.target && ev.target.closest ? ev.target.closest('button') : null;
-	if (!btn || btn.disabled) return;
-	const now = Date.now();
-	if (btn === lastHoverBtn && now - lastHoverTime < 500) return;
-	lastHoverBtn = btn; lastHoverTime = now;
-	playHover();
-});
 
 function toast(message, isError = false) {
 	ui.toast.textContent = message;
@@ -706,36 +520,10 @@ function toast(message, isError = false) {
 			}
 		}
 	}
-	if (isError) { playError(); notifySystem('Auto Quest — lỗi', message); }
+	if (isError) notifySystem('Auto Quest — lỗi', message);
 }
 
 /* ---------------- State Management ---------------- */
-
-/* FIX64-P3 (W35): ly do dang TEXT cho nut dang bi khoa — title (tooltip
-   desktop) + aria-label (trinh doc man hinh doc ca nhan + ly do). Chi set
-   text, khong doi trang thai disabled, khong doi nhan hien (hang nut canh
-   tab rat chat, doi nhan se vo layout). Trang thai chay/dung/dang dung van
-   hien qua nhan tung the + pill claim + log. */
-function setBtnReason(btn, reason) {
-	if (!btn) return;
-	if (reason) {
-		btn.title = reason;
-		const label = btn.querySelector('.side-act-text');
-		const base = label ? label.textContent.trim() : '';
-		btn.setAttribute('aria-label', base ? `${base} — ${reason}` : reason);
-	} else {
-		btn.title = '';
-		btn.removeAttribute('aria-label');
-	}
-}
-function syncMainButtonReasons() {
-	const en = currentLang === 'en';
-	const busy = state === 'starting' || state === 'running' || state === 'stopping' || state === 'scanning';
-	const hasToken = !!(ui.token && ui.token.value.trim());
-	if (ui.btnScan) setBtnReason(ui.btnScan, ui.btnScan.disabled ? (busy ? (en ? 'Busy — wait for the current run to finish before scanning.' : 'Đang chạy — chờ xong đợt hiện tại mới quét được.') : (!hasToken ? (en ? 'No account token yet — paste your account token first.' : 'Chưa có token tài khoản — dán token tài khoản trước.') : '')) : '');
-	if (ui.btnStart) setBtnReason(ui.btnStart, ui.btnStart.disabled ? (busy ? (en ? 'Busy — wait for the current run to finish.' : 'Đang chạy — chờ xong đợt hiện tại.') : (selected.size === 0 ? (en ? 'No quest selected — tick quests in the To do tab.' : 'Chưa chọn nhiệm vụ nào — tích chọn ở tab Chưa làm.') : '')) : '');
-	if (ui.btnStop) setBtnReason(ui.btnStop, ui.btnStop.disabled ? (state === 'stopping' ? (en ? 'Stopping — wait for running quests to stop.' : 'Đang dừng — chờ các nhiệm vụ dừng hẳn.') : (en ? 'No quest is running.' : 'Không có nhiệm vụ nào đang chạy.')) : '');
-}
 
 function setBusyFlags() {
 	// Waves 42: nút "Dừng" phải bấm được khi CÓ nhiệm vụ đang chạy, dù tiến
@@ -753,7 +541,6 @@ function setBusyFlags() {
 	ui.btnStart.disabled = busy || selected.size === 0;
 	// Wave#111: "Nhận tất cả" khoá theo tiến trình/tiến trình nhận hàng loạt.
 	if (ui.btnClaimAll) ui.btnClaimAll.disabled = bulkClaimBusy || state !== 'idle';
-	syncMainButtonReasons();
 }
 
 /** Đếm số nhiệm vụ đang thực sự chạy (nguồn sự thật cho nút Dừng). */
@@ -802,17 +589,9 @@ function switchTab(tab) {
 	ui.questListActive.hidden = tab !== 'active';
 	ui.questListNew.hidden = tab !== 'new';
 	ui.questListDone.hidden = tab !== 'done';
-	// Waves#161/#162/#167: công cụ Đã làm chỉ hiện ở tab Đã làm.
-	if (ui.doneTools) ui.doneTools.hidden = tab !== 'done';
-	if (ui.doneToolsAdvanced) ui.doneToolsAdvanced.hidden = tab !== 'done';
-	if (ui.doneExportAdvanced) ui.doneExportAdvanced.hidden = tab !== 'done';
 	// Wave#111: chuyển tab phải tính lại thanh chọn + nút "Nhận tất cả"
 	// theo bộ lọc hiện tại (không chỉ dựa vào việc lưới có thẻ hay không).
 	renderQuests();
-	// FIX26 F11: chi cuon khi khung quest nam ngoai viewport (block nearest)
-	// — khong nhay ve dau trang, khong nhay xuong cuoi trang.
-	const qc = document.querySelector('.quests-card');
-	if (qc && typeof qc.scrollIntoView === 'function') qc.scrollIntoView({ block: 'nearest' });
 }
 
 ui.tabActive.addEventListener('click', () => switchTab('active'));
@@ -968,14 +747,38 @@ function isOrbWinLine(line) {
 	return /(đã nhận|nhận được|thành công|\+\s*\d)/i.test(s);
 }
 
-/** Ghi nội dung dòng log DAY DU, khong cat gon (FIX26 F24).
- *  Quyet dinh nay THAY THE cap 2 dong cu (Waves 46e): Ethan duyet
- *  F24 — dong log phai wrap tron ven, khong cat bang dau "…".
- *  Khung .u229 van giu max-height + cuon noi bo nen khung khong
- *  bao gio bi day cao len vi dong dai. */
+/** Ghi nội dung dòng log và CẮT GỌN CÓ DẤU "…" nếu vượt quá 2 dòng.
+ *  Bro: "1 dòng text nếu quá dài thì chỉ nên gói gọn lại trong 2 dòng hoặc giản
+ *  lược nó lại hoặc ...".
+ *  CSS `-webkit-line-clamp: 2` chỉ CẮT — nó không cho biết là đã cắt (và với
+ *  `white-space: pre-wrap` dấu "…" tự động có thể không hiện). Vì vậy ở đây ta
+ *  tự tìm độ dài vừa 2 dòng rồi thêm "…" — người đọc biết chắc là còn nữa.
+ *  Tìm bằng tìm-kiếm-nhị-phân trên chuỗi RAW (mỗi lần dựng lại HTML từ raw nên
+ *  không bao giờ cắt vào giữa thẻ <span>). */
 function fitLogBody(body, text) {
+	/* PHẢI TẮT CLAMP khi đo: với `-webkit-line-clamp`, Chromium kẹp LUÔN cả
+	   `scrollHeight` về đúng 2 dòng → `scrollHeight <= clientHeight` luôn đúng →
+	   tưởng "không tràn" và không bao giờ thêm "…" (đã mắc đúng lỗi này: probe
+	   báo "dòng dài KHÔNG có dấu …"). Tắt clamp một nhịp để lấy chiều cao THẬT,
+	   đo xong bật lại ngay trong cùng một frame nên không thấy nháy. */
 	body.style.webkitLineClamp = 'unset';
 	body.innerHTML = logBodyHtml(text);
+	const lineH = parseFloat(getComputedStyle(body).lineHeight) || 16;
+	const maxH = Math.round(lineH * 2) + 1;
+	if (body.scrollHeight <= maxH) {
+		body.style.webkitLineClamp = '';
+		return;
+	}
+	let lo = 0;
+	let hi = text.length;
+	while (lo < hi) {
+		const mid = (lo + hi + 1) >> 1;
+		body.innerHTML = logBodyHtml(`${text.slice(0, mid)}…`);
+		if (body.scrollHeight <= maxH) lo = mid;
+		else hi = mid - 1;
+	}
+	body.innerHTML = logBodyHtml(`${text.slice(0, lo).trimEnd()}…`);
+	body.style.webkitLineClamp = '';
 }
 
 function appendLog(line, stream) {
@@ -1229,7 +1032,6 @@ function finishLoader(total, breakdown) {
 	if (!progEl) {
 		// chưa từng có dòng tiến trình → chỉ ghi tổng kết
 		if (total) writeScanSummary(total, breakdown, 0);
-		if (total) playScanDone();
 		return;
 	}
 	scanTotal = total || scanTotal;
@@ -1259,8 +1061,6 @@ function finishLoader(total, breakdown) {
 		dropProgress();
 		writeScanSummary(scanTotal, breakdown, secs);
 	}, wait);
-	// FIX26-E: quet that su xong (finishLoader) moi co tieng chime rieng.
-	playScanDone();
 }
 
 function writeScanSummary(total, breakdown, secs) {
@@ -1290,14 +1090,13 @@ function emptyMsg(kind) {
 				? 'No quests yet — press <strong>Scan quests</strong> to load.'
 				: 'Chưa có nhiệm vụ nào — bấm <strong>Quét nhiệm vụ</strong> để tải.';
 		case 'active':
-			// FIX64-P3 (W39): cau tron ven + hanh dong goi y, khong chi bao rong.
-			return en ? 'No unfinished quests — press Scan quests to load more.' : 'Không còn nhiệm vụ nào chưa làm — bấm Quét nhiệm vụ để tải thêm.';
+			return en ? 'No unfinished quests.' : 'Không còn nhiệm vụ nào chưa làm.';
 		case 'claimable':
-			return en ? 'No quests awaiting claim — finish a quest in To do, then come back.' : 'Không có nhiệm vụ nào chờ nhận thưởng — hoàn thành nhiệm vụ ở tab Chưa làm rồi quay lại.';
+			return en ? 'No quests awaiting claim.' : 'Không có nhiệm vụ nào chờ nhận thưởng.';
 		case 'done':
-			return en ? 'No claimed quests yet — claim a reward in Unclaimed to record it here.' : 'Chưa nhận thưởng nhiệm vụ nào — nhận thưởng ở tab Chưa nhận để ghi vào đây.';
+			return en ? 'No claimed quests yet.' : 'Chưa nhận thưởng nhiệm vụ nào.';
 		case 'filter':
-			return en ? 'No quests match the current filter — try loosening the filter or clearing the search.' : 'Không có nhiệm vụ nào khớp bộ lọc — thử nới bộ lọc hoặc xoá tìm kiếm.';
+			return en ? 'No quests match the current filter.' : 'Không có nhiệm vụ nào khớp bộ lọc.';
 		default:
 			return '';
 	}
@@ -1385,14 +1184,6 @@ function isQuestFiltering() {
 
 function questMatchesFilter(q) {
 	if (!q || q.flag === 'gone') return false;
-	if (currentTab === 'done' && doneRewardFilter !== 'all' && rewardTypeOf(q) !== doneRewardFilter) return false;
-	if (currentTab === 'done' && (doneDateFrom || doneDateTo)) {
-		if (!q.claimedAt) { if (!doneIncludeUndated) return false; }
-		else { const d = String(q.claimedAt).slice(0, 10); if (doneDateFrom && d < doneDateFrom) return false; if (doneDateTo && d > doneDateTo) return false; }
-	}
-	if (platformFilter !== 'all' && String(q.platform ?? '') !== String(platformFilter)) return false;
-	if (taskFilter !== 'all' && String(q.task || '') !== String(taskFilter) && !String(taskLabel(q.task) || '').toLowerCase().includes(String(taskFilter).toLowerCase())) return false;
-	if (expiringOnly && !isExpiringSoon(q, 3)) return false;
 	if (questFilter === 'orbs' && !(Number(q.orbs) > 0)) return false;
 	if (questFilter === 'manual' && q.automatable !== false) return false;
 	if (questFilter === 'urgent') {
@@ -1483,131 +1274,12 @@ function appIconUrl(id, icon, size) {
 	return `${QCDN}app-icons/${sid}/${hash}.${ext}?size=${size || 128}`;
 }
 
-/** Ảnh logo THẬT của quest (không bao giờ trả logo Orb). '' nếu không có gì.
- * Waves#155: chọn biến thể theo theme hiện tại — Sáng ưu tiên *_light,
- * Tối ưu tiên *_dark — rồi fallback chéo sang biến thể còn lại, rồi
- * logotype/game_tile cũ, cuối cùng là icon application. */
+/** Ảnh logo THẬT của quest (không bao giờ trả logo Orb). '' nếu không có gì. */
 function questLogoUrl(q) {
-	// Đọc theme từ DOM (an toàn hơn biến let khai báo sau trong file).
-	const light = document.documentElement.dataset.theme === 'light';
-	const logoFor = (dark, lite) => (light ? lite || dark : dark || lite);
-	const chain = [
-		logoFor(q.logotypeDark, q.logotypeLight),
-		logoFor(q.logotypeLight, q.logotypeDark),
-		q.logotype,
-		logoFor(q.gameTileDark, q.gameTileLight),
-		logoFor(q.gameTileLight, q.gameTileDark),
-		q.gameTile,
-	];
-	for (const v of chain) {
-		const url = questAssetUrl(v);
-		if (url) return url;
-	}
+	const direct = questAssetUrl(q.logotype) || questAssetUrl(q.gameTile);
+	if (direct) return direct;
 	return appIconUrl(q.appId, q.appIcon);
 }
-
-/* Waves#151/#161/#165/#168 — loại phần thưởng chính, dùng chung cho
- * tile Đã làm, bộ lọc, badge và diagnostics. 'code' thắng 'orbs' vì một
- * quest có code là quest code dù nó có kèm Orb hay không; 'avatar' là
- * rewardKind=item (decoration/effect) có hoặc không có asset. */
-function rewardTypeOf(q) {
-	if (!q) return 'other';
-	if (q.rewardCode) return 'code';
-	if (Number(q.orbs) > 0) return 'orbs';
-	if (q.rewardKind === 'item') return 'avatar';
-	return q.rewardType || 'other';
-}
-function rewardTypeLabel(q) {
-	const en = typeof currentLang !== 'undefined' && currentLang === 'en';
-	const t = rewardTypeOf(q);
-	if (t === 'orbs') return 'Orbs';
-	if (t === 'avatar') return 'Avatar';
-	if (t === 'code') return en ? 'Code' : 'Mã code';
-	return en ? 'Reward' : 'Phần thưởng';
-}
-/* Waves#153 (renderer): quét code trong phản hồi claim (session only).
- * Cùng whitelist với engine; không ghi log, không lưu cache/export. */
-function extractSessionCode(obj) {
-	if (!obj || typeof obj !== 'object') return '';
-	const KEYS = ['code', 'redeem_code', 'reward_code', 'external_code', 'gift_code', 'voucher_code', 'promo_code', 'promotion_code', 'redemption_code'];
-	const ok = (v) => typeof v === 'string' && /^[A-Za-z0-9][A-Za-z0-9\-_]{3,127}$/.test(v.trim());
-	for (const k of KEYS) if (ok(obj[k])) return String(obj[k]).trim();
-	for (const nest of ['metadata', 'details', 'data', 'reward']) {
-		const inner = obj[nest];
-		if (inner && typeof inner === 'object') {
-			for (const k of KEYS) if (ok(inner[k])) return String(inner[k]).trim();
-		}
-	}
-	return '';
-}
-
-/* Chữ ký đổi của một tile Đã làm: đổi loại/asset/code là phải dựng lại
- * node, vì mặt trước tile phụ thuộc hoàn toàn vào chúng (#159). */
-function doneRewardSig(q) {
-	return `${q.rewardKind || 'orbs'}|${q.rewardAsset || ''}|${q.rewardCode ? 'code' : ''}`;
-}
-/* Waves#168: đếm ảnh hỏng để diagnostics báo được, không ghi vào log. */
-let assetFailCount = 0;
-const assetFailQuests = new Set();
-function noteAssetFailure(id) {
-	assetFailCount += 1;
-	if (id) assetFailQuests.add(String(id));
-}
-/* Waves#166: thời gian render lưới gần nhất (ms), diagnostics đọc. */
-let lastQuestRenderMs = 0;
-/* Waves#161: bộ lọc + sắp xếp riêng cho tab Đã làm. */
-let doneRewardFilter = 'all';
-let doneSort = 'claimed';
-/* Waves#171-#200: trạng thái bổ sung, không chứa token/code. */
-let scanGeneration = 0;
-let scanStartGen = 0;
-let doneDateFrom = '';
-let doneDateTo = '';
-let doneIncludeUndated = true;
-let doneWindowEnd = 80;
-let lastDoneVisibleCount = 0;
-let activeWindowEnd = 80;
-let newWindowEnd = 80;
-let lastActiveVisibleCount = 0;
-let lastNewVisibleCount = 0;
-let platformFilter = 'all';
-let taskFilter = 'all';
-let expiringOnly = false;
-let groupGames = false;
-let expandedGroups = new Set();
-let scanPartialErrors = [];
-let partialRetryAttempt = 0;
-let prevScanQuestIds = new Set();
-let last429 = null;
-const NOTES_KEY = 'autoquest.notes.v1';
-let questNotesStore = loadJsonLocal(NOTES_KEY, {});
-/* Waves#203: yêu thích đã xóa — khi nạp, chỉ bỏ trường __fav cũ, giữ nguyên
-   mọi ghi chú chữ của user. Không còn hàm đọc/ghi yêu thích nào nữa. */
-try { let dropped = false; for (const sc of Object.keys(questNotesStore || {})) { const s = questNotesStore[sc]; if (s && typeof s === 'object' && '__fav' in s) { delete s.__fav; dropped = true; } } if (dropped) saveJsonLocal(NOTES_KEY, questNotesStore); } catch {}
-function notesScope() { try { return accountScope(); } catch { return 'default'; } }
-function questNoteFor(id) { const s = questNotesStore[notesScope()] || {}; return s[id] || ''; }
-function setQuestNote(id, text) { const sc = notesScope(); if (!questNotesStore[sc]) questNotesStore[sc] = {}; questNotesStore[sc][String(id)] = String(text || '').slice(0, 500); saveJsonLocal(NOTES_KEY, questNotesStore); }
-function setGlobal429(scope, seconds) { last429 = { scope: String(scope || ''), seconds: Number(seconds) || 0, until: Date.now() + (Number(seconds) || 0) * 1000 }; }
-function forecastOrbs() { let orbs = 0; let secs = 0; for (const q of quests.values()) { if (q.status !== 'todo' || q.flag === 'gone') continue; const need = Number(q.secondsNeeded) || 0; const done = Number(q.secondsDone) || 0; if (need > 0) { orbs += Number(q.orbs) || 0; secs += Math.max(0, need - done); } } return { orbs, minutes: Math.round(secs / 60) }; }
-// Waves#223: đếm ngược trực tiếp cho quest sắp hết hạn (trong 7 ngày).
-// Quá 7 ngày thì chỉ hiện ngày (đủ rõ); đã hết hạn thì không đếm.
-function formatExpiryCountdown(expiresAt) {
-	const t = expiresAt ? Date.parse(expiresAt) : NaN;
-	if (!Number.isFinite(t)) return '';
-	const d = t - Date.now();
-	if (d <= 0) return '';
-	if (d > 7 * 86400000) return '';
-	const days = Math.floor(d / 86400000);
-	if (days >= 1) return `Còn ${days} ngày`;
-	const hours = Math.floor(d / 3600000);
-	if (hours >= 1) return `Còn ${hours}g ${Math.floor((d % 3600000) / 60000)}p`;
-	return `Còn ${Math.max(1, Math.floor(d / 60000))}p`;
-}
-function isExpiringSoon(q, days) { const t = q.expiresAt ? Date.parse(q.expiresAt) : NaN; if (!Number.isFinite(t)) return false; const d = t - Date.now(); return d >= 0 && d <= days * 86400000; }
-function groupGameKey(q) { return String(q.gameTitle || q.application || q.name || 'Khác'); }
-function clearClipboardAfter(ms) { try { if (navigator.clipboard && navigator.clipboard.writeText) setTimeout(() => { try { navigator.clipboard.writeText(''); } catch {} }, ms); } catch {} }
-function copySecretWithTimeout(text, ms) { return (async () => { try { await navigator.clipboard.writeText(String(text || '')); } catch { return false; } clearClipboardAfter(ms || 30000); return true; })(); }
-const questRenderSig = new Map();
 
 /** Gán ảnh/video quest từ đường dẫn tương đối của API. Trả false nếu không có asset. */
 function setQuestImg(img, p) {
@@ -1654,55 +1326,47 @@ function fmtShortDate(iso) {
 	return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`;
 }
 
-/* DISCORD-ORB (2026-10-31) — logo Orb thật của Discord, đo từ quest-home.
-   Mapping màu xanh/tím CHƯA xác nhận bằng mắt (giả thuyết: ít Orbs = xanh,
-   700+ = tím) — nếu ngược, đổi 2 hằng CARD/SMALL trong 1 wave:
-     - thẻ quest (64px): d4fc (đa số thẻ Discord dùng bản này)
-     - icon nhỏ / pill 32px / captcha: 864e
-     - video trên ô Đã nhận: 61aaa
-   Video logo lúc load (122274…) KHÔNG phải slot Orb — không dùng ở đây.
-   Video luôn muted (không tiếng). Tải lỗi → ảnh tĩnh ?format=webp, rồi
-   chuỗi fallback cũ — không bao giờ về logo cũ. */
-const DISCORD_ORB_CARD = 'https://cdn.discordapp.com/assets/content/d4fc1c99b3e3044530f08ede0156d1d43a13bf78f0f539e240b63f2d4dad3554.webm';
-const DISCORD_ORB_SMALL = 'https://cdn.discordapp.com/assets/content/864e5841fd9af8da3c50ad6d6220bee54e8c2da2d36d3c85d0a5ae95cdbf095e.webm';
-const DISCORD_ORB_CLAIMED = 'https://cdn.discordapp.com/assets/content/61aaaee4a0366652022b510d9aaa8a26d552ce8457679b0c28c5e2002484a5a6.webm';
-/* ORBRING: poster phai la anh tinh cua CHINH asset video do (dang
-   ?format=webp cua Discord CDN). Poster chung 864e truoc day lam anh
-   tinh hien sai bien the Orb so voi video dang chay — truoc khi phat,
-   khi loi, va khi reduced-motion khong autoplay. */
-const orbPoster = (src) => src + '?format=webp';
-function orbVideoEl(src, cls) {
-	const v = document.createElement('video');
-	v.className = cls;
-	v.muted = true;
-	v.playsInline = true;
-	v.preload = 'metadata';
-	v.poster = orbPoster(src);
-	v.setAttribute('aria-hidden', 'true');
-	v.draggable = false;
-	if (!window.matchMedia || !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-		v.autoplay = true;
-		v.loop = true;
-	}
-	v.src = src;
-	v.addEventListener('error', () => {
-		const img = document.createElement('img');
-		img.className = v.className;
-		img.src = orbPoster(src);
-		img.alt = '';
-		img.setAttribute('aria-hidden', 'true');
-		img.draggable = false;
-		img.addEventListener('error', () => img.remove(), { once: true });
-		v.replaceWith(img);
-	}, { once: true });
-	return v;
-}
+/* Waves 30/46 — LOGO ORB (ảnh do bro cung cấp, đã TÁCH NỀN sạch).
+   File: web/app/assets/orb-logo.png (256×256) — dùng cho glyph nhỏ inline.
+   Waves 46: bro yêu cầu orb TO Ở CHÍNH GIỮA → thêm bản orb-logo-big.png
+   (500×500, alpha thật) dùng cho logo lớn giữa thẻ hero + các ô "Đã làm".
+   Giữ class .orb-glyph để CSS cũ áp dụng. */
+const ORB_GLYPH =
+	'<img class="orb-glyph" src="assets/orb-logo.png" alt="" aria-hidden="true" draggable="false" />';
+
+/* Waves 46 — ảnh logo Orb TO (500×500) cho vị trí chính giữa + ô "Đã làm". */
+const ORB_ICON_SRC = 'assets/orb-logo-big.png';
 
 /* Waves 46b — ORB LỚN LÀ ẢNH CỦA Ô AVATAR HERO (không còn lớp phủ lơ lửng).
    Quy tắc: chỉ bật orb khi (a) user KHÔNG có ảnh đại diện thật, và (b) file
    ảnh nạp được thật sự. Ảnh hỏng → gỡ class, hình người mặc định quay lại.
    Ảnh gốc bro đưa còn nguyên MÀN ĐEN alpha=128 phủ toàn khung; đã tách nền
    thật bằng tools/cutout-orb-alpha.py (alpha=0 ở vùng ngoài đĩa orb). */
+let heroOrbOk = null; // null = chưa biết, true/false = kết quả nạp ảnh
+
+function syncHeroOrb() {
+	const avatarEl = ui.phAvatar;
+	const orbImg = ui.phAvatarOrb;
+	if (!avatarEl || !orbImg) return;
+	const hasPhoto = avatarEl.classList.contains('has-photo');
+	if (hasPhoto) {
+		avatarEl.classList.remove('has-orb');
+		return;
+	}
+	const apply = (ok) => {
+		heroOrbOk = ok;
+		avatarEl.classList.toggle('has-orb', ok);
+	};
+	if (heroOrbOk !== null) return apply(heroOrbOk);
+	if (orbImg.complete) return apply(orbImg.naturalWidth > 0);
+	orbImg.addEventListener(
+		'load',
+		() => apply(orbImg.naturalWidth > 0),
+		{ once: true },
+	);
+	orbImg.addEventListener('error', () => apply(false), { once: true });
+}
+
 /* Waves 44 — thương hiệu CỘNG ĐỒNG hiển thị khi CHƯA đăng nhập.
    Bro: "bro xóa đi replace lại bằng ZoZ Community nhé; nếu user không có ảnh bìa
    và avt thì bro để mặc định như này". Tên + khai báo đặt 1 chỗ để đổi dễ. */
@@ -1770,8 +1434,6 @@ function buildQuestCard(q) {
 	node.className = 'qcard';
 	node.dataset.questId = q.id;
 	node.dataset.rewardKind = q.rewardKind || 'orbs';
-	// Waves#165: badge thẻ được tạo ở updateQuestCard (sau khi
-	// innerHTML dựng xong) để không bị template ghi đè.
 
 	// Chỉ nhiệm vụ CHƯA XONG mới chọn để cày; nhiệm vụ đã xong thì đi nhận thưởng.
 	const isDone = q.status === 'claimed' || q.status === 'claimable';
@@ -1790,27 +1452,21 @@ function buildQuestCard(q) {
 				<input type="checkbox" data-quest-check="${escapeHtml(q.id)}" aria-label="${en ? 'Select' : 'Chọn'} ${escapeHtml(q.name || '')}"${selectable ? '' : ' disabled'} />
 			</label>`;
 
-	// CARDV2 (2026-11-01): the todo chi con detail — khong nut hanh dong,
-	// khong thanh tien do ngang. Thu tu: banner (fade + logo nho) ->
-	// dong quang ba -> hang detail (orb ben trai + 3 dong chu ben phai)
-	// -> chan (CHI hien khi the co nut claim: cho nhan / dang nhan /
-	// mo Discord / thu lai / da nhan) -> chan doan. The todo khong co
-	// chan: trang thai nam o badge tren banner + dong chan doan.
 	node.innerHTML = `
 		<div class="qcard-banner">
 			${checkHtml}
-			<span class="qcard-state"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="12" r="6"/></svg><span class="qcard-state-text"></span></span>
-		</div>
-		<div class="qcard-pub">
-			<span class="qcard-pub-l">
-				<span class="qcard-pub-caption">${en ? 'Promoted by' : 'Được quảng bá bởi'}</span>
-				<svg class="qcard-verified" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2 15 4.5 18.8 4.2 20.4 7.6 23.4 10.2 22.4 13.9 23.4 17.6 20.4 20.2 18.8 23.6 15 23.3 12 25.8 9 23.3 5.2 23.6 3.6 20.2 0.6 17.6 1.6 13.9 0.6 10.2 3.6 7.6 5.2 4.2 9 4.5z" transform="translate(0 -1.4) scale(.96)"/><path d="m10.6 15.2-2.7-2.7 1.2-1.2 1.5 1.5 4-4 1.2 1.2z" fill="#0b0c10"/></svg>
-				<b class="qcard-pub-name"></b>
-			</span>
-			<span class="qcard-end"></span>
+			<span class="qcard-state"></span>
 		</div>
 		<div class="qcard-body">
-			<div class="qcard-detail">
+			<div class="qcard-pub">
+				<span class="qcard-pub-l">
+					<span class="qcard-pub-caption">${en ? 'Promoted by' : 'Được quảng bá bởi'}</span>
+					<svg class="qcard-verified" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2 15 4.5 18.8 4.2 20.4 7.6 23.4 10.2 22.4 13.9 23.4 17.6 20.4 20.2 18.8 23.6 15 23.3 12 25.8 9 23.3 5.2 23.6 3.6 20.2 0.6 17.6 1.6 13.9 0.6 10.2 3.6 7.6 5.2 4.2 9 4.5z" transform="translate(0 -1.4) scale(.96)"/><path d="m10.6 15.2-2.7-2.7 1.2-1.2 1.5 1.5 4-4 1.2 1.2z" fill="#0b0c10"/></svg>
+					<b class="qcard-pub-name"></b>
+				</span>
+				<span class="qcard-end"></span>
+			</div>
+			<div class="qcard-main">
 				<div class="qcard-reward">
 					<svg class="qring" viewBox="0 0 44 44" aria-hidden="true">
 						<circle class="qring-bg" cx="22" cy="22" r="20"></circle>
@@ -1821,35 +1477,27 @@ function buildQuestCard(q) {
 				</div>
 				<div class="qcard-info">
 					<span class="qcard-kicker"></span>
-					<span class="qcard-title-row">
-						<span class="qcard-title"><span class="qcard-title-orb"></span><span class="qcard-title-text"></span></span>
-						<span class="qcard-mult"></span>
-					</span>
+					<span class="qcard-title"></span>
 					<span class="qcard-desc"></span>
-					<span class="qcard-prog"></span>
 				</div>
 			</div>
 		</div>
-		<!-- CARDV2: chan chi ton tai khi the co nut claim; the todo bi go chan o updateQuestFoot -->
+		<!-- Waves 31: hàng nút trạng thái — Chưa làm (khoá) / Nhận (bấm được) / Đã nhận -->
 		<div class="qcard-foot">
 			<button type="button" class="qcard-act" data-act="todo" disabled></button>
 		</div>
-		<div class="qcard-diag"></div>
 	`;
 
 	updateQuestCard(node, q);
 	return node;
 }
 
-/* CARDV2 (2026-11-01): the todo KHONG con nut hanh dong — chay bang
-   checkbox + nut "Chay (n)" tren thanh cong cu. Chan (.qcard-foot) CHI
-   ton tai khi the co nut claim; the todo bi go chan, trang thai chi
-   hien o badge tren banner + dong chan doan. Cac nut claim giu nguyen:
+/* Waves 31: nội dung + hành vi nút trạng thái theo đúng trạng thái thật của quest.
+   - todo      → "Chưa làm"      (disabled, không bấm)
    - claimable → "Nhận N Orbs"   (bấm → claim thật, captcha thì mở modal)
    - busy      → "Đang nhận…"    (đang gọi Discord)
    - claimed   → "Đã nhận"       (tick xanh, không bấm)
    - error     → "Thử lại"       (claim lỗi, cho thử lại)
-   - open      → "Mở Discord để nhận" (captcha passive, sang Discord thật)
    KHÔNG tự cộng orbs — chỉ đổi trạng thái khi Discord trả OK thật. */
 const ACT_ICON = {
 	todo: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
@@ -1865,35 +1513,10 @@ const ACT_ICON = {
 	open: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>',
 };
 
-const CLAIM_DIAG_BRANCH = {
-	'captcha-still-required': { vi: 'Discord vẫn đòi captcha sau khi gửi token', en: 'Discord still demanded captcha after the token' },
-	'grant-403-10008': { vi: 'Discord nhận xác minh nhưng trao thưởng lỗi 403 · 10008', en: 'Discord accepted verification but the reward grant failed (403 · 10008)' },
-};
-const CLAIM_DIAG_SOURCE = {
-	'callback': { vi: 'callback hCaptcha', en: 'hCaptcha callback' },
-	'manual': { vi: 'bấm thủ công', en: 'manual submit' },
-};
-// Wave chẩn đoán claim (không đổi hành vi): chỉ dựng nhãn chẩn đoán từ
-// nhánh + nguồn token + thời gian, không chứa token hay code thưởng.
-function formatClaimDiag(q, en) {
-	const branch = CLAIM_DIAG_BRANCH[q.claimBranch];
-	if (!branch) return '';
-	const source = CLAIM_DIAG_SOURCE[q.claimDiagSource] || { vi: 'không rõ', en: 'unknown' };
-	const delay = Number.isFinite(q.claimDiagDelayMs) ? ` · ${Math.round(q.claimDiagDelayMs)}ms` : '';
-	const age = Number.isFinite(q.claimDiagTokenAgeMs) ? (en ? ` · token ${Math.round(q.claimDiagTokenAgeMs)}ms old at submit` : ` · token ${Math.round(q.claimDiagTokenAgeMs)}ms tuổi lúc gửi`) : '';
-	return en
-		? `Claim diagnosis: ${branch.en} · token via ${source.en}${delay} from modal open to submit${age}`
-		: `Chẩn đoán claim: ${branch.vi} · nguồn token: ${source.vi}${delay} từ lúc mở hộp tới lúc gửi${age}`;
-}
-function appendClaimDiag(quest, branch) {
-	const src = lastCaptchaSubmit ? lastCaptchaSubmit.source : '';
-	const delay = lastCaptchaSubmit && Number.isFinite(lastCaptchaSubmit.delayMs) ? Math.round(lastCaptchaSubmit.delayMs) : null;
-	const age = lastCaptchaSubmit && Number.isFinite(lastCaptchaSubmit.tokenAgeMs) ? Math.round(lastCaptchaSubmit.tokenAgeMs) : null;
-	appendLog(`[Chẩn đoán claim] "${quest.name || ''}": nhánh=${branch} · nguồn token=${src || 'không rõ'}${delay == null ? '' : ` · ${delay}ms từ lúc mở hộp tới lúc gửi`}${age == null ? '' : ` · token ${age}ms tuổi lúc gửi`}`, 'system');
-}
-
 function updateQuestFoot(node, q) {
 	const r = node._r || {};
+	const btn = r.act;
+	if (!btn) return;
 	const en = currentLang === 'en';
 
 	let act;
@@ -1916,88 +1539,28 @@ function updateQuestFoot(node, q) {
 		act = 'claim';
 		label = q.orbs ? `${en ? 'Claim' : 'Nhận'} ${q.orbs} Orbs` : en ? 'Claim reward' : 'Nhận thưởng';
 	} else {
-		// CARDV2: the todo (ke ca dang chay / da dung / bi chan / thu cong)
-		// khong co nut — chi badge tren banner + chan doan ben duoi.
 		act = 'todo';
-		label = '';
+		label = q.stopFlag
+			? en
+				? 'Stopped'
+				: 'Đã dừng'
+			: q.running
+				? en
+					? 'Working…'
+					: 'Đang cày…'
+				: en
+					? 'To do'
+					: 'Chưa làm';
 	}
 
-	// CARDV2: node tai dung qua questNodes — the doi tu todo sang
-	// claimable (va nguoc lai) phai tu tao / go chan, khong the dua vao
-	// template luc dau. Chan doan ben duoi chay moi truong hop (khong
-	// return som khi khong co nut).
-	const diagEl = r.diag;
-	const claimKind = act !== 'todo';
-	let btn = node.querySelector('.qcard-act');
-	if (!claimKind) {
-		const foot = node.querySelector('.qcard-foot');
-		if (foot) foot.remove();
-		r.act = null;
-		btn = null;
-	} else {
-		let foot = node.querySelector('.qcard-foot');
-		if (!foot) {
-			foot = document.createElement('div');
-			foot.className = 'qcard-foot';
-			const b = document.createElement('button');
-			b.type = 'button';
-			b.className = 'qcard-act';
-			b.dataset.act = 'todo';
-			b.disabled = true;
-			foot.appendChild(b);
-			if (diagEl) node.insertBefore(foot, diagEl);
-			else node.appendChild(foot);
-		}
-		btn = foot.querySelector('.qcard-act');
-		r.act = btn;
+	if (btn.dataset.act !== act) btn.dataset.act = act;
+	btn.disabled = act === 'todo' || act === 'claimed' || act === 'busy';
+	if (btn.dataset.label !== label) {
+		btn.dataset.label = label;
+		btn.innerHTML = `${ACT_ICON[act] || ''}<span>${escapeHtml(label)}</span>`;
 	}
-	if (btn) {
-		if (btn.dataset.act !== act) btn.dataset.act = act;
-		btn.disabled = act === 'claimed' || act === 'busy';
-		if (btn.dataset.label !== label) {
-			btn.dataset.label = label;
-			btn.innerHTML = `${ACT_ICON[act] || ''}<span>${escapeHtml(label)}</span>`;
-		}
-		if (btn.title !== label) btn.title = label;
-	}
-	if (diagEl) {
-		// FIX64-P0 wave 4: hướng dẫn bằng chữ (không chỉ màu) cho quest bị
-		// chặn heartbeat — dùng chung ô chẩn đoán sẵn có của thẻ.
-		// ORBFIX: hướng dẫn của thẻ bị chặn phân biệt theo trạng thái nhận
-		// quest (enrolled) — q.enrolled lấy từ engine (xem payload
-		// quest:heartbeat-blocked + mục inventory); undefined = chưa rõ
-		// thì giữ hướng dẫn chung cũ, không đoán là chưa nhận.
-		const blockedText = q.heartbeatBlocked
-			? q.enrolled === false
-				? en
-					? 'This quest has not been accepted in real Discord — open real Discord, accept this quest there, then press "Run" in the toolbar again.'
-					: 'Nhiệm vụ này chưa được nhận trong Discord thật — mở Discord thật, nhận nhiệm vụ này ở đó, rồi bấm "Chạy" ở thanh công cụ lại.'
-				: en
-					? 'Discord rejected heartbeat (401) — play the game in the real Discord client; the app tracks progress via scans.'
-					: 'Heartbeat bị Discord từ chối (401) — mở game trong Discord thật và chơi, app theo dõi tiến độ qua quét.'
-			: '';
-		// FIX64-P3 (W37): ly do claim loi phai hien NGAY TREN THE (nut chi
-		// noi "Thu lai"), khong chi trong toast/log de roi troi mat.
-		// Thu tu: chan doan claim > bi chan heartbeat > claimError that >
-		// loi engine (quest:error). FIX64-P4 (W50): kem thoi gian xay ra
-		// (gio:phut) — the loi ma khong co thoi gian thi khong biet loi
-		// moi hay tu phien truoc.
-		// HBCAP: canh bao passive truoc-gui len dau chuoi chan doan —
-		// truong rieng, khong qua claimError de khong bien the todo
-		// thanh nut 'Thu lai' (act chi xet claimBusy/claimOpenDiscord/
-		// claimError/claimed/claimable o tren, khong xet truong nay).
-		const mainDiag = (q.captchaPassiveWarn ? String(q.captchaPassiveWarn) : '') || formatClaimDiag(q, en) || blockedText || (q.claimError ? String(q.claimError) : '') || (q.questErrorMsg ? String(q.questErrorMsg) : '');
-		const bannerDiag = (node.dataset && node.dataset.bannerDiag) || '';
-		const diagBase = mainDiag || bannerDiag;
-		const diagAt = q.captchaPassiveWarnAt || q.claimErrorAt || q.heartbeatBlockedAt || q.questErrorAt || 0;
-		const diagTime = mainDiag && diagAt
-			? ` · ${new Date(diagAt).toLocaleTimeString(en ? 'en-US' : 'vi-VN', { hour: '2-digit', minute: '2-digit' })}`
-			: '';
-		const diagText = diagBase + diagTime;
-		if (diagEl.textContent !== diagText) diagEl.textContent = diagText;
-	}
-	// CARDV2: has-foot chi dung khi chan that su ton tai (the claim).
-	node.classList.toggle('has-foot', !!node.querySelector('.qcard-foot'));
+	if (btn.title !== label) btn.title = label;
+	node.classList.add('has-foot');
 }
 
 function updateQuestCard(node, q) {
@@ -2006,163 +1569,68 @@ function updateQuestCard(node, q) {
 		node._r ||
 		(node._r = {
 			banner: node.querySelector('.qcard-banner'),
-			reward: node.querySelector('.qcard-reward'),
-			state: node.querySelector('.qcard-state-text'),
+			state: node.querySelector('.qcard-state'),
 			pub: node.querySelector('.qcard-pub-name'),
 			pubCaption: node.querySelector('.qcard-pub-caption'),
 			end: node.querySelector('.qcard-end'),
 			art: node.querySelector('.qcard-reward-art'),
 			kicker: node.querySelector('.qcard-kicker'),
 			title: node.querySelector('.qcard-title'),
-			titleText: node.querySelector('.qcard-title-text'),
-			titleOrb: node.querySelector('.qcard-title-orb'),
-			mult: node.querySelector('.qcard-mult'),
 			desc: node.querySelector('.qcard-desc'),
-			prog: node.querySelector('.qcard-prog'),
 			ring: node.querySelector('.qring-fg'),
 			pct: node.querySelector('.qcard-pct'),
 			check: node.querySelector('input[data-quest-check]'),
 			act: node.querySelector('.qcard-act'),
-			diag: node.querySelector('.qcard-diag'),
 		});
 
 	node.dataset.status = q.stopFlag
 		? 'stop'
-		: q.heartbeatBlocked
-			? 'heartbeat-blocked'
-			: q.running
-				? 'running'
-				: q.flag || q.status;
-	let cardBadgeEl = node.querySelector('.reward-badge-card');
-	if (!cardBadgeEl) {
-		cardBadgeEl = document.createElement('span');
-		cardBadgeEl.className = 'reward-badge reward-badge-card';
-		cardBadgeEl.setAttribute('aria-label', rewardTypeLabel(q));
-		node.appendChild(cardBadgeEl);
-	}
-	if (cardBadgeEl.textContent !== rewardTypeLabel(q)) cardBadgeEl.textContent = rewardTypeLabel(q);
+		: q.running
+			? 'running'
+			: q.flag || q.status;
 	const sel = selected.has(q.id) ? '1' : '0';
 	if (node.dataset.selected !== sel) node.dataset.selected = sel;
 
-	// ---- Banner thật + logo game (dựng lại khi chữ ký banner đổi) ----
-	// SHOTFIX (W6): trước đây banner chỉ dựng 1 lần / node (dataset.media),
-	// trong khi renderQuests tái dùng node qua questNodes — thẻ dựng lần
-	// đầu không có hero (hoặc hero đổi sau quét mới) kẹt mãi ở chữ cái.
-	// Nay lưu chữ ký (id + hero + heroVideo + logo + theme) và dựng lại
-	// mỗi khi chữ ký đổi; chỉ gỡ các phần tử media cũ, giữ nguyên
-	// checkbox + badge trạng thái của template.
+	// ---- Banner thật + logo game (1 lần / thẻ) ----
 	const banner = r.banner;
-	const logoUrl = questLogoUrl(q);
-	const bannerTheme = document.documentElement.dataset.theme || '';
-	const bannerSig = [q.id, q.hero || '', q.heroVideo || '', logoUrl, bannerTheme].join('|');
-	let bannerReason = '';
-	let heroMedia = false;
-	if (banner.dataset.mediaSig !== bannerSig) {
-		banner.dataset.mediaSig = bannerSig;
-		banner.querySelectorAll('.qcard-banner-fallback, .qcard-logo, .qcard-banner-hero, .qcard-banner-video').forEach((el) => el.remove());
-		banner.style.background = '';
-		// HB-FIX: placeholder khi quest không có ảnh hero/logo — chữ cái đầu
-		// của tên game, nền token, KHÔNG dùng logo Orb sai quest. Ẩn tự động
-		// khi banner có bất kỳ <img> nào (xem CSS .qcard-banner:has(img)).
-		const ph = document.createElement('span');
-		ph.className = 'qcard-banner-fallback';
-		ph.setAttribute('aria-hidden', 'true');
-		ph.textContent = String(q.gameTitle || q.application || q.name || '?').trim().charAt(0).toUpperCase() || '?';
-		banner.prepend(ph);
+	if (!banner.dataset.media) {
+		banner.dataset.media = '1';
 		const grad = [toHexColor(q.colorPrimary), toHexColor(q.colorSecondary)].filter(Boolean);
 		if (grad.length === 2) banner.style.background = `linear-gradient(135deg, ${grad[0]}, ${grad[1]})`;
-		const langEn = currentLang === 'en';
-		const heroVideoUrl = questAssetUrl(q.heroVideo);
-		const heroImgUrl = q.hero && q.hero !== q.heroVideo ? questAssetUrl(q.hero) : '';
-		const markBannerError = (reason) => {
-			node.dataset.bannerDiag = reason;
-			if (r.diag && !r.diag.textContent) r.diag.textContent = reason;
-		};
-		if (heroVideoUrl) {
-			// SHOTFIX (W7): quest có hero_video thật (engine đã trả trường
-			// heroVideo) — dựng <video> thay vì cố nhét video vào <img>
-			// (img sẽ lỗi rồi rơi về chữ cái). Tôn trọng reduced-motion:
-			// không tự phát khi user đã bật giảm chuyển động.
-			const v = document.createElement('video');
-			v.className = 'qcard-banner-video';
-			v.muted = true;
-			v.loop = true;
-			v.autoplay = !(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
-			v.playsInline = true;
-			v.preload = 'metadata';
-			if (heroImgUrl) v.poster = heroImgUrl;
-			v.addEventListener('error', () => {
-				v.remove();
-				markBannerError(langEn ? 'Hero video failed to load — showing the game initial.' : 'Video hero tải lỗi — đang hiện chữ cái.');
-			}, { once: true });
-			v.src = heroVideoUrl;
-			banner.appendChild(v);
-			heroMedia = true;
-		} else if (q.hero) {
-			if (heroImgUrl) {
-				const img = document.createElement('img');
-				img.className = 'qcard-banner-hero';
-				img.alt = '';
-				img.loading = 'lazy';
-				img.decoding = 'async';
-				img.addEventListener('error', () => {
-					img.remove();
-					markBannerError(langEn ? 'Hero image failed to load — showing the game initial.' : 'Ảnh hero tải lỗi — đang hiện chữ cái.');
-				}, { once: true });
-				img.src = heroImgUrl;
-				banner.appendChild(img);
-				heroMedia = true;
-			} else {
-				bannerReason = langEn ? 'Quest hero image is invalid — showing the game initial.' : 'Ảnh hero không hợp lệ — đang hiện chữ cái.';
-			}
-		} else {
-			bannerReason = langEn ? 'Discord did not provide a hero image — showing the game initial.' : 'Discord không trả ảnh hero — đang hiện chữ cái.';
+		if (q.hero) {
+			const img = document.createElement('img');
+			img.alt = '';
+			img.loading = 'lazy';
+			img.decoding = 'async';
+			if (setQuestImg(img, q.hero)) banner.appendChild(img);
 		}
-		// CARDV2: lop mo cuoi banner (fade tu trong suot xuong mau nen
-		// the) — tao 1 lan, append SAU hero nhung TRUOC logo theo DOM
-		// order: fade ve tren art hero, logo (append sau) ve tren fade
-		// (khong z-index moi). Checkbox + badge trang thai co z-index
-		// san nen khong bi fade che. Fade pointer-events:none (trang
-		// tri, khong chan bam). Logo append sau fade nen logo luon tren.
-		let fade = banner.querySelector('.qcard-banner-fade');
-		if (!fade) {
-			fade = document.createElement('span');
-			fade.className = 'qcard-banner-fade';
-			fade.setAttribute('aria-hidden', 'true');
-		}
-		banner.appendChild(fade);
 		// Waves 42: logo THẬT của nhiệm vụ — ưu tiên logotype/game_tile, thiếu thì
 		// dùng icon application (luôn có). Nếu ảnh lỗi → thử tiếp icon app, cuối
 		// cùng mới bỏ (không hiện logo Orb sai nhiệm vụ).
+		const logoUrl = questLogoUrl(q);
 		if (logoUrl) {
 			const logo = document.createElement('img');
 			logo.className = 'qcard-logo';
 			logo.alt = '';
 			logo.loading = 'lazy';
 			logo.decoding = 'async';
-			// FIX64-P3 (W32): chi coi la "da thu icon app" khi logoUrl CHINH
-			// LA icon app (hoac khong co icon app). Truoc day co nay chi
-			// nhin logotype/game_tile goc: neu logoUrl la bien the dark/light
-			// ma anh do 404 trong khi 2 truong goc rong, code bo luon logo
-			// ma khong thu icon app (luon co). Listener KHONG once: lan loi
-			// 1 doi sang icon app, lan loi 2 (icon app cung hong) thi go logo
-			// chu khong de lai anh vo.
+			let triedAppIcon = questAssetUrl(q.logotype) || questAssetUrl(q.gameTile) ? false : true;
 			const fallback = appIconUrl(q.appId, q.appIcon);
-			let triedAppIcon = !fallback || logoUrl === fallback;
-			logo.addEventListener('error', () => {
-				if (!triedAppIcon && fallback && logo.src !== fallback) {
-					triedAppIcon = true;
-					logo.src = fallback;
-				} else {
-					logo.remove();
-				}
-			});
+			logo.addEventListener(
+				'error',
+				() => {
+					if (!triedAppIcon && fallback && logo.src !== fallback) {
+						triedAppIcon = true;
+						logo.src = fallback;
+					} else {
+						logo.remove();
+					}
+				},
+				{ once: true },
+			);
 			logo.src = logoUrl;
 			banner.appendChild(logo);
 		}
-		// CARDV2: orb KHONG con de mep hero — no nam trong hang detail
-		// duoi dong quang ba, nen khong duoc keo no ve banner nua.
-		node.dataset.bannerDiag = heroMedia ? '' : bannerReason;
 	}
 
 	// ---- Nhãn trạng thái ----
@@ -2173,11 +1641,7 @@ function updateQuestCard(node, q) {
 		? en
 			? 'Stopped'
 			: 'Dừng'
-		: q.heartbeatBlocked
-			? en
-				? 'Play in Discord'
-				: 'Cần chơi trong Discord'
-			: q.running
+		: q.running
 			? en
 				? 'Running'
 				: 'Đang chạy'
@@ -2199,9 +1663,8 @@ function updateQuestCard(node, q) {
 	}
 	const pubText = q.publisher || q.application || q.gameTitle || 'Discord';
 	if (r.pub.textContent !== pubText) r.pub.textContent = pubText;
-	const countdown = formatExpiryCountdown(q.expiresAt);
 	const endText = q.expiresAt
-		? `${en ? 'Ends' : 'Kết thúc ngày'} ${fmtShortDate(q.expiresAt)}${countdown ? ` · ${countdown}` : ''}`
+		? `${en ? 'Ends' : 'Kết thúc vào'} ${fmtShortDate(q.expiresAt)}`
 		: '';
 	if (r.end.textContent !== endText) r.end.textContent = endText;
 
@@ -2211,9 +1674,9 @@ function updateQuestCard(node, q) {
 		if (q.rewardKind === 'item' && q.rewardAsset) {
 			const media = rewardMediaEl(q);
 			if (media) r.art.appendChild(media);
-			else r.art.appendChild(orbVideoEl(DISCORD_ORB_CARD, 'orb-video'));
+			else r.art.innerHTML = ORB_GLYPH;
 		} else {
-			r.art.appendChild(orbVideoEl(DISCORD_ORB_CARD, 'orb-video'));
+			r.art.innerHTML = ORB_GLYPH;
 		}
 	}
 
@@ -2228,56 +1691,13 @@ function updateQuestCard(node, q) {
 			: en
 				? 'Claim Discord reward'
 				: 'Nhận phần thưởng Discord');
-	if (r.titleText && r.titleText.textContent !== titleText) r.titleText.textContent = titleText;
-	if (r.title) r.title.title = titleText;
-	// CARDV2: icon orb nho (20px) dau dong "Nhan X Orbs" kieu Discord —
-	// CHI cho quest Orbs (rewardKind != 'item' va co orbs); quest item
-	// khong duoc hien orb (luat §5.3: khong fallback Orb sai quest).
-	// Node tai dung theo id quest nen rewardKind khong doi giua cac lan
-	// update, nhung van don sach neu loai thuong doi (phong thu).
-	if (r.titleOrb) {
-		const orbQuest = q.rewardKind !== 'item' && !!q.orbs;
-		if (orbQuest && !r.titleOrb.dataset.built) {
-			r.titleOrb.dataset.built = '1';
-			r.titleOrb.appendChild(orbVideoEl(DISCORD_ORB_SMALL, 'orb-video orb-inline'));
-		} else if (!orbQuest && r.titleOrb.dataset.built) {
-			delete r.titleOrb.dataset.built;
-			r.titleOrb.textContent = '';
-		}
-	}
-
-	// GRID-DISCORD: badge nhân Orbs kiểu Discord ("Mở khóa 1,2x") — CHỈ hiện
-	// khi dữ liệu quest thật sự có hệ số nhân (q.multiplier / q.rewardMultiplier
-	// dạng số > 1). API hiện tại không trả trường này nên badge mặc định ẩn
-	// (CSS .qcard-mult:empty) — KHÔNG bịa hệ số, không hiện badge giả.
-	if (r.mult) {
-		const rawMult = q.multiplier != null ? q.multiplier : q.rewardMultiplier;
-		const multNum = rawMult != null ? Number(String(rawMult).replace(',', '.')) : NaN;
-		const multText =
-			Number.isFinite(multNum) && multNum > 1
-				? en
-					? `Unlock ${multNum}x`
-					: `Mở khóa ${String(multNum).replace('.', ',')}x`
-				: '';
-		if (r.mult.textContent !== multText) r.mult.textContent = multText;
+	if (r.title.textContent !== titleText) {
+		r.title.textContent = titleText;
+		r.title.title = titleText;
 	}
 
 	const descText = questDesc(q);
 	if (r.desc.textContent !== descText) r.desc.textContent = descText;
-
-	// FIX64-P3 (W33): phut DA CAY / CAN — chi tu so that secondsDone /
-	// secondsNeeded (heartbeat/scan gui ve), khong uoc tinh, khong so ao.
-	// Quest khong co secondsNeeded thi de trong (CSS an khi :empty).
-	if (r.prog) {
-		const needSecs = Number(q.secondsNeeded) || 0;
-		const progText =
-			needSecs > 0
-				? en
-					? `Played ${Math.floor((Number(q.secondsDone) || 0) / 60)}/${Math.ceil(needSecs / 60)} min`
-					: `Đã cày ${Math.floor((Number(q.secondsDone) || 0) / 60)}/${Math.ceil(needSecs / 60)} phút`
-				: '';
-		if (r.prog.textContent !== progText) r.prog.textContent = progText;
-	}
 
 	// ---- Vòng tiến độ + % ----
 	const pct = questPct(q);
@@ -2288,8 +1708,6 @@ function updateQuestCard(node, q) {
 	}
 	const pctText = `${pct}%`;
 	if (r.pct.textContent !== pctText) r.pct.textContent = pctText;
-	// CARDV2: thanh tien do ngang da xoa khoi the — tien do chi con o
-	// vong tron + badge % + dong "Da cay x/y phut" ben duoi mo ta.
 
 	// ---- Checkbox ----
 	if (r.check) {
@@ -2350,60 +1768,33 @@ function buildDoneTile(q) {
 	node.className = 'qdone';
 	node.dataset.questId = q.id;
 	node.dataset.rewardKind = q.rewardKind || 'orbs';
-	node.dataset.rewardSig = doneRewardSig(q);
-	node.dataset.rewardType = rewardTypeOf(q);
 
 	const isItem = q.rewardKind === 'item' && !!q.rewardAsset;
-	const isCode = !!q.rewardCode;
 	const orbs = Number(q.orbs) || 0;
 
 	// ---------- TẦNG A: mặt trước (Orb trên, logo nhiệm vụ dưới) ----------
 	const face = document.createElement('div');
 	face.className = 'qdone-face';
 
-	// A1 — PHẦN THƯỞNG THẬT (Waves#151). Trước đây mọi ô đều vẽ logo Orb
-	// (xem Waves 46c) kể cả quest thưởng avatar/code. Nay: quest vật phẩm
-	// hiện đúng asset của nó, quest code hiện nhãn CODE, chỉ quest Orb
-	// mới hiện logo Orb. Asset hỏng → ẩn hàng này, logo game vẫn hiện.
-	let topRow;
-	let orbNum = null;
-	if (isItem) {
-		const media = rewardMediaEl(q);
-		if (media) {
-			media.classList.add('qdone-reward');
-			media.loading = 'eager';
-			if (media.tagName === 'VIDEO') media.preload = 'metadata';
-			media.addEventListener('error', () => {
-				noteAssetFailure(q.id);
-				topRow.hidden = true;
-				showNameFallback();
-			}, { once: true });
-			topRow = document.createElement('span');
-			topRow.className = 'qdone-reward-row';
-			topRow.appendChild(media);
-		} else {
-			topRow = document.createElement('span');
-			topRow.className = 'qdone-reward-row';
-			topRow.hidden = true;
-		}
-	} else if (isCode) {
-		topRow = document.createElement('span');
-		topRow.className = 'qdone-reward-row';
-		const codeTag = document.createElement('span');
-		codeTag.className = 'qdone-code-tag';
-		codeTag.textContent = 'CODE';
-		topRow.appendChild(codeTag);
-	} else {
-		// Quest Orb: video Orb Discord (trên) + số Orb, như cũ.
-		topRow = document.createElement('span');
-		topRow.className = 'qdone-orbs';
-		const orbIco = orbVideoEl(DISCORD_ORB_CLAIMED, 'qdone-orb orb-video');
-		orbNum = document.createElement('span');
-		orbNum.className = 'qdone-orb-num';
-		orbNum.textContent = orbs > 0 ? String(orbs) : '—';
-		topRow.appendChild(orbIco);
-	}
-	const showNameFallback = () => { if (name && !name.textContent) name.textContent = doneTileGameLabel(q); if (name) name.hidden = !name.textContent; };
+	// A1 — logo ORB (trên) + số Orb
+	const orbRow = document.createElement('span');
+	orbRow.className = 'qdone-orbs';
+	const orbIco = document.createElement('img');
+	orbIco.className = 'qdone-orb';
+	orbIco.src = ORB_ICON_SRC;
+	orbIco.alt = '';
+	orbIco.setAttribute('aria-hidden', 'true');
+	orbIco.draggable = false;
+	const orbNum = document.createElement('span');
+	orbNum.className = 'qdone-orb-num';
+	orbNum.textContent = orbs > 0 ? String(orbs) : '—';
+	orbRow.append(orbIco, orbNum);
+	// Waves 46c — KHÔNG ẨN BADGE ORB NỮA (bro: "nhiều cái ko hiện logo orbs").
+	// Trước đây dòng `if (orbs <= 0) orbRow.hidden = true;` giấu cả logo Orb lẫn
+	// số Orb với MỌI nhiệm vụ thưởng vật phẩm (avatar decoration…) → bro thấy
+	// "nhiều cái không hiện logo Orbs". Nay logo Orb LUÔN hiện trên mọi ô;
+	// nhiệm vụ không có Orb thì chỗ số Orb ghi tên phần thưởng ngắn (hoặc "—"),
+	// nên ô nào cũng có logo Orb như bro yêu cầu.
 
 	// A2 — logo nhiệm vụ/game (dưới). Waves 46c: LUÔN để trong DOM (chỉ ẩn khi
 	// chưa nạp xong / nạp lỗi) vì nay nó sống CHUNG với chữ tên game.
@@ -2430,21 +1821,7 @@ function buildDoneTile(q) {
 	name.textContent = doneTileGameLabel(q);
 	if (!name.textContent) name.hidden = true;
 
-	// Waves#165: nhãn loại thưởng (chữ, không chỉ màu/icon).
-	const badge = document.createElement('span');
-	badge.className = 'reward-badge';
-	badge.textContent = rewardTypeLabel(q);
-	badge.setAttribute('aria-label', rewardTypeLabel(q));
-	face.append(topRow, logo, name, ...(orbNum ? [orbNum] : []), badge);
-
-	// FIX64-P1 (W21): badge trang thai "Da lam" cho tab Da lam — icon
-	// check SVG + text (khong chi mau), cung token badge voi .qcard-state.
-	// pointer-events none qua CSS nen bam vao o van mo khung chi tiet.
-	const state = document.createElement('span');
-	state.className = 'qdone-state';
-	const doneLabel = currentLang === 'en' ? 'Done' : 'Đã làm';
-	state.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span>' + doneLabel + '</span>';
-	state.setAttribute('aria-label', doneLabel);
+	face.append(orbRow, logo, name);
 
 	// ---------- TẦNG B: mặt sau, hiện NGAY TRONG ô khi rê chuột ----------
 	const info = document.createElement('div');
@@ -2453,13 +1830,7 @@ function buildDoneTile(q) {
 	setDoneInfoHtml(info, q, orbs);
 	node.title = ''; // tránh tooltip hệ thống chồng lên hiệu ứng trong ô
 	node.setAttribute('aria-label', doneTileAria(q, orbs));
-	node.append(face, state, info);
-	// Waves#152: bấm vào ô (chuột + cảm ứng) mở khung chi tiết, không
-	// chỉ hover. Hover cũ vẫn giữ nguyên qua CSS.
-	node.addEventListener('click', () => {
-		const fresh = quests.get(q.id) || q;
-		openDoneDetail(fresh, node);
-	});
+	node.append(face, info);
 
 	// ---------- Nạp logo nhiệm vụ (leo thang logotype -> game_tile -> icon app) ----------
 	const chain = [
@@ -2478,7 +1849,6 @@ function buildDoneTile(q) {
 		const tryNext = () => {
 			if (i >= chain.length) {
 				// Hết chuỗi mà vẫn không nạp được ảnh nào → bỏ ảnh, dùng chữ.
-				noteAssetFailure(q.id);
 				logo.remove();
 				showName();
 				return;
@@ -2500,201 +1870,20 @@ function buildDoneTile(q) {
 		});
 		logo.addEventListener('error', tryNext);
 		tryNext();
+	} else if (isItem) {
+		const media = rewardMediaEl(q);
+		if (media) {
+			media.classList.add('qdone-logo');
+			face.insertBefore(media, logo);
+			logo.remove();
+		} else {
+			showName();
+		}
 	} else {
-		// Chain rỗng: phần thưởng (nếu có) đã ở hàng trên, còn lại dùng chữ.
 		showName();
 	}
 
 	return node;
-}
-
-/** Waves#152/#169 — khung chi tiết của một ô Đã làm.
- * Mở bằng bấm (chuột/cảm ứng), đóng bằng nút Đóng, bấm nền mờ, hoặc Esc.
- * Focus: mở thì focus nút Đóng, Tab bị giữ trong khung, đóng thì trả
- * focus về đúng ô đã bấm. Mọi chuỗi từ Discord đi qua textContent,
- * không qua innerHTML. Code (nếu có) chỉ hiện khi người dùng bấm
- * "Hiện code", và KHÔNG BAO GIỜ được ghi vào log/diagnostics/cache. */
-function openDoneDetail(q, tileNode) {
-	const en = currentLang === 'en';
-	const prevFocus = document.activeElement;
-	const veil = document.createElement('div');
-	veil.className = 'qdone-modal-veil';
-	const dialog = document.createElement('div');
-	dialog.className = 'qdone-modal';
-	dialog.setAttribute('role', 'dialog');
-	dialog.setAttribute('aria-modal', 'true');
-	dialog.setAttribute('aria-label', q.name || q.gameTitle || (en ? 'Claimed quest' : 'Nhiệm vụ đã nhận'));
-	const closeBtn = document.createElement('button');
-	closeBtn.type = 'button';
-	closeBtn.className = 'qdone-modal-close';
-	closeBtn.textContent = '✕';
-	closeBtn.setAttribute('aria-label', en ? 'Close' : 'Đóng');
-	dialog.appendChild(closeBtn);
-	const heroUrl = questAssetUrl(q.hero);
-	if (heroUrl) {
-		const hero = document.createElement('img');
-		hero.className = 'qdone-modal-hero';
-		hero.src = heroUrl;
-		hero.alt = '';
-		hero.loading = 'eager';
-		dialog.appendChild(hero);
-	}
-	const logoUrl = questLogoUrl(q);
-	if (logoUrl) {
-		const logo = document.createElement('img');
-		logo.className = 'qdone-modal-logo';
-		logo.src = logoUrl;
-		logo.alt = '';
-		dialog.appendChild(logo);
-	}
-	const title = document.createElement('h3');
-	title.className = 'qdone-modal-title';
-	title.textContent = q.name || q.gameTitle || (en ? 'Quest' : 'Nhiệm vụ');
-	dialog.appendChild(title);
-	const addRow = (label, value) => {
-		if (!value) return;
-		const row = document.createElement('div');
-		row.className = 'qdone-modal-row';
-		const k = document.createElement('span');
-		k.className = 'qdone-modal-key';
-		k.textContent = label;
-		const v = document.createElement('span');
-		v.className = 'qdone-modal-val';
-		v.textContent = value;
-		row.append(k, v);
-		dialog.appendChild(row);
-	};
-	addRow(en ? 'Game' : 'Game', q.gameTitle || q.publisher || '');
-	addRow(en ? 'Reward' : 'Phần thưởng', q.rewardName || q.rewardTitle || rewardTypeLabel(q));
-	addRow(en ? 'Type' : 'Loại', rewardTypeLabel(q));
-	if (Number(q.orbs) > 0) addRow('Orbs', String(q.orbs));
-	addRow(en ? 'Claimed at' : 'Nhận lúc', fmtClaimTime(q.claimedAt) || '');
-	// Waves#191: ghi chú (chỉ chữ), lưu cục bộ theo tài khoản, không gửi đi đâu.
-	// Waves#203: nút yêu thích đã xóa khỏi modal này cùng toàn bộ tính năng.
-	try {
-		const noteLabel = document.createElement('label');
-		noteLabel.className = 'qdone-modal-note';
-		noteLabel.textContent = en ? 'Note (local only, never sent anywhere):' : 'Ghi chú (chỉ lưu cục bộ, không gửi đi đâu):';
-		const noteInput = document.createElement('input');
-		noteInput.type = 'text'; noteInput.className = 'qdone-modal-input'; noteInput.maxLength = 500;
-		noteInput.value = questNoteFor(q.id);
-		noteInput.addEventListener('change', () => setQuestNote(q.id, noteInput.value));
-		dialog.append(noteLabel, noteInput);
-	} catch {}
-	// Code section: session memory only.
-	const codeWrap = document.createElement('div');
-	codeWrap.className = 'qdone-modal-code';
-	if (q.rewardCode) {
-		const note = document.createElement('p');
-		note.className = 'qdone-modal-note';
-		note.textContent = en
-			? 'This code lives only in this session. It is never saved to disk, logs, or exports unless you choose to export with codes.'
-			: 'Code này chỉ nằm trong phiên này, không lưu xuống máy, không ghi log, không nằm trong file xuất trừ khi bạn bật riêng.';
-		codeWrap.appendChild(note);
-		const masked = document.createElement('code');
-		masked.className = 'qdone-modal-codeval';
-		masked.textContent = '••••••••';
-		codeWrap.appendChild(masked);
-		const showBtn = document.createElement('button');
-		showBtn.type = 'button';
-		showBtn.className = 'ghost-btn';
-		showBtn.textContent = en ? 'Show code' : 'Hiện code';
-		showBtn.addEventListener('click', () => {
-			masked.textContent = q.rewardCode;
-			showBtn.hidden = true;
-		});
-		const copyBtn = document.createElement('button');
-		copyBtn.type = 'button';
-		copyBtn.className = 'ghost-btn';
-		copyBtn.textContent = en ? 'Copy code' : 'Sao chép code';
-		copyBtn.addEventListener('click', async () => {
-			try {
-				const ok = await copySecretWithTimeout(q.rewardCode, 30000);
-				if (!ok) throw new Error('clipboard');
-				toast(en ? 'Code copied.' : 'Đã sao chép code.');
-			} catch {
-				masked.textContent = q.rewardCode;
-				toast(en ? 'Code shown — copy it manually.' : 'Đã hiện code, bạn sao chép thủ công.', true);
-			}
-		});
-		codeWrap.append(showBtn, copyBtn);
-	} else {
-		const note = document.createElement('p');
-		note.className = 'qdone-modal-note';
-		note.textContent = en
-			? 'Discord did not return a redeemable code for this quest in the app data. Open the quest in Discord to view it — no code is invented here.'
-			: 'Discord không trả code đổi thưởng cho quest này trong dữ liệu app nhận được. Mở quest trong Discord để xem — app không bịa code.';
-		codeWrap.appendChild(note);
-		const link = document.createElement('a');
-		link.className = 'qdone-modal-link';
-		link.href = `https://discord.com/quest-home#${encodeURIComponent(q.id)}`;
-		link.target = '_blank';
-		link.rel = 'noopener';
-		link.textContent = en ? 'Open in Discord' : 'Mở trong Discord';
-		codeWrap.appendChild(link);
-	}
-	dialog.appendChild(codeWrap);
-	// Waves#237: thẻ chia sẻ — chỉ tên, game, phần thưởng, ngày nhận.
-	// KHÔNG bao giờ vẽ token hay code đổi thưởng (kể cả khi q.rewardCode có).
-	const shareBtn = document.createElement('button');
-	shareBtn.type = 'button';
-	shareBtn.className = 'ghost-btn';
-	shareBtn.textContent = en ? 'Export share card' : 'Xuất thẻ chia sẻ';
-	shareBtn.addEventListener('click', () => {
-		try {
-			const cv = document.createElement('canvas'); cv.width = 800; cv.height = 420;
-			const ctx = cv.getContext('2d');
-			ctx.fillStyle = '#0b0e18'; ctx.fillRect(0, 0, 800, 420);
-			ctx.fillStyle = '#5865f2'; ctx.fillRect(0, 0, 800, 8);
-			ctx.fillStyle = '#ffffff'; ctx.font = '700 40px system-ui, sans-serif';
-			const wrap = (s, w) => { const words = String(s || '').split(/\s+/); const lines = []; let cur = ''; for (const word of words) { const test = cur ? cur + ' ' + word : word; if (ctx.measureText(test).width > w && cur) { lines.push(cur); cur = word; } else cur = test; } if (cur) lines.push(cur); return lines.slice(0, 2); };
-			const lines = wrap(q.name || q.gameTitle || 'Quest', 720);
-			lines.forEach((ln, i) => ctx.fillText(ln, 40, 90 + i * 48));
-			ctx.fillStyle = '#9aa3b8'; ctx.font = '400 26px system-ui, sans-serif';
-			ctx.fillText(q.gameTitle || q.publisher || '', 40, 90 + lines.length * 48 + 20);
-			ctx.fillStyle = '#f5c518'; ctx.font = '700 30px system-ui, sans-serif';
-			ctx.fillText(q.rewardName || q.rewardTitle || rewardTypeLabel(q), 40, 300);
-			ctx.fillStyle = '#9aa3b8'; ctx.font = '400 24px system-ui, sans-serif';
-			ctx.fillText(fmtClaimTime(q.claimedAt) || '', 40, 345);
-			ctx.fillStyle = '#5865f2'; ctx.font = '700 22px system-ui, sans-serif';
-			ctx.fillText('AUTO-QUEST · ZoZ Community', 40, 390);
-			cv.toBlob((blob) => { if (!blob) return; const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `quest-${String(q.id || 'done')}.png`; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 5000); toast(en ? 'Share card downloaded.' : 'Đã tải thẻ chia sẻ.'); }, 'image/png');
-		} catch { toast(en ? 'Could not export the share card.' : 'Không xuất được thẻ chia sẻ.', true); }
-	});
-	dialog.appendChild(shareBtn);
-	veil.appendChild(dialog);
-	document.body.appendChild(veil);
-	const close = () => {
-		document.removeEventListener('keydown', onKey);
-		veil.remove();
-		if (tileNode && typeof tileNode.focus === 'function') tileNode.focus();
-		else if (prevFocus && typeof prevFocus.focus === 'function') prevFocus.focus();
-	};
-	const onKey = (e) => {
-		if (e.key === 'Escape') {
-			e.preventDefault();
-			close();
-			return;
-		}
-		if (e.key !== 'Tab') return;
-		const focusables = Array.from(dialog.querySelectorAll('button, a[href]')).filter((el) => !el.hidden);
-		if (!focusables.length) return;
-		const first = focusables[0];
-		const last = focusables[focusables.length - 1];
-		if (e.shiftKey && document.activeElement === first) {
-			e.preventDefault();
-			last.focus();
-		} else if (!e.shiftKey && document.activeElement === last) {
-			e.preventDefault();
-			first.focus();
-		}
-	};
-	closeBtn.addEventListener('click', close);
-	veil.addEventListener('click', (e) => {
-		if (e.target === veil) close();
-	});
-	document.addEventListener('keydown', onKey);
-	closeBtn.focus();
 }
 
 /** Logo nạp được có phải WORDMARK (chữ dạng ảnh) hay không?
@@ -2729,11 +1918,6 @@ function updateDoneTile(node, q) {
 	// Bản cũ đặt `orbRow.hidden = orbs <= 0` → ô thưởng vật phẩm mất luôn logo.
 	const orbRow = node.querySelector('.qdone-orbs');
 	if (orbRow && orbRow.hidden) orbRow.hidden = false;
-	// Waves#151/#165: đồng bộ loại thưởng + badge khi dữ liệu đổi.
-	if (node.dataset.rewardKind !== (q.rewardKind || 'orbs')) node.dataset.rewardKind = q.rewardKind || 'orbs';
-	if (node.dataset.rewardType !== rewardTypeOf(q)) node.dataset.rewardType = rewardTypeOf(q);
-	const badgeEl = node.querySelector('.reward-badge');
-	if (badgeEl && badgeEl.textContent !== rewardTypeLabel(q)) badgeEl.textContent = rewardTypeLabel(q);
 	// Tên game có thể tới muộn (payload cập nhật) → đồng bộ lại chữ.
 	// Chữ tên game: CHỈ dùng khi KHÔNG có logotype (xem buildDoneTile — Discord
 	// dùng logotype thay chữ). Nếu ảnh logo đang hiện thì giữ chữ ẩn.
@@ -2794,7 +1978,7 @@ function doneTileInfoHtml(q, orbs) {
 
 	// (2) Logotype thật của game. Ảnh hỏng → JS gỡ và bật (2b) chữ tên game.
 	const logo = logoUrl
-		? `<img class="qdone-info-logo" src="${escapeHtml(logoUrl)}" alt="" aria-hidden="true" draggable="false" loading="lazy" decoding="async" />`
+		? `<img class="qdone-info-logo" src="${escapeHtml(logoUrl)}" alt="" aria-hidden="true" draggable="false" loading="eager" decoding="async" />`
 		: '';
 	const gameText = `<span class="qdone-info-game"${logoUrl ? ' hidden' : ''}>${escapeHtml(gameName)}</span>`;
 
@@ -2872,9 +2056,6 @@ const questNodes = new Map(); // id -> { node, kind }
 let needSort = true;
 
 function renderQuests() {
-	const renderT0 = typeof performance !== 'undefined' ? performance.now() : 0;
-	const scrollEl = document.getElementById('appScroll');
-	const scrollTop = scrollEl ? scrollEl.scrollTop : 0;
 	// Waves 33: ẩn hẳn mọi thẻ đã bị Discord gỡ (flag 'gone') — chúng chỉ gây
 	// nhiễu (404 mỗi lần bấm). Dọn cả node đã dựng để không giữ DOM rác.
 	for (const id of questOrder) {
@@ -2888,22 +2069,6 @@ function renderQuests() {
 		}
 	}
 
-	// Waves#173: windowing thật cho tab Đã làm — chỉ gắn DOM trong cửa sổ.
-	const doneVisibleOrder = questOrder.filter((id) => { const qq = quests.get(id); return qq && qq.status === 'claimed' && qq.flag !== 'gone' && questMatchesFilter(qq); });
-	lastDoneVisibleCount = doneVisibleOrder.length;
-	const doneWindowing = currentTab === 'done' && doneVisibleOrder.length > 55;
-	let doneWindowIdx = 0;
-	// Waves#225: cùng cơ chế windowing cho tab Chưa làm / Chưa nhận khi
-	// danh sách dài — chỉ gắn DOM trong cửa sổ, giữ nguyên đếm và lựa chọn
-	// (node vẫn nằm trong questNodes, render sau gắn lại khi vào cửa sổ).
-	const activeVisibleOrder = questOrder.filter((id) => { const qq = quests.get(id); return qq && qq.status !== 'claimed' && qq.status !== 'claimable' && qq.flag !== 'gone' && questMatchesFilter(qq); });
-	const newVisibleOrder = questOrder.filter((id) => { const qq = quests.get(id); return qq && qq.status === 'claimable' && qq.flag !== 'gone' && questMatchesFilter(qq); });
-	lastActiveVisibleCount = activeVisibleOrder.length;
-	lastNewVisibleCount = newVisibleOrder.length;
-	const activeWindowing = currentTab === 'active' && activeVisibleOrder.length > 55;
-	const newWindowing = currentTab === 'new' && newVisibleOrder.length > 55;
-	let activeWindowIdx = 0;
-	let newWindowIdx = 0;
 	// Đảm bảo mọi quest có node, gắn vào đúng tab
 	let visActive = 0;
 	let visNew = 0;
@@ -2921,14 +2086,7 @@ function renderQuests() {
 					: ui.questListActive;
 		const kind = q.status === 'claimed' ? 'done' : 'card';
 		const cached = questNodes.get(id);
-		// Waves#151/#159: reward thay đổi là phải dựng lại tile Đã làm.
-		if (cached && cached.kind === 'done' && cached.node.dataset.rewardSig !== doneRewardSig(q)) {
-			cached.node.remove();
-			questNodes.delete(id);
-			needSort = true;
-		}
-		let node = questNodes.get(id);
-		node = node && node.kind === kind ? node.node : null;
+		let node = cached && cached.kind === kind ? cached.node : null;
 
 		if (cached && cached.kind !== kind) {
 			// Đổi loại thẻ (card ↔ tile) → bỏ node cũ, dựng lại
@@ -2945,42 +2103,12 @@ function renderQuests() {
 			targetList.appendChild(node); // di chuyển node, không dựng lại
 			needSort = true;
 		}
-		// Waves#159: dữ liệu + bộ lọc không đổi thì không cập nhật lại
-		// node (giữ ảnh đã nạp, giữ vị trí cuộn, tránh nháy toàn lưới).
-		const filterSig = `${questFilter}|${questQuery}|${currentTab}|${doneRewardFilter}|${doneSort}`;
-		const sig = [q.status, q.orbs, q.claimedAt, q.rewardKind, q.rewardAsset, q.rewardCode ? 'code' : '', q.logotype, q.logotypeDark, q.logotypeLight, q.gameTile, q.name, q.gameTitle, q.flag, q.claimPhase, q.claimBusy, q.claimError, q.claimErrorAt, q.heartbeatBlocked, q.heartbeatBlockedAt, q.enrolled, q.questErrorMsg, q.questErrorAt, q.running, q.secondsDone, q.secondsNeeded, q.task, filterSig].join('|');
-		if (questRenderSig.get(id) !== sig) {
-			questRenderSig.set(id, sig);
-			if (kind === 'card') updateQuestCard(node, q);
-			else updateDoneTile(node, q);
-		}
+		if (kind === 'card') updateQuestCard(node, q);
+		else updateDoneTile(node, q);
 
 		// Wave#111: ẩn/hiện theo tìm kiếm + bộ lọc. Badge tab vẫn là TỔNG,
 		// còn đếm riêng số thẻ đang hiện để xử lý trạng thái rỗng đúng.
 		const matches = questMatchesFilter(q);
-		if (kind === 'done' && matches) doneWindowIdx += 1;
-		if (kind === 'done' && currentTab === 'done' && doneWindowing && doneWindowIdx > doneWindowEnd) {
-			if (node.parentElement) node.remove();
-			if (matches) { visTotal += 1; visDone += 1; }
-			continue;
-		}
-		if (kind === 'card' && matches) {
-			if (q.status === 'claimable') {
-				newWindowIdx += 1;
-				if (currentTab === 'new' && newWindowing && newWindowIdx > newWindowEnd) {
-					if (node.parentElement) node.remove();
-					visTotal += 1; visNew += 1;
-					continue;
-				}
-			} else {
-				activeWindowIdx += 1;
-				if (currentTab === 'active' && activeWindowing && activeWindowIdx > activeWindowEnd) {
-					if (node.parentElement) node.remove();
-					visTotal += 1; visActive += 1;
-					continue;
-				}
-			}
-		}
 		if (node.hidden === matches) node.hidden = !matches;
 		if (matches) {
 			visTotal++;
@@ -3011,49 +2139,6 @@ function renderQuests() {
 		else countActive++;
 	}
 
-	// Waves#161/#166: sắp xếp riêng cho tab Đã làm + đánh dấu lưới lớn
-	// để CSS dùng content-visibility (không render tile ngoài khung nhìn).
-	if (ui.questListDone) {
-		ui.questListDone.classList.toggle('virtual', countDone > 55);
-		// FIX64-P3 (W38): 'claimed' nghia la "Moi nhan nhat" nhung truoc day
-		// nhanh nay KHONG sap xep gi ca — tile giu thu tu quet (first-seen),
-		// quest vua nhan xong khong len dau. Nay sap that theo claimedAt
-		// giam dan, quest chua co claimedAt xuong cuoi.
-		const doneNodes = Array.from(ui.questListDone.querySelectorAll('.qdone'));
-		doneNodes.sort((a, b) => {
-			const qa = quests.get(a.dataset.questId) || {};
-			const qb = quests.get(b.dataset.questId) || {};
-			if (doneSort === 'orbs') return (Number(qb.orbs) || 0) - (Number(qa.orbs) || 0);
-			if (doneSort === 'name') return String(qa.name || qa.gameTitle || '').localeCompare(String(qb.name || qb.gameTitle || ''));
-			const da = String(qa.claimedAt || '');
-			const db = String(qb.claimedAt || '');
-			if (!da && !db) return 0;
-			if (!da) return 1;
-			if (!db) return -1;
-			return db.localeCompare(da);
-		});
-		for (const n of doneNodes) ui.questListDone.appendChild(n);
-	}
-	// Waves#196: nhóm theo game ở tab Chưa làm — header nhóm + thu gọn.
-	try {
-		for (const h of Array.from(document.querySelectorAll('.qgroup-head'))) h.remove();
-		if (groupGames && currentTab === 'active' && ui.questListActive) {
-			const groups = new Map();
-			for (const id of questOrder) { const qq = quests.get(id); if (!qq || qq.flag === 'gone' || qq.status === 'claimed' || qq.status === 'claimable') continue; if (!questMatchesFilter(qq)) continue; const k = groupGameKey(qq); if (!groups.has(k)) groups.set(k, []); groups.get(k).push(id); }
-			for (const [k, ids] of groups) {
-				if (ids.length < 2) continue;
-				const first = questNodes.get(ids[0]); if (!first || !first.node.parentElement) continue;
-				const head = document.createElement('div');
-				head.className = 'qgroup-head';
-				head.dataset.group = k;
-				head.textContent = `${k} · ${ids.length} nhiệm vụ · ${expandedGroups.has(k) ? 'Thu gọn' : 'Mở rộng'}`;
-				first.node.parentElement.insertBefore(head, first.node);
-				if (!expandedGroups.has(k)) { for (let i = 1; i < ids.length; i++) { const n = questNodes.get(ids[i]); if (n) n.node.hidden = true; } }
-			}
-		}
-	} catch {}
-	if (scrollEl && scrollTop) scrollEl.scrollTop = scrollTop;
-	lastQuestRenderMs = renderT0 ? Math.round(performance.now() - renderT0) : 0;
 	ui.countActive.textContent = countActive;
 	ui.countNew.textContent = countNew;
 	ui.countDone.textContent = countDone;
@@ -3073,17 +2158,6 @@ function renderQuests() {
 	// state của tiến trình — tránh cảnh nút bị khoá trong khi quest vẫn cày.
 	setBusyFlags();
 }
-
-// Waves#223: tick mỗi phút để đếm ngược hết hạn chạy theo thời gian thật.
-// Chỉ render lại khi có quest hết hạn trong 7 ngày và tab đang hiện —
-// renderQuests đã diff theo signature nên tick này rẻ, không nháy lưới.
-setInterval(() => {
-	if (document.hidden) return;
-	try {
-		const any = Array.from(quests.values()).some((q) => !!formatExpiryCountdown(q.expiresAt));
-		if (any) renderQuests();
-	} catch {}
-}, 60000);
 
 /** Waves 27: sau khi nạp xong, cho toàn bộ thẻ "trôi vào + mờ dần lên".
  *  Dùng animation CSS rẻ (GPU) + stagger nhẹ để mượt, máy yếu vẫn ổn. */
@@ -3153,7 +2227,6 @@ function visibleSelectableIds() {
 
 /* Wave#111: đồng bộ hàng công cụ (số khớp bộ lọc + nút "Nhận tất cả"). */
 function syncQuestTools(visNew, visTotal, countAll) {
-	updateAdvancedFilterCount();
 	if (ui.questFilterCount) {
 		const filtering = isQuestFiltering();
 		ui.questFilterCount.hidden = !filtering;
@@ -3164,14 +2237,6 @@ function syncQuestTools(visNew, visTotal, countAll) {
 	ui.btnClaimAll.hidden = !show;
 	if (!show) return;
 	ui.btnClaimAll.disabled = bulkClaimBusy || state !== 'idle';
-	// FIX64-P3 (W35): ly do khoa cho "Nhan tat ca" (text trong nut da co
-	// so dem khi dang nhan; title them ly do khi khoa vi dang chay).
-	if (ui.btnClaimAll.disabled) {
-		const en = currentLang === 'en';
-		ui.btnClaimAll.title = bulkClaimBusy
-			? (en ? 'Claiming — wait for this batch to finish.' : 'Đang nhận thưởng — chờ xong đợt này.')
-			: (en ? 'Busy — wait for the current run to finish before claiming all.' : 'Đang chạy — chờ xong đợt hiện tại mới nhận tất cả.');
-	} else ui.btnClaimAll.title = '';
 	ui.btnClaimAll.textContent = bulkClaimBusy
 		? `Đang nhận… ${bulkClaimDone}/${bulkClaimTotal}`
 		: `Nhận tất cả (${visNew})`;
@@ -3179,11 +2244,7 @@ function syncQuestTools(visNew, visTotal, countAll) {
 
 function updateSelectionUi() {
 	ui.selectedCount.textContent = selected.size;
-	// CARDV2: nut chay tren thanh cong cu chi con "Chay (n)" / "Run (n)"
-	// (n = so quest da tich). Nut "Dung" la nut RIENG (btnStop), khong
-	// phai toggle cua nut nay — giu nguyen.
-	const enSel = currentLang === 'en';
-	const label = selected.size > 0 ? `${enSel ? 'Run' : 'Chạy'} (${selected.size})` : enSel ? 'Run' : 'Chạy';
+	const label = selected.size > 0 ? `Auto ORBs (${selected.size})` : 'Auto ORBs';
 	if (ui.btnStart.dataset.label !== label) {
 		ui.btnStart.dataset.label = label;
 		// Giữ nguyên SVG icon, chỉ đổi text node cuối
@@ -3205,68 +2266,9 @@ function updateSelectionUi() {
 		if (q) selOrbs += q.orbs || 0;
 	}
 	ui.selectedOrbs.textContent = selected.size > 0 ? `(+${selOrbs} Orbs)` : '';
-	try { refreshGameSelect(); } catch {}
-	// FIX64-P3 (W35): duong nay (tich/bỏ tich the) khong qua setBusyFlags
-	// nen cap nhat ly do khoa rieng, chi set text.
-	try { syncMainButtonReasons(); } catch {}
 }
-
-// Waves#231: chọn tất cả quest của một game trong tab Chưa làm, không
-// chọn game khác, và chỉ chọn quest đang khớp bộ lọc + chọn được.
-// FIX64-P3 (W34): cung chuoi voi groupGameKey (gameTitle -> application ->
-// name). Truoc day dung publisher lam du phong nen cung 1 quest co the
-// hien ten game khac nhau giua "chon theo game" va tieu de nhom game.
-function gameLabelOf(q) { return String(q.gameTitle || q.application || q.name || '').trim(); }
-function refreshGameSelect() {
-	if (!ui.gameSelect) return;
-	const prev = ui.gameSelect.value;
-	const games = new Map();
-	for (const id of questOrder) { const q = quests.get(id); if (!q || !canSelectQuest(q) || !questMatchesFilter(q)) continue; const g = gameLabelOf(q); if (g) games.set(g, true); }
-	const opts = ['<option value="">Chọn theo game…</option>'] + Array.from(games.keys()).sort().map((g) => `<option value="${escapeHtml(g)}">${escapeHtml(g)}</option>`);
-	ui.gameSelect.innerHTML = opts.join('');
-	if (prev && games.has(prev)) ui.gameSelect.value = prev;
-}
-if (ui.btnSelectGame) ui.btnSelectGame.addEventListener('click', () => {
-	const g = ui.gameSelect ? ui.gameSelect.value : '';
-	if (!g) return;
-	let n = 0;
-	for (const id of questOrder) { const q = quests.get(id); if (!q || !canSelectQuest(q) || !questMatchesFilter(q) || gameLabelOf(q) !== g) continue; if (!selected.has(id)) { selected.add(id); n++; } }
-	renderQuests();
-	updateSelectionUi();
-	persistSelection();
-	if (n) toast(`Đã chọn ${n} nhiệm vụ của ${g}.`);
-});
 
 /* ---------------- Selection handlers ---------------- */
-
-/* FIX64-P4 (W46 + W41): lua chon quest phai song qua tai lai trang,
-   quet lai va khoi phuc worker. Truoc day `selected` chi nam trong RAM:
-   bam Quet lai xoa sach (scan handler), tai lai trang mat het, khoi phuc
-   worker chi giu danh sach trong cau hinh chay chu khong giu tich tren UI.
-   Nay luu id da chon theo tai khoan (localStorage, KHONG token/code) va
-   khoi phuc lai moi lan nhan danh sach quet — chi nhung id con ton tai va
-   con chon duoc (todo + automatable). Doi tai khoan thi luu truoc roi moi
-   xoa RAM, de quay lai tai khoan cu van con lua chon cu. */
-const SELECTION_KEY = 'autoquest.selection.v1';
-function persistSelection() {
-	try {
-		const store = loadJsonLocal(SELECTION_KEY, {});
-		store[accountScope()] = Array.from(selected).slice(0, 300);
-		saveJsonLocal(SELECTION_KEY, store);
-	} catch {}
-}
-function restoreSelection() {
-	try {
-		const store = loadJsonLocal(SELECTION_KEY, {});
-		const saved = store[accountScope()];
-		if (!Array.isArray(saved)) return;
-		for (const id of saved) {
-			const q = quests.get(String(id));
-			if (q && canSelectQuest(q)) selected.add(String(id));
-		}
-		persistSelection();
-	} catch {}
-}
 
 function onQuestCheckChange(e) {
 	const check = e.target.closest('input[data-quest-check]');
@@ -3278,7 +2280,6 @@ function onQuestCheckChange(e) {
 	const card = check.closest('.qcard');
 	if (card) card.dataset.selected = check.checked ? '1' : '0';
 	updateSelectionUi();
-	persistSelection();
 }
 
 /* Waves 24: gắn cho CẢ tab "Chưa làm" và "Chưa nhận" — trước đây chỉ gắn tab
@@ -3295,7 +2296,6 @@ ui.selectAll.addEventListener('change', () => {
 	}
 	renderQuests();
 	updateSelectionUi();
-	persistSelection();
 });
 
 /* ---------------- Wave#111: tìm kiếm · lọc · nhận tất cả ---------------- */
@@ -3307,33 +2307,6 @@ function clearQuestSearch() {
 	renderQuests();
 }
 
-// Waves#234: lịch sử tìm kiếm — chỉ lưu cục bộ (localStorage), tối đa 10
-// từ khóa gần nhất, không chứa token, không gửi đi đâu, xóa được.
-const SEARCH_HISTORY_KEY = 'autoquest.searchHistory.v1';
-function loadSearchHistory() { try { const v = JSON.parse(localStorage.getItem(SEARCH_HISTORY_KEY) || '[]'); return Array.isArray(v) ? v.filter((x) => typeof x === 'string') : []; } catch { return []; } }
-function saveSearchTerm(term) {
-	const t = String(term || '').trim();
-	if (t.length < 2) return;
-	const h = loadSearchHistory().filter((x) => x !== t);
-	h.unshift(t);
-	try { localStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(h.slice(0, 10))); } catch {}
-}
-function renderSearchHistory() {
-	if (!ui.searchHistory) return;
-	const h = loadSearchHistory();
-	ui.searchHistory.hidden = !h.length;
-	ui.searchHistory.innerHTML = '';
-	for (const term of h) {
-		const b = document.createElement('button');
-		b.type = 'button'; b.className = 'ghost-btn'; b.textContent = term;
-		b.addEventListener('click', () => { if (!ui.questSearch) return; ui.questSearch.value = term; questQuery = term; if (ui.btnQuestSearchClear) ui.btnQuestSearchClear.hidden = false; renderQuests(); });
-		ui.searchHistory.appendChild(b);
-	}
-	const clr = document.createElement('button');
-	clr.type = 'button'; clr.className = 'ghost-btn'; clr.textContent = currentLang === 'en' ? 'Clear history' : 'Xóa lịch sử';
-	clr.addEventListener('click', () => { try { localStorage.removeItem(SEARCH_HISTORY_KEY); } catch {} renderSearchHistory(); });
-	ui.searchHistory.appendChild(clr);
-}
 if (ui.questSearch) {
 	ui.questSearch.addEventListener('input', () => {
 		const v = ui.questSearch.value;
@@ -3342,8 +2315,6 @@ if (ui.questSearch) {
 		clearTimeout(questSearchTimer);
 		questSearchTimer = setTimeout(() => {
 			questQuery = ui.questSearch.value.trim();
-			saveSearchTerm(questQuery);
-			renderSearchHistory();
 			renderQuests();
 		}, 120);
 	});
@@ -3351,8 +2322,6 @@ if (ui.questSearch) {
 		if (e.key === 'Enter') {
 			clearTimeout(questSearchTimer);
 			questQuery = ui.questSearch.value.trim();
-			saveSearchTerm(questQuery);
-			renderSearchHistory();
 			renderQuests();
 		} else if (e.key === 'Escape' && ui.questSearch.value) {
 			e.preventDefault();
@@ -3368,103 +2337,7 @@ if (ui.questFilter) {
 		renderQuests();
 	});
 }
-/* Waves#161/#162/#167 — công cụ tab Đã làm. */
-function doneQuestsSorted() {
-	const list = questOrder.map((id) => quests.get(id)).filter((q) => q && q.status === 'claimed' && q.flag !== 'gone');
-	list.sort((a, b) => String(b.claimedAt || '').localeCompare(String(a.claimedAt || '')));
-	return list;
-}
-function downloadTextFile(name, text, type) {
-	const blob = new Blob([text], { type });
-	const url = URL.createObjectURL(blob);
-	const a = document.createElement('a');
-	a.href = url;
-	a.download = name;
-	document.body.appendChild(a);
-	a.click();
-	a.remove();
-	setTimeout(() => URL.revokeObjectURL(url), 1000);
-}
-function exportDone(includeCodes, asJson) {
-	const list = doneQuestsSorted();
-	if (!list.length) {
-		toast(currentLang === 'en' ? 'No claimed quests to export.' : 'Chưa có nhiệm vụ Đã làm để xuất.');
-		return;
-	}
-	if (includeCodes) toast(currentLang === 'en' ? 'Warning: exported file contains reward codes. Share it only with people you trust.' : 'Cảnh báo: file xuất có chứa mã code — chỉ chia sẻ cho người bạn tin tưởng.', true);
-	const rows = list.map((q) => ({
-		name: q.name || '',
-		game: q.gameTitle || q.publisher || '',
-		rewardType: rewardTypeOf(q),
-		rewardName: q.rewardName || q.rewardTitle || '',
-		orbs: Number(q.orbs) || 0,
-		claimedAt: q.claimedAt || '',
-		...(includeCodes ? { code: q.rewardCode || '' } : {}),
-	}));
-	if (asJson) {
-		downloadTextFile('autoquest-done.json', JSON.stringify(rows, null, 2), 'application/json');
-	} else {
-		const esc = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
-		const header = Object.keys(rows[0]);
-		const csv = [header.join(','), ...rows.map((r) => header.map((k) => esc(r[k])).join(','))].join('\n');
-		downloadTextFile('autoquest-done.csv', csv, 'text/csv');
-	}
-	toast(currentLang === 'en' ? `Exported ${rows.length} claimed quests.` : `Đã xuất ${rows.length} nhiệm vụ Đã làm.`);
-}
-if (ui.questDoneRewardFilter) ui.questDoneRewardFilter.addEventListener('change', () => {
-	doneRewardFilter = ui.questDoneRewardFilter.value || 'all';
-	renderQuests();
-});
-if (ui.questDoneSort) ui.questDoneSort.addEventListener('change', () => {
-	doneSort = ui.questDoneSort.value || 'claimed';
-	renderQuests();
-});
-if (ui.questPlatformFilter) ui.questPlatformFilter.addEventListener('change', () => { platformFilter = ui.questPlatformFilter.value || 'all'; renderQuests(); });
-if (ui.questTaskFilter) ui.questTaskFilter.addEventListener('change', () => { taskFilter = ui.questTaskFilter.value || 'all'; renderQuests(); });
-if (ui.chkExpiringSoon) ui.chkExpiringSoon.addEventListener('change', () => { expiringOnly = ui.chkExpiringSoon.checked; renderQuests(); });
-if (ui.chkGroupGames) ui.chkGroupGames.addEventListener('change', () => { groupGames = ui.chkGroupGames.checked; renderQuests(); });
-if (ui.doneDateFrom) ui.doneDateFrom.addEventListener('change', () => { doneDateFrom = ui.doneDateFrom.value || ''; doneWindowEnd = 80; renderQuests(); });
-if (ui.doneDateTo) ui.doneDateTo.addEventListener('change', () => { doneDateTo = ui.doneDateTo.value || ''; doneWindowEnd = 80; renderQuests(); });
-if (ui.chkDoneUndated) ui.chkDoneUndated.addEventListener('change', () => { doneIncludeUndated = ui.chkDoneUndated.checked; renderQuests(); });
-if (ui.statsDateFrom) ui.statsDateFrom.addEventListener('change', () => renderStats());
-if (ui.statsDateTo) ui.statsDateTo.addEventListener('change', () => renderStats());
-if (ui.btnStatsHistoryCsv) ui.btnStatsHistoryCsv.addEventListener('click', () => exportStatsHistoryCsv());
-if (ui.btnExportConfigFile) ui.btnExportConfigFile.addEventListener('click', () => exportConfigFile());
-if (ui.btnImportConfigFile) ui.btnImportConfigFile.addEventListener('click', () => { if (ui.fileImportConfig) ui.fileImportConfig.click(); });
-if (ui.fileImportConfig) ui.fileImportConfig.addEventListener('change', async () => { const f = ui.fileImportConfig.files && ui.fileImportConfig.files[0]; if (!f) return; try { importConfigFile(await f.text()); } catch { toast('Không đọc được file cấu hình.', true); } ui.fileImportConfig.value = ''; });
-if (ui.btnClearCdnCache) ui.btnClearCdnCache.addEventListener('click', async () => {
-	try { if (navigator.serviceWorker && navigator.serviceWorker.controller) navigator.serviceWorker.controller.postMessage({ type: 'CLEAR_CDN_CACHE' }); toast('Đã gửi lệnh xóa cache ảnh CDN cho Service Worker.'); }
-	catch { toast('Không gửi được lệnh xóa cache CDN.', true); }
-});
-if (ui.btnExportDoneCsv) ui.btnExportDoneCsv.addEventListener('click', () => exportDone(!!(ui.chkExportCodes && ui.chkExportCodes.checked), false));
-// Waves#232: lưu mục tiêu Orb (chỉ dữ liệu local, không token).
-if (ui.btnOrbGoalSave) ui.btnOrbGoalSave.addEventListener('click', () => {
-	const v = Math.max(0, Math.min(1000000000, parseInt(ui.orbGoalInput ? ui.orbGoalInput.value : '', 10) || 0));
-	saveJsonLocal('autoquest.orbGoal.v1', v);
-	renderStats();
-	toast(v > 0 ? `Đã lưu mục tiêu ${v} Orbs.` : 'Đã xóa mục tiêu Orb.');
-});
-if (ui.btnExportDoneJson) ui.btnExportDoneJson.addEventListener('click', () => exportDone(!!(ui.chkExportCodes && ui.chkExportCodes.checked), true));
-if (ui.btnClearDoneCache) ui.btnClearDoneCache.addEventListener('click', () => {
-	// Waves#167: chỉ xóa cache inventory của tài khoản hiện tại, không
-	// đụng token (token nằm ở IndexedDB) và không đụng code phiên.
-	try {
-		delete inventoryStore[accountScope()];
-		localStorage.setItem(INVENTORY_KEY, JSON.stringify(inventoryStore));
-	} catch {}
-	toast(currentLang === 'en' ? 'Done cache cleared. Scan again to reload.' : 'Đã xóa cache Đã làm. Quét lại để nạp mới.');
-});
 if (ui.btnClaimAll) ui.btnClaimAll.addEventListener('click', claimAllMatching);
-/* Waves#202: đếm bộ lọc nâng cao đang bật + bật/tắt khối lọc nâng cao. */
-// Waves#218: pure counter for the advanced-filter badge. Every advanced
-// filter must be counted here exactly once: platform, task, expiring-soon,
-// date range (from OR to counts once), undated excluded, group-by-game.
-// countActiveAdvancedFilters() is only a thin delegate over this function
-// so the badge can never drift from the real filter state.
-function countAdvancedFiltersState(s) { let n = 0; if (s.platformFilter !== 'all') n++; if (s.taskFilter !== 'all') n++; if (s.expiringOnly) n++; if (s.doneDateFrom || s.doneDateTo) n++; if (!s.doneIncludeUndated) n++; if (s.groupGames) n++; return n; }
-function countActiveAdvancedFilters() { return countAdvancedFiltersState({ platformFilter, taskFilter, expiringOnly, doneDateFrom, doneDateTo, doneIncludeUndated, groupGames }); }
-function updateAdvancedFilterCount() { const n = countActiveAdvancedFilters(); if (ui.advancedFilterCount) ui.advancedFilterCount.textContent = n > 0 ? `(${n})` : ''; }
-if (ui.btnAdvancedFilters) ui.btnAdvancedFilters.addEventListener('click', () => { if (!ui.questAdvanced) return; const willShow = ui.questAdvanced.hidden; ui.questAdvanced.hidden = !willShow; ui.btnAdvancedFilters.setAttribute('aria-expanded', String(willShow)); });
 
 // Wave#116: chạm/rê tới nút Nhận là bắt đầu tải hCaptcha song song với request
 // claim — Discord trả captcha_sitekey là widget dựng được ngay.
@@ -3510,12 +2383,6 @@ function upsertQuest(id, patch, opts = {}) {
 			orbs: 0,
 		});
 	}
-	// FIX64-P4 (W50): dong thoi gian cho chan doan tren the — claimError va
-	// heartbeatBlocked chi co noi dung thi khong biet loi tu luc nao. Dong
-	// dau thoi gian o day (1 cho duy nhat) thay vi sua tung cho goi upsert.
-	if (patch && typeof patch.claimError === 'string' && patch.claimError && !patch.claimErrorAt) patch.claimErrorAt = Date.now();
-	if (patch && typeof patch.captchaPassiveWarn === 'string' && patch.captchaPassiveWarn && !patch.captchaPassiveWarnAt) patch.captchaPassiveWarnAt = Date.now();
-	if (patch && patch.heartbeatBlocked === true && !patch.heartbeatBlockedAt) patch.heartbeatBlockedAt = Date.now();
 	Object.assign(quests.get(id), patch);
 	if (opts.defer) {
 		scheduleRender(); // gộp: render 1 lần duy nhất mỗi frame
@@ -3547,9 +2414,6 @@ function pruneQuestsMissing(list) {
 			questNodes.delete(id);
 		}
 	}
-	// FIX64-P4 (W46): quet moi loai id da mat thi lua chon luu cung phai
-	// cap nhat theo, khong de id chet song lai o lan khoi phuc sau.
-	try { persistSelection(); } catch {}
 }
 
 /* ============================================================
@@ -3559,39 +2423,12 @@ function pruneQuestsMissing(list) {
      2) Discord trả OK  → orbs nhảy THẬT (đọc lại ví) + thẻ sang "Đã nhận"
      3) Discord trả 400 + captcha_sitekey → mở MODAL hCaptcha:
         render widget hCaptcha THẬT bằng sitekey/rqdata Discord cấp.
-        Người dùng tự giải. Giải xong → callback chỉ lưu token chờ; bấm
-        "Gửi xác minh ngay" mới gọi lại claim kèm captcha_key.
+        Người dùng tự giải. Giải xong → tự gọi lại claim kèm captcha_key.
      4) Nếu vẫn lỗi → hiện NGUYÊN VĂN lỗi server, tuyệt đối không bịa.
    Không bypass, không bẻ khoá: chỉ dựng lại đúng trình xác thực của Discord.
    ============================================================ */
 
-let captchaCtx = null; // { quest, captcha, widgetId, pendingToken }
-// CLAIM-MANUAL (2026-10-31): callback hCaptcha CHỈ báo token sẵn sàng, KHÔNG tự gửi.
-// Token chờ nằm ở captchaCtx.pendingToken; chỉ nút "Gửi xác minh ngay" mới gửi,
-// đúng 1 lần qua guard submitted trong onCaptchaSolved. Hết hạn/đóng/mở lại:
-// pendingToken bị xóa, hint về trạng thái chờ tick, không bao giờ gửi token cũ.
-const CAPTCHA_HINT_IDLE = 'Tick vào ô xác minh bên trên, giải thử thách nếu hiện, rồi bấm "Gửi xác minh ngay" để gửi kết quả nhận thưởng.';
-const CAPTCHA_HINT_READY = 'Đã có kết quả xác minh — bấm "Gửi xác minh ngay" để gửi.';
-// HBCAP — canh bao token passive TRUOC khi gui (xem onCaptchaTokenReady):
-// noi dung noi that muc do chac chan — day la suy luan tu su kien
-// open-callback (khong hien thu thach), khong phai phan tich chuoi
-// token (tien to P1_ la phien ban token, ca token giai that cung mang
-// no, nen KHONG dung no de phan loai). Ban EN qua hcaptchaText().
-const CAPTCHA_PASSIVE_WARN_VI = 'Token xác minh này về mà không hiện thử thách nào — rất có thể là token passive, Discord thường từ chối loại này. Bấm "Tải lại hộp xác minh" để lấy phiên mới, rồi tick lại và chờ thử thách hiện ra.';
-const CAPTCHA_PASSIVE_WARN_EN = 'This verification token arrived without any challenge being shown — it is likely a passive token, which Discord usually rejects. Press "Reload verification" for a fresh session, then tick again and wait for a challenge to appear.';
-const CAPTCHA_PASSIVE_DIAG_VI = 'Cảnh báo: token xác minh dạng passive (không hiện thử thách) — chưa gửi, hãy tải lại hộp xác minh.';
-const CAPTCHA_PASSIVE_DIAG_EN = 'Warning: passive verification token (no challenge shown) — not sent yet, reload the verification box.';
-// ANYACCT — canh bao token CU truoc khi gui (xem onCaptchaRetryClick):
-// hCaptcha token chi song vai chuc giay den vai phut (ghi chu repo cu:
-// token "passive" song vai chuc giay); token callback ve tu >60s truoc
-// luc bam Gui thi lan bam dau CHI canh bao + hien hang tai lai, bam
-// lan 2 moi gui (quyet co chu dich, giong cua passive cua HBCAP).
-// Duong getResponse khong biet tuoi token nen khong canh bao cu — noi
-// that gioi han nay, khong doan tuoi.
-const CAPTCHA_STALE_WARN_VI = 'Kết quả xác minh này đã về từ hơn 60 giây trước — token hCaptcha có thể đã hết hạn, Discord thường từ chối token cũ. Bấm "Tải lại hộp xác minh" để lấy token mới, hoặc bấm "Gửi xác minh ngay" lần nữa nếu vẫn muốn thử token này.';
-const CAPTCHA_STALE_WARN_EN = 'This verification result arrived over 60 seconds ago — the hCaptcha token may have expired, and Discord usually rejects stale tokens. Press "Reload verification" for a fresh token, or press "Send verification now" again if you still want to try this one.';
-const CAPTCHA_STALE_AGE_MS = 60000;
-let lastCaptchaSubmit = null; // Chẩn đoán claim: { source, delayMs, tokenAgeMs } — KHÔNG chứa token.
+let captchaCtx = null; // { quest, captcha, widgetId }
 let hcaptchaLoading = null;
 let captchaWarmStarted = false;
 let captchaPreconnected = false;
@@ -3786,13 +2623,9 @@ function closeCaptchaModal() {
 		}
 	}
 	if (ui.captchaWidget) ui.captchaWidget.innerHTML = '';
-	// HBCAP: canh bao passive chi co y nghia khi modal dang mo — dong
-	// modal thi xoa khoi the de khong hien canh bao cu sau nay.
-	const closingQuest = captchaCtx ? captchaCtx.quest : null;
 	captchaCtx = null;
 	if (ui.captchaModal) ui.captchaModal.hidden = true;
 	setCaptchaError('');
-	if (closingQuest) upsertQuest(closingQuest.id, { captchaPassiveWarn: '', captchaPassiveWarnAt: 0 });
 }
 
 /**
@@ -3804,31 +2637,17 @@ async function openCaptchaModal(quest, captcha) {
 		quest,
 		captcha,
 		widgetId: null,
-		pendingToken: null,
-		openedAt: Date.now(),
 		theme: document.documentElement.dataset.theme === 'light' ? 'light' : 'dark',
-		// HBCAP: challengeShown = open-callback cua hCaptcha da ban trong
-		// phien nay (co thu thach hien ra); passiveToken/passiveWarned
-		// xem onCaptchaTokenReady / onCaptchaRetryClick.
-		challengeShown: false,
-		passiveToken: false,
-		passiveWarned: false,
-		// ANYACCT: pendingTokenAt = luc callback tra token (de do tuoi
-		// that luc gui); staleWarned = da canh bao token cu o lan bam
-		// Gui truoc (bam lan 2 moi gui).
-		pendingTokenAt: null,
-		staleWarned: false,
 	};
 	if (!ui.captchaModal) return;
 
 	// Thông tin nhiệm vụ đang xác minh
 	if (ui.captchaTarget) {
-		ui.captchaTargetArt.innerHTML = '';
-		if (quest.rewardKind !== 'item') ui.captchaTargetArt.appendChild(orbVideoEl(DISCORD_ORB_SMALL, 'orb-video'));
+		ui.captchaTargetArt.innerHTML = quest.rewardKind === 'item' ? '' : ORB_GLYPH;
 		if (quest.rewardKind === 'item' && quest.rewardAsset) {
 			const media = rewardMediaEl(quest);
 			if (media) ui.captchaTargetArt.appendChild(media);
-			else ui.captchaTargetArt.appendChild(orbVideoEl(DISCORD_ORB_SMALL, 'orb-video'));
+			else ui.captchaTargetArt.innerHTML = ORB_GLYPH;
 		}
 		ui.captchaTargetName.textContent =
 			quest.rewardTitle || quest.name || quest.gameTitle || 'Nhiệm vụ Discord';
@@ -3841,12 +2660,8 @@ async function openCaptchaModal(quest, captcha) {
 		ui.captchaTarget.hidden = false;
 	}
 	if (ui.captchaErr) setCaptchaError('');
-	if (ui.captchaHint) ui.captchaHint.textContent = CAPTCHA_HINT_IDLE;
 	if (ui.captchaLoading) ui.captchaLoading.hidden = false;
 	if (ui.btnCaptchaRetry) ui.btnCaptchaRetry.disabled = true;
-	// HBCAP: hang tai lai an mac dinh, chi hien khi token passive.
-	if (ui.captchaReloadRow) ui.captchaReloadRow.hidden = true;
-	if (ui.btnCaptchaReload) ui.btnCaptchaReload.textContent = hcaptchaText('Tải lại hộp xác minh', 'Reload verification');
 	ui.captchaModal.hidden = false;
 
 	const service = captcha && captcha.service ? captcha.service : 'hcaptcha';
@@ -3896,14 +2711,14 @@ async function openCaptchaModal(quest, captcha) {
 			captchaCtx.widgetId = null;
 		}
 		ui.captchaWidget.innerHTML = '';
-	// Wave sửa claim mobile (Ethan duyệt 2026-10-30): BỎ chế độ tự chạy xác minh.
-	// Lý do: token từ hcaptcha.execute() tự động là token "passive" — hộp chỉ quay
-	// rồi mất, không hiện thử thách — và Discord trả 403 · 10008 (nhánh D) vì token
-	// đó không được tính là đã giải. Nay widget chỉ dựng ở size 'normal', KHÔNG
-	// execute, KHÔNG tự quét token: người dùng tick vào ô, giải thử thách nếu hiện,
-	// token từ lần tương tác thật đó chỉ được LƯU LẠI qua callback (CLAIM-MANUAL:
-	// callback không gửi); chỉ nút "Gửi xác minh ngay" mới gửi claim. Claim nào
-	// không bị bắt captcha thì không qua bước này.
+	// Waves 38: BRO YÊU CẦU "tự túc ấn xác minh, không cần người dùng bấm".
+	// → App tự gọi `hcaptcha.execute()` để hCaptcha tự chạy xác minh:
+	//   • Nếu hCaptcha cho qua (passive) → callback bắn NGAY, app tự gửi Discord
+	//     mà người dùng KHÔNG phải bấm gì (đúng ý bro).
+	//   • Nếu hCaptcha bung bảng thử thách → widget VẪN HIỆN (size 'normal' +
+	//     execute) để người dùng giải trực tiếp, rồi app tự gửi.
+	// Trước đây để `size:'invisible'` → hộp hoàn toàn trắng, không có gì để bấm
+	// (bro phàn nàn). Nay dùng size 'normal': luôn có UI thật, có checkbox thật.
 	const renderOpts = {
 		sitekey: captcha.sitekey,
 		size: 'normal',
@@ -3913,46 +2728,19 @@ async function openCaptchaModal(quest, captcha) {
 		// visible người dùng tick trực tiếp, token do render tạo nên không mang
 		// rqdata → Discord xác minh sai → captcha-required / 403·10008.
 		...(captcha.rqdata ? { rqdata: captcha.rqdata } : {}),
-		callback: (token) => onCaptchaTokenReady(token),
-		// HBCAP — dau hieu passive THAT (docs.hcaptcha.com/configuration):
-		// open-callback chi ban khi "user display of a challenge starts".
-		// Token ve ma ca phien chua tung ban open-callback = khong co
-		// thu thach nao hien ra = tu dong cho qua (passive), khong loi
-		// giai — dung truong hop Discord tu choi o log live. Co nay
-		// CHI latch len (khong reset o close-callback): neu thu thach
-		// da hien roi user tat di, token sau do van co the tu giai that;
-		// reset latch o day se bao nham token giai that thanh passive
-		// (false positive hai hon false negative — false negative chi
-		// ve duong cu, khong lam gi them).
-		'open-callback': () => {
-			if (captchaCtx) captchaCtx.challengeShown = true;
-		},
+		callback: (token) => onCaptchaSolved(token),
 		'error-callback': () => setCaptchaError('hCaptcha báo lỗi khi tải. Bấm "Thử lại" hoặc tải lại ô xác minh.'),
 		'expired-callback': () => {
 			// Waves 41: hCaptcha "passive" token sống rất ngắn (vài chục giây). Khi nó
 			// hết hạn, widget KHÔNG tự lấy token mới → phải reset để lấy phiên mới.
 			// Trước đây chỉ báo lỗi mà không tự làm mới → user thấy "dead link" lặp lại.
-			// CLAIM-MANUAL: token chờ (nếu có) hết hiệu lực cùng phiên — xóa để
-			// không bao giờ gửi token cũ, hint về trạng thái chờ tick lại.
-			// HBCAP: phien moi = co passive cu het hieu luc — xoa luon
-			// canh bao tren the + an hang tai lai.
-			if (captchaCtx) {
-				captchaCtx.pendingToken = null;
-				captchaCtx.pendingTokenAt = null;
-				captchaCtx.passiveToken = false;
-				captchaCtx.passiveWarned = false;
-				captchaCtx.staleWarned = false;
-				captchaCtx.challengeShown = false;
-				if (captchaCtx.quest) upsertQuest(captchaCtx.quest.id, { captchaPassiveWarn: '', captchaPassiveWarnAt: 0 });
-			}
-			if (ui.captchaReloadRow) ui.captchaReloadRow.hidden = true;
-			if (ui.captchaHint) ui.captchaHint.textContent = CAPTCHA_HINT_IDLE;
-			appendLog('[Cảnh báo] Phiên xác minh hết hạn — đã reset hộp, chờ người dùng tick lại.', 'warn');
-			setCaptchaError('Phiên xác minh hết hạn — tick lại ô bên trên để lấy phiên mới.');
+			appendLog('[Cảnh báo] Phiên xác minh hết hạn (token hCaptcha sống ngắn) — đang tự làm mới…', 'warn');
+			setCaptchaError('Phiên xác minh hết hạn — app đang tự làm mới, đợi chút hoặc giải lại ô bên trên.');
 			// Tự reset widget để lấy phiên mới rồi chạy lại xác minh.
 			try {
 				if (captchaCtx && captchaCtx.widgetId != null) {
 					window.hcaptcha.reset(captchaCtx.widgetId);
+					hcaptchaRecover(captcha);
 				}
 			} catch {
 				/* widget đã bị gỡ — người dùng bấm "Thử lại" */
@@ -3963,7 +2751,7 @@ async function openCaptchaModal(quest, captcha) {
 		`[Hệ thống] Dựng hCaptcha: sitekey=${String(captcha.sitekey).slice(0, 12)}…` +
 			` · rqdata=${captcha.rqdata ? 'có (' + captcha.rqdata.length + ' ký tự)' : 'THIẾU'}` +
 			` · rqtoken=${captcha.rqtoken ? 'có' : 'không'}` +
-			` · chế độ=THỦ CÔNG (người dùng tick hộp rồi mới gửi)`,
+			` · chế độ=TỰ ĐỘNG (app tự chạy xác minh)`,
 		'system',
 	);
 	if (!captcha.rqdata) {
@@ -3975,9 +2763,22 @@ async function openCaptchaModal(quest, captcha) {
 	captchaCtx.widgetId = hcaptcha.render(ui.captchaWidget, renderOpts);
 	if (ui.captchaLoading) ui.captchaLoading.hidden = true;
 	if (ui.btnCaptchaRetry) ui.btnCaptchaRetry.disabled = false;
-	// Wave sửa claim mobile: KHÔNG tự execute, KHÔNG tự quét token nữa.
-	// Hộp đứng yên chờ người dùng tick; token từ tương tác thật mới được gửi.
-	appendLog('[Hệ thống] Hộp xác minh đã sẵn — tick vào ô, giải thử thách nếu hiện, rồi bấm \'Gửi xác minh ngay\' để gửi.', 'system');
+	// TỰ ĐỘNG chạy xác minh — không cần người dùng bấm gì.
+	try {
+		const execArgs = { async: false };
+		if (captcha.rqdata) execArgs.rqdata = captcha.rqdata;
+		hcaptcha.execute(captchaCtx.widgetId, execArgs);
+		appendLog('[Hệ thống] Đã tự chạy xác minh — nếu hCaptcha bung ô thử thách, hãy giải rồi app tự gửi.', 'system');
+	} catch (e) {
+		appendLog(
+			`[Cảnh báo] Không gọi được hcaptcha.execute (${e.message}) — đã có widget để bấm thủ công.`,
+			'warn',
+		);
+	}
+	// Waves 38: NẾU callback không bắn (một số môi trường hCaptcha chỉ đẩy token
+	// vào getResponse), app TỰ ĐỘNG đọc token và gửi — người dùng KHÔNG phải bấm.
+	// Đây chính là "tự túc ấn xác minh rồi gửi" mà bro yêu cầu. Dừng ngay khi có.
+	startCaptchaAutoSubmit();
 	// Waves 38: đo trạng thái widget ra terminal (chẩn đoán hộp trắng / không bấm được).
 	if (window.autoquest && window.autoquest.captchaTrace) {
 		let n = 0;
@@ -4009,66 +2810,18 @@ async function openCaptchaModal(quest, captcha) {
 	}
 }
 
-/**
- * CLAIM-MANUAL: callback hCaptcha CHỈ lưu token chờ, KHÔNG gửi, KHÔNG đóng modal.
- * Người dùng tự quyết lúc gửi bằng nút "Gửi xác minh ngay" (onCaptchaRetryClick).
- */
-function onCaptchaTokenReady(token) {
-	if (!captchaCtx || !token) return;
-	if (captchaCtx.submitted) return; // Đã gửi rồi — token tới sau không làm gì.
-	captchaCtx.pendingToken = token;
-	// ANYACCT: ghi luc token ve — delayMs cu (mo hop -> gui) phong dai
-	// tuoi token vi no gom ca thoi gian giai thu thach; tuoi that luc
-	// gui phai do tu luc token ve (live 2026-11-01: 195s mo->gui khong
-	// noi token cu bao nhieu, 20s thi chac chan khong phai het han).
-	captchaCtx.pendingTokenAt = Date.now();
-	captchaCtx.staleWarned = false;
-	// HBCAP — bao ve truoc-gui (pre-send guard), giu nguyen cua
-	// CLAIM-MANUAL (callback chi luu cho, khong tu gui):
-	// token ve ma ca phien chua tung hien thu thach (challengeShown
-	// false) = token passive, Discord thuong tu choi. KHONG gui im
-	// lang roi moi bao loi nhu truoc — canh bao NGAY trong modal +
-	// tren the, hien nut tai lai, va nut Gui VAN MO (chu dich) de
-	// user tu quyet sau canh bao. Ly do khong khoa nut Gui: phat
-	// hien dua tren su kien widget (open-callback) chu khong phai
-	// thuoc tinh cua token; neu hCaptcha khong ban su kien o cau
-	// hinh sitekey nao do, khoa nut se ket user o token co the
-	// dung duoc — canh bao + tai lai ngan duoc loi gui im lang
-	// ma khong cuop quyen gui. (Khong phan loai bang chuoi token:
-	// tien to P1_ la phien ban token, ca token giai that cung mang no.)
-	const passive = !captchaCtx.challengeShown;
-	captchaCtx.passiveToken = passive;
-	if (passive) {
-		captchaCtx.passiveWarned = true;
-		if (ui.captchaHint) ui.captchaHint.textContent = hcaptchaText(CAPTCHA_PASSIVE_WARN_VI, CAPTCHA_PASSIVE_WARN_EN);
-		if (ui.captchaReloadRow) ui.captchaReloadRow.hidden = false;
-		// Canh bao len the TRUOC khi gui — dung truong rieng, KHONG
-		// dung claimError (claimError se bien the todo thanh nut
-		// 'Thu lai' o updateQuestFoot — CARDV2 cam nut tren the todo).
-		if (captchaCtx.quest) upsertQuest(captchaCtx.quest.id, { captchaPassiveWarn: hcaptchaText(CAPTCHA_PASSIVE_DIAG_VI, CAPTCHA_PASSIVE_DIAG_EN), captchaPassiveWarnAt: Date.now() });
-		appendLog('[Hệ thống] Token xác minh về mà không hiện thử thách nào — có thể là token passive, Discord thường từ chối. Chưa gửi: bấm "Tải lại hộp xác minh" để lấy phiên mới, hoặc bấm "Gửi xác minh ngay" nếu vẫn muốn thử.', 'system');
-	} else {
-		if (ui.captchaHint) ui.captchaHint.textContent = CAPTCHA_HINT_READY;
-		if (ui.captchaReloadRow) ui.captchaReloadRow.hidden = true;
-		appendLog('[Hệ thống] Đã có kết quả xác minh — chờ bạn bấm "Gửi xác minh ngay" để gửi.', 'system');
-	}
-	if (ui.btnCaptchaRetry) ui.btnCaptchaRetry.disabled = false;
-}
-
-/** Nút "Gửi xác minh ngay" → gọi lại claim kèm captcha_key (2A). Cửa gửi DUY NHẤT. */
-async function onCaptchaSolved(captchaToken, source = 'manual') {
+/** Người dùng giải xong captcha → tự gọi lại claim kèm captcha_key (2A). */
+async function onCaptchaSolved(captchaToken) {
 	if (!captchaCtx || !captchaToken) return;
-	if (captchaCtx.submitted) return; // Chỉ gửi 1 lần (callback lưu chờ + nút bấm không đua nhau).
-	// ANYACCT: tuoi token THAT luc gui = gui - luc callback tra token
-	// (khong phai mo hop -> gui). Duong getResponse khong co
-	// pendingTokenAt nen tuoi = null (noi that, khong doan).
-	const tokenAgeMs = captchaCtx.pendingTokenAt ? Date.now() - captchaCtx.pendingTokenAt : null;
-	captchaCtx.pendingToken = null;
+	if (captchaCtx.submitted) return; // Waves 38: chỉ gửi 1 lần (auto + callback không đua)
 	captchaCtx.submitted = true;
-	lastCaptchaSubmit = { source, delayMs: captchaCtx.openedAt ? Date.now() - captchaCtx.openedAt : null, tokenAgeMs };
+	if (captchaCtx.autoTimer) {
+		clearInterval(captchaCtx.autoTimer);
+		captchaCtx.autoTimer = null;
+	}
 	const { quest } = captchaCtx;
 	const captcha = captchaCtx.captcha;
-	appendLog('[Hệ thống] Đang gửi yêu cầu nhận thưởng kèm kết quả xác minh tới Discord…', 'system');
+	appendLog('[Hệ thống] Đã có kết quả xác minh — tự gửi lại yêu cầu nhận thưởng tới Discord…', 'system');
 	closeCaptchaModal();
 	const outcome = await runClaim(quest, {
 		captchaKey: captchaToken,
@@ -4084,90 +2837,93 @@ async function onCaptchaSolved(captchaToken, source = 'manual') {
 	}
 }
 
-/** Nút "Gửi xác minh ngay" — cửa gửi DUY NHẤT: gửi token chờ, đúng 1 lần. */
+/**
+ * Waves 41: LÀM MỚI phiên hCaptCha sau khi token cũ hết hạn ("dead link").
+ * Vì sao cần: token passive sống rất ngắn; khi hết hạn widget không tự lấy token
+ * mới. Ta reset widget rồi chạy lại execute() + vòng auto-submit → không bắt user
+ * bấm lại nhiều lần. Chỉ 1 lần cho mỗi lần mở modal để tránh vòng lặp vô tận.
+ */
+function hcaptchaRecover(captcha) {
+	if (!captchaCtx || captchaCtx.recovering) return;
+	captchaCtx.recovering = true;
+	captchaCtx.submitted = false;
+	if (captchaCtx.autoTimer) {
+		clearInterval(captchaCtx.autoTimer);
+		captchaCtx.autoTimer = null;
+	}
+	try {
+		const execArgs = { async: false };
+		if (captcha && captcha.rqdata) execArgs.rqdata = captcha.rqdata;
+		window.hcaptcha.execute(captchaCtx.widgetId, execArgs);
+		appendLog('[Hệ thống] Đã tự làm mới phiên xác minh — chạy lại.', 'system');
+		startCaptchaAutoSubmit();
+	} catch (e) {
+		appendLog(`[Cảnh báo] Không làm mới được phiên xác minh (${e.message}) — hãy giải lại ô bên trên.`, 'warn');
+	}
+}
+
+/**
+ * Waves 38: TỰ ĐỘNG gửi xác minh — không cần người dùng bấm "Tôi đã giải xong".
+ * Vì sao cần: hCaptcha trong một số môi trường chỉ đẩy token vào getResponse()
+ * mà KHÔNG gọi callback (hoặc callback bắn trước khi widget settle). Vòng poll
+ * này đọc token mỗi 800ms; có token hợp lệ → tự onCaptchaSolved() → tự claim.
+ * Dừng sau 2 phút (hết hạn phiên) để không treo vô hạn.
+ */
+function startCaptchaAutoSubmit() {
+	if (!captchaCtx) return;
+	let waited = 0;
+	const MAX_MS = 120000;
+	captchaCtx.autoTimer = setInterval(() => {
+		waited += 800;
+		if (!captchaCtx || captchaCtx.submitted) {
+			clearInterval(captchaCtx && captchaCtx.autoTimer);
+			return;
+		}
+		if (ui.captchaModal && ui.captchaModal.hidden) {
+			clearInterval(captchaCtx.autoTimer);
+			captchaCtx.autoTimer = null;
+			return;
+		}
+		let token = null;
+		try {
+			token = window.hcaptcha && captchaCtx.widgetId != null
+				? window.hcaptcha.getResponse(captchaCtx.widgetId)
+				: null;
+		} catch {
+			token = null;
+		}
+		if (token) {
+			appendLog('[Hệ thống] hCaptcha đã trả kết quả — tự động gửi (không cần bấm).', 'system');
+			onCaptchaSolved(token);
+			return;
+		}
+		if (waited >= MAX_MS) {
+			clearInterval(captchaCtx && captchaCtx.autoTimer);
+			if (captchaCtx) captchaCtx.autoTimer = null;
+			setCaptchaError('Hết thời gian chờ xác minh. Bấm "Thử lại" hoặc giải ô thử thách bên trên.');
+		}
+	}, 800);
+}
+
+/** Nút "Tôi đã giải xong" — đọc token từ widget nếu callback chưa bắn. */
 function onCaptchaRetryClick() {
 	if (!captchaCtx || captchaCtx.widgetId == null) {
 		closeCaptchaModal();
 		return;
 	}
-	// Ưu tiên token callback đã lưu chờ; dự phòng khi callback chưa bắn thì đọc
-	// token từ widget — chỉ gửi khi widget ĐÃ có token từ lần người dùng
-	// tick/giải, không tự tạo token.
-	let token = captchaCtx.pendingToken || null;
-	if (!token) {
-		try {
-			token = window.hcaptcha.getResponse(captchaCtx.widgetId);
-		} catch {
-			token = null;
-		}
-	}
-	if (!token) {
-		setCaptchaError('Chưa có kết quả xác minh. Tick vào ô bên trên, giải thử thách nếu hiện, rồi bấm lại nút này.');
-		return;
-	}
-	// HBCAP — cua passive cho ca duong getResponse (callback khong ban):
-	// token tu duong nay ma ca phien chua tung hien thu thach thi cung
-	// la passive. Lan bam dau tien CHI canh bao (hint + the + hang tai
-	// lai) chu khong gui — bam lan 2 sau canh bao moi gui (quyet co
-	// chu dich cua user). Duong callback binh thuong da canh bao o
-	// onCaptchaTokenReady (passiveWarned true) nen bam la gui ngay.
-	const passiveNow = captchaCtx.pendingToken ? !!captchaCtx.passiveToken : !captchaCtx.challengeShown;
-	if (passiveNow && !captchaCtx.passiveWarned) {
-		captchaCtx.passiveToken = true;
-		captchaCtx.passiveWarned = true;
-		if (ui.captchaHint) ui.captchaHint.textContent = hcaptchaText(CAPTCHA_PASSIVE_WARN_VI, CAPTCHA_PASSIVE_WARN_EN);
-		if (ui.captchaReloadRow) ui.captchaReloadRow.hidden = false;
-		if (captchaCtx.quest) upsertQuest(captchaCtx.quest.id, { captchaPassiveWarn: hcaptchaText(CAPTCHA_PASSIVE_DIAG_VI, CAPTCHA_PASSIVE_DIAG_EN), captchaPassiveWarnAt: Date.now() });
-		appendLog('[Hệ thống] Token xác minh này có thể là token passive (không hiện thử thách) — chưa gửi. Bấm "Tải lại hộp xác minh" để lấy phiên mới, hoặc bấm "Gửi xác minh ngay" lần nữa nếu vẫn muốn thử.', 'system');
-		return;
-	}
-	// ANYACCT — cua token CU cho duong callback (biet tuoi token qua
-	// pendingTokenAt): token >60s thi lan bam dau CHI canh bao + hien
-	// hang tai lai, bam lan 2 moi gui (quyet co chu dich, giong cua
-	// passive cua HBCAP). Duong getResponse khong biet tuoi nen khong
-	// canh bao (noi that gioi han, khong doan tuoi).
-	if (captchaCtx.pendingToken && captchaCtx.pendingTokenAt && Date.now() - captchaCtx.pendingTokenAt > CAPTCHA_STALE_AGE_MS && !captchaCtx.staleWarned) {
-		captchaCtx.staleWarned = true;
-		if (ui.captchaHint) ui.captchaHint.textContent = hcaptchaText(CAPTCHA_STALE_WARN_VI, CAPTCHA_STALE_WARN_EN);
-		if (ui.captchaReloadRow) ui.captchaReloadRow.hidden = false;
-		appendLog('[Hệ thống] Kết quả xác minh này đã về từ hơn 60 giây trước — token có thể đã hết hạn nên chưa gửi. Bấm "Tải lại hộp xác minh" để lấy token mới, hoặc bấm "Gửi xác minh ngay" lần nữa nếu vẫn muốn thử token này.', 'system');
-		return;
-	}
-	onCaptchaSolved(token, 'manual');
-}
-
-/** Nút "Tải lại hộp xác minh" (HBCAP) — reset phiên widget để lấy token
-    mới (phiên mới mới có cơ hội hiện thử thách), xóa token + cờ passive
-    cũ để không bao giờ gửi token cũ. Không tự gửi gì cả. */
-function onCaptchaReloadClick() {
-	if (!captchaCtx) return;
-	const quest = captchaCtx.quest;
-	const captcha = captchaCtx.captcha;
-	let resetOk = false;
+	let token = null;
 	try {
-		if (captchaCtx.widgetId != null && window.hcaptcha && typeof window.hcaptcha.reset === 'function') {
-			window.hcaptcha.reset(captchaCtx.widgetId);
-			resetOk = true;
-		}
+		token = window.hcaptcha.getResponse(captchaCtx.widgetId);
 	} catch {
-		/* widget đã bị gỡ — rơi về mở lại modal bên dưới */
+		token = null;
 	}
-	captchaCtx.pendingToken = null;
-	captchaCtx.pendingTokenAt = null;
-	captchaCtx.passiveToken = false;
-	captchaCtx.passiveWarned = false;
-	captchaCtx.staleWarned = false;
-	captchaCtx.challengeShown = false;
-	if (ui.captchaHint) ui.captchaHint.textContent = CAPTCHA_HINT_IDLE;
-	if (ui.captchaReloadRow) ui.captchaReloadRow.hidden = true;
-	if (ui.btnCaptchaRetry) ui.btnCaptchaRetry.disabled = true; // chờ token mới
-	if (quest) upsertQuest(quest.id, { captchaPassiveWarn: '', captchaPassiveWarnAt: 0 });
-	appendLog('[Hệ thống] Đã tải lại hộp xác minh — tick lại để lấy token mới.', 'system');
-	if (!resetOk) {
-		// Widget đã bị gỡ khỏi DOM: mở lại modal để dựng widget mới.
-		if (quest && captcha) openCaptchaModal(quest, captcha);
-		else setCaptchaError('Không tải lại được hộp — đóng modal rồi bấm nhận lại.');
+	if (!token) {
+		// Waves 38: không còn bắt buộc "đánh dấu ô". App tự chạy xác minh; nút này
+		// chỉ để ép gửi ngay khi widget đã có token (hoặc thử lại).
+		setCaptchaError('Chưa có kết quả xác minh. App đang tự chạy — đợi chút, hoặc giải ô thử thách nếu có.');
+		return;
 	}
+	onCaptchaSolved(token);
 }
 
 /**
@@ -4191,14 +2947,6 @@ async function runClaim(quest, captchaMeta) {
 		claimBusy: true,
 		claimError: '',
 		claimOpenDiscord: false,
-		claimBranch: '',
-		claimDiagSource: '',
-		claimDiagDelayMs: null,
-		claimDiagTokenAgeMs: null,
-		// HBCAP: bat dau chay claim that thi canh bao passive truoc-gui
-		// het hieu luc (token da gui, cho ket qua that tu Discord).
-		captchaPassiveWarn: '',
-		captchaPassiveWarnAt: 0,
 		claimPhase:
 			currentLang === 'en'
 				? captchaMeta
@@ -4253,21 +3001,13 @@ async function runClaim(quest, captchaMeta) {
 
 		if (res && res.ok) {
 			// ✅ Discord đã trao thưởng THẬT
-			// Waves#153: code trong phản hồi claim (nếu có) chỉ vào bộ
-			// nhớ phiên, không vào cache/export/log.
-			const sessionCode = extractSessionCode(res.raw);
 			upsertQuest(id, {
 				status: 'claimed',
-				...(sessionCode ? { rewardCode: sessionCode } : {}),
 				running: false,
 				flag: '',
 				claimBusy: false,
 				claimError: '',
 				claimOpenDiscord: false,
-				claimBranch: '',
-				claimDiagSource: '',
-				claimDiagDelayMs: null,
-				claimDiagTokenAgeMs: null,
 				claimPhase: '',
 			});
 			sessionClaimCount += 1;
@@ -4276,7 +3016,6 @@ async function runClaim(quest, captchaMeta) {
 			recordClaim(quest.name, res.orbs || quest.orbs || 0, id);
 			appendLog(`[OK] Đã nhận "${quest.name || ''}" (+${res.orbs || quest.orbs || 0} Orbs) — Discord xác nhận.`, 'ok');
 			toast(`Đã nhận ${res.orbs || quest.orbs || 0} Orbs · "${quest.name || ''}"`);
-			playClaimSuccess();
 			notifySystem('Đã nhận Orbs', `+${res.orbs || quest.orbs || 0} Orbs · ${quest.name || ''}`);
 			// Số dư nhảy THẬT: đọc lại ví từ Discord (không tự cộng số ảo)
 			fetchOrbBalance(token);
@@ -4294,31 +3033,19 @@ async function runClaim(quest, captchaMeta) {
 
 		if (res && res.captchaRequired) {
 			upsertQuest(id, { claimBusy: false, claimPhase: '' });
-			// ANYACCT: dong cu khang dinh token "passive (P1_/pd:0)" —
-			// SAI o dang tong quat: live 2026-11-01 user GIAI thu thach
-			// hien ro (Once Human 195s mo->gui, Melon 20s) ma van bi tu
-			// choi, dong cu van in. P1_ la phien ban token, khong phai
-			// chan doan; mo->gui phong dai tuoi token (gom ca thoi gian
-			// giai). Dong moi chi noi SU THAT: Discord tra status/code
-			// gi + token bao nhieu tuoi luc gui. Neu token tuoi <60s ma
-			// van bi tu choi thi het han KHONG phai nguyen nhan — nguyen
-			// nhan that (gioi han origin/phien phia Discord) van chua
-			// biet, can bang chung live tiep theo (status/code/tuoi).
-			// Mo lai modal chi tao vong lap nhu cu — dung lai o day.
+			// Waves 37: CHỐNG LẶP VÔ TẬN. Nếu đã gửi token xác minh mà Discord VẪN
+			// đòi captcha → hCaptcha đang ở chế độ "passive" (token P1_/pd:0, KHÔNG
+			// có lời giải thử thách) nên Discord không công nhận. Mở lại modal chỉ
+			// tạo vòng lặp y như bro đã gặp. Nói THẬT lý do và dừng lại.
 			if (captchaMeta && captchaMeta.captchaKey) {
-				const resStatus = res && res.status ? res.status : 'không rõ';
-				const resCode = res && res.code != null ? res.code : 'không rõ';
-				const tokenAge = lastCaptchaSubmit && Number.isFinite(lastCaptchaSubmit.tokenAgeMs) ? `${Math.round(lastCaptchaSubmit.tokenAgeMs)}ms` : 'không rõ';
 				const msg =
-					'Discord vẫn đòi xác minh dù đã gửi kết quả. ' +
-					`Discord trả HTTP ${resStatus} · code ${resCode} · token ${tokenAge} tuổi lúc gửi. ` +
-					'Đây là phản hồi thật từ Discord, không phải suy đoán loại token. Hãy mở Discord chính chủ ' +
+					'Discord vẫn đòi xác minh dù đã gửi kết quả. hCaptcha trong môi trường này ' +
+					'tự cho qua (token "passive") nên Discord không công nhận. Hãy mở Discord chính chủ ' +
 					'để nhận nhiệm vụ này.';
 				// Waves 40 (B): đổi nút thành "Mở Discord để nhận" (logic-only, UI giữ nguyên).
-				upsertQuest(id, { claimError: msg, claimOpenDiscord: true, claimBranch: 'captcha-still-required', claimDiagSource: lastCaptchaSubmit ? lastCaptchaSubmit.source : '', claimDiagDelayMs: lastCaptchaSubmit ? lastCaptchaSubmit.delayMs : null, claimDiagTokenAgeMs: lastCaptchaSubmit ? lastCaptchaSubmit.tokenAgeMs : null });
-				appendClaimDiag(quest, 'captcha-still-required');
+				upsertQuest(id, { claimError: msg, claimOpenDiscord: true });
 				appendLog(`[Cảnh báo] "${quest.name || ''}": Discord giữ nguyên yêu cầu xác minh — dừng vòng lặp.`, 'warn');
-				appendLog(`[Hệ thống] Discord vẫn yêu cầu xác minh sau khi gửi token (HTTP ${resStatus} · code ${resCode} · token ${tokenAge} tuổi lúc gửi). Thông điệp Discord: ${res && res.message ? res.message : 'không kèm thông điệp'}.`, 'system');
+				appendLog('[Hệ thống] hCaptcha trả token passive (P1_/pd:0) không có lời giải thử thách, nên Discord từ chối. Không phải lỗi token.', 'system');
 				toast('Discord chưa công nhận xác minh — hãy mở Discord để nhận nhiệm vụ này.', true);
 				queueRemove(id);
 				return 'captcha-rejected';
@@ -4347,7 +3074,6 @@ async function runClaim(quest, captchaMeta) {
 		// thử lại sớm với chờ bị chặn tối đa; claimSequence sẽ tự tiếp tục
 		// hàng đợi sau khi hết retry_after (xem stopReason 'rate').
 		if (res && res.rateLimited) {
-			setGlobal429('claim', res.retryAfter);
 			if (Number.isFinite(Number(res.retryAfter)) && Number(res.retryAfter) > 0) lastClaimRateLimitSec = Number(res.retryAfter);
 			const wait = res.retryAfter ? `${Math.ceil(res.retryAfter)}s` : 'vài giây';
 			const msg = res.message || `Discord đang giới hạn tốc độ — thử lại sau ${wait}.`;
@@ -4369,18 +3095,15 @@ async function runClaim(quest, captchaMeta) {
 		}
 
 		// 🎮 403 code 10008 — Discord ăn captcha_key nhưng trả "Unknown Message".
-		// ANYACCT: comment cu khang dinh token "van la loai passive chua
-		// duoc coi la da giai" — khong chung minh duoc (xem nhanh
-		// still-required: thu thach giai that van bi tu choi). Su that
-		// biet duoc: Discord da nhan captcha (doi tu 400 sang 403) nhung
-		// buoc trao thuong loi. Noi dung phan hoi that, KHONG mo lai
-		// modal (tranh lap).
+		// Waves 37: đo được khi gửi kèm captcha_rqdata + captcha_rqtoken thì Discord
+		// đổi từ `400 captcha-required` sang `403 10008`. Nghĩa là đã qua cổng
+		// captcha nhưng phía thưởng truy hồi lỗi (token vẫn là loại "passive" chưa
+		// được coi là đã giải). Nói rõ, KHÔNG mở lại modal (tránh lặp).
 		if (res && res.status === 403 && (res.code === 10008 || /10008/.test(String(res.message || '')))) {
 			const msg =
 				'Discord đã nhận kết quả xác minh nhưng không thể trao thưởng (403 · 10008). ' +
-				'Hãy mở Discord chính chủ cho nhiệm vụ này.';
-			upsertQuest(id, { claimBusy: false, claimPhase: '', claimError: msg, claimOpenDiscord: true, claimBranch: 'grant-403-10008', claimDiagSource: lastCaptchaSubmit ? lastCaptchaSubmit.source : '', claimDiagDelayMs: lastCaptchaSubmit ? lastCaptchaSubmit.delayMs : null });
-			appendClaimDiag(quest, 'grant-403-10008');
+				'Phiên hCaptcha trong app chưa được coi là "đã giải". Hãy mở Discord chính chủ cho nhiệm vụ này.';
+			upsertQuest(id, { claimBusy: false, claimPhase: '', claimError: msg, claimOpenDiscord: true });
 			appendLog(`[Cảnh báo] "${quest.name || ''}": Discord trả 403 · 10008 (đã qua captcha, lỗi trao thưởng).`, 'warn');
 			toast('Discord chưa trao thưởng — hãy mở Discord để nhận nhiệm vụ này.', true);
 			queueRemove(id);
@@ -4395,8 +3118,7 @@ async function runClaim(quest, captchaMeta) {
 		queueRemove(id);
 		return 'error';
 	} catch (err) {
-		// FIX64-P3 (W37): khong de loi chung chung — noi ro buoc + buoc tiep.
-		const msg = (err && err.message) || 'Không liên lạc được với Discord khi nhận thưởng — kiểm tra mạng rồi bấm Thử lại.';
+		const msg = (err && err.message) || 'Lỗi không xác định khi gọi Discord.';
 		upsertQuest(id, { claimBusy: false, claimPhase: '', claimError: msg });
 		appendLog(`[Lỗi] Nhận "${quest.name || ''}" thất bại: ${msg}`, 'stderr');
 		toast(`Nhận thất bại: ${msg}`, true);
@@ -4426,8 +3148,6 @@ function claimableMatchingIds() {
 let lastClaimRateLimitSec = 0;
 
 async function claimSequence(ids, source = 'bulk') {
-	clearInterval(rateLimitCountdownTimer);
-	rateLimitCountdownTimer = null;
 	bulkClaimBusy = true;
 	bulkClaimDone = 0;
 	bulkClaimTotal = ids.length;
@@ -4445,10 +3165,6 @@ async function claimSequence(ids, source = 'bulk') {
 	let orbs = 0;
 	let attempted = 0;
 	let stopReason = '';
-	// Waves#160: đếm lần thử trong đợt claim này — 'gone' là kết cục
-	// cuối (không retry), 'unconfirmed' quá 2 lần thì bỏ qua để khỏi
-	// quay vòng vô hạn trong cùng một đợt. Captcha/404 không retry.
-	const claimAttempts = new Map();
 	try {
 		for (const id of ids) {
 			if (state !== 'idle') {
@@ -4464,17 +3180,7 @@ async function claimSequence(ids, source = 'bulk') {
 			bulkClaimDone = attempted;
 			pillSetCount(attempted, ids.length);
 			renderQuests();
-			claimAttempts.set(id, (claimAttempts.get(id) || 0) + 1);
 			const out = await runClaim(q);
-			if (out === 'gone') {
-				queueRemove(id);
-				continue;
-			}
-			if (out === 'unconfirmed' && claimAttempts.get(id) >= 2) {
-				queueRemove(id);
-				appendLog(`[Hệ thống] Bỏ qua "${q.name || id}" sau 2 lần chưa xác nhận trong đợt này — quét lại sau.`, 'warn');
-				continue;
-			}
 			if (out === 'claimed') {
 				claimed += 1;
 				orbs += Number(q.orbs) || 0;
@@ -4503,9 +3209,6 @@ async function claimSequence(ids, source = 'bulk') {
 	}
 
 	if (stopReason === 'captcha') {
-		// Waves#188: captcha hết hạn giữa đợt nhận chỉ dừng quest đó; hàng đợi
-		// giữ nguyên vị trí (queueRows không bị xóa), giải lại xong
-		// onCaptchaSolved tự tiếp tục hàng đợi — không khởi động lại toàn bộ.
 		const left = queueRows().length;
 		appendLog(
 			left > 0
@@ -4542,10 +3245,9 @@ async function claimSequence(ids, source = 'bulk') {
 		const resumeMs = ((Number.isFinite(lastClaimRateLimitSec) && lastClaimRateLimitSec > 0 ? lastClaimRateLimitSec : 30) * 1000) + 1000;
 		appendLog(`[Cảnh báo] Đã dừng nhận hàng loạt: Discord giới hạn tốc độ. Sẽ tự nhận tiếp sau ${Math.ceil(resumeMs / 1000)}s.`, 'warn');
 		toast(`Đã dừng: Discord giới hạn tốc độ — sẽ tự nhận tiếp sau ${Math.ceil(resumeMs / 1000)}s.`, true);
-		// FIX64-P4 (W43): dem nguoc truc tiep tren pill thay vi setTimeout cam.
-		startRateLimitCountdown(resumeMs, () => {
+		setTimeout(() => {
 			if (queueRows().length) continueClaimQueue();
-		});
+		}, resumeMs);
 	} else if (stopReason === 'engine') {
 		appendLog('[Hệ thống] Đã dừng nhận hàng loạt vì tiến trình cày vừa khởi động.', 'warn');
 	} else {
@@ -4554,7 +3256,6 @@ async function claimSequence(ids, source = 'bulk') {
 		appendLog(`[Hệ thống] Nhận hàng loạt xong: ${bits.join(' · ')}.`, claimed > 0 ? 'ok' : 'warn');
 		if (claimed > 0) {
 			toast(`Đã nhận ${claimed} nhiệm vụ${orbs > 0 ? ` (+${orbs} Orbs)` : ''}.`);
-			playClaimSuccess();
 			notifySystem('Nhận hàng loạt', `Đã nhận ${claimed} nhiệm vụ${orbs > 0 ? ` (+${orbs} Orbs)` : ''}`);
 		} else if (attempted > 0) {
 			toast('Không nhận được nhiệm vụ nào — xem nhật ký để biết lý do.', true);
@@ -4624,10 +3325,6 @@ function onQuestActClick(e) {
 			});
 		return;
 	}
-	// CARDV2: nhanh play ("Chay Ngay" tren the) da xoa — chay bang
-	// checkbox + nut "Chay (n)" tren thanh cong cu. Su kien run-start
-	// cua engine (case 'quest:start') van xoa co chan heartbeat khi
-	// dot chay moi bat dau, nen the chan cu khong che dot thu lai.
 	if (act === 'claim' || act === 'retry') {
 		e.preventDefault();
 		e.stopPropagation();
@@ -4654,37 +3351,15 @@ function onQuestActClick(e) {
 ui.questListActive.addEventListener('click', onQuestActClick);
 ui.questListNew.addEventListener('click', onQuestActClick);
 ui.questListDone.addEventListener('click', onQuestActClick);
-if (ui.questListActive) ui.questListActive.addEventListener('click', (e) => {
-	const head = e.target.closest ? e.target.closest('.qgroup-head') : null;
-	if (!head) return;
-	const k = head.dataset.group;
-	if (expandedGroups.has(k)) expandedGroups.delete(k); else expandedGroups.add(k);
-	renderQuests();
-});
 
 /* Nút trong modal captcha */
 if (ui.btnCaptchaCancel) ui.btnCaptchaCancel.addEventListener('click', closeCaptchaModal);
 if (ui.btnCaptchaRetry) ui.btnCaptchaRetry.addEventListener('click', onCaptchaRetryClick);
-if (ui.btnCaptchaReload) ui.btnCaptchaReload.addEventListener('click', onCaptchaReloadClick);
 if (ui.captchaVeilClick) ui.captchaVeilClick.addEventListener('click', (e) => {
 	if (e.target === ui.captchaModal) closeCaptchaModal();
 });
 
 /* ---------------- Event Dispatcher ---------------- */
-
-/* FIX64-P4 (W44): loi fatal do token chet/het han phai noi dung 1 cau ro
-   rang + hanh dong tiep theo, khong de thong diep chung chung hay ma 401
-   troi. Cac nguon (engine bot.js, bridge login/balance/claim) da tra cau
-   nay; day la lop chuan hoa cuoi cho moi fatal lac toi UI. */
-function tokenDeadText(msg) {
-	const s = String(msg || '');
-	if (/401/.test(s) || /token.*(không hợp lệ|hết hạn|het han|invalid|expired)/i.test(s)) {
-		return currentLang === 'en'
-			? 'Token is no longer valid, paste the token again.'
-			: 'Token không còn hiệu lực, dán lại token.';
-	}
-	return s;
-}
 
 async function handleEvent(evt) {
 	const d = evt.data || {};
@@ -4710,7 +3385,6 @@ async function handleEvent(evt) {
 			break;
 
 		case 'scan:start':
-			scanStartGen = scanGeneration;
 			// Wave#103: mỗi lượt quét phải bắt đầu từ buffer RỖNG. Trước đây nếu
 			// lượt trước dở dang (mất kết nối) buffer còn sót → lượt sau trộn quest
 			// cũ với mới, đếm sai và có thể hồi sinh quest đã biến mất.
@@ -4734,7 +3408,6 @@ async function handleEvent(evt) {
 		}
 
 		case 'quest:inventory': {
-			if (scanStartGen && scanStartGen !== scanGeneration) { scanBuffer.length = 0; break; }
 			// Waves 27: đổ TOÀN BỘ quest từ RAM ra 1 lượt + hiệu ứng trôi + mờ dần.
 			// Danh sách quét THẬT từ Discord API. KHÔNG cộng orbs, KHÔNG tự nhận.
 			const rawList =
@@ -4772,35 +3445,10 @@ async function handleEvent(evt) {
 								? 'claimable'
 								: 'todo',
 					flag: '',
-					// FIX64-P0 wave 3/12c: quét làm mới tiến độ nhưng KHÔNG xoá
-					// trạng thái bị chặn khi quest còn todo (tiến độ vẫn cập
-					// nhật qua quét); chỉ xoá khi quest đã xong/chờ nhận vì
-					// lúc đó heartbeat không còn ý nghĩa.
-					heartbeatBlocked:
-						item.status === 'claimable' || item.status === 'claimed'
-							? false
-							: prev
-								? !!prev.heartbeatBlocked
-								: false,
-					heartbeatBlockedReason:
-						item.status === 'claimable' || item.status === 'claimed'
-							? ''
-							: prev
-								? prev.heartbeatBlockedReason || ''
-								: '',
 					// Waves 22: dữ liệu thẻ Discord
 					hero: item.hero || '',
-					heroVideo: item.heroVideo || '',
 					gameTile: item.gameTile || '',
-					gameTileDark: item.gameTileDark || '',
-					gameTileLight: item.gameTileLight || '',
 					logotype: item.logotype || '',
-					logotypeDark: item.logotypeDark || '',
-					logotypeLight: item.logotypeLight || '',
-					// Waves#153: session memory ONLY — stripInventoryItem
-					// deliberately drops this so codes never reach disk.
-					rewardCode: item.rewardCode || '',
-					rewardType: item.rewardType || '',
 					// Waves 42: logo dự phòng LUÔN có — icon application (game).
 					appId: item.appId || '',
 					appIcon: item.appIcon || '',
@@ -4816,11 +3464,6 @@ async function handleEvent(evt) {
 					rewardName: item.rewardName || '',
 					// Waves 43: thời điểm NHẬN THẬT để ô "Đã làm" hiện đúng "lúc nào".
 					claimedAt: item.claimedAt || null,
-					// ORBFIX: trạng thái ĐÃ NHẬN quest trong Discord thật (engine
-					// gửi kèm từ user_status.enrolled_at) — dùng để hướng dẫn
-					// thẻ bị chặn heartbeat; chỉ ghi đè khi engine gửi boolean,
-					// không để undefined của cache cũ xoá giá trị đã biết.
-					enrolled: typeof item.enrolled === 'boolean' ? item.enrolled : (prev ? prev.enrolled : undefined),
 					// Waves 32: platform THẬT (Discord cần đúng giá trị khi claim).
 					platform: typeof item.platform === 'number' ? item.platform : 0,
 					// Wave#102: traffic metadata Discord cấp lúc enroll — claim tay
@@ -4831,9 +3474,6 @@ async function handleEvent(evt) {
 			}
 			scanBuffer.length = 0;
 			pruneQuestsMissing(list);
-			// FIX64-P4 (W46): khoi phuc lua chon da luu cho nhung quest con
-			// ton tai trong danh sach moi (sau khi prune da loai id chet).
-			restoreSelection();
 			// Wave#128: giữ bản lưu ngoại tuyến theo tài khoản (không token).
 			saveInventoryCache(list);
 			// Wave#118: hàng đợi chỉ giữ mục còn nhận được / chưa quá hạn.
@@ -4885,33 +3525,6 @@ async function handleEvent(evt) {
 			// trôi + mờ dần 620ms. Bỏ ngay sẽ làm nó biến mất giật cục.
 			setScanning(false, questOrder.length);
 			if (state === 'scanning') setState('idle');
-			// Waves#186/#194: báo phần quét lỗi + thông báo khi có nhiệm vụ chờ nhận.
-			try {
-				if (!scanPartialErrors.length) partialRetryAttempt = 0;
-				// Waves#238: quest mới = id có trong lần quét này nhưng không có
-				// trong lần quét trước. Lần quét đầu tiên (chưa có lần trước)
-				// thì không báo, tránh toast "mới" cho toàn bộ danh sách.
-				if (prevScanQuestIds.size > 0) {
-					const fresh = questOrder.filter((id) => !prevScanQuestIds.has(id));
-					if (fresh.length) {
-						const freshNames = fresh.map((id) => { const qq = quests.get(id); return (qq && (qq.name || qq.gameTitle)) || id; }).slice(0, 5).join(', ');
-						appendLog(`[Mới] Có ${fresh.length} quest mới so với lần quét trước (${freshNames}${fresh.length > 5 ? '…' : ''}).`, 'system');
-						toast(`Có ${fresh.length} quest mới.`, false);
-					}
-				}
-				prevScanQuestIds = new Set(questOrder);
-				if (scanPartialErrors.length) {
-					const names = scanPartialErrors.map((x) => x.name || x.id).slice(0, 5).join(', ');
-					appendLog(`[Cảnh báo] Quét chưa đủ: ${scanPartialErrors.length} nhiệm vụ chưa quét được (${names}${scanPartialErrors.length > 5 ? '…' : ''}). Bấm Quét lại để thử lại phần này — danh sách hiện tại KHÔNG được coi là đầy đủ.`, 'warn');
-					toast(`Quét chưa đủ: ${scanPartialErrors.length} nhiệm vụ chưa quét được — quét lại để thử lại phần này.`, true);
-				}
-				const exp1 = Array.from(quests.values()).filter((qq) => isExpiringSoon(qq, 1) && qq.status !== 'claimed').length;
-				const exp3 = Array.from(quests.values()).filter((qq) => isExpiringSoon(qq, 3) && qq.status !== 'claimed').length;
-				if (exp1 > 0) appendLog(`[Cảnh báo] ${exp1} nhiệm vụ hết hạn trong 1 ngày — không tự chạy, bạn chọn tay nếu muốn làm.`, 'warn');
-				else if (exp3 > 0) appendLog(`[Hệ thống] ${exp3} nhiệm vụ hết hạn trong 3 ngày — lọc "Sắp hết hạn (3 ngày)" để xem.`, 'system');
-				const claimable = Array.from(quests.values()).filter((qq) => qq.status === 'claimable').length;
-				if (claimable > 0) notifySystem('Có nhiệm vụ chờ nhận', `${claimable} nhiệm vụ đã xong và chờ nhận thưởng — app không tự nhận, bạn bấm Nhận khi sẵn sàng.`);
-			} catch {}
 			break;
 
 		case 'quest:start':
@@ -4928,38 +3541,8 @@ async function handleEvent(evt) {
 				orbs: d.orbs || 0,
 				running: true,
 				stopFlag: false,
-				// FIX64-P0: chạy lại thì thử heartbeat lại từ đầu — xoá trạng
-				// thái bị chặn của lần chạy trước.
-				heartbeatBlocked: false,
-				heartbeatBlockedReason: '',
 			});
 			break;
-
-		case 'quest:heartbeat-blocked': {
-			// FIX64-P0 wave 3/4: heartbeat bị Discord từ chối 401 kéo dài cả
-			// 2 appId — KHÔNG phải fail chung. Giữ nguyên status/tab, giữ
-			// tiến độ thật, chỉ tắt cờ chạy và gắn hướng dẫn chơi trong
-			// Discord thật; tiến độ tiếp tục cập nhật qua quét (xem
-			// quest:inventory: giữ heartbeatBlocked khi còn todo, xoá khi
-			// quest đã xong/chuyển sang chờ nhận).
-			const key = d.id || d.name;
-			const q = quests.get(key) || {};
-			upsertQuest(key, {
-				name: d.name || q.name,
-				running: false,
-				flag: '',
-				heartbeatBlocked: true,
-				heartbeatBlockedReason: d.reason || d.message || 'Discord từ chối heartbeat (401) — mở game trong Discord thật và chơi, app sẽ theo dõi tiến độ qua quét.',
-				// ORBFIX: trạng thái nhận quest kèm theo payload chặn (engine
-				// tính từ user_status.enrolled_at) — chỉ ghi đè khi boolean,
-				// không để payload thiếu field xoá giá trị đã biết.
-				enrolled: typeof d.enrolled === 'boolean' ? d.enrolled : q.enrolled,
-				secondsDone: typeof d.secondsDone === 'number' ? d.secondsDone : q.secondsDone,
-				secondsNeeded: typeof d.secondsNeeded === 'number' ? d.secondsNeeded : q.secondsNeeded,
-			});
-			appendLog(`[Cảnh báo] "${d.name || key}": heartbeat bị Discord từ chối (401) cả appId task lẫn appId quest — đã dừng heartbeat, chơi game trong Discord thật để tiến độ tiếp tục.`, 'warn');
-			break;
-		}
 
 		case 'quest:progress':
 			upsertQuest(
@@ -4997,11 +3580,8 @@ async function handleEvent(evt) {
 				// reward was claimed. Do not toast "+Orbs" as if received, and
 				// do not add to any session total here — only a confirmed
 				// quest:claim event counts Orbs.
-				// FIX64-P5 (W53): tieng hoan thanh RIENG (khac tieng claim),
-				// chi phat 1 lan nho co doneSeen (first) — khong spam.
 				if (earned > 0) toast(`Hoàn thành "${d.name || q.name}" — phần thưởng ${earned} Orbs, chưa nhận.`);
 				else toast(`Hoàn thành "${d.name || q.name}" — chờ nhận thưởng.`);
-				playQuestComplete();
 			}
 			// Discord chặn claim bằng captcha → báo 1 lần, đừng để bro tưởng app lỗi.
 			if (d.note && !claimNoteShown) {
@@ -5030,10 +3610,6 @@ async function handleEvent(evt) {
 					claimPhase: '',
 					claimError: d.reason || d.message || 'Discord yêu cầu xác minh nhưng không cấp đủ dữ liệu — mở Discord để nhận thủ công.',
 					claimOpenDiscord: true,
-					claimBranch: '',
-					claimDiagSource: '',
-					claimDiagDelayMs: null,
-					claimDiagTokenAgeMs: null,
 					orbs: d.orbs || q.orbs || 0,
 				});
 				appendLog(`[Cảnh báo] "${d.name || key}": ${d.reason || 'bị chặn xác minh.'}`, 'warn');
@@ -5153,12 +3729,7 @@ async function handleEvent(evt) {
 			break;
 
 		case 'quest:error':
-			// Waves#186: ghi lại nhiệm vụ quét lỗi để scan:complete báo rõ phần thiếu.
-			try { if (scanning && d && (d.id || d.name)) scanPartialErrors.push({ id: String(d.id || ''), name: String(d.name || ''), message: String(d.message || d.reason || '') }); } catch {}
-			// FIX64-P4 (W50): quest loi tu engine truoc day chi co co 'error'
-			// ma khong co chu gi tren the — ghi ca ly do + thoi gian de the
-			// hien duoc ma khong can mo log.
-			upsertQuest(d.id || d.name, { running: false, flag: 'error', questErrorMsg: String(d.message || d.reason || ''), questErrorAt: Date.now() });
+			upsertQuest(d.id || d.name, { running: false, flag: 'error' });
 			break;
 
 		case 'orb:summary':
@@ -5202,8 +3773,8 @@ async function handleEvent(evt) {
 			break;
 
 		case 'fatal':
-			appendLog(`[LỖI] ${tokenDeadText(d.message) || 'Lỗi không xác định'}`, 'stderr');
-			toast(`Lỗi: ${tokenDeadText(d.message)}`, true);
+			appendLog(`[LỖI] ${d.message || 'Lỗi không xác định'}`, 'stderr');
+			toast(`Lỗi: ${d.message}`, true);
 			if (scanning) {
 				// Wave#103: quét lỗi không được để loader quay mãi.
 				setScanning(false, scanDone);
@@ -5473,14 +4044,12 @@ function openAccSw() {
 		renderAccountList();
 	}
 	if (t) t.focus();
-	playModalOpen();
 }
 
 /** Đóng popup "Đổi tài khoản" (và modal xác nhận nếu đang mở). */
 function closeAccSw() {
 	if (ui.accSwitchModal) ui.accSwitchModal.hidden = true;
 	if (ui.accConfirmSwitchModal) ui.accConfirmSwitchModal.hidden = true;
-	playModalClose();
 }
 
 /** Modal XÁC NHẬN "Bạn có muốn chuyển tài khoản sang @…/UID ?". */
@@ -5541,9 +4110,6 @@ function showLoginVeil() {
 function resetQuestSessionForSwitch() {
 	try {
 		// 1) State nhiệm vụ trong RAM (store theo id + thứ tự + chọn + dedupe + bộ đếm phiên).
-		// FIX64-P4 (W46): luu lua chon cua tai khoan cu TRUOC khi xoa RAM,
-		// de quay lai tai khoan do van con lua chon cu.
-		try { persistSelection(); } catch {}
 		quests.clear();
 		questOrder.length = 0;
 		selected.clear();
@@ -5567,81 +4133,28 @@ function resetQuestSessionForSwitch() {
 		}
 		if (ui.questCounter) ui.questCounter.textContent = '0';
 		if (ui.stateActive) ui.stateActive.textContent = STATE_TEXT.idle;
-		// Waves#180: dọn sạch dữ liệu phiên của tài khoản cũ (không đụng
-		// ghi chú/yêu thích đã lưu theo scope, không đụng token IndexedDB).
-		claimQueue = [];
-		scanPartialErrors = [];
-		partialRetryAttempt = 0;
-		prevScanQuestIds.clear();
-		last429 = null;
-		try { if (typeof api.clearClaimDiagnostics === 'function') api.clearClaimDiagnostics(); } catch {}
-		try { if (ui.claimQueueChip) ui.claimQueueChip.hidden = true; } catch {}
 	} catch {
 		/* best-effort: reload ngay sau đó sẽ dọn sạch mọi thứ còn sót */
 	}
 }
 
-/** "Xác Nhận": hiện veil → reset phiên → đặt active mới → ghi config → KIỂM CHỨNG → RELOAD.
- * ANYACCT (2026-11-01): ban cu co 3 lo hong gop lai lam mat tai khoan
- * (live 2026-11-01: tai khoan dich bien mat sau switch):
- *  (D1) khong bao gio cap nhat activeIdxCache tu ket qua setActive —
- *  saveConfig ngay sau do gui activeIdx CU, ghi de gia tri bridge vua
- *  dat; (D2) catch {} nuot loi roi van reload — loi setActive/save
- *  thanh trang thai cu/khong day du ma khong bao gi; (D3) saveConfig
- *  ghi de mang accounts bang cache co the thieu (bridge da chan o
- *  saveConfig — union khong bao gio ngan danh sach).
- * Ban moi: setActive tra ok:false thi huy (khong reload); sau setActive
- * nap lai cache tu bridge va doi chieu theo ID tai khoan dich (khong
- * doi chieu theo idx — idx co the lech khi cache cu); ghi ban
- * pendingSwitch truoc reload; sau save doc lai va kiem chung lan nua
- * — chi reload khi tai khoan dich con trong danh sach VA la active.
- * That bai o bat ky buoc nao: an veil, bao loi, GIU phien cu, KHONG
- * xoa tai khoan nao, KHONG reload. */
+/** "Xác Nhận": hiện veil → reset phiên → đặt active mới → ghi config → RELOAD. */
 async function confirmSwitchAccount() {
 	const idx = pendingSwitchIdx;
 	if (idx < 0 || !accountsCache[idx]) return;
 	const a = accountsCache[idx];
-	const abortSwitch = (msg) => {
-		try { localStorage.removeItem('autoquest.pendingSwitch.v1'); } catch {}
-		if (ui.loginVeil) ui.loginVeil.hidden = true;
-		appendLog(`[Multiaccount] ${msg}`, 'warn');
-		toast(msg, true);
-	};
 	// BƯỚC 1 (bro chốt): hiện NGAY màn "Đang đăng nhập" — trước mọi việc khác.
 	showLoginVeil();
 	// BƯỚC 2: dọn phiên quét của account cũ ⇒ không đè lên account mới.
 	resetQuestSessionForSwitch();
 	try {
 		// BƯỚC 3: đổi active (main giải mã tokenEnc → ghi token chính).
-		const setRes = await api.accountsSetActive(idx);
-		if (setRes && setRes.ok === false) {
-			abortSwitch('Đổi tài khoản thất bại (tài khoản đích không hợp lệ) — vẫn giữ tài khoản cũ, không mất tài khoản nào.');
-			return;
-		}
-		// BƯỚC 3b (ANYACCT): nap lai cache tu bridge (nguon dung that) va
-		// doi chieu theo ID — activeIdxCache cu khong duoc phep song sot
-		// toi buoc save (D1).
-		await loadAccountsCache();
-		let newIdx = accountsCache.findIndex((x) => x && x.id === a.id);
-		if (newIdx === -1 || activeIdxCache !== newIdx) {
-			abortSwitch('Đổi tài khoản chưa lưu được (bridge chưa nhận active mới) — vẫn giữ tài khoản cũ, không mất tài khoản nào.');
-			return;
-		}
+		await api.accountsSetActive(idx);
 		// Wave#134: xin token qua tokenReveal() — đang trong cú click thật của user nên cổng mở.
 		const rev = typeof api.tokenReveal === 'function' ? await api.tokenReveal({ reason: 'account-switch' }) : null;
 		if (rev && rev.ok && rev.token && ui.token) ui.token.value = rev.token;
 		// BƯỚC 4: ghi config (kèm accounts/activeIdx để KHÔNG xoá danh sách).
 		await api.saveConfig(collectConfig());
-		// BƯỚC 4b (ANYACCT): ghi ban pendingSwitch TRUOC reload + doc lai
-		// va kiem chung — chi reload khi dich con trong danh sach VA la
-		// active. Ban ghi nay de boot sau reload tu kiem tra (xem init).
-		try { localStorage.setItem('autoquest.pendingSwitch.v1', JSON.stringify({ id: a.id, idx: newIdx, at: Date.now() })); } catch {}
-		await loadAccountsCache();
-		newIdx = accountsCache.findIndex((x) => x && x.id === a.id);
-		if (newIdx === -1 || activeIdxCache !== newIdx) {
-			abortSwitch('Đổi tài khoản chưa lưu trọn vẹn sau khi ghi — vẫn giữ tài khoản cũ, không mất tài khoản nào.');
-			return;
-		}
 		appendLog(`[Multiaccount] Chuyển sang @${a.username || a.id} — đang nạp lại client…`, 'system');
 		// BƯỚC 5 (Wave#96): "trong thời gian mờ mờ loading RENDER CÁC HIỆU ỨNG
 		// VÀO RAM rồi đợi mở ra load siêu mượt" ⇒ warm-up ảnh/asset TRƯỚC khi
@@ -5649,11 +4162,7 @@ async function confirmSwitchAccount() {
 		// trình duyệt để lúc client mở lại là hiện TỨC THÌ (0 network stall).
 		await warmUpAccountAssets(a);
 	} catch {
-		/* ANYACCT: loi bat ky buoc nao thi GIU phien cu, KHONG reload
-		   (ban cu reload bat chap — do la cach trang thai cu/thieu
-		   thanh trang thai that). */
-		abortSwitch('Đổi tài khoản gặp lỗi — vẫn giữ tài khoản cũ, không mất tài khoản nào.');
-		return;
+		/* dù lỗi vẫn reload để đồng bộ trạng thái */
 	}
 	window.location.reload();
 }
@@ -5860,6 +4369,7 @@ function renderDiscordProfile(user) {
 	//   Bro: "phải có màu ở chỗ 2 khung này … làm background cho từng khung".
 	const hasTheme = Array.isArray(themeColors) && themeColors.length >= 2;
 	applyThemeColors(themeColors, ui.dpBanner, ui.upPop);
+	applyThemeColors(themeColors, ui.phBanner, ui.heroProfile);
 	if (hasTheme) {
 		const tshadow = themeTextShadow();
 		for (const el of [ui.upName, ui.dpDisplay, ui.dpUsername]) {
@@ -5898,13 +4408,17 @@ function renderDiscordProfile(user) {
 		const badgeSrc = `${CDN}/clan-badges/${clan.guildId || '0'}/${clan.badge}.png?size=32`;
 		ui.dpClanBadge.src = badgeSrc;
 		ui.dpClanBadge.hidden = false;
-		for (const tagEl of [ui.dpClanTag, ui.upClanTag]) {
+		ui.phClanBadge.src = badgeSrc;
+		ui.phClanBadge.hidden = false;
+		for (const tagEl of [ui.dpClanTag, ui.phClanTag, ui.upClanTag]) {
 			tagEl.textContent = clan.tag || '';
 			tagEl.hidden = !clan.tag;
 		}
 	} else {
 		ui.dpClanBadge.hidden = true;
 		ui.dpClanTag.hidden = true;
+		ui.phClanBadge.hidden = true;
+		ui.phClanTag.hidden = true;
 		ui.upClanTag.hidden = true;
 	}
 
@@ -5912,9 +4426,83 @@ function renderDiscordProfile(user) {
 	// Waves 22: bỏ hẳn dòng "Đóng khung quản lý" trong popup (chỉ giữ cho khách đăng nhập)
 	ui.dpBadge.hidden = true;
 
+	// ---- Hero giữa trang (Waves 15/16): BẮT BUỘC hiện khi đăng nhập ----
+	ui.heroProfile.hidden = false;
+	ui.phDisplay.textContent = display;
+	// Waves 48: áp KIỂU TÊN HIỂN THỊ thật của Discord (font + hiệu ứng + màu).
+	loadDisplayNameStyle(display, id);
+	ui.phUsername.textContent = username ? `@${username}` : '';
+	// Waves 17: dòng ID Discord thật (user.id từ API)
+	ui.phUserId.hidden = !id;
+	ui.phUserIdValue.textContent = id || '—';
+	ui.phAvatar.innerHTML = '';
+	ui.phAvatar.classList.toggle('is-default', !(avatar && id));
+	if (avatar && id) {
+		const ext = avatar.startsWith('a_') ? 'gif' : 'png';
+		const img = document.createElement('img');
+		img.src = `${CDN}/avatars/${id}/${avatar}.${ext}?size=160`;
+		img.alt = '';
+		img.className = 'ph-avatar-img';
+		ui.phAvatar.appendChild(img);
+		ui.phAvatar.classList.add('has-photo');
+	} else {
+		// Waves 41: avatar mặc định Discord (xám trung tính), không nền tím.
+		const idx = id ? Number((BigInt(id) >> 22n) % 6n) || 0 : 0;
+		const img = document.createElement('img');
+		img.src = `${CDN}/embed/avatars/${idx}.png`;
+		img.alt = '';
+		img.className = 'ph-avatar-img';
+		img.addEventListener('error', () => img.remove(), { once: true });
+		ui.phAvatar.appendChild(img);
+		ui.phAvatar.classList.add('has-photo');
+	}
+	// Waves 46b: nếu user KHÔNG có ảnh đại diện thật thì giữ LOGO ORB TO làm
+	// "mặt" của thẻ hero — đây mới đúng ý bro "logo orb to ở chính giữa".
+	// Ảnh phải nạp được (naturalWidth>0) mới bật; hỏng thì rơi về hình người.
+	syncHeroOrb();
+	// Wave#87: đã đăng nhập → BỎ class guest + Ẩn nút "Đăng nhập tài khoản Discord".
+	ui.heroProfile.classList.remove('is-discord-guest');
+	ui.heroProfile.dataset.state = 'logged-in';
+	ui.phAvatar.classList.remove('is-discord-guest');
+	if (ui.phLoginHint) ui.phLoginHint.hidden = true;
+	ui.phBanner.classList.remove('default');
+	// Waves 49: ưu tiên profileBanner (từ /users/@me/profile) rồi banner (từ /users/@me)
+	const heroBanner = profileBanner || banner;
+	let phHasImg = false;
+	if (heroBanner && id) {
+		const ext = heroBanner.startsWith('a_') ? 'gif' : 'png';
+		ui.phBanner.style.background = `center / cover no-repeat url('${CDN}/banners/${id}/${heroBanner}.${ext}?size=600')`;
+		phHasImg = true;
+	} else if (accentColor) {
+		ui.phBanner.style.background = linearGradientFromHex(intToHex(accentColor));
+	} else {
+		ui.phBanner.style.background = '';
+		ui.phBanner.classList.add('default');
+	}
+	ui.phBanner.dataset.bannerImage = phHasImg ? '1' : '';
+	ui.heroProfile.dataset.bannerImage = phHasImg ? '1' : '';
+	/* Waves 50 — BRO CHỐT: "loại bỏ triệt để khung ở giữa" + "LOẠI BỎ TRIỆT ĐỂ
+	   HIỆU ỨNG Ở BÊN KHUNG CHÍNH VÀ CẢ KHUNG".
+
+	   ⇒ Thẻ hero GIỮA trang KHÔNG vẽ khung, KHÔNG vẽ hiệu ứng hồ sơ nữa. Chỉ
+	   còn profile BÊN TRÁI (popout) mang khung + hiệu ứng. Avatar, tên, banner,
+	   decoration… vẫn nguyên — bro cấm xoá mấy thứ đó.
+
+	   Vẫn phải DỌN SẠCH node hero để lần trước không sót lại. */
+	renderProfileEffect(null, ui.phEffect, 'hero');
+	renderProfileFrame(null, ui.phFrame, 'hero');
+	ui.phDecoration.innerHTML = '';
+	if (avatarDecoration && id) {
+		const decoImg = document.createElement('img');
+		decoImg.src = `${CDN}/avatar-decoration-presets/${avatarDecoration}.png?size=96&passthrough=true`;
+		decoImg.alt = '';
+		ui.phDecoration.appendChild(decoImg);
+	}
+
 	// ---- NAMEPLATE CHUẨN DISCORD (Waves 16/18) ----
 	// Waves 22: CHỈ hero giữa trang dùng nameplate. Popup quản lý để tên TRẦN
 	// (bro yêu cầu bỏ hiệu ứng bảng tên bên trong khung quản lý).
+	applyNameplate(user.nameplate, ui.phNameplate);
 	applyNameplate(null, ui.dpNameplate); // dọn sạch hiệu ứng bảng tên trong popup
 	// Waves 21: hiệu ứng bảng tên phủ lên KHUNG BO TRÒN NGOÀI của chip sidebar
 	applyChipNameplate(user.nameplate);
@@ -5923,8 +4511,30 @@ function renderDiscordProfile(user) {
 	//   - Có nameplate  → --np = màu palette (đỏ → viền đỏ, xanh → viền xanh…)
 	//   - Không có      → bỏ --np ⇒ CSS dùng viền mặc định (xanh thương hiệu)
 	//   CẤM rainbow khi user đã có nameplate (đúng yêu cầu bro).
+	applyProfileAura(user.nameplate);
+
+	// ---- HIỆU ỨNG AVATAR (Waves 18): user có nameplate/decoration → ring conic xoay quanh avatar ----
+	const hasEffect = !!(avatarDecoration || (user.nameplate && user.nameplate.asset));
+	ui.phAvatarwrap.classList.toggle('has-effect', hasEffect);
+	if (hasEffect) {
+		/* Ring avatar xoay lấy màu palette bảng tên (do applyNameplate set) —
+		   Waves 55: KHÔNG fallback tím. Không có palette ⇒ CSS rơi về màu Nitro
+		   `--theme-b` của chính user (luôn động, không bịa màu). */
+		const npRing = ui.phNameplate.style.getPropertyValue('--np-ring');
+		if (npRing) {
+			ui.phAvatarwrap.style.setProperty('--np', npRing);
+			ui.phAvatarwrap.style.setProperty('--np-ring', npRing);
+		} else {
+			ui.phAvatarwrap.style.removeProperty('--np');
+			ui.phAvatarwrap.style.removeProperty('--np-ring');
+		}
+	} else {
+		ui.phAvatarwrap.style.removeProperty('--np');
+		ui.phAvatarwrap.style.removeProperty('--np-ring');
+	}
 
 	// ---- TOÀN BỘ HUY HIỆU trích từ token (Waves 18): badges xếp cạnh tên ----
+	renderBadges(ui.phBadges, user.badges, user.premiumType);
 	renderBadges(ui.dpBadges, user.badges, user.premiumType);
 
 	// ---- Wave#88/#90: NÚT ĐĂNG XUẤT (đỏ) + ĐỔI TÀI KHOẢN — bật khi đã login ----
@@ -6161,7 +4771,7 @@ function applyThemeColors(colors, bannerEl, cardEl) {
 	   mép dưới banner (không chèn lên ảnh bìa). Banner có thể chưa có rect
 	   (thẻ đang ẩn) → fallback theo biến `--ph-banner-h` của CSS. */
 	if (cardEl) {
-		const banner = bannerEl || cardEl.querySelector('.up-pop-banner');
+		const banner = bannerEl || cardEl.querySelector('.ph-banner, .up-pop-banner');
 		const measure = () => {
 			/* `hidden` ⇒ rect = 0 ⇒ KHÔNG ghi 0px (sẽ đè mất giá trị đúng khi
 			   panel vừa hiện). Chỉ ghi khi đo được chiều cao THẬT. */
@@ -6175,7 +4785,7 @@ function applyThemeColors(colors, bannerEl, cardEl) {
 				const fade = Math.min(30, Math.max(16, Math.round(h * 0.28)));
 				bannerEl?.style.setProperty('--banner-fade-h', `${fade}px`);
 				cardEl.style.setProperty('--banner-fade-h', `${fade}px`);
-				const bw = bannerEl || cardEl.querySelector('.up-pop-banner');
+				const bw = bannerEl || cardEl.querySelector('.ph-banner, .up-pop-banner');
 				bw?.style.setProperty('--banner-fade-h', `${fade}px`);
 			}
 		};
@@ -6321,9 +4931,9 @@ function renderProfileEffect(profileEffect, imgEl, mode) {
 	   Neo vẫn tính theo AVATAR cho popout (chủ thể), còn hero thì lát kín thẻ.
 	   Cả hai đều suy từ dữ liệu thật của TỪNG user — không hardcode gì. */
 	const applyScale = () => {
-		const card = imgEl.closest('.up-pop');
+		const card = imgEl.closest('.hero-card, .up-pop, .profile-hero');
 		const av = card
-			? card.querySelector('.dp-avatar, .up-pop-avatarwrap, .up-pop-avatar')
+			? card.querySelector('.ph-avatar, .dp-avatar, .up-pop-avatarwrap, .up-pop-avatar')
 			: null;
 		const hostRect = imgEl.getBoundingClientRect();
 		const avRect = av ? av.getBoundingClientRect() : null;
@@ -6345,7 +4955,7 @@ function renderProfileEffect(profileEffect, imgEl, mode) {
 			   canvas bằng `object-fit: cover` ⇒ 4 phần ghép kín hình chữ
 			   nhật và co giãn theo MỌI cỡ thẻ/cửa sổ/cỡ chữ — không hardcode. */
 			const bannerEl = card
-				? card.querySelector('.dp-banner, .up-pop-banner')
+				? card.querySelector('.ph-banner, .dp-banner, .up-pop-banner')
 				: null;
 			const bannerRect = bannerEl ? bannerEl.getBoundingClientRect() : null;
 			const boxW = bannerRect && bannerRect.width > 0 ? bannerRect.width : hostRect.width;
@@ -6585,11 +5195,11 @@ function renderProfileFrame(frameData, frameEl, mode) {
 
 	// Waves 49d — KHUNG PHẢI PHỦ CẢ THẺ HỒ SƠ (đúng Discord: `.profileFrameContainer`
 	// có `inset:0; width:100%; height:100%` của THẺ, không phải ô avatar).
-	// Trong HTML #dpFrame đang nằm trong avatarwrap → phải CHUYỂN nó lên
+	// Trong HTML #dpFrame/#phFrame đang nằm trong avatarwrap → phải CHUYỂN nó lên
 	// làm con trực tiếp của thẻ (ngay sau banner) để `100%` = bề rộng/cao thẻ.
-	const card = frameEl.closest('.up-pop') || null;
+	const card = frameEl.closest('.up-pop, .profile-hero, .hero-card') || null;
 	if (card && frameEl.parentElement !== card) {
-		const banner = card.querySelector(':scope > .up-pop-banner');
+		const banner = card.querySelector(':scope > .up-pop-banner, :scope > .ph-banner');
 		if (banner && banner.nextSibling) card.insertBefore(frameEl, banner.nextSibling);
 		else card.appendChild(frameEl);
 	}
@@ -7191,6 +5801,27 @@ function tokenOf(user) {
  *   - Không có      → viền mặc định xanh thương hiệu (--np bị xoá).
  * Đây là điều bro yêu cầu: "user dùng hiệu ứng bảng tên gì thì cấp ngay khung màu đó".
  */
+function applyProfileAura(nameplate) {
+	if (!ui.heroProfile) return;
+	if (!nameplate || !nameplate.asset) {
+		ui.heroProfile.classList.remove('has-aura');
+		ui.heroProfile.removeAttribute('data-np-real'); // Wave#96
+		ui.heroProfile.style.removeProperty('--np');
+		return;
+	}
+	/* Wave#96 (bro lệnh): XOÁ fallback tím lại một lần nữa — cùng gốc "khung
+	   xanh xanh". Chỉ gắn aura khi có palette THẬT. */
+	const hex = NAMEPLATE_PALETTES[nameplate.palette];
+	if (!hex) {
+		ui.heroProfile.classList.remove('has-aura');
+		ui.heroProfile.removeAttribute('data-np-real');
+		ui.heroProfile.style.removeProperty('--np');
+		return;
+	}
+	ui.heroProfile.style.setProperty('--np', hex);
+	ui.heroProfile.setAttribute('data-np-real', '1');
+	ui.heroProfile.classList.add('has-aura');
+}
 
 function linearGradientFromHex(hex) {
 	// Gradient dọc từ màu accent → đậm dần (giống Discord khi user không có banner)
@@ -7239,20 +5870,9 @@ function updateBalanceHint() {
 	ui.orbPending.textContent = balanceHintText(pending, source, pendingUnknown);
 }
 
-/* NEO W29: dem tang cho so Orb THAT (khong so mo phong). Reduced-motion thi gan thang. */
-function neoCountUp(el, target) {
-	if (!el) return;
-	const from = parseInt((el.textContent || '').replace(/[^0-9-]/g, ''), 10);
-	const to = Number(target);
-	if (!Number.isFinite(to) || !Number.isFinite(from) || from === to) { el.textContent = String(target); return; }
-	if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) { el.textContent = String(target); return; }
-	const start = performance.now();
-	const step = (now) => { const t = Math.min(1, (now - start) / 400); el.textContent = String(Math.round(from + (to - from) * t)); if (t < 1) requestAnimationFrame(step); };
-	requestAnimationFrame(step);
-}
 function setSideBalance(balance, pendingClaim, source, pendingUnknown) {
 	if (!ui.sideBalance || !ui.orbBalance) return;
-	neoCountUp(ui.orbBalance, balance);
+	ui.orbBalance.textContent = String(balance);
 	ui.sideBalance.dataset.pending = String(Number(pendingClaim) || 0);
 	ui.sideBalance.dataset.pendingUnknown = pendingUnknown ? '1' : '';
 	ui.orbPending.textContent = balanceHintText(Number(pendingClaim) || 0, source, pendingUnknown);
@@ -7338,7 +5958,8 @@ function resetDiscordProfile() {
 	ui.dpBanner.classList.add('default');
 	// Waves 49: dọn profile effect + frame + theme colors (cả 2 panel).
 	if (ui.dpEffect) { ui.dpEffect.hidden = true; ui.dpEffect.src = ''; ui.dpEffect.classList.remove('is-looping'); }
-	for (const fr of [ui.dpFrame]) {
+	if (ui.phEffect) { ui.phEffect.hidden = true; ui.phEffect.src = ''; ui.phEffect.classList.remove('is-looping'); }
+	for (const fr of [ui.dpFrame, ui.phFrame]) {
 		if (!fr) continue;
 		fr.innerHTML = '';
 		fr.hidden = true;
@@ -7356,7 +5977,7 @@ function resetDiscordProfile() {
 			fr.style.removeProperty(v);
 		}
 	}
-	for (const b of [ui.dpBanner]) {
+	for (const b of [ui.dpBanner, ui.phBanner]) {
 		if (!b) continue;
 		b.style.removeProperty('--theme-a');
 		b.style.removeProperty('--theme-b');
@@ -7365,7 +5986,7 @@ function resetDiscordProfile() {
 		b.style.removeProperty('--theme-banner-h');
 		delete b.dataset.bannerImage;
 	}
-	for (const c of [ui.upPop]) {
+	for (const c of [ui.upPop, ui.heroProfile]) {
 		if (!c) continue;
 		c.style.removeProperty('--theme-a');
 		c.style.removeProperty('--theme-b');
@@ -7385,7 +6006,50 @@ function resetDiscordProfile() {
 	// Về trạng thái guest: đóng pop
 	ui.upPop.hidden = true;
 	ui.upRow.setAttribute('aria-expanded', 'false');
+	// Hero giữa trang → HIỆN thẻ ZoZ Community (Waves 44: trước đây ẩn hẳn).
+	ui.heroProfile.hidden = false;
+	ui.heroProfile.dataset.state = 'guest';
+	ui.phDisplay.textContent = ZOZ_NAME;
+	// Waves 47: khách không có style → trả tên về mặc định của app.
+	clearDisplayNameStyle();
+	ui.phUsername.textContent = ZOZ_TAG;
+	ui.phUserId.hidden = true;
+	ui.phUserIdValue.textContent = '—';
+	ui.phAvatar.innerHTML = '';
+	/* Wave#87: guest = avatar Discord MẶC ĐỊNH (nền #5865f2 do CSS
+	   `.profile-hero.is-discord-guest .ph-avatar`), KHÔNG phải logo ORB.
+	   Class phải nằm trên THẺ HERO (#heroProfile) — đúng như selector CSS —
+	   KHÔNG phải trên chính .ph-avatar (bẫy: đặt sai chỗ ⇒ CSS không khớp). */
+	ui.heroProfile.classList.add('is-discord-guest');
+	ui.phAvatar.classList.remove('is-discord-guest');
+	ui.phAvatar.insertAdjacentHTML('beforeend', defaultAvatarSvg(34));
+	ui.phAvatar.classList.remove('has-photo');
+	if (ui.phLoginHint) ui.phLoginHint.hidden = false;
+	/* Wave#87: khách TUYỆT ĐỐI không ORB — "mặt" thẻ là avatar Discord xanh.
+	   KHÔNG gọi syncHeroOrb() ở nhánh guest: nó sẽ bật lại class `has-orb`
+	   (ảnh orb-logo-big.png vẫn nằm trong DOM) ⇒ orb lộ ra sau nền xanh. */
+	heroOrbOk = false;
+	ui.phAvatar.classList.remove('has-orb');
+	/* Wave#88/89: trả thẻ tài khoản trong Cài đặt về guest + ẩn 4 nút tài khoản. */
+	refreshCfgCard(null);
+	applyAccountButtons();
+	ui.phDecoration.innerHTML = '';
+	ui.phClanBadge.hidden = true;
+	ui.phClanTag.hidden = true;
+	ui.phBanner.innerHTML = '';
+	ui.phBanner.style.background = '';
+	ui.phBanner.classList.add('default');
+	// Waves 49: dọn hero effect + frame
+	if (ui.phEffect) { ui.phEffect.hidden = true; ui.phEffect.src = ''; }
+	if (ui.phFrame) ui.phFrame.innerHTML = '';
+	// Waves 18: dọn huy hiệu + hiệu ứng avatar
+	ui.phBadges.innerHTML = '';
+	ui.phBadges.hidden = true;
+	ui.dpBadges.innerHTML = '';
+	ui.dpBadges.hidden = true;
+	ui.phAvatarwrap.classList.remove('has-effect');
 	// Waves 28: bỏ viền màu bảng tên khi đăng xuất → về viền mặc định
+	applyProfileAura(null);
 	// Waves 21: dọn chip tài khoản sidebar (decoration + khung nameplate + tag)
 	ui.upDeco.style.backgroundImage = '';
 	ui.upAvatarwrap.classList.remove('has-deco');
@@ -7423,7 +6087,6 @@ ui.upRow.addEventListener('click', (e) => {
 		openAccSw(); // Wave#88: guest bấm → popup Dán Token + Tài khoản
 		return;
 	}
-	if (isMobileLayout()) { openAccountSheet(); return; } // Waves#245: mobile dùng sheet, không dùng .up-pop ngược
 	const willShow = ui.upPop.hidden;
 	ui.upPop.hidden = !willShow;
 	ui.upRow.setAttribute('aria-expanded', String(willShow));
@@ -7491,11 +6154,9 @@ function openLogoutModal() {
 	}
 	ui.logoutModal.hidden = false;
 	ui.btnLogoutConfirm.focus();
-	playModalOpen();
 }
 function closeLogoutModal() {
 	ui.logoutModal.hidden = true;
-	playModalClose();
 }
 async function confirmLogout() {
 	closeLogoutModal();
@@ -7549,6 +6210,10 @@ for (const btn of [ui.btnSwitchAccount, ui.btnSwitchAccountRow, ui.btnAccCfgSwit
 			}
 		});
 	}
+}
+/* Wave#87 — nút "Đăng nhập tài khoản Discord" ở hero guest. */
+if (ui.phLoginHint) {
+	ui.phLoginHint.addEventListener('click', () => openAccSw());
 }
 /* Wave#88 — popup "Đổi tài khoản": dán / hiện-ẩn / hướng dẫn / copy script / thêm. */
 if (ui.accSwitchModal) {
@@ -7647,8 +6312,6 @@ if (ui.btnTokenEye) {
 		tokenVisibleCfg = !tokenVisibleCfg;
 		if (ui.btnTokenEyeText) ui.btnTokenEyeText.textContent = tokenVisibleCfg ? 'Ẩn' : 'Hiện';
 		syncCfgToken();
-		// Waves#178: token đã hiện không được nằm trên màn hình vô thời hạn.
-		if (tokenVisibleCfg) setTimeout(() => { if (tokenVisibleCfg) { tokenVisibleCfg = false; if (ui.btnTokenEyeText) ui.btnTokenEyeText.textContent = 'Hiện'; syncCfgToken(); } }, 60000);
 	});
 }
 if (ui.btnTokenCopy) {
@@ -7660,8 +6323,7 @@ if (ui.btnTokenCopy) {
 		}
 		try {
 			await api.writeClipboard(t);
-			clearClipboardAfter(30000);
-			toast('Đã copy token Discord. Clipboard sẽ tự xóa sau 30 giây nếu trình duyệt cho phép.');
+			toast('Đã copy token Discord.');
 		} catch {
 			toast('Không copy được token.', true);
 		}
@@ -7727,9 +6389,8 @@ function switchPage(name) {
 		renderQuests(); // vẽ lại để tính lại select-tools hiển thị
 	}
 	if (name === 'stats') renderStats();
-	// Đóng drawer mobile sau khi chọn trang — chuyển trang TRƯỚC, đóng SAU
-	// (Waves#201), và không cướp focus khỏi nút nav vừa bấm.
-	closeDrawer({ returnFocus: false });
+	// Đóng drawer mobile sau khi chọn trang
+	closeDrawer();
 }
 
 ui.navQuest.addEventListener('click', () => switchPage('quest'));
@@ -7739,119 +6400,17 @@ ui.navAbout.addEventListener('click', () => switchPage('about'));
 
 /* ---------------- Drawer mobile (sidebar trượt trên màn hẹp) ---------------- */
 
-/* Waves#201: drawer — overlay nay ở trong .shell, z-index thấp hơn sidebar,
-   nên bấm nav tới được nút. Mở drawer: focus vào mục nav đầu tiên, khóa
-   cuộn nền (class drawer-open). Đóng bằng overlay/Esc: focus trả về nút
-   mở menu. Đóng sau khi chọn trang: không cướp focus (xem switchPage). */
 function openDrawer() {
 	ui.sidebar.classList.add('open');
 	ui.drawerOverlay.classList.add('show');
-	document.body.classList.add('drawer-open');
-	try { if (ui.btnDrawer) ui.btnDrawer.setAttribute('aria-expanded', 'true'); } catch {}
-	try { if (ui.navQuest) ui.navQuest.focus(); } catch {}
 }
-function closeDrawer(opts) {
-	const wasOpen = ui.sidebar && ui.sidebar.classList.contains('open');
+function closeDrawer() {
 	ui.sidebar.classList.remove('open');
 	ui.drawerOverlay.classList.remove('show');
-	document.body.classList.remove('drawer-open');
-	try { if (ui.btnDrawer) ui.btnDrawer.setAttribute('aria-expanded', 'false'); } catch {}
-	if (wasOpen && opts && opts.returnFocus) { try { if (ui.btnDrawer) ui.btnDrawer.focus(); } catch {} }
 }
 ui.btnDrawer.addEventListener('click', openDrawer);
-ui.drawerOverlay.addEventListener('click', () => closeDrawer({ returnFocus: true }));
-/* Waves#259: vuốt ngang sang trái để đóng drawer (chỉ vuốt ngang, không
-   chặn cuộn dọc, không preventDefault — vuốt cạnh của iOS vẫn là back). */
-let drawerTouch = null;
-if (ui.sidebar) {
-	ui.sidebar.addEventListener('touchstart', (e) => {
-		const t = e.changedTouches && e.changedTouches[0];
-		if (t) drawerTouch = { x: t.clientX, y: t.clientY, at: Date.now() };
-	}, { passive: true });
-	ui.sidebar.addEventListener('touchend', (e) => {
-		if (!drawerTouch) return;
-		const t = e.changedTouches && e.changedTouches[0];
-		const dx = t ? t.clientX - drawerTouch.x : 0;
-		const dy = t ? t.clientY - drawerTouch.y : 0;
-		const dt = Date.now() - drawerTouch.at;
-		drawerTouch = null;
-		if (ui.sidebar.classList.contains('open') && dx < -60 && Math.abs(dy) < 80 && dt < 600) closeDrawer({ returnFocus: true });
-	}, { passive: true });
-}
-/* Waves#245/#256/#259: focus trap chung cho drawer, bottom sheet và mọi
-   modal-veil đang mở; Esc đóng sheet trước, rồi tới drawer. */
-function trapFocusIn(container, e) {
-	if (!container || e.key !== 'Tab') return;
-	const focusables = Array.from(container.querySelectorAll('button, input, select, textarea, [tabindex]:not([tabindex="-1"])'))
-		.filter((el) => !el.disabled && el.offsetParent !== null);
-	if (!focusables.length) return;
-	const first = focusables[0];
-	const last = focusables[focusables.length - 1];
-	if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
-	else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
-}
-document.addEventListener('keydown', (e) => {
-	// FIX64-P5 (W61): Esc dong ca modal captcha — truoc day chi co nut Huy
-	// + bam veil moi dong duoc; Tab trap da bao modal-veil nhung Esc thi
-	// chua. Dung dung closeCaptchaModal cua nut Huy (reset widget, xoa ctx)
-	// nen khong them rui ro trang thai moi.
-	if (e.key === 'Escape' && ui.captchaModal && !ui.captchaModal.hidden) { closeCaptchaModal(); return; }
-	if (e.key === 'Escape' && ui.accountSheetVeil && !ui.accountSheetVeil.hidden) { closeAccountSheet({ returnFocus: true }); return; }
-	if (e.key === 'Escape' && ui.sidebar && ui.sidebar.classList.contains('open')) { closeDrawer({ returnFocus: true }); return; }
-	if (e.key !== 'Tab') return;
-	if (ui.accountSheetVeil && !ui.accountSheetVeil.hidden) { trapFocusIn(ui.accountSheetVeil, e); return; }
-	if (ui.sidebar && ui.sidebar.classList.contains('open')) { trapFocusIn(ui.sidebar, e); return; }
-	const openVeil = document.querySelector('.modal-veil:not([hidden])');
-	if (openVeil) trapFocusIn(openVeil, e);
-});
-/* Waves#256: bàn phím iOS mở lên thì cuộn ô đang nhập vào tầm nhìn
-   (chỉ màn hẹp, chỉ trong modal/sheet/capture — desktop không đổi). */
-document.addEventListener('focusin', (e) => {
-	const t = e.target;
-	if (!t || window.innerWidth > 1023) return;
-	if (t.tagName !== 'INPUT' && t.tagName !== 'TEXTAREA' && t.tagName !== 'SELECT') return;
-	if (!t.closest('.modal-veil, .sheet-veil, .capture-card')) return;
-	try { t.scrollIntoView({ block: 'nearest' }); } catch {}
-});
+ui.drawerOverlay.addEventListener('click', closeDrawer);
 
-/* ---------------- Waves#243/#245: Bottom sheet tài khoản (mobile) ---------------- */
-let sheetReturnFocus = null;
-function isMobileLayout() { return window.innerWidth <= 1023; }
-function syncAccountSheet() {
-	if (!ui.sheetName) return;
-	const name = ui.upName ? ui.upName.textContent.trim() : '';
-	const sub = ui.upSub ? ui.upSub.textContent.trim() : '';
-	ui.sheetName.textContent = name || 'Chưa đăng nhập';
-	ui.sheetId.textContent = sub || '';
-	const bal = ui.orbBalance ? ui.orbBalance.textContent.trim() : '';
-	ui.sheetBalance.textContent = (bal && bal !== '—') ? (bal + ' Orbs') : 'Chưa có số dư Orb';
-	try {
-		if (ui.sheetAvatar && ui.upAvatar && ui.upAvatar.querySelector('img')) ui.sheetAvatar.innerHTML = ui.upAvatar.innerHTML;
-	} catch {}
-}
-function openAccountSheet() {
-	if (!ui.accountSheetVeil) return;
-	sheetReturnFocus = document.activeElement;
-	syncAccountSheet();
-	ui.accountSheetVeil.hidden = false;
-	try { if (ui.btnTopbarAccount) ui.btnTopbarAccount.setAttribute('aria-expanded', 'true'); } catch {}
-	try { if (ui.btnSheetSwitch) ui.btnSheetSwitch.focus(); } catch {}
-}
-function closeAccountSheet(opts) {
-	if (!ui.accountSheetVeil) return;
-	ui.accountSheetVeil.hidden = true;
-	try { if (ui.btnTopbarAccount) ui.btnTopbarAccount.setAttribute('aria-expanded', 'false'); } catch {}
-	if (opts && opts.returnFocus && sheetReturnFocus && sheetReturnFocus.focus) { try { sheetReturnFocus.focus(); } catch {} }
-	sheetReturnFocus = null;
-}
-if (ui.accountSheetVeil) ui.accountSheetVeil.addEventListener('click', (e) => { if (e.target === ui.accountSheetVeil) closeAccountSheet({ returnFocus: true }); });
-if (ui.btnSheetClose) ui.btnSheetClose.addEventListener('click', () => closeAccountSheet({ returnFocus: true }));
-if (ui.btnSheetSwitch) ui.btnSheetSwitch.addEventListener('click', () => { closeAccountSheet({}); openAccSw(); });
-if (ui.btnSheetLogout) ui.btnSheetLogout.addEventListener('click', () => { closeAccountSheet({}); openLogoutModal(); });
-if (ui.btnTopbarAccount) ui.btnTopbarAccount.addEventListener('click', () => {
-	if (ui.sidebar && ui.sidebar.classList.contains('open')) closeDrawer({ returnFocus: false });
-	openAccountSheet();
-});
 /* ---------------- User Actions ---------------- */
 
 function validate() {
@@ -8094,34 +6653,6 @@ function pillEnd() {
 	}, 420);
 }
 
-/* FIX64-P4 (W43): dem nguoc TRUC TIEP tren claim pill khi Discord tra 429.
-   Truoc day chi co 1 dong log/toast tinh "sau Xs" roi im lang den luc tu
-   nhan tiep — nguoi dung khong biet con cho bao lau. Nay pill tick moi
-   giay theo dung retry_after (+1s) ma claimSequence da tinh, het gio thi
-   tu goi lai ham tiep tuc hang doi. Khong gui request som hon retry_after. */
-let rateLimitCountdownTimer = null;
-function startRateLimitCountdown(resumeMs, onDone) {
-	clearInterval(rateLimitCountdownTimer);
-	rateLimitCountdownTimer = null;
-	let remaining = Math.max(1, Math.ceil((Number(resumeMs) || 0) / 1000));
-	const label = () => currentLang === 'en'
-		? `Rate limited — resuming in ${remaining}s…`
-		: `Giới hạn tốc độ — tự nhận tiếp sau ${remaining}s…`;
-	pillStart(label());
-	pillSetCount(0, 0);
-	rateLimitCountdownTimer = setInterval(() => {
-		remaining -= 1;
-		if (remaining <= 0) {
-			clearInterval(rateLimitCountdownTimer);
-			rateLimitCountdownTimer = null;
-			pillEnd();
-			if (typeof onDone === 'function') onDone();
-			return;
-		}
-		pillSetText(label());
-	}, 1000);
-}
-
 /* ---------------- Wave#118: hàng đợi nhận thưởng chờ xác minh ---------------- */
 
 function queueRows() {
@@ -8266,36 +6797,6 @@ function shortWeekday(ts) {
 	return (currentLang === 'en' ? namesEn : namesVi)[new Date(ts).getDay()];
 }
 
-/* Waves#197: export/import cấu hình, không bao giờ chứa token/code. */
-function exportConfigFile() {
-	const payload = { version: 1, exportedAt: new Date().toISOString(), filters: { questFilter, platformFilter, taskFilter, doneRewardFilter, doneSort }, notes: questNotesStore, theme: currentTheme };
-	const text = JSON.stringify(payload, null, 2);
-	if (/token|rewardCode|"code"\s*:/i.test(text)) { toast('File cấu hình chứa trường nhạy cảm — đã chặn xuất.', true); return; }
-	downloadTextFile('autoquest-config.json', text, 'application/json');
-	toast('Đã xuất cấu hình (không chứa token/code).');
-}
-function importConfigFile(text) {
-	let data;
-	try { data = JSON.parse(String(text || '')); } catch { toast('File cấu hình không hợp lệ.', true); return; }
-	const s = JSON.stringify(data);
-	if (/token|rewardCode/i.test(s)) { toast('File cấu hình chứa token/code — đã từ chối nhập.', true); return; }
-	if (data.filters) { questFilter = data.filters.questFilter || questFilter; platformFilter = data.filters.platformFilter || platformFilter; taskFilter = data.filters.taskFilter || taskFilter; doneRewardFilter = data.filters.doneRewardFilter || doneRewardFilter; doneSort = data.filters.doneSort || doneSort; }
-	if (data.notes && typeof data.notes === 'object') { questNotesStore = data.notes; saveJsonLocal(NOTES_KEY, questNotesStore); }
-	renderQuests();
-	toast('Đã nhập cấu hình.');
-}
-function exportStatsHistoryCsv() {
-	const entries = statsEntries();
-	const from = ui.statsDateFrom ? ui.statsDateFrom.value : '';
-	const to = ui.statsDateTo ? ui.statsDateTo.value : '';
-	const dayMap = new Map();
-	for (const row of entries) { const k = dayKey(row.at); if (from && k < from) continue; if (to && k > to) continue; const d = dayMap.get(k) || { orbs: 0, claims: 0 }; d.orbs += Number(row.orbs) || 0; d.claims += 1; dayMap.set(k, d); }
-	if (!dayMap.size) { toast('Không có dữ liệu trong khoảng ngày đã chọn.', true); return; }
-	const esc = (v) => `"${String(v).replace(/"/g, '""')}"`;
-	const lines = ['Ngày,Orbs,Số nhiệm vụ'];
-	for (const k of Array.from(dayMap.keys()).sort()) lines.push([esc(k), String(dayMap.get(k).orbs), String(dayMap.get(k).claims)].join(','));
-	downloadTextFile(`autoquest-orb-history-${dayKey(Date.now())}.csv`, '\uFEFF' + lines.join('\r\n'), 'text/csv;charset=utf-8');
-}
 function renderStats() {
 	if (!ui.pageStats) return;
 	const entries = statsEntries();
@@ -8373,18 +6874,7 @@ function renderStats() {
 	if (ui.statsRecent) {
 		ui.statsRecent.innerHTML = '';
 		const recent = entries.slice(-10).reverse();
-		// Waves#233: dòng thời gian — nhóm các lần nhận gần nhất theo ngày,
-		// mới nhất trước, mỗi ngày một tiêu đề riêng.
-		let lastDay = '';
 		for (const row of recent) {
-			const day = dayKey(row.at);
-			if (day !== lastDay) {
-				lastDay = day;
-				const head = document.createElement('li');
-				head.className = 'stats-recent-day';
-				head.textContent = day;
-				ui.statsRecent.appendChild(head);
-			}
 			const li = document.createElement('li');
 			li.className = 'stats-recent-item';
 			const name = document.createElement('span');
@@ -8406,25 +6896,6 @@ function renderStats() {
 		}
 	}
 	if (ui.statsEmpty) ui.statsEmpty.hidden = entries.length > 0;
-	// Waves#193: bảng Orb theo ngày + khoảng ngày; Waves#190: dự báo (ước tính).
-	try {
-		const from = ui.statsDateFrom ? ui.statsDateFrom.value : '';
-		const to = ui.statsDateTo ? ui.statsDateTo.value : '';
-		if (ui.statsHistoryTable) {
-			const dayMap2 = new Map();
-			for (const row of entries) { const k = dayKey(row.at); if (from && k < from) continue; if (to && k > to) continue; const d = dayMap2.get(k) || { orbs: 0, claims: 0 }; d.orbs += Number(row.orbs) || 0; d.claims += 1; dayMap2.set(k, d); }
-			const rows = Array.from(dayMap2.keys()).sort().reverse().slice(0, 60).map((k) => `<tr><td>${escapeHtml(k)}</td><td class="mono">${dayMap2.get(k).orbs}</td><td class="mono">${dayMap2.get(k).claims}</td></tr>`).join('');
-			ui.statsHistoryTable.innerHTML = rows ? `<table class="stats-table"><thead><tr><th>Ngày</th><th>Orbs</th><th>Nhiệm vụ</th></tr></thead><tbody>${rows}</tbody></table>` : '<p class="qstate-text">Không có dữ liệu trong khoảng ngày đã chọn.</p>';
-		}
-		if (ui.statsForecast) { const fc = forecastOrbs(); ui.statsForecast.textContent = `Dự báo (chỉ là ước tính, không phải số thật từ Discord): khoảng ${fc.orbs} Orbs từ các nhiệm vụ đang làm dở, cần ~${fc.minutes} phút nếu làm liên tục.`; }
-		// Waves#232: mục tiêu Orb — chỉ tính từ lịch sử nhận cục bộ, ghi rõ
-		// là dữ liệu local, KHÔNG phải số dư Discord. Không chứa token.
-		try {
-			const goal = Number(loadJsonLocal('autoquest.orbGoal.v1', 0)) || 0;
-			if (ui.orbGoalInput && document.activeElement !== ui.orbGoalInput) ui.orbGoalInput.value = goal > 0 ? String(goal) : '';
-			if (ui.orbGoalProgress) ui.orbGoalProgress.textContent = goal > 0 ? `Mục tiêu Orb (dữ liệu local): ${totalOrbs} / ${goal} (${Math.min(100, Math.round((totalOrbs / goal) * 100))}%) — không phải số dư Discord.` : 'Chưa đặt mục tiêu Orb. Đặt một con số ở trên để theo dõi tiến độ từ lịch sử nhận cục bộ.';
-		} catch {}
-	} catch {}
 }
 
 function exportStatsCsv() {
@@ -8534,7 +7005,6 @@ function applyLang(lang, persist = true) {
 	}
 	langSet('#consoleCard .log-title', 'log.title');
 	if (ui.btnClearLog) ui.btnClearLog.textContent = t('log.clear');
-	if (ui.btnCopyLog) ui.btnCopyLog.textContent = t('log.copy');
 	langSet('#sideBalance .sb-label', 'balance.label');
 
 	langSet('#pageStats .card-title', 'stats.title');
@@ -8552,7 +7022,7 @@ function applyLang(lang, persist = true) {
 	if (ui.statsEmpty) ui.statsEmpty.textContent = t('stats.empty');
 
 	const settingsTitles = document.querySelectorAll('#pageSettings .config-card .card-title');
-	const settingKeys = ['settings.account', 'settings.appearance', 'settings.optimize'];
+	const settingKeys = ['settings.account', 'settings.appearance', 'settings.optimize', 'settings.version'];
 	settingsTitles.forEach((node, i) => {
 		if (settingKeys[i]) node.textContent = t(settingKeys[i]);
 	});
@@ -8591,6 +7061,9 @@ function applyLang(lang, persist = true) {
 	});
 	btnText(ui.btnOpenFolder, 'settings.folder');
 	btnText(ui.btnDataPanel, 'settings.data');
+	const versionLabels = document.querySelectorAll('#pageSettings .version-label');
+	if (versionLabels[0]) versionLabels[0].textContent = t('settings.versionApp');
+	if (versionLabels[1]) versionLabels[1].textContent = t('settings.versionSw');
 	if (ui.liteMode) {
 		const liteCard = ui.liteMode.closest('.config-card');
 		const liteHint = liteCard && liteCard.querySelector('.hint');
@@ -8601,6 +7074,9 @@ function applyLang(lang, persist = true) {
 		if (lockHint && lockHint.classList.contains('hint')) lockHint.textContent = t('settings.lockHint');
 	}
 
+	if (ui.updateBar) ui.updateBarText.textContent = t('update.available');
+	if (ui.btnUpdateReload) ui.btnUpdateReload.textContent = t('update.now');
+	if (ui.btnUpdateDismiss) ui.btnUpdateDismiss.textContent = t('update.later');
 	langSet('#lockTitle', 'lock.title');
 	langSet('#lockVeil .lock-desc', 'lock.desc');
 	if (ui.btnUnlock) ui.btnUnlock.textContent = t('lock.unlock');
@@ -8621,6 +7097,7 @@ function applyLang(lang, persist = true) {
 	if (ui.btnWipeData) ui.btnWipeData.textContent = t('data.wipe');
 	if (ui.btnDataClose) ui.btnDataClose.textContent = t('data.close');
 	langSet('#dataTitle', 'data.title');
+	if (ui.btnCheckUpdate) ui.btnCheckUpdate.textContent = t('common.checkUpdate');
 
 	const dataIntro = document.getElementById('dataIntro');
 	if (dataIntro) dataIntro.textContent = t('data.intro');
@@ -8769,17 +7246,8 @@ function stripInventoryItem(item) {
 		automatable: item.automatable !== false,
 		status: item.status,
 		hero: item.hero || '',
-		heroVideo: item.heroVideo || '',
 		gameTile: item.gameTile || '',
-		gameTileDark: item.gameTileDark || '',
-		gameTileLight: item.gameTileLight || '',
 		logotype: item.logotype || '',
-		logotypeDark: item.logotypeDark || '',
-		logotypeLight: item.logotypeLight || '',
-		// Waves#153: the session-only code field is INTENTIONALLY
-		// absent here — the inventory cache lives in localStorage
-		// and must never hold codes.
-		rewardType: item.rewardType || '',
 		appId: item.appId || '',
 		appIcon: item.appIcon || '',
 		publisher: item.publisher || '',
@@ -8793,9 +7261,6 @@ function stripInventoryItem(item) {
 		rewardIsVideo: item.rewardIsVideo === true,
 		rewardName: item.rewardName || '',
 		claimedAt: item.claimedAt || null,
-		// ORBFIX: giữ trạng thái nhận quest trong cache để hướng dẫn thẻ
-		// bị chặn không mất sau khi tải lại trang (boolean, không phải code).
-		enrolled: item.enrolled,
 		platform: typeof item.platform === 'number' ? item.platform : 0,
 	};
 }
@@ -8828,21 +7293,7 @@ function hydrateOfflineInventory() {
 }
 
 window.addEventListener('online', () => {
-	if (appScroll) {
-	let doneScrollTimer = null;
-	appScroll.addEventListener('scroll', () => {
-		if (doneScrollTimer) clearTimeout(doneScrollTimer);
-		doneScrollTimer = setTimeout(() => {
-			if (appScroll.scrollTop + appScroll.clientHeight <= appScroll.scrollHeight - 600) return;
-			// Waves#225: mở rộng cửa sổ của đúng tab đang xem.
-			if (currentTab === 'done' && doneWindowEnd < lastDoneVisibleCount) { doneWindowEnd += 80; renderQuests(); }
-			else if (currentTab === 'active' && activeWindowEnd < lastActiveVisibleCount) { activeWindowEnd += 80; renderQuests(); }
-			else if (currentTab === 'new' && newWindowEnd < lastNewVisibleCount) { newWindowEnd += 80; renderQuests(); }
-		}, 120);
-	}, { passive: true });
-}
-
-updateNetBadge();
+	updateNetBadge();
 	toast(currentLang === 'en' ? 'Back online.' : 'Đã có mạng trở lại.');
 	appendLog(
 		currentLang === 'en' ? '[System] Network restored.' : '[Hệ thống] Đã có mạng trở lại.',
@@ -8951,7 +7402,7 @@ async function checkIntegrity() {
 			);
 			return;
 		}
-		const lines = [`AUTO-QUEST · ${new Date().toLocaleString(en ? 'en-US' : 'vi-VN')}`, ''];
+		const lines = [`AUTO-QUEST ${APP_VERSION} · ${new Date().toLocaleString(en ? 'en-US' : 'vi-VN')}`, ''];
 		const bad = [];
 		const missing = [];
 		for (const [file, expected] of entries) {
@@ -9033,18 +7484,183 @@ if (ui.btnWipeData) {
 
 /* ---------------- Wave#123: PWA update + phiên bản ---------------- */
 
-async function setupServiceWorker() {
-	// Web deploy thẳng qua Cloudflare mỗi khi main đổi: KHÔNG còn khái niệm
-	// "phiên bản / cập nhật" trong app, không còn popup cập nhật.
-	// Service Worker chỉ còn để cache vỏ cho trường hợp ngoại tuyến; sw.js
-	// lấy file app theo network-first nên reload sau deploy là bản mới nhất.
-	if (!('serviceWorker' in navigator)) return;
-	if (!(location.protocol === 'https:' || location.hostname === '127.0.0.1' || location.hostname === 'localhost')) return;
+let swRegistration = null;
+let swReloading = false;
+let updateDismissed = false;
+let swAutoUpdateTimer = null;
+
+function setUpdateStatus(text) {
+	if (!ui.updateStatus) return;
+	ui.updateStatus.textContent = text || '';
+}
+
+function showUpdateBar() {
+	if (!ui.updateBar) return;
+	updateDismissed = false;
+	ui.updateBarText.textContent = t('update.available');
+	ui.updateBar.hidden = false;
+}
+
+function hideUpdateBar() {
+	if (ui.updateBar) ui.updateBar.hidden = true;
+}
+
+/* Waves#149: app có được coi là RẢNH để tự áp dụng bản SW đang chờ không.
+   Chặn tuyệt đối khi đang chạy/quét/nhận hàng loạt/captcha mở — không bao
+   giờ reload giữa lúc đang cày (lỗi cũ của Wave#123 là tự nhảy). */
+function appIsIdleForUpdate() {
+	return state === 'idle' && !bulkClaimBusy && !scanning && !(ui.captchaModal && !ui.captchaModal.hidden) && !swReloading;
+}
+
+/* Waves#149: tự kích hoạt bản SW đang chờ KHI APP RẢNH (sau khi chạy xong
+   hoặc đã idle), với 10 giây ân hạn + thanh cập nhật hiển thị rõ để người
+   dùng kịp bấm "Để sau". Hết ân hạn mà vẫn rảnh thì mới gửi SKIP_WAITING
+   (controllerchange sẽ reload — lúc đó không còn gì đang chạy). */
+function scheduleIdleSwUpdate() {
+	if (swAutoUpdateTimer) clearTimeout(swAutoUpdateTimer);
+	swAutoUpdateTimer = null;
+	if (!swRegistration || !swRegistration.waiting || !navigator.serviceWorker.controller) return;
+	if (updateDismissed) return;
+	if (!appIsIdleForUpdate()) return;
+	showUpdateBar();
+	setUpdateStatus(
+		currentLang === 'en'
+			? 'Update will apply automatically in 10s while the app is idle — press “Later” to postpone.'
+			: 'Bản cập nhật sẽ tự áp dụng sau 10 giây khi app rảnh — bấm “Để sau” để hoãn.',
+	);
+	swAutoUpdateTimer = setTimeout(() => {
+		swAutoUpdateTimer = null;
+		if (!appIsIdleForUpdate()) return;
+		const waiting = swRegistration && swRegistration.waiting;
+		if (!waiting) return;
+		swReloading = true;
+		setUpdateStatus(currentLang === 'en' ? 'Applying update…' : 'Đang áp dụng bản cập nhật…');
+		try {
+			waiting.postMessage({ type: 'SKIP_WAITING' });
+		} catch {
+			/* ignore */
+		}
+		setTimeout(() => {
+			if (swReloading) location.reload();
+		}, 2600);
+	}, 10000);
+}
+
+async function showSwVersion() {
+	if (!ui.swVersion) return;
+	let version = '';
 	try {
-		await navigator.serviceWorker.register(new URL('sw.js', document.baseURI).href, { updateViaCache: 'none' });
+		const keys = await caches.keys();
+		const shells = keys.filter((key) => key.startsWith('autoquest-shell-')).sort();
+		if (shells.length) version = shells[shells.length - 1].replace('autoquest-shell-', '');
 	} catch {
-		/* Service Worker là tùy chọn — app chạy bình thường khi không có nó. */
+		/* ignore */
 	}
+	ui.swVersion.textContent = version || '—';
+	if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+		try {
+			navigator.serviceWorker.controller.postMessage({ type: 'GET_VERSION' });
+		} catch {
+			/* ignore */
+		}
+	}
+}
+
+async function setupServiceWorker() {
+	if (ui.appVersion) ui.appVersion.textContent = APP_VERSION;
+	if (
+		!('serviceWorker' in navigator) ||
+		!(location.protocol === 'https:' || location.hostname === '127.0.0.1' || location.hostname === 'localhost')
+	) {
+		setUpdateStatus('Service Worker chỉ hoạt động trên HTTPS hoặc localhost.');
+		return;
+	}
+	navigator.serviceWorker.addEventListener('message', (event) => {
+		const data = event.data || {};
+		if (data.type === 'SW_VERSION' && ui.swVersion) ui.swVersion.textContent = data.version || '—';
+	});
+	navigator.serviceWorker.addEventListener('controllerchange', () => {
+		if (!swReloading) return;
+		location.reload();
+	});
+	try {
+		swRegistration = await navigator.serviceWorker.register(new URL('sw.js', document.baseURI).href, {
+			updateViaCache: 'none',
+		});
+		if (swRegistration.waiting && navigator.serviceWorker.controller) {
+			showUpdateBar();
+			scheduleIdleSwUpdate();
+		}
+		swRegistration.addEventListener('updatefound', () => {
+			const worker = swRegistration && swRegistration.installing;
+			if (!worker) return;
+			worker.addEventListener('statechange', () => {
+				if (worker.state === 'installed' && navigator.serviceWorker.controller && !updateDismissed) {
+					showUpdateBar();
+					setUpdateStatus('Đã có bản cập nhật mới — bấm "Cập nhật" để nạp.');
+					scheduleIdleSwUpdate();
+				}
+			});
+		});
+		setUpdateStatus('');
+		showSwVersion();
+	} catch {
+		setUpdateStatus('Không đăng ký được Service Worker (không ảnh hưởng chức năng chính).');
+	}
+}
+
+if (ui.btnUpdateReload) {
+	ui.btnUpdateReload.addEventListener('click', () => {
+		const waiting = swRegistration && swRegistration.waiting;
+		if (!waiting) {
+			location.reload();
+			return;
+		}
+		swReloading = true;
+		setUpdateStatus('Đang áp dụng bản cập nhật…');
+		try {
+			waiting.postMessage({ type: 'SKIP_WAITING' });
+		} catch {
+			/* ignore */
+		}
+		setTimeout(() => {
+			if (swReloading) location.reload();
+		}, 2600);
+	});
+}
+if (ui.btnUpdateDismiss) {
+	ui.btnUpdateDismiss.addEventListener('click', () => {
+		if (swAutoUpdateTimer) clearTimeout(swAutoUpdateTimer);
+		swAutoUpdateTimer = null;
+		updateDismissed = true;
+		hideUpdateBar();
+		setUpdateStatus('Sẽ cập nhật ở lần mở tiếp theo.');
+	});
+}
+if (ui.btnCheckUpdate) {
+	ui.btnCheckUpdate.addEventListener('click', async () => {
+		ui.btnCheckUpdate.disabled = true;
+		setUpdateStatus('Đang kiểm tra bản mới…');
+		try {
+			if (!swRegistration) {
+				setUpdateStatus('Service Worker chưa sẵn sàng trên trang này.');
+				return;
+			}
+			await swRegistration.update();
+			await new Promise((resolve) => setTimeout(resolve, 700));
+			if (swRegistration.waiting && navigator.serviceWorker.controller) {
+				showUpdateBar();
+				setUpdateStatus('Đã có bản cập nhật mới.');
+			} else {
+				setUpdateStatus('Bạn đang dùng phiên bản mới nhất.');
+			}
+			showSwVersion();
+		} catch (err) {
+			setUpdateStatus('Không kiểm tra được: ' + (err?.message || err));
+		} finally {
+			ui.btnCheckUpdate.disabled = false;
+		}
+	});
 }
 
 /* ---------------- Wave#131: nhịp tim + tự phục hồi engine ---------------- */
@@ -9143,16 +7759,6 @@ async function recoverRun(auto = false) {
 		);
 	}
 	userStopped = false;
-	// FIX64-P4 (W41): khoi phuc worker khong duoc lam mat tich tren UI —
-	// ap lai lua chon tu cau hinh chay gan nhat cho quest con ton tai va
-	// con chon duoc, roi luu lai theo tai khoan.
-	if (Array.isArray(cfg.selectedQuests)) {
-		for (const id of cfg.selectedQuests) {
-			const q = quests.get(String(id));
-			if (q && canSelectQuest(q)) selected.add(String(id));
-		}
-		persistSelection();
-	}
 	startHeartbeat();
 	await startRun(cfg.mode || 'run', {
 		selectedQuests: Array.isArray(cfg.selectedQuests) ? cfg.selectedQuests : [],
@@ -9161,18 +7767,6 @@ async function recoverRun(auto = false) {
 	});
 }
 if (ui.btnRecover) ui.btnRecover.addEventListener('click', () => recoverRun(false));
-
-// Waves#235: phím tắt toàn cục — Q quét, / focus ô tìm kiếm, Esc đã có
-// sẵn ở modal/drawer. TẮT khi đang gõ trong input/textarea/select/token
-// field hoặc khi có modal đang mở, để không quét nhầm lúc gõ.
-document.addEventListener('keydown', (e) => {
-	if (e.metaKey || e.ctrlKey || e.altKey) return;
-	const t = e.target;
-	if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable)) return;
-	if (document.querySelector('.qdone-modal')) return;
-	if (e.key === 'q' || e.key === 'Q') { if (ui.btnScan && !ui.btnScan.disabled) ui.btnScan.click(); }
-	else if (e.key === '/') { e.preventDefault(); try { switchPage('quest'); } catch {} if (ui.questSearch) ui.questSearch.focus(); }
-});
 
 /* ---------------- Wave#125: bẫy focus + phím tắt modal ---------------- */
 
@@ -9270,23 +7864,13 @@ updateNetBadge();
 
 /* ---------------- Waves 28: Chế độ Sáng / Tối ---------------- */
 let currentTheme = 'dark';
-// Waves#236: chế độ "Theo hệ thống" chỉ lưu ở renderer (localStorage),
-// KHÔNG đưa vào bridge config — bridge chuẩn hóa theme chỉ light/dark và
-// sẽ lột bỏ giá trị 'system' nếu lưu qua config. Khi OS đổi theme,
-// matchMedia listener đổi theo mà không cần bấm lại.
-let themeMode = 'dark';
-try { const m = localStorage.getItem('autoquest.themeMode.v1'); if (m === 'system' || m === 'light' || m === 'dark') themeMode = m; } catch {}
-function resolveTheme(mode) { return mode === 'system' ? (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark') : (mode === 'light' ? 'light' : 'dark'); }
 
 function applyTheme(theme, persist = true) {
-	if (theme === 'system' || theme === 'light' || theme === 'dark') themeMode = theme;
-	currentTheme = resolveTheme(themeMode);
+	currentTheme = theme === 'light' ? 'light' : 'dark';
 	document.documentElement.dataset.theme = currentTheme;
 	const isLight = currentTheme === 'light';
-	if (ui.themeDark) ui.themeDark.setAttribute('aria-checked', String(themeMode === 'dark'));
-	if (ui.themeLight) ui.themeLight.setAttribute('aria-checked', String(themeMode === 'light'));
-	if (ui.themeSystem) ui.themeSystem.setAttribute('aria-checked', String(themeMode === 'system'));
-	try { localStorage.setItem('autoquest.themeMode.v1', themeMode); } catch {}
+	if (ui.themeDark) ui.themeDark.setAttribute('aria-checked', String(!isLight));
+	if (ui.themeLight) ui.themeLight.setAttribute('aria-checked', String(isLight));
 	/* Wave#134: mực trên bảng tên PHẢI tính lại ngay khi đổi theme — nó phụ thuộc
 	   nền thật (--card) vừa đổi, không phụ thuộc theme lúc renderProfile chạy. */
 	refreshNameplateInk();
@@ -9296,9 +7880,6 @@ function applyTheme(theme, persist = true) {
 	   gốc của user — chỉ chỉnh lại độ sáng theo nền mới. */
 	if (dnsApplied) applyDisplayNameStyle(dnsApplied);
 	refreshOpenCaptchaTheme();
-	// Waves#155: đổi theme thì vẽ lại tile bằng biến thể asset của
-	// theme mới, không cần quét lại (dữ liệu đã có trong bộ nhớ).
-	refreshQuestLogos();
 	if (persist) {
 		// Lưu lại cùng config (không phá token/loop đang có)
 		api.saveConfig(collectConfig()).catch(() => {});
@@ -9307,20 +7888,6 @@ function applyTheme(theme, persist = true) {
 
 if (ui.themeDark) ui.themeDark.addEventListener('click', () => applyTheme('dark'));
 if (ui.themeLight) ui.themeLight.addEventListener('click', () => applyTheme('light'));
-if (ui.themeSystem) ui.themeSystem.addEventListener('click', () => applyTheme('system'));
-if (window.matchMedia) window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', () => { if (themeMode === 'system') applyTheme('system', false); });
-
-/* Waves#155: dựng lại toàn bộ node quest để questLogoUrl chọn biến
- * thể _light/_dark theo theme mới. Không gọi lại Discord, không mất
- * lựa chọn (selected lưu theo id, không theo node). */
-function refreshQuestLogos() {
-	if (!questNodes || questNodes.size === 0) return;
-	for (const [, entry] of questNodes) entry.node.remove();
-	questNodes.clear();
-	questRenderSig.clear();
-	needSort = true;
-	renderQuests();
-}
 
 async function saveTokenDirectly() {
 	const token = cleanTokenClient(ui.token.value);
@@ -9348,17 +7915,6 @@ ui.btnScan.addEventListener('click', async () => {
 		toast('Đang nhận thưởng hàng loạt — đợi xong rồi quét lại.', true);
 		return;
 	}
-	// Waves#171: bấm Quét lần nữa trong lúc đang quét thì HỦY quét cũ
-	// (dừng worker) và bắt đầu quét mới; kết quả quét cũ bị chặn ở
-	// scan:start / quest:inventory bằng scanGeneration.
-	if (scanning) {
-		scanGeneration += 1;
-		try { api.stop(); } catch {}
-		setScanning(false);
-		setState('idle');
-		toast('Đã hủy quét cũ — đang quét lại.', false);
-	}
-	scanGeneration += 1;
 	if (!isOnline()) {
 		toast('Đang ngoại tuyến — cần mạng để quét nhiệm vụ.', true);
 		return;
@@ -9366,21 +7922,6 @@ ui.btnScan.addEventListener('click', async () => {
 	if (!validate()) return;
 	// Wave#116: quét xong thường sẽ claim — nạp sẵn hCaptcha ngay từ đây.
 	warmUpCaptcha();
-	// Waves#238: chụp lại id của lần quét trước TRƯỚC khi danh sách bị xóa,
-	// để scan:complete so sánh và báo quest mới xuất hiện.
-	prevScanQuestIds = new Set(questOrder);
-	// Waves#222: lần quét ngay sau một lần quét thiếu — thử lại có chờ
-	// (backoff giới hạn 1s/2s/3s/4s, tối đa 4 lần rồi quay về 1s). Lưu ý thật:
-	// Discord chỉ có endpoint quét bulk, không có endpoint quét riêng một
-	// quest id, nên "thử lại phần lỗi" ở đây là quét bulk lại sau backoff
-	// và báo rõ những id lỗi lần trước — không thể chỉ quét riêng id lỗi.
-	if (scanPartialErrors.length) {
-		partialRetryAttempt = Math.min(partialRetryAttempt + 1, 4);
-		const waitMs = partialRetryAttempt * 1000;
-		const names = scanPartialErrors.map((x) => x.name || x.id).slice(0, 5).join(', ');
-		appendLog(`[Thử lại] Quét thiếu lần trước (${scanPartialErrors.length} nhiệm vụ: ${names}) — chờ ${waitMs / 1000}s rồi quét lại (lần ${partialRetryAttempt}).`, 'warn');
-		await new Promise((r) => setTimeout(r, waitMs));
-	}
 
 	// Waves 27: vào TRẠNG THÁI QUÉT NGAY — không chờ saveConfig/start.
 	// Wave#96 (bro: "ấn quét nhiệm vụ phải nạp luôn nhé, hơi chậm đấy"):
@@ -9388,12 +7929,10 @@ ui.btnScan.addEventListener('click', async () => {
 	//   Trước đây `await api.saveConfig(...)` (IPC, tốn vài chục–trăm ms trên máy
 	//   yếu) nằm TRƯỚC setScanning ⇒ % đứng im ⇒ bro cảm nhận "chậm".
 	//   Nay: reset state (đồng bộ, rẻ) → setScanning(true) → await saveConfig.
-	// Reset danh sách cũ — KHONG xoa lua chon (FIX64-P4 W46): lua chon
-	// duoc luu theo tai khoan va khoi phuc lai khi danh sach quet moi ve
-	// (quest:inventory -> prune -> restoreSelection); id khong con trong
-	// danh sach moi se bi prune loai khoi lua chon o do.
+	// Reset danh sách & lựa chọn cũ
 	questOrder.length = 0;
 	quests.clear();
+	selected.clear();
 	doneSeen.clear();
 	ui.console.innerHTML = '';
 	logText = '';
@@ -9457,9 +7996,6 @@ async function startRun(mode, extra = {}) {
 		setState('starting');
 		switchPage('quest'); // chạy thì hiện ngay trang Auto Quest để theo dõi console
 		startHeartbeat();
-		// FIX64-P0 wave 1: dấu hiệu phiên bản trong nhật ký — nhìn log là biết
-		// code mới đang chạy, không cần đoán theo deploy/cache.
-		appendLog('[Hệ thống] Heartbeat fallback đang bật: 401 appId task -> thử appId quest 1 lần/nhịp; 401 cả hai -> thẻ chuyển sang "Cần chơi trong Discord", không fail. · presence-gate-v2', 'system');
 		toast(`Đang chạy ${extra.selectedQuests?.length || 0} nhiệm vụ đã chọn...`);
 	}
 }
@@ -9475,7 +8011,6 @@ ui.btnStart.addEventListener('click', () => {
 });
 
 ui.btnStop.addEventListener('click', () => {
-	scanGeneration += 1;
 	ui.btnStop.disabled = true; // chống double-click ngay lập tức
 	userStopped = true;
 	stopHeartbeat();
@@ -9821,12 +8356,13 @@ function dnsRegisterFont(family, dataUrl, weight) {
 
 /** Mọi chỗ hiển thị TÊN người dùng — phải ĐỒNG BỘ cùng một kiểu.
  *  Waves 49b: bro báo khung profiles TRÁI giữ font cũ, không khớp profile CHÍNH.
- *  Nguyên nhân: kiểu tên từng không đồng bộ giữa các khung. Nay áp đồng bộ cho:
+ *  Nguyên nhân: `applyDisplayNameStyle` cứng `ui.phDisplay`. Nay áp cho cả 3:
+ *    ui.phDisplay  — tên lớn giữa trang (hero)
  *    ui.dpDisplay  — tên trong khung popout/sidebar
  *    ui.upName     — tên trên chip user ở đáy sidebar
  *  Bỏ phần tử không tồn tại; giữ thứ tự để hiệu ứng gummy tách chữ đúng. */
 function dnsTargets() {
-	const list = [ui.dpDisplay, ui.upName].filter(Boolean);
+	const list = [ui.phDisplay, ui.dpDisplay, ui.upName].filter(Boolean);
 	// Khử trùng (phòng khi 2 id trỏ cùng một node).
 	return [...new Set(list)];
 }
@@ -9986,6 +8522,33 @@ function applyBotProfile(u) {
 	ui.dpClanTag.hidden = true;
 	ui.dpBadge.hidden = false;
 	ui.dpBadgeText.textContent = 'Đổi tài khoản';
+	// Hero giữa trang: hiện ở chế độ "bot" (không có banner cá nhân → nền mặc định).
+	ui.heroProfile.hidden = false;
+	ui.heroProfile.dataset.state = 'bot';
+	ui.phDisplay.textContent = name;
+	// Waves 48: bot cũng có thể có kiểu tên hiển thị riêng.
+	loadDisplayNameStyle(name, u.id);
+	ui.phUsername.textContent = u.username ? `@${u.username}` : 'Hồ sơ bot';
+	ui.phUserId.hidden = false;
+	ui.phUserIdValue.textContent = u.id;
+	if (avHash && avId) {
+		ui.phAvatar.innerHTML = '';
+		const img = document.createElement('img');
+		img.className = 'ph-avatar-img';
+		img.src = discordAvatarSrc({ id: avId, avatar: avHash }, 160);
+		img.alt = '';
+		ui.phAvatar.appendChild(img);
+	} else {
+		ui.phAvatar.innerHTML = defaultAvatarSvg(34);
+	}
+	ui.phDecoration.innerHTML = '';
+	ui.phClanBadge.hidden = true;
+	ui.phClanTag.hidden = true;
+	ui.phBanner.innerHTML = '';
+	ui.phBanner.style.background = '';
+	ui.phBanner.classList.add('default');
+	ui.phBadges.innerHTML = '';
+	ui.phBadges.hidden = true;
 }
 
 /* ============================================================================
@@ -10049,56 +8612,6 @@ ui.btnClearLog.addEventListener('click', () => {
 	dropLoader();
 	setLogCount('—');
 });
-
-/* COPYLOG (2026-11-01): nut "Sao chep" — sao chep TOAN BO nhat ky tu
- * logText (kho trong bo nho, giu toi 1MB cuoi — xem appendLog) chu khong
- * chi 400 dong DOM dang hien trong khung. Chi DOC logText: khong goi duong
- * xoa (khong innerHTML='', khong logText=''), khong append dong moi — sao
- * chep khong bao gio reset/xoa/cut ngan log. "Xoa" van la nut duy nhat
- * xoa log. Log von khong chua secret, va duong sao chep khong them bat
- * cu noi dung moi nao (chi copy nguyen van logText). */
-let copyLogTimer = null;
-function copyLogFlash(key) {
-	const btn = ui.btnCopyLog;
-	if (!btn) return;
-	if (copyLogTimer) clearTimeout(copyLogTimer);
-	btn.textContent = t(key);
-	copyLogTimer = setTimeout(() => {
-		btn.textContent = t('log.copy');
-		copyLogTimer = null;
-	}, 2000);
-}
-async function copyLogText() {
-	const text = logText;
-	if (!text) {
-		copyLogFlash('log.copyEmpty');
-		return;
-	}
-	try {
-		if (navigator.clipboard && navigator.clipboard.writeText) {
-			await navigator.clipboard.writeText(text);
-		} else {
-			// Fallback cho context khong co Async Clipboard API: textarea tam,
-			// dat ngoai man hinh (khong phai style trang tri, go ngay sau khi
-			// copy) de execCommand('copy') chon duoc noi dung.
-			const ta = document.createElement('textarea');
-			ta.value = text;
-			ta.setAttribute('readonly', '');
-			ta.style.position = 'fixed';
-			ta.style.opacity = '0';
-			document.body.appendChild(ta);
-			ta.select();
-			const ok = document.execCommand('copy');
-			ta.remove();
-			if (!ok) throw new Error('copy-fallback-failed');
-		}
-		copyLogFlash('log.copied');
-	} catch {
-		// Sao chep loi: chi bao bang chu tren nut, log giu nguyen tuyet doi.
-		copyLogFlash('log.copyFail');
-	}
-}
-if (ui.btnCopyLog) ui.btnCopyLog.addEventListener('click', copyLogText);
 
 /* ---------------- Wave#108/#109: Dữ liệu & chẩn đoán ---------------- */
 
@@ -10243,19 +8756,6 @@ async function runDiagnostics() {
 			return;
 		}
 		ui.dataDiagOut.textContent = formatDiagnostics(r.diagnostics);
-		// Waves#166/#167/#168: phần chẩn đoán phía renderer (không qua
-		// bridge, không chứa token/code — chỉ đếm loại và số ảnh hỏng).
-		try {
-			const counts = { orbs: 0, avatar: 0, code: 0, other: 0 };
-			for (const q of quests.values()) counts[rewardTypeOf(q)] = (counts[rewardTypeOf(q)] || 0) + 1;
-			const rec = inventoryStore[accountScope()];
-			const cacheLine = rec
-				? `Inventory cache: ${rec.quests ? rec.quests.length : 0} quests, as of ${rec.at ? new Date(rec.at).toLocaleString() : '—'}`
-				: 'Inventory cache: none';
-			ui.dataDiagOut.textContent += `\n[Rewards]\n  by type: orbs ${counts.orbs} · avatar ${counts.avatar} · code ${counts.code} · other ${counts.other}\n  asset failures: ${assetFailCount} (quests: ${assetFailQuests.size}) · asset variant: ${currentTheme} (${currentTheme === 'light' ? 'logotype_light/game_tile_light first' : 'logotype_dark/game_tile_dark first'})\n  render quests: ${lastQuestRenderMs} ms\n  ${cacheLine}\n`;
-			try { const fc = forecastOrbs(); const claimable = Array.from(quests.values()).filter((qq) => qq.status === 'claimable').length; ui.dataDiagOut.textContent += `[Waves#171-#200]\n  forecast (estimate only): ${fc.orbs} Orbs · ~${fc.minutes} min remaining · claimable: ${claimable} · done window: ${doneWindowEnd} / ${lastDoneVisibleCount} · last 429: ${last429 ? last429.scope + ' ' + last429.seconds + 's' : 'none'} · partial scan errors: ${scanPartialErrors.length} · build number: ${typeof AQIdentity !== 'undefined' ? AQIdentity.webBuildNumber : '—'} (placeholder, see #175) · bundle sizes: see [Bundle] below\n`; } catch {}
-			try { if (typeof document !== 'undefined') { const sz = (id) => { const el = document.querySelector(id); return el ? 'present' : 'missing'; }; ui.dataDiagOut.textContent += `[Bundle]\n  renderer.js / styles.css are loaded from the app shell; exact byte sizes are reported by the build step (npm run build:static) and by the diagnostics bundle check in self-test, not by guessing in the browser.\n`; } } catch {}
-		} catch {}
 		setDataStatus(dataSay('Đã chạy chẩn đoán.', 'Diagnostics complete.'));
 	} catch (err) {
 		ui.dataDiagOut.textContent = dataSay('Lỗi chẩn đoán: ', 'Diagnostics error: ') + (err?.message || err);
@@ -10267,9 +8767,9 @@ async function runDiagnostics() {
 
 async function doBackupExport() {
 	const pass = ui.dataPassword ? ui.dataPassword.value : '';
-	if (pass.length < 12) {
+	if (pass.length < 8) {
 		setDataStatus(
-			dataSay('Waves#177: mật khẩu sao lưu mới cần ít nhất 12 ký tự (bản sao lưu cũ vẫn mở bình thường).', 'Waves#177: new backup passwords need at least 12 characters (old backups still open normally).'),
+			dataSay('Mật khẩu sao lưu cần ít nhất 8 ký tự.', 'Backup password must be at least 8 characters.'),
 			true,
 		);
 		if (ui.dataPassword) ui.dataPassword.focus();
@@ -10356,7 +8856,6 @@ async function doBackupPick() {
 				);
 			}
 			if (p.hasExtras) bits.push(en ? 'includes history & queue' : 'kèm lịch sử & hàng đợi');
-			if (Number(p.kdfIterations) > 0 && Number(p.kdfIterations) < 200000) bits.push(en ? `WARNING: weak KDF (${p.kdfIterations} iterations) — re-export after restore` : `CẢNH BÁO: KDF yếu (${p.kdfIterations} vòng) — khôi phục xong nên xuất lại bản mới`);
 			ui.dataImportMeta.textContent = bits.join(' · ') + names;
 		}
 		if (ui.dataImportPreview) ui.dataImportPreview.hidden = false;
@@ -10464,13 +8963,8 @@ ui.btnOpenFolder.addEventListener('click', () => api.openDataFolder());
 
 /* Waves 24: KHÔNG đổ stdout của bot ra nhật ký nữa — đó chính là kiểu "sổ một đống
    chữ" mà bro chê. Tiến độ đã có loader riêng + thẻ nhiệm vụ tự cập nhật vòng %.
-   Chỉ giữ lại dòng LỖI / CẢNH BÁO để còn manh mối khi hỏng.
-   ANYACCT (2026-11-01): bo loc cu giu CHAT het dong chuyen trang thai
-   gateway + dong chan doan heartbeat (khong khop tu khoa nao) — log
-   live 13:31 vi the khong co dong transition/timeout nao, khong phai
-   vi gateway khong log. Mo rong co muc tieu: dong presence it (vai
-   dong/lan chay), khong phai log tien do on ao. */
-const LOG_KEEP = /(\[LỖI\]|❌|⚠|cảnh báo|lỗi |thất bại|rate.?limit|bị chặn|không thể|gateway|presence|timeout|chẩn đoán heartbeat)/i;
+   Chỉ giữ lại dòng LỖI / CẢNH BÁO để còn manh mối khi hỏng. */
+const LOG_KEEP = /(\[LỖI\]|❌|⚠|cảnh báo|lỗi |thất bại|rate.?limit|bị chặn|không thể)/i;
 
 api.onLog((payload) => {
 	const raw = String(payload.line ?? '').replace(/\u001b\[[0-9;]*m/g, '');
@@ -10488,6 +8982,8 @@ api.onState((payload) => {
 	}
 	setState(payload.state, payload);
 	if (payload.state === 'idle' || payload.state === 'error') {
+		// Waves#149: chạy xong → app rảnh → cho phép tự áp dụng bản SW chờ.
+		scheduleIdleSwUpdate();
 		stopHeartbeat();
 		if (payload.state === 'error' && !userStopped) {
 			if (ui.btnRecover) ui.btnRecover.hidden = false;
@@ -10506,7 +9002,8 @@ window.addEventListener('beforeunload', (e) => {
 	}
 });
 
-/* PWA — chỉ cache vỏ ứng dụng, không đụng API Discord. Không còn popup cập nhật: deploy Cloudflare mới nhất là bản dùng ngay sau reload. */
+/* #106/#123: PWA — chỉ cache vỏ ứng dụng, không đụng API Discord.
+   setupServiceWorker() (Wave#123) lo đăng ký, phiên bản và thanh cập nhật. */
 if (ui.skipLink) {
 	ui.skipLink.addEventListener('click', (event) => {
 		event.preventDefault();
@@ -10535,10 +9032,10 @@ window.__aqDiag = {
 		lastAuthedToken = '';
 		return api.authCheck(t);
 	},
-	applyAura: () => ({ ok: false, message: 'central profile card removed' }),
+	applyAura: (np) => applyProfileAura(np),
 	nameplateState: () => {
 		const out = [];
-		for (const sel of ['.up-row']) {
+		for (const sel of ['.ph-nameplate', '.up-row']) {
 			const host = document.querySelector(sel);
 			const v = host && host.querySelector('video.np-media');
 			const i = host && host.querySelector('img.np-media');
@@ -10579,30 +9076,13 @@ window.__aqDiag = {
 		const cfg = await api.getConfig();
 		// Wave#88: nạp cache tài khoản đã lưu (cho popup "Đổi tài khoản").
 		await loadAccountsCache();
-		/* ANYACCT (2026-11-01): kiem tra switch dang do sau reload — neu
-		   ban ghi pendingSwitch ton tai ma tai khoan dich khong con
-		   trong danh sach da luu thi bao ro (khong tu xoa them, khong
-		   tu khoi phuc token — nguoi dung tu dang nhap lai neu can).
-		   Xoa ban ghi du sao (chi kiem tra 1 lan). */
-		try {
-			const raw = localStorage.getItem('autoquest.pendingSwitch.v1');
-			if (raw) {
-				localStorage.removeItem('autoquest.pendingSwitch.v1');
-				const rec = JSON.parse(raw);
-				if (rec && rec.id && !accountsCache.some((x) => x && x.id === rec.id)) {
-					const warnMsg = cfg.lang === 'en'
-						? 'Account switch did not fully persist: the target account is missing from the saved list. No account was deleted by cleanup — re-add it if needed.'
-						: 'Chuyển tài khoản chưa lưu trọn vẹn: tài khoản đích không còn trong danh sách đã lưu. App không tự xoá thêm tài khoản nào — cần thì đăng nhập lại tài khoản đó.';
-					appendLog(`[Cảnh báo] ${warnMsg}`, 'warn');
-				}
-			}
-		} catch {}
 		// Waves 28: áp chế độ Sáng/Tối đã lưu TRƯỚC khi vẽ (tránh nháy sáng/tối)
-		applyTheme(themeMode === 'system' ? 'system' : (cfg.theme === 'light' ? 'light' : 'dark'), false);
+		applyTheme(cfg.theme === 'light' ? 'light' : 'dark', false);
 		// Waves #126/#129/#127: ngôn ngữ, chế độ nhẹ, tự khoá — áp trước khi vẽ.
 		applyLang(cfg.lang === 'en' ? 'en' : 'vi', false);
 		applyLiteMode(cfg.liteMode === true, false);
 		setAutoLock(cfg.autoLockMin, false);
+		if (ui.appVersion) ui.appVersion.textContent = APP_VERSION;
 		setupServiceWorker();
 		renderQueueChip();
 		renderStats();

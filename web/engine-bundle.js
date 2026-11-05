@@ -293,10 +293,6 @@ async function runSelectedQuests(questManager, quests) {
         return;
     }
     const totalOrbs = runnable.reduce((sum, q) => sum + questManager_1.QuestManager.getQuestOrbs(q), 0);
-    // FIX64-P0 wave 1: dấu hiệu phiên bản — nhìn log là biết code mới đang
-    // chạy (fallback 401 + trạng thái bị chặn thay vì fail), không cần đoán
-    // theo deploy/cache.
-    console.log('[FIX64-P0] Heartbeat fallback đang bật: 401 appId task -> thử appId quest 1 lần/nhịp; 401 cả hai -> thẻ chuyển sang "Cần chơi trong Discord", không fail.');
     console.log(`\n--- Cày ${runnable.length} nhiệm vụ ĐÃ NHẬN · tổng ${totalOrbs} Orbs (chậm rãi, tránh rate-limit) ---`);
     for (const q of runnable) {
         console.log(`  ▸ [${questManager_1.QuestManager.getTaskLabel(q)}] ${q.config.messages.quest_name} — ${questManager_1.QuestManager.getQuestOrbs(q)} Orbs — tiến độ ${Math.floor(questManager_1.QuestManager.getTaskProgress(q))}/${questManager_1.QuestManager.getTaskTarget(q)}`);
@@ -411,7 +407,7 @@ async function runQuestCycle() {
         // Wave#104: lỗi của MỘT lượt (mạng chập chờn, Discord 5xx) không được
         // giết cả chế độ treo. Chỉ token chết (401) mới dừng hẳn.
         if (err?.status === 401) {
-            (0, events_1.report)('fatal', { message: 'Token không còn hiệu lực, dán lại token (401).' });
+            (0, events_1.report)('fatal', { message: 'Token Discord không hợp lệ hoặc đã hết hạn (401).' });
             console.error('Token hết hiệu lực:', message);
             void shutdown(1);
             return;
@@ -636,42 +632,12 @@ const events_1 = require("./events");
 const quest_1 = require("./quest");
 const taskTypes_1 = require("./taskTypes");
 const utils_1 = require("./utils");
-const presence_1 = require("./presence");
 class QuestManager {
     quests = new Map();
     client;
     constructor(client, quests = []) {
         this.client = client;
         quests.forEach((quest) => this.quests.set(quest.id, quest));
-    }
-    /**
-     * CARDV2 — phien presence dung chung cho cac quest choi PC chay
-     * song song (nhieu activity trong 1 phien). Token lay tu client
-     * (shim web luon co this.token); khong co token hoac khong co
-     * WebSocket -> phien o trang thai 'unavailable' va moi thao tac
-     * la no-op, khong anh huong luong heartbeat cu.
-     */
-    presenceSession() {
-        if (this.presence) return this.presence;
-        let token = '';
-        try {
-            token = String((this.client && this.client.token) || '');
-        } catch (e) {}
-        let properties = null;
-        try {
-            const constants_1 = require("./constants");
-            properties = constants_1.Constants && constants_1.Constants.Properties ? constants_1.Constants.Properties : null;
-        } catch (e) {}
-        this.presence = new presence_1.PresenceSession({
-            token: token,
-            properties: properties,
-            log: (msg) => {
-                try {
-                    console.log(msg);
-                } catch (e) {}
-            },
-        });
-        return this.presence;
     }
     static async fromResponse(client, response, fetchExcludedQuests = true) {
         if (response.quest_enrollment_blocked_until !== null) {
@@ -681,10 +647,10 @@ class QuestManager {
         // Quét toàn bộ nhiệm vụ phụ / excluded_quests để không xót bất kỳ nhiệm vụ nào
         if (fetchExcludedQuests && Array.isArray(response.excluded_quests) && response.excluded_quests.length > 0) {
             console.log(`Tìm thấy ${response.excluded_quests.length} nhiệm vụ phụ/bổ sung. Đang nạp chi tiết để không xót nhiệm vụ...`);
-            // Waves#157: parallel excluded fetch, cap 4 per batch.
-            const pending = response.excluded_quests.filter((quest) => quest.id && !questManager.hasQuest(quest.id));
-            for (let i = 0; i < pending.length; i += 4) {
-                await Promise.all(pending.slice(i, i + 4).map((quest) => questManager.addExcludedQuest(quest.id)));
+            for (const quest of response.excluded_quests) {
+                if (quest.id && !questManager.hasQuest(quest.id)) {
+                    await questManager.addExcludedQuest(quest.id);
+                }
             }
         }
         return questManager;
@@ -859,63 +825,6 @@ class QuestManager {
         }
         return String(quest.config?.application?.id ?? '');
     }
-    /**
-     * HB-DIAG (2026-10-31): chỉ làm giàu dòng log lỗi heartbeat — KHÔNG đổi
-     * cách chạy, nhịp, payload hay ngưỡng fail. Chỉ ghi thêm mã HTTP, mã lỗi
-     * Discord, quest, task và application_id đã gửi, để lần chạy sau nhìn log
-     * là biết Discord từ chối vì gì. Không ghi token, không ghi mã thưởng.
-     */
-    static heartbeatDiag(err, ctx) {
-        const status = err?.status ?? err?.response?.status ?? '?';
-        const code = err?.code ?? err?.response?.data?.code ?? '?';
-        const msg = err?.message || String(err);
-        return `status=${status} code=${code} quest=${ctx.questId} task=${ctx.taskName} appId=${ctx.applicationId} endpoint=${ctx.endpoint} msg=${msg}`;
-    }
-    /**
-     * FIX64-P0: toàn bộ application_id khai trong task (chỉ id, không token),
-     * để log fallback so sánh được appId task với appId quest ngay từ 1 dòng.
-     */
-    static taskApplicationIds(quest, taskName) {
-        try {
-            const tasks = QuestManager.getTasks(quest);
-            const name = taskName ?? QuestManager.resolveTaskName(quest);
-            const apps = tasks?.[name]?.applications;
-            if (Array.isArray(apps))
-                return apps.map((a) => String(a?.id ?? '')).filter(Boolean);
-        }
-        catch {
-            /* ignore */
-        }
-        return [];
-    }
-    /**
-     * FIX64-P0: quest bị Discord từ chối heartbeat 401 kéo dài (cả appId task
-     * lẫn appId quest) thì KHÔNG failQuest với lỗi chung và KHÔNG gửi tiếp.
-     * Dừng vòng heartbeat sạch (caller return ngay sau đó), quest ở lại danh
-     * sách với tiến độ thật để người dùng chơi trong Discord thật và app theo
-     * dõi tiến độ qua quét. Renderer hiển thị trạng thái này riêng.
-     */
-    blockHeartbeatQuest(quest, questName, taskName, endpoint, taskAppId, questAppId, lastMsg, secondsNeeded) {
-        const secondsDone = QuestManager.getTaskProgress(quest, taskName);
-        console.warn(`[Cảnh báo] Heartbeat "${questName}" bị Discord từ chối 401 liên tục (task appId=${taskAppId}, quest appId=${questAppId}) — dừng heartbeat, giữ quest để theo dõi tiến độ qua quét.`);
-        (0, events_1.report)('quest:heartbeat-blocked', {
-            id: QuestManager.getQuestId(quest),
-            name: questName,
-            task: taskName,
-            endpoint,
-            taskAppId,
-            questAppId,
-            message: lastMsg,
-            reason: 'Discord từ chối heartbeat (401) cả appId task lẫn appId quest — mở game trong Discord thật và chơi, app sẽ theo dõi tiến độ qua quét.',
-            // ORBFIX: trạng thái nhận quest thật (user_status.enrolled_at)
-            // để UI phân biệt "chưa nhận quest" với "đã nhận nhưng 401".
-            // Phòng thủ: getQuestCardData còn được gọi với object thuần
-            // (mock test) không có method — lúc đó đọc thẳng userStatus.
-            enrolled: typeof quest.isEnrolledQuest === 'function' ? quest.isEnrolledQuest() : Boolean(quest.userStatus?.enrolled_at),
-            secondsDone,
-            secondsNeeded,
-        });
-    }
     /** Nhận thưởng công khai (bot.ts gọi trực tiếp thay vì đụng redeemQuest private flow). */
     claimReward(quest) {
         return this.redeemQuest(quest);
@@ -1024,36 +933,6 @@ class QuestManager {
      * - `rewardKind`: 'orbs' khi có orb_quantity, ngược lại 'item' (avatar decoration...).
      * - `rewardAsset`: asset ảnh/video của phần thưởng (chỉ có với reward dạng vật phẩm).
      */
-    // Waves#153 — defensive code-field scan (session memory only).
-    // No code field is confirmed in this codebase's Discord payloads.
-    // Scans a small whitelist (top level + one level of metadata/details)
-    // and returns value + field name; never logs the value. Empty when
-    // nothing matches, so the UI shows the Discord link, not a fake code.
-    static extractRewardCode(reward) {
-        const KEYS = ['code', 'redeem_code', 'reward_code', 'external_code', 'gift_code', 'voucher_code', 'promo_code', 'promotion_code', 'redemption_code', 'key'];
-        const ok = (v) => typeof v === 'string' && /^[A-Za-z0-9][A-Za-z0-9\-_]{3,127}$/.test(v.trim());
-        const scan = (obj) => {
-            if (!obj || typeof obj !== 'object')
-                return null;
-            for (const k of KEYS) {
-                if (ok(obj[k]))
-                    return { code: String(obj[k]).trim(), source: k };
-            }
-            for (const nest of ['metadata', 'details', 'data']) {
-                const inner = obj[nest];
-                if (inner && typeof inner === 'object') {
-                    for (const k of KEYS) {
-                        if (ok(inner[k]))
-                            return { code: String(inner[k]).trim(), source: `${nest}.${k}` };
-                    }
-                }
-            }
-            return null;
-        };
-        if (!reward)
-            return { code: '', source: '' };
-        return scan(reward) || { code: '', source: '' };
-    }
     static getQuestCardData(quest) {
         const cfg = quest.config;
         const assets = cfg?.assets;
@@ -1076,17 +955,11 @@ class QuestManager {
         };
         const rewardAsset = pick(itemReward?.asset, itemReward?.asset_video);
         const rewardIsVideo = /\.mp4$/i.test(rewardAsset);
-        const codeFound = QuestManager.extractRewardCode(itemReward);
-        const rewardType = codeFound.code ? 'code' : orbCount > 0 ? 'orbs' : itemReward ? 'avatar' : 'other';
         return {
             hero: pick(assets?.hero, assets?.quest_bar_hero, assets?.hero_video),
             heroVideo: pick(assets?.hero_video) || null,
             gameTile: pick(assets?.game_tile_dark, assets?.game_tile_light, assets?.game_tile),
-            gameTileDark: pick(assets?.game_tile_dark),
-            gameTileLight: pick(assets?.game_tile_light),
             logotype: pick(assets?.logotype_dark, assets?.logotype_light, assets?.logotype),
-            logotypeDark: pick(assets?.logotype_dark),
-            logotypeLight: pick(assets?.logotype_light),
             publisher: messages?.game_publisher || '',
             gameTitle: messages?.game_title || '',
             // Waves 42 — LOGO CHUẨN THEO TỪNG NHIỆM VỤ.
@@ -1103,9 +976,6 @@ class QuestManager {
             rewardTitle: orbCount > 0 ? `Nhận ${orbCount} Orbs` : `Nhận ${itemName}`,
             rewardAsset,
             rewardIsVideo,
-            rewardType,
-            rewardCode: codeFound.code,
-            rewardCodeSource: codeFound.source,
             rewardName: orbCount > 0 ? `${orbCount} Discord Orbs` : itemName,
             // Waves 32: platform THẬT từ rewards_config (Discord yêu cầu đúng giá trị này
             // khi claim; gửi sai/0 có thể bị từ chối). Gửi kèm lên UI để claim dùng đúng.
@@ -1114,10 +984,6 @@ class QuestManager {
             // "Đã làm" hiện đúng "nhận bao nhiêu, lúc nào" khi rê chuột.
             orbs: orbCount,
             claimedAt: quest.userStatus?.claimed_at || null,
-            // ORBFIX: trạng thái nhận quest thật — UI dùng để hướng dẫn
-            // thẻ bị chặn heartbeat (chưa nhận vs đã nhận nhưng 401).
-            // Phòng thủ như payload chặn: object thuần không có method.
-            enrolled: typeof quest.isEnrolledQuest === 'function' ? quest.isEnrolledQuest() : Boolean(quest.userStatus?.enrolled_at),
             // Wave#102: payload claim của UI phải giống engine — gửi nguyên trạng
             // traffic metadata (undefined thì JSON bỏ field, KHÔNG đổi thành null).
             traffic_metadata_raw: quest.raw?.traffic_metadata_raw,
@@ -1371,17 +1237,6 @@ class QuestManager {
             });
             return;
         }
-        // FIX64-P0 wave 7: quest đã hết hạn thì bỏ qua với lý do rõ, KHÔNG gửi
-        // heartbeat vô ích rồi mới báo lỗi heartbeat.
-        if (quest.isExpired()) {
-            console.log(`⏭ Bỏ qua "${questName}": đã hết thời gian nhiệm vụ trong Discord.`);
-            (0, events_1.report)('quest:skip', {
-                id: questId,
-                name: questName,
-                reason: 'Đã hết thời gian nhiệm vụ trong Discord — không gửi heartbeat',
-            });
-            return;
-        }
         const taskName = QuestManager.resolveTaskName(quest);
         const kind = (0, taskTypes_1.taskKindOf)(taskName);
         const taskLabel = (0, taskTypes_1.taskLabelOf)(taskName);
@@ -1399,20 +1254,6 @@ class QuestManager {
         const applicationName = quest.config.application?.name || '';
         const appId = QuestManager.getTaskApplicationId(quest, taskName);
         console.log(`▶ "${questName}" · ${taskLabel} (${taskName}) · ${orbs} Orbs · ${Math.floor(secondsDone)}/${secondsNeeded}`);
-        // ORBRING (2026-11-01): dong chan doan heartbeat ngay khi bat dau —
-        // in enrolled + task + ca 2 appId ra activity log (qua kenh console
-        // cua worker, giong cac dong warn heartbeat) de lan chay sau khong
-        // con phai doan nguyen nhan 401: chua nhan / da nhan / appId sai.
-        // Chi log, khong doi hanh vi chay, khong enroll, khong doi nguong.
-        // ANYACCT (2026-11-01): them marker phien ban code presence-gate —
-        // dong nay (qua LOG_KEEP) + dong marker Auto-start cua renderer la
-        // bang chung lan chay live dang chay code moi, khong phai bundle
-        // cache cu.
-        if (kind === 'desktop' || kind === 'console' || kind === 'mobile') {
-            const questAppId = String(quest.config?.application?.id ?? '');
-            const enrolled = typeof quest.isEnrolledQuest === 'function' ? quest.isEnrolledQuest() : Boolean(quest.userStatus?.enrolled_at);
-            console.log(`[Chẩn đoán heartbeat] "${questName}" · enrolled=${enrolled ? 'yes' : 'no'} · task=${taskName} · appId task=${appId} · appId quest=${questAppId} · ${this.presenceSession().describeShort()} · marker=${presence_1.PRESENCE_BUILD_MARKER}`);
-        }
         (0, events_1.report)('quest:start', {
             id: questId,
             name: questName,
@@ -1512,7 +1353,6 @@ class QuestManager {
         console.log(`Đang giả lập xem video nhiệm vụ: "${questName}" (${secondsNeeded} giây)...`);
         let videoIterations = 0;
         const maxVideoIterations = Math.ceil(Math.max(secondsNeeded, 0) / speed) + 600;
-        let lastMilestone = -1; // Waves#187: milestone logging only, no per-tick spam.
         let stallIterations = 0;
         const maxStallIterations = 60;
         while (true) {
@@ -1542,12 +1382,6 @@ class QuestManager {
                 completed = res.completed_at != null;
                 quest.updateUserStatus(res);
                 secondsDone = Math.min(secondsNeeded, timestamp);
-                /* Waves#187: log milestones 25/50/75/100% only. Stop during
-                   a video quest already terminates the worker cleanly
-                   (bridge stopEngine); no in-loop flag is needed here. */
-                const pct = secondsNeeded > 0 ? Math.floor((secondsDone / secondsNeeded) * 100) : 0;
-                const mile = pct >= 100 ? 100 : pct >= 75 ? 75 : pct >= 50 ? 50 : pct >= 25 ? 25 : -1;
-                if (mile !== lastMilestone && mile >= 0) { lastMilestone = mile; console.log(`Video "${questName}": ${mile}% (${secondsDone}/${secondsNeeded}s)`); }
                 (0, events_1.report)('quest:progress', {
                     id: QuestManager.getQuestId(quest),
                     name: questName,
@@ -1585,35 +1419,7 @@ class QuestManager {
         const interval = Math.max(5, heartbeatIntervalS);
         const maxTicks = Math.ceil(secondsNeeded / interval) + 60;
         console.log(`Đang giả lập chơi "${applicationName}" cho "${questName}" (Thời gian yêu cầu: ${Math.ceil(secondsNeeded / 60)} phút, heartbeat ${interval}s)...`);
-        // HBCAP — presence-ready gate TRUOC nhip heartbeat dau tien:
-        // cho gateway READY + op 3 activity cua DUNG game nay gui xong
-        // (presence.waitForActivity), toi da 10s. Qua han van chay
-        // heartbeat REST cu va log presence=timeout de log chung minh
-        // truong hop nao da xay ra. Khong doi quy tac 5-nhip blocked,
-        // khong doi khoang nghi. Ly do: ban CARDV2 chi doi Identify
-        // GUI XONG nen nhip 1 van chay khi phien moi o 'connecting'
-        // (log live: presence=connecting o tick 1/5) — gate nay dong
-        // dung lo hong do. Presence go o finally ben duoi moi duong ve.
-        // Chi ap dung duong desktop-play nay: console/mobile khong
-        // dung presence (endpoint rieng, khong chia se duong nay).
-        const presence = this.presenceSession();
-        const gateTimeoutMs = typeof this.presenceGateTimeoutMs === 'number' ? this.presenceGateTimeoutMs : presence_1.PRESENCE_GATE_TIMEOUT_MS;
-        let presenceState = 'off';
-        try {
-            presenceState = await presence.add(applicationId, applicationName);
-            presenceState = await presence.waitForActivity(applicationId, gateTimeoutMs);
-        } catch (e) {
-            presenceState = 'error';
-        }
-        console.log(`[Presence] "${applicationName}" (appId=${applicationId}): ${presence.describeShort()} (gate -> ${presenceState})`);
-        if (presenceState === 'timeout') {
-            console.log(`[Presence] "${applicationName}": gate TIMEOUT sau ${gateTimeoutMs}ms — chay heartbeat REST, presence=timeout.`);
-        }
-        try {
         let consecutiveErrors = 0;
-        // FIX64-P0 wave 6: nhịp chờ sau 1 nhịp lỗi (2x, tối đa 60s), về nhịp
-        // gốc ngay khi 1 nhịp thành công.
-        let waitS = interval;
         let tick = 0;
         while (!quest.isCompleted() && tick < maxTicks) {
             tick++;
@@ -1626,7 +1432,6 @@ class QuestManager {
                 });
                 quest.updateUserStatus(res);
                 consecutiveErrors = 0;
-                waitS = interval;
                 const currentDone = QuestManager.getTaskProgress(quest, taskName);
                 console.log(`  [Heartbeat: ${applicationName}] Tiến độ: ${Math.floor(currentDone / 60)}/${Math.ceil(secondsNeeded / 60)} phút.`);
                 (0, events_1.report)('quest:progress', {
@@ -1637,62 +1442,15 @@ class QuestManager {
                 });
             }
             catch (err) {
-                // HB-FIX (2026-10-31): 401 -> thử lại ĐÚNG 1 lần với application_id
-                // của chính quest (không phải appId của task). Chỉ đổi appId trong
-                // lần thử lại, không đổi endpoint, nhịp gốc hay ngưỡng 5/5.
-                // FIX64-P0: 401 kéo dài cả 2 appId -> trạng thái bị chặn (wave 3),
-                // KHÔNG failQuest; nhịp lỗi chờ lâu hơn (wave 6).
-                const questAppId = String(quest.config?.application?.id ?? '');
-                const is401 = err?.status === 401 || err?.code === 40001;
-                const taskApps = QuestManager.taskApplicationIds(quest, taskName);
-                if (is401 && questAppId && questAppId !== applicationId) {
-                    try {
-                        const resFb = await this.client.rest.post(`/quests/${quest.id}/heartbeat`, {
-                            body: {
-                                application_id: questAppId,
-                                terminal: false,
-                            },
-                        });
-                        quest.updateUserStatus(resFb);
-                        consecutiveErrors = 0;
-                        waitS = interval;
-                        const currentDone = QuestManager.getTaskProgress(quest, taskName);
-                        console.log(`  [Heartbeat: ${applicationName}] Fallback appId quest (${questAppId}) đã nhận sau khi appId task (${applicationId}) bị 401. Tiến độ: ${Math.floor(currentDone / 60)}/${Math.ceil(secondsNeeded / 60)} phút.`);
-                        (0, events_1.report)('quest:progress', {
-                            id: QuestManager.getQuestId(quest),
-                            name: questName,
-                            secondsDone: currentDone,
-                            secondsNeeded,
-                        });
-                    }
-                    catch (errFb) {
-                        consecutiveErrors++;
-                        const msg = errFb?.message || String(errFb);
-                        console.warn(`[Cảnh báo] Lỗi gửi tín hiệu heartbeat "${applicationName}" (${consecutiveErrors}/5) sau fallback appId=${questAppId} (appId task=${applicationId} bị 401) taskApps=[${taskApps.join(',')}] ${presence.describeShort()}: ${QuestManager.heartbeatDiag(errFb, { questId: QuestManager.getQuestId(quest), taskName, applicationId: questAppId, endpoint: 'heartbeat' })}`);
-                        if (consecutiveErrors >= 5) {
-                            this.blockHeartbeatQuest(quest, questName, taskName, 'heartbeat', applicationId, questAppId, msg, secondsNeeded);
-                            return;
-                        }
-                        waitS = Math.min(60, interval * 2);
-                    }
-                }
-                else {
-                    consecutiveErrors++;
-                    const msg = err?.message || String(err);
-                    console.warn(`[Cảnh báo] Lỗi gửi tín hiệu heartbeat "${applicationName}" (${consecutiveErrors}/5) ${presence.describeShort()}: ${QuestManager.heartbeatDiag(err, { questId: QuestManager.getQuestId(quest), taskName, applicationId, endpoint: 'heartbeat' })}`);
-                    if (consecutiveErrors >= 5) {
-                        if (is401) {
-                            this.blockHeartbeatQuest(quest, questName, taskName, 'heartbeat', applicationId, questAppId || applicationId, msg, secondsNeeded);
-                        }
-                        else {
-                            this.failQuest(quest, questName, `Mất tín hiệu liên tục: ${msg}`);
-                        }
-                        return;
-                    }
-                    waitS = Math.min(60, interval * 2);
+                consecutiveErrors++;
+                const msg = err?.message || String(err);
+                console.warn(`[Cảnh báo] Lỗi gửi tín hiệu heartbeat "${applicationName}" (${consecutiveErrors}/5): ${msg}`);
+                if (consecutiveErrors >= 5) {
+                    this.failQuest(quest, questName, `Mất tín hiệu liên tục: ${msg}`);
+                    return;
                 }
             }
-            await this.timeout(waitS * 1000);
+            await this.timeout(interval * 1000);
         }
         if (!quest.isCompleted()) {
             this.failQuest(quest, questName, `Quá ${maxTicks} nhịp heartbeat mà Discord chưa ghi nhận hoàn thành.`);
@@ -1710,14 +1468,6 @@ class QuestManager {
         catch {
             /* ignore terminal heartbeat error */
         }
-        }
-        finally {
-            // CARDV2: go activity khi het luong (hoan thanh / chan /
-            // fail) — de presence khong ket lai game cu sang dot sau.
-            try {
-                presence.remove(applicationId);
-            } catch (e) {}
-        }
         await this.finishQuest(quest, questName);
     }
     /**
@@ -1731,9 +1481,6 @@ class QuestManager {
         const maxTicks = Math.ceil(secondsNeeded / interval) + 60;
         console.log(`Đang giả lập chơi trên ${platform} "${applicationName}" cho "${questName}" (${Math.ceil(secondsNeeded / 60)} phút)...`);
         let consecutiveErrors = 0;
-        // FIX64-P0 wave 6: nhịp chờ sau 1 nhịp lỗi (2x, tối đa 60s), về nhịp
-        // gốc ngay khi 1 nhịp thành công.
-        let waitS = interval;
         let tick = 0;
         while (!quest.isCompleted() && tick < maxTicks) {
             tick++;
@@ -1747,7 +1494,6 @@ class QuestManager {
                 });
                 quest.updateUserStatus(res);
                 consecutiveErrors = 0;
-                waitS = interval;
                 const currentDone = QuestManager.getTaskProgress(quest, taskName);
                 console.log(`  [Console ${platform}] Tiến độ: ${Math.floor(currentDone / 60)}/${Math.ceil(secondsNeeded / 60)} phút.`);
                 (0, events_1.report)('quest:progress', {
@@ -1758,61 +1504,15 @@ class QuestManager {
                 });
             }
             catch (err) {
-                // HB-FIX: 401 -> thử lại ĐÚNG 1 lần với application_id của chính quest.
-                // FIX64-P0: 401 kéo dài cả 2 appId -> trạng thái bị chặn (wave 3),
-                // KHÔNG failQuest; nhịp lỗi chờ lâu hơn (wave 6).
-                const questAppId = String(quest.config?.application?.id ?? '');
-                const is401 = err?.status === 401 || err?.code === 40001;
-                const taskApps = QuestManager.taskApplicationIds(quest, taskName);
-                if (is401 && questAppId && questAppId !== applicationId) {
-                    try {
-                        const resFb = await this.client.rest.post(`/quests/${quest.id}/console-heartbeat`, {
-                            body: {
-                                application_id: questAppId,
-                                platform,
-                                terminal: false,
-                            },
-                        });
-                        quest.updateUserStatus(resFb);
-                        consecutiveErrors = 0;
-                        waitS = interval;
-                        const currentDone = QuestManager.getTaskProgress(quest, taskName);
-                        console.log(`  [Console ${platform}] Fallback appId quest (${questAppId}) đã nhận sau khi appId task (${applicationId}) bị 401. Tiến độ: ${Math.floor(currentDone / 60)}/${Math.ceil(secondsNeeded / 60)} phút.`);
-                        (0, events_1.report)('quest:progress', {
-                            id: QuestManager.getQuestId(quest),
-                            name: questName,
-                            secondsDone: currentDone,
-                            secondsNeeded,
-                        });
-                    }
-                    catch (errFb) {
-                        consecutiveErrors++;
-                        const msg = errFb?.message || String(errFb);
-                        console.warn(`[Cảnh báo] Lỗi console-heartbeat (${consecutiveErrors}/5) sau fallback appId=${questAppId} (appId task=${applicationId} bị 401) taskApps=[${taskApps.join(',')}]: ${QuestManager.heartbeatDiag(errFb, { questId: QuestManager.getQuestId(quest), taskName, applicationId: questAppId, endpoint: 'console-heartbeat' })}`);
-                        if (consecutiveErrors >= 5) {
-                            this.blockHeartbeatQuest(quest, questName, taskName, 'console-heartbeat', applicationId, questAppId, msg, secondsNeeded);
-                            return;
-                        }
-                        waitS = Math.min(60, interval * 2);
-                    }
-                }
-                else {
-                    consecutiveErrors++;
-                    const msg = err?.message || String(err);
-                    console.warn(`[Cảnh báo] Lỗi console-heartbeat (${consecutiveErrors}/5): ${QuestManager.heartbeatDiag(err, { questId: QuestManager.getQuestId(quest), taskName, applicationId, endpoint: 'console-heartbeat' })}`);
-                    if (consecutiveErrors >= 5) {
-                        if (is401) {
-                            this.blockHeartbeatQuest(quest, questName, taskName, 'console-heartbeat', applicationId, questAppId || applicationId, msg, secondsNeeded);
-                        }
-                        else {
-                            this.failQuest(quest, questName, `Console heartbeat lỗi liên tục: ${msg}`);
-                        }
-                        return;
-                    }
-                    waitS = Math.min(60, interval * 2);
+                consecutiveErrors++;
+                const msg = err?.message || String(err);
+                console.warn(`[Cảnh báo] Lỗi console-heartbeat (${consecutiveErrors}/5): ${msg}`);
+                if (consecutiveErrors >= 5) {
+                    this.failQuest(quest, questName, `Console heartbeat lỗi liên tục: ${msg}`);
+                    return;
                 }
             }
-            await this.timeout(waitS * 1000);
+            await this.timeout(interval * 1000);
         }
         if (!quest.isCompleted()) {
             this.failQuest(quest, questName, `Console: quá ${maxTicks} nhịp mà chưa hoàn thành.`);
@@ -1843,9 +1543,6 @@ class QuestManager {
         const maxTicks = Math.ceil(secondsNeeded / interval) + 60;
         console.log(`Đang giả lập chơi mobile "${applicationName}" cho "${questName}" (${Math.ceil(secondsNeeded / 60)} phút)...`);
         let consecutiveErrors = 0;
-        // FIX64-P0 wave 6: nhịp chờ sau 1 nhịp lỗi (2x, tối đa 60s), về nhịp
-        // gốc ngay khi 1 nhịp thành công.
-        let waitS = interval;
         let tick = 0;
         while (!quest.isCompleted() && tick < maxTicks) {
             tick++;
@@ -1858,7 +1555,6 @@ class QuestManager {
                 });
                 quest.updateUserStatus(res);
                 consecutiveErrors = 0;
-                waitS = interval;
                 const currentDone = QuestManager.getTaskProgress(quest, taskName);
                 console.log(`  [Mobile] Tiến độ: ${Math.floor(currentDone / 60)}/${Math.ceil(secondsNeeded / 60)} phút.`);
                 (0, events_1.report)('quest:progress', {
@@ -1869,60 +1565,15 @@ class QuestManager {
                 });
             }
             catch (err) {
-                // HB-FIX: 401 -> thử lại ĐÚNG 1 lần với application_id của chính quest.
-                // FIX64-P0: 401 kéo dài cả 2 appId -> trạng thái bị chặn (wave 3),
-                // KHÔNG failQuest; nhịp lỗi chờ lâu hơn (wave 6).
-                const questAppId = String(quest.config?.application?.id ?? '');
-                const is401 = err?.status === 401 || err?.code === 40001;
-                const taskApps = QuestManager.taskApplicationIds(quest, taskName);
-                if (is401 && questAppId && questAppId !== applicationId) {
-                    try {
-                        const resFb = await this.client.rest.post(`/quests/${quest.id}/mobile-heartbeat`, {
-                            body: {
-                                application_id: questAppId,
-                                session_id: sessionId,
-                            },
-                        });
-                        quest.updateUserStatus(resFb);
-                        consecutiveErrors = 0;
-                        waitS = interval;
-                        const currentDone = QuestManager.getTaskProgress(quest, taskName);
-                        console.log(`  [Mobile] Fallback appId quest (${questAppId}) đã nhận sau khi appId task (${applicationId}) bị 401. Tiến độ: ${Math.floor(currentDone / 60)}/${Math.ceil(secondsNeeded / 60)} phút.`);
-                        (0, events_1.report)('quest:progress', {
-                            id: QuestManager.getQuestId(quest),
-                            name: questName,
-                            secondsDone: currentDone,
-                            secondsNeeded,
-                        });
-                    }
-                    catch (errFb) {
-                        consecutiveErrors++;
-                        const msg = errFb?.message || String(errFb);
-                        console.warn(`[Cảnh báo] Lỗi mobile-heartbeat (${consecutiveErrors}/5) sau fallback appId=${questAppId} (appId task=${applicationId} bị 401) taskApps=[${taskApps.join(',')}]: ${QuestManager.heartbeatDiag(errFb, { questId: QuestManager.getQuestId(quest), taskName, applicationId: questAppId, endpoint: 'mobile-heartbeat' })}`);
-                        if (consecutiveErrors >= 5) {
-                            this.blockHeartbeatQuest(quest, questName, taskName, 'mobile-heartbeat', applicationId, questAppId, msg, secondsNeeded);
-                            return;
-                        }
-                        waitS = Math.min(60, interval * 2);
-                    }
-                }
-                else {
-                    consecutiveErrors++;
-                    const msg = err?.message || String(err);
-                    console.warn(`[Cảnh báo] Lỗi mobile-heartbeat (${consecutiveErrors}/5): ${QuestManager.heartbeatDiag(err, { questId: QuestManager.getQuestId(quest), taskName, applicationId, endpoint: 'mobile-heartbeat' })}`);
-                    if (consecutiveErrors >= 5) {
-                        if (is401) {
-                            this.blockHeartbeatQuest(quest, questName, taskName, 'mobile-heartbeat', applicationId, questAppId || applicationId, msg, secondsNeeded);
-                        }
-                        else {
-                            this.failQuest(quest, questName, `Mobile heartbeat lỗi liên tục: ${msg}`);
-                        }
-                        return;
-                    }
-                    waitS = Math.min(60, interval * 2);
+                consecutiveErrors++;
+                const msg = err?.message || String(err);
+                console.warn(`[Cảnh báo] Lỗi mobile-heartbeat (${consecutiveErrors}/5): ${msg}`);
+                if (consecutiveErrors >= 5) {
+                    this.failQuest(quest, questName, `Mobile heartbeat lỗi liên tục: ${msg}`);
+                    return;
                 }
             }
-            await this.timeout(waitS * 1000);
+            await this.timeout(interval * 1000);
         }
         if (!quest.isCompleted()) {
             this.failQuest(quest, questName, `Mobile: quá ${maxTicks} nhịp mà chưa hoàn thành.`);
@@ -2006,35 +1657,12 @@ class QuestManager {
                 : 'join';
         const platform = taskName === 'JOIN_COMMUNITY' ? 'community' : 'social';
         console.log(`Đang thực hiện hành động "${action}" cho "${questName}"...`);
-        // FIX64-P4 (W42): loi mang/Discord nhat thoi KHONG duoc fail quest ngay
-        // lan dau. Thu lai toi da 3 lan voi backoff 2s/5s; chi 401/403/404 la
-        // ket cuc cuoi (token chet / quest khong ton tai / khong co quyen) thi
-        // dung ngay thay vi cho vo ich. Het luot thu moi failQuest.
-        const SOCIAL_RETRY_DELAYS_MS = [2000, 5000];
-        let socialDone = false;
-        let socialLastErr = null;
-        for (let attempt = 0; attempt <= SOCIAL_RETRY_DELAYS_MS.length; attempt++) {
-            try {
-                const res = await this.client.rest.post(`/quests/${quest.id}/social-action`, { body: { action, platform } });
-                quest.updateUserStatus(res);
-                socialDone = true;
-                break;
-            }
-            catch (err) {
-                socialLastErr = err;
-                const status = err?.status;
-                if (status === 401 || status === 403 || status === 404) {
-                    console.warn(`[Cảnh báo] social-action dung ngay (HTTP ${status}, khong thu lai): ${err?.message || err}`);
-                    break;
-                }
-                if (attempt >= SOCIAL_RETRY_DELAYS_MS.length)
-                    break;
-                console.warn(`[Cảnh báo] social-action loi lan ${attempt + 1}/3 (se thu lai sau ${SOCIAL_RETRY_DELAYS_MS[attempt] / 1000}s): ${err?.message || err}`);
-                await this.timeout(SOCIAL_RETRY_DELAYS_MS[attempt]);
-            }
+        try {
+            const res = await this.client.rest.post(`/quests/${quest.id}/social-action`, { body: { action, platform } });
+            quest.updateUserStatus(res);
         }
-        if (!socialDone) {
-            this.failQuest(quest, questName, `social-action lỗi sau 3 lần thử: ${socialLastErr?.message || socialLastErr}`);
+        catch (err) {
+            this.failQuest(quest, questName, `social-action lỗi: ${err?.message || err}`);
             return;
         }
         await this.finishQuest(quest, questName);
@@ -2109,7 +1737,7 @@ class QuestManager {
             catch (err) {
                 consecutiveErrors++;
                 const msg = err?.message || String(err);
-                console.warn(`[Cảnh báo] Lỗi gửi tín hiệu hoạt động "${applicationName}" (${consecutiveErrors}/5): ${QuestManager.heartbeatDiag(err, { questId: QuestManager.getQuestId(quest), taskName, applicationId: streamKey, endpoint: 'heartbeat' })}`);
+                console.warn(`[Cảnh báo] Lỗi gửi tín hiệu hoạt động "${applicationName}" (${consecutiveErrors}/5): ${msg}`);
                 if (consecutiveErrors >= 5) {
                     this.failQuest(quest, questName, `Lỗi tín hiệu liên tục: ${msg}`);
                     return;
@@ -2209,408 +1837,6 @@ class QuestManager {
     }
 }
 exports.QuestManager = QuestManager;
-
-};
-
-__factories["src/presence.js"] = function (require, module, exports, env, process, Buffer, console, setTimeout, clearTimeout, setInterval, clearInterval, URL, URLSearchParams, Headers, fetch, AbortController, TextEncoder, btoa, atob) {
-'use strict';
-Object.defineProperty(exports, '__esModule', { value: true });
-
-/**
- * CARDV2 — Gateway presence cho quest choi tren PC (PLAY_ON_DESKTOP).
- *
- * Vi sao can: engine web truoc day CHI goi REST (fetch shim, khong co
- * phien gateway nao, khong bao gio bao cao game dang chay). Trong khi
- * client Discord that chi ghi nhan tien do PLAY_ON_DESKTOP khi game
- * duoc bao cao la dang chay (desktop phat hien process -> presence).
- * Cac cong cu cong dong deu xac nhan: quest choi game khong chay
- * duoc tu phien trinh duyet vi trinh duyet khong bao cao game dang
- * chay; cach lam cua ho la gia lap game dang chay (process gia hoac
- * RPC SET_ACTIVITY). Day la nghi van so 1 cho 401/40001 keo dai o
- * Roblox + Arknights trong khi video/scan/claim (khong can game
- * dang chay) van OK voi cung token + header.
- *
- * Cach lam o day (trong kha nang cua trinh duyet): mo mot WebSocket
- * gateway that (wss://gateway.discord.gg) bang token cua user, identify
- * voi properties tu AQIdentity, va gui presence activity {type: 0,
- * application_id} cho game dang cày — dung tin hieu client that gui
- * khi game mo. Khong dung RPC socket (chi co tren desktop), khong
- * dung process gia (khong lam duoc trong trinh duyet).
- *
- * Phong thu tuyet doi: moi loi o day chi lam presence xuong cap ve
- * hanh vi cu (van goi REST heartbeat binh thuong), KHONG BAO GIO
- * nem loi vao luong quest. Khong log token — chi log appId, ten
- * game (da co trong log quest) va trang thai phien.
- */
-
-const GATEWAY_URL = 'wss://gateway.discord.gg/?v=10&encoding=json';
-const OP_DISPATCH = 0;
-const OP_HEARTBEAT = 1;
-const OP_IDENTIFY = 2;
-const OP_PRESENCE = 3;
-const OP_HELLO = 10;
-const MAX_RECONNECTS = 5;
-const RECONNECT_DELAY_MS = 5000;
-/* HBCAP (2026-11-01): presence-ready gate — nhip heartbeat dau tien
-   chi gui SAU KHI gateway READY + op 3 activity cua dung game do
-   da gui xong. Timeout gioi han (mac dinh 10s): qua han van chay
-   heartbeat REST cu va log presence=timeout, khong treo luong quest.
-   Ly do: ban CARDV2 chi doi Identify GUI XONG (sendIdentify tu set
-   state='ready'), nen nhip 1 van co the chay khi phien moi chi o
-   'connecting' — dung nhu log live cua Ethan (presence=connecting
-   o tick 1/5). */
-const PRESENCE_GATE_TIMEOUT_MS = 10000;
-/* ANYACCT (2026-11-01): marker phien ban code presence-gate — in vao
-   dong chan doan heartbeat cua engine + dong marker Auto-start cua
-   renderer, de lan chay live sau chung minh duoc dang chay code moi
-   (khong phai bundle cache cu — dung mo ho cua lan chay 13:31). */
-const PRESENCE_BUILD_MARKER = 'presence-gate-v2';
-
-let WsCtorOverride = null;
-function setWebSocketCtor(fn) {
-	WsCtorOverride = typeof fn === 'function' ? fn : null;
-}
-function getWsCtor() {
-	if (WsCtorOverride) return WsCtorOverride;
-	try {
-		return typeof WebSocket !== 'undefined' ? WebSocket : null;
-	} catch (e) {
-		return null;
-	}
-}
-
-class PresenceSession {
-	constructor(opts) {
-		opts = opts || {};
-		this.token = String(opts.token || '');
-		this.properties = opts.properties || null;
-		this.log = typeof opts.log === 'function' ? opts.log : function () {};
-		this.ws = null;
-		this.activities = new Map();
-		this.state = 'off';
-		this.seq = null;
-		this.hbIntervalMs = 0;
-		this.hbTimer = null;
-		this.reconnects = 0;
-		this.wantActivities = false;
-		/* HBCAP: nguoi doi gate — moi muc { appId, resolve }. Chi giai
-		   quyet khi READY (ke ca reconnect), khi phien chet, hoac khi
-		   timeout rieng cua tung waiter het han. */
-		this._activityWaiters = [];
-		/* HBCAP: true chi khi READY cua phien HIEN TAI da den va op 3
-		   da gui xong. Reset moi lan connect()/close() — READY cua
-		   phien cu khong duoc chung minh cho phien moi. */
-		this.presenceConfirmed = false;
-		/* ANYACCT: ly do gateway that bai gan nhat { kind, code,
-		   detail } — null khi chua co loi. kind: 'timeout' (gate het
-		   han), 'close' (gateway dong, kem code), 'transport-error'
-		   (loi WebSocket), 'connect-error' (khong mo duoc socket).
-		   Chi ma/ly do gateway tra — khong bao gio token. Xoa o
-		   add() khi bat dau phien moi va o READY khi phien song. */
-		this.lastFailure = null;
-		this._reconnectTimer = null;
-		/* CARDV2: chet that sau close() cuoi — tin nhan gateway den
-		   muon (vi du READY den sau khi quest xong trong tich tac)
-		   khong duoc phep khoi dong lai timer heartbeat hay gui op 3
-		   nua. connect() moi se reset co nay. */
-		this.dead = false;
-	}
-
-	describe() {
-		return { state: this.state, apps: Array.from(this.activities.keys()) };
-	}
-
-	describeShort() {
-		const base = 'presence=' + this.state + ' apps=[' + Array.from(this.activities.keys()).join(',') + ']';
-		if (!this.lastFailure) return base;
-		const code = this.lastFailure.code != null ? ':' + this.lastFailure.code : '';
-		return base + ' fail=' + this.lastFailure.kind + code;
-	}
-
-	buildActivities() {
-		const out = [];
-		this.activities.forEach((name, appId) => {
-			out.push({ name: name || 'Game', type: 0, application_id: appId });
-		});
-		return out;
-	}
-
-	/* HBCAP — presence-ready gate. Chi resolve 'ready' khi phien HIEN
-	   TAI da READY, op 3 da gui, va appId nay co trong activities.
-	   Cac trang thai cuoi (unavailable/closed/off) resolve ngay, khong
-	   doi. Dang connecting/identifying thi doi toi da timeoutMs, het
-	   han resolve 'timeout' (nguoi goi van chay heartbeat REST cu).
-	   Khong bao gio treo, khong bao gio nem loi. */
-	waitForActivity(appId, timeoutMs) {
-		const self = this;
-		appId = String(appId || '');
-		const timeout = typeof timeoutMs === 'number' && timeoutMs > 0 ? timeoutMs : PRESENCE_GATE_TIMEOUT_MS;
-		return new Promise((resolve) => {
-			if (self.state === 'ready' && self.presenceConfirmed && self.activities.has(appId)) {
-				resolve('ready');
-				return;
-			}
-			if (self.state === 'unavailable' || self.state === 'closed' || self.state === 'off') {
-				resolve(self.state);
-				return;
-			}
-			const waiter = { appId: appId, resolve: resolve, timer: null };
-			waiter.timer = setTimeout(() => {
-				const i = self._activityWaiters.indexOf(waiter);
-				if (i !== -1) self._activityWaiters.splice(i, 1);
-				/* ANYACCT: gate het han phai de lai dau vet — truoc day
-				   chi log presence=timeout o questManager, con cac dong
-				   warn nhip sau van chi noi presence=connecting mai
-				   ma khong noi gate da bo cuoc. */
-				if (self.state !== 'ready') self.lastFailure = { kind: 'timeout', code: null, detail: null };
-				resolve('timeout');
-			}, timeout);
-			self._activityWaiters.push(waiter);
-		});
-	}
-
-	_notifyActivityWaiters(result) {
-		const waiters = this._activityWaiters;
-		this._activityWaiters = [];
-		for (let i = 0; i < waiters.length; i++) {
-			try {
-				if (waiters[i].timer) clearTimeout(waiters[i].timer);
-			} catch (e) {}
-			try {
-				waiters[i].resolve(result);
-			} catch (e) {}
-		}
-	}
-
-	/* HBCAP: add() CHI khoi dong phien va tra ve trang thai hien tai
-	   ngay lap tuc — khong doi READY o day. Viec doi READY + op 3
-	   thuoc ve waitForActivity() (gate o questManager) de timeout
-	   cua gate la gioi han duy nhat truoc nhip heartbeat dau tien. */
-	add(appId, name) {
-		appId = String(appId || '');
-		if (!appId) return Promise.resolve(this.state);
-		this.activities.set(appId, String(name || ''));
-		this.wantActivities = true;
-		if (this.state === 'ready' && this.presenceConfirmed) {
-			this.sendPresence();
-			return Promise.resolve(this.state);
-		}
-		if (this.state === 'connecting' || this.state === 'identifying' || this.state === 'ready') {
-			return Promise.resolve(this.state);
-		}
-		if (!this.token) {
-			this.state = 'unavailable';
-			return Promise.resolve(this.state);
-		}
-		const Ctor = getWsCtor();
-		if (!Ctor) {
-			this.state = 'unavailable';
-			return Promise.resolve(this.state);
-		}
-		/* ANYACCT: phien moi thi dau vet loi cu het hieu luc — loi cua
-		   lan chay truoc khong duoc hien tren dong chan doan cua lan
-		   chay moi. Reconnect trong cung phien (onclose) giu nguyen. */
-		this.lastFailure = null;
-		this.connect(Ctor);
-		return Promise.resolve(this.state);
-	}
-
-	remove(appId) {
-		appId = String(appId || '');
-		this.activities.delete(appId);
-		if (this.activities.size === 0) {
-			this.wantActivities = false;
-			this.close();
-			return;
-		}
-		if (this.state === 'ready') this.sendPresence();
-	}
-
-	connect(Ctor) {
-		const self = this;
-		this.dead = false;
-		this.presenceConfirmed = false;
-		this.state = 'connecting';
-		this.log('[Presence] gateway: connecting');
-		this.seq = null;
-		let ws;
-		try {
-			ws = new Ctor(GATEWAY_URL);
-		} catch (e) {
-			this.state = 'closed';
-			this.lastFailure = { kind: 'connect-error', code: null, detail: null };
-			this.log('[Presence] khong mo duoc gateway: ' + (e && e.message ? e.message : String(e)));
-			this._notifyActivityWaiters('closed');
-			return;
-		}
-		this.ws = ws;
-		ws.onopen = function () {};
-		ws.onmessage = function (ev) {
-			if (self.dead) return;
-			let msg = null;
-			try {
-				msg = JSON.parse(ev && ev.data ? ev.data : '');
-			} catch (e) {
-				return;
-			}
-			if (!msg) return;
-			if (msg.op === OP_HELLO) {
-				self.hbIntervalMs = Number((msg.d && msg.d.heartbeat_interval) || 0) || 41250;
-				self.sendIdentify();
-			} else if (msg.op === OP_DISPATCH) {
-				if (msg.s != null) self.seq = msg.s;
-				if (msg.t === 'READY') {
-					/* HBCAP: CHI day moi la 'ready' that — READY cua
-					   phien hien tai da den, op 3 gui ngay sau do.
-					   Gate (waitForActivity) chi mo khi toi day. */
-					self.state = 'ready';
-					self.presenceConfirmed = true;
-					self.lastFailure = null;
-					self.startHeartbeat();
-					self.sendPresence();
-					self.log('[Presence] gateway: ready (da gui op 3 activity)');
-					self._notifyActivityWaiters('ready');
-				}
-			} else if (msg.op === OP_HEARTBEAT) {
-				self.sendGatewayHeartbeat();
-			}
-		};
-		ws.onerror = function () {
-			/* ANYACCT: truoc day onerror RONG — loi transport bi nuot
-			   tron, log live chi thay presence=connecting mai ma khong
-			   biet vi sao. Ghi dau vet + log (khong token, khong nem
-			   loi; onclose van xu ly reconnect/dong phien nhu cu). */
-			if (self.state !== 'ready') self.lastFailure = { kind: 'transport-error', code: null, detail: null };
-			self.log('[Presence] gateway: loi ket noi (transport error — cho onclose xu ly)');
-		};
-		ws.onclose = function (ev) {
-			self.clearHeartbeat();
-			self.ws = null;
-			self.presenceConfirmed = false;
-			/* ANYACCT: ghi ma dong + ly do gateway tra (chi ma/ly do,
-			   khong token) — ma dong la bang chung chan doan quan
-			   trong nhat khi gateway khong bao gio ready (vi du 4004
-			   = identify bi tu choi, 1006 = mat ket noi bat thuong).
-			   ev co the undefined o mock — phong thu day du. */
-			const closeCode = ev && ev.code != null ? ev.code : null;
-			const closeReason = ev && ev.reason ? String(ev.reason).slice(0, 80) : '';
-			if (self.state !== 'off') self.lastFailure = { kind: 'close', code: closeCode, detail: closeReason || null };
-			if (closeCode != null) self.log('[Presence] gateway: closed (code=' + closeCode + (closeReason ? ' reason=' + closeReason : '') + ')');
-			if (self.wantActivities && self.reconnects < MAX_RECONNECTS) {
-				self.reconnects += 1;
-				self.state = 'connecting';
-				self.log('[Presence] gateway mat ket noi, thu noi lai (' + self.reconnects + '/' + MAX_RECONNECTS + ')');
-				self._reconnectTimer = setTimeout(() => {
-					self._reconnectTimer = null;
-					const Next = getWsCtor();
-					if (Next && self.wantActivities) self.connect(Next);
-					else {
-						self.state = 'closed';
-						self.log('[Presence] gateway: closed');
-						self._notifyActivityWaiters('closed');
-					}
-				}, RECONNECT_DELAY_MS);
-			} else {
-				self.state = self.wantActivities ? 'closed' : 'off';
-				self.log('[Presence] gateway: ' + self.state);
-				self._notifyActivityWaiters(self.state);
-			}
-		};
-	}
-
-	sendIdentify() {
-		if (!this.ws) return;
-		const props = this.properties || { os: 'Windows', browser: 'Discord Client', device: '' };
-		const payload = {
-			op: OP_IDENTIFY,
-			d: {
-				token: this.token,
-				intents: 0,
-				properties: props,
-				presence: {
-					since: null,
-					activities: this.buildActivities(),
-					status: 'online',
-					afk: false,
-				},
-			},
-		};
-		try {
-			this.ws.send(JSON.stringify(payload));
-		} catch (e) {}
-		/* HBCAP: Identify CHI mang activity theo trong payload — no
-		   KHONG chung minh phien da READY. Trang thai chi chuyen
-		   sang 'ready' khi dispatch READY den (xem onmessage), va
-		   gate chi mo o do. Truoc day dong nay tu set ready +
-		   flush waiter ngay khi Identify gui xong, nen nhip heartbeat
-		   dau tien van chay duoc khi phien moi o 'connecting'. */
-		this.state = 'identifying';
-		this.log('[Presence] gateway: identifying (da gui Identify)');
-	}
-
-	sendPresence() {
-		if (!this.ws || this.ws.readyState !== 1) return;
-		const payload = {
-			op: OP_PRESENCE,
-			d: { since: null, activities: this.buildActivities(), status: 'online', afk: false },
-		};
-		try {
-			this.ws.send(JSON.stringify(payload));
-		} catch (e) {}
-	}
-
-	sendGatewayHeartbeat() {
-		if (!this.ws || this.ws.readyState !== 1) return;
-		try {
-			this.ws.send(JSON.stringify({ op: OP_HEARTBEAT, d: this.seq }));
-		} catch (e) {}
-	}
-
-	startHeartbeat() {
-		const self = this;
-		if (this.dead) return;
-		this.clearHeartbeat();
-		if (!this.hbIntervalMs) return;
-		this.hbTimer = setInterval(() => {
-			self.sendGatewayHeartbeat();
-		}, this.hbIntervalMs);
-	}
-
-	clearHeartbeat() {
-		if (this.hbTimer) {
-			try {
-				clearInterval(this.hbTimer);
-			} catch (e) {}
-			this.hbTimer = null;
-		}
-	}
-
-	close() {
-		this.dead = true;
-		this.presenceConfirmed = false;
-		this._notifyActivityWaiters('off');
-		this.clearHeartbeat();
-		if (this._reconnectTimer) {
-			try {
-				clearTimeout(this._reconnectTimer);
-			} catch (e) {}
-			this._reconnectTimer = null;
-		}
-		const ws = this.ws;
-		this.ws = null;
-		if (ws) {
-			try {
-				ws.close();
-			} catch (e) {}
-		}
-		if (!this.wantActivities) this.state = 'off';
-	}
-}
-
-exports.PresenceSession = PresenceSession;
-exports.setWebSocketCtor = setWebSocketCtor;
-exports.PRESENCE_GATE_TIMEOUT_MS = PRESENCE_GATE_TIMEOUT_MS;
-exports.PRESENCE_BUILD_MARKER = PRESENCE_BUILD_MARKER;
 
 };
 
