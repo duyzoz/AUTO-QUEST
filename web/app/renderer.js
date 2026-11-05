@@ -47,9 +47,9 @@ const ui = {
 	dataDiagOut: el('dataDiagOut'),
 	dataStatus: el('dataStatus'),
 	btnDataClose: el('btnDataClose'),
-	// Waves 28: chế độ Sáng/Tối
-	themeDark: el('themeDark'),
-	themeLight: el('themeLight'),
+	// Lucian #021: một nút gạt ngày/đêm thay 2 radio Sáng/Tối
+	themeSwitch: el('themeSwitch'),
+	themeSwitchRoot: el('themeSwitchRoot'),
 	btnDrawer: el('btnDrawer'),
 	drawerOverlay: el('drawerOverlay'),
 	sidebar: el('sidebar'),
@@ -318,7 +318,7 @@ const i18nDict = {
 	'tab.new': ['Chưa nhận', 'Unclaimed'],
 	'tab.done': ['Đã làm', 'Done'],
 	'act.scan': ['Quét nhiệm vụ', 'Scan quests'],
-	'act.start': ['Auto ORBs', 'Auto ORBs'],
+	'act.start': ['Chạy', 'Run'],
 	'act.stop': ['Dừng', 'Stop'],
 	'act.search': ['Tìm nhiệm vụ, game, phần thưởng…', 'Search quests, games, rewards…'],
 	'act.claimAll': ['Nhận tất cả', 'Claim all'],
@@ -564,6 +564,8 @@ function setState(next, extra = {}) {
 		else ui.upSub.textContent = STATE_TEXT[next] || next;
 	}
 	setBusyFlags();
+	/* Lucian #001: đồng bộ trạng thái glass theo state thật. */
+	syncGlassButtons();
 }
 
 function updateModeDisplay() {
@@ -2244,14 +2246,15 @@ function syncQuestTools(visNew, visTotal, countAll) {
 
 function updateSelectionUi() {
 	ui.selectedCount.textContent = selected.size;
-	const label = selected.size > 0 ? `Auto ORBs (${selected.size})` : 'Auto ORBs';
+	const base = t('act.start');
+	const label = selected.size > 0 ? `${base} (${selected.size})` : base;
 	if (ui.btnStart.dataset.label !== label) {
 		ui.btnStart.dataset.label = label;
-		// Giữ nguyên SVG icon, chỉ đổi text node cuối
-		const keep = ui.btnStart.querySelector('.btn-ico');
-		ui.btnStart.textContent = '';
-		if (keep) ui.btnStart.appendChild(keep);
-		ui.btnStart.appendChild(document.createTextNode(` ${label}`));
+		/* Lucian #001: nhãn nằm trong .side-act-text (giữ nguyên icon +
+		   lớp glass .u001-txt); KHÔNG wipe textContent như trước — làm vậy
+		   sẽ xoá cả span glass + icon của nút. */
+		const lab = ui.btnStart.querySelector('.side-act-text');
+		if (lab) lab.textContent = label;
 	}
 	const busy = state !== 'idle';
 	ui.btnStart.disabled = selected.size === 0 || busy;
@@ -3525,6 +3528,8 @@ async function handleEvent(evt) {
 			// trôi + mờ dần 620ms. Bỏ ngay sẽ làm nó biến mất giật cục.
 			setScanning(false, questOrder.length);
 			if (state === 'scanning') setState('idle');
+			/* Lucian #001: quét thật xong → nút Quét nháy "ok" rồi về idle. */
+			flashGlassOk();
 			break;
 
 		case 'quest:start':
@@ -6391,6 +6396,8 @@ function switchPage(name) {
 	if (name === 'stats') renderStats();
 	// Đóng drawer mobile sau khi chọn trang
 	closeDrawer();
+	/* Lucian #040: trượt pill highlight theo mục nav vừa chọn. */
+	placeRailHighlight();
 }
 
 ui.navQuest.addEventListener('click', () => switchPage('quest'));
@@ -7026,8 +7033,8 @@ function applyLang(lang, persist = true) {
 	settingsTitles.forEach((node, i) => {
 		if (settingKeys[i]) node.textContent = t(settingKeys[i]);
 	});
-	langSet('#themeDark span', 'settings.themeDark');
-	langSet('#themeLight span', 'settings.themeLight');
+	langSet('#themeSwitchDay', 'settings.themeLight');
+	langSet('#themeSwitchNight', 'settings.themeDark');
 	if (ui.langSelect) {
 		const label = ui.langSelect.closest('.setting-row')?.querySelector('.setting-label');
 		if (label) label.textContent = t('settings.lang');
@@ -7869,8 +7876,9 @@ function applyTheme(theme, persist = true) {
 	currentTheme = theme === 'light' ? 'light' : 'dark';
 	document.documentElement.dataset.theme = currentTheme;
 	const isLight = currentTheme === 'light';
-	if (ui.themeDark) ui.themeDark.setAttribute('aria-checked', String(!isLight));
-	if (ui.themeLight) ui.themeLight.setAttribute('aria-checked', String(isLight));
+	/* Lucian #021: đồng bộ nút gạt ngày/đêm (is-night ⇔ theme tối). */
+	if (ui.themeSwitch) ui.themeSwitch.setAttribute('aria-checked', String(!isLight));
+	if (ui.themeSwitchRoot) ui.themeSwitchRoot.classList.toggle('is-night', !isLight);
 	/* Wave#134: mực trên bảng tên PHẢI tính lại ngay khi đổi theme — nó phụ thuộc
 	   nền thật (--card) vừa đổi, không phụ thuộc theme lúc renderProfile chạy. */
 	refreshNameplateInk();
@@ -7886,8 +7894,154 @@ function applyTheme(theme, persist = true) {
 	}
 }
 
-if (ui.themeDark) ui.themeDark.addEventListener('click', () => applyTheme('dark'));
-if (ui.themeLight) ui.themeLight.addEventListener('click', () => applyTheme('light'));
+/* Lucian #021: một nút gạt duy nhất đảo theme (không còn 2 radio). */
+if (ui.themeSwitch) ui.themeSwitch.addEventListener('click', () => applyTheme(currentTheme === 'dark' ? 'light' : 'dark'));
+
+/* ================================================================
+   LUCIAN UX/UI — driver JS (2026-11-05).
+   #001 glass buttons: data-state driven by REAL app state only
+   (never a fake timer) — Scan load while scanning, ok briefly on
+   real scan completion, then idle; Chạy load while a run is active.
+   #040 rail: highlight pill follows the active nav item; arrow
+   keys move between nav items; collapsing is desktop-only.
+   License lines are in index.html/styles.css per element.
+   ================================================================ */
+
+/* ---------- Lucian #001: glass buttons ---------- */
+let glassOkFlash = false;
+let glassOkTimer = null;
+
+function glassRootFor(btn) {
+	return btn ? btn.closest('.u001') : null;
+}
+
+function setGlassLive(root, text) {
+	const live = root ? root.querySelector('.u001-live') : null;
+	if (live) live.textContent = text || '';
+}
+
+/* Đồng bộ data-state của 3 nút glass theo state thật của app.
+   Gọi từ setState() — KHÔNG tự chạy theo timer. */
+function syncGlassButtons() {
+	const scanRoot = glassRootFor(ui.btnScan);
+	const startRoot = glassRootFor(ui.btnStart);
+	const stopRoot = glassRootFor(ui.btnStop);
+	if (state === 'scanning') {
+		if (glassOkTimer) { clearTimeout(glassOkTimer); glassOkTimer = null; }
+		glassOkFlash = false;
+	}
+	if (scanRoot) {
+		const next = state === 'scanning' ? 'load' : glassOkFlash ? 'ok' : 'idle';
+		scanRoot.dataset.state = next;
+		setGlassLive(scanRoot, next === 'idle' ? '' : `${t('act.scan')}${next === 'load' ? '…' : ''}`);
+	}
+	if (startRoot) {
+		const running = state === 'starting' || state === 'running' || state === 'stopping';
+		startRoot.dataset.state = running ? 'load' : 'idle';
+		setGlassLive(startRoot, running ? `${t('act.start')}…` : '');
+	}
+	if (stopRoot) {
+		stopRoot.dataset.state = 'idle';
+		setGlassLive(stopRoot, '');
+	}
+}
+
+/* Quét thật xong (case 'scan:complete'): nút Quét nháy "ok" ~1.4s.
+   Lớp done copy đúng nhãn hiện tại — không thêm key i18n mới. */
+function flashGlassOk() {
+	const scanRoot = glassRootFor(ui.btnScan);
+	if (!scanRoot || state === 'scanning') return;
+	const doneText = scanRoot.querySelector('.u001-done-text');
+	const label = ui.btnScan.querySelector('.side-act-text');
+	if (doneText && label) doneText.textContent = label.textContent;
+	glassOkFlash = true;
+	syncGlassButtons();
+	if (glassOkTimer) clearTimeout(glassOkTimer);
+	glassOkTimer = setTimeout(() => {
+		glassOkTimer = null;
+		glassOkFlash = false;
+		syncGlassButtons();
+	}, 1400);
+}
+
+/* Magnetic hover (Lucian): kéo nhẹ nút theo con trỏ + vệt sáng --mx/--my.
+   Dùng CSS vars (không inline style); tắt khi reduced-motion. */
+for (const root of document.querySelectorAll('.side-actions .u001')) {
+	const btn = root.querySelector('.u001-btn');
+	const mag = root.querySelector('.u001-mag');
+	if (!btn || !mag) continue;
+	root.addEventListener('pointermove', (e) => {
+		const r = btn.getBoundingClientRect();
+		const dx = e.clientX - (r.left + r.width / 2);
+		const dy = e.clientY - (r.top + r.height / 2);
+		const pull = prefersReduced.matches ? 0 : Math.max(0, 1 - Math.hypot(dx, dy) / 190);
+		mag.style.setProperty('--tx', `${(dx * 0.18 * pull).toFixed(1)}px`);
+		mag.style.setProperty('--ty', `${(dy * 0.18 * pull).toFixed(1)}px`);
+		btn.style.setProperty('--mx', `${((e.clientX - r.left) / r.width * 100).toFixed(1)}%`);
+		btn.style.setProperty('--my', `${((e.clientY - r.top) / r.height * 100).toFixed(1)}%`);
+	});
+	root.addEventListener('pointerleave', () => {
+		mag.style.setProperty('--tx', '0px');
+		mag.style.setProperty('--ty', '0px');
+	});
+}
+
+/* ---------- Lucian #040: expanding side rail ---------- */
+const railHl = document.querySelector('.sidebar .u040-hl');
+
+function placeRailHighlight() {
+	const active = document.querySelector('.sidebar .nav-item.active');
+	if (!railHl || !active) return;
+	railHl.style.setProperty('--y', `${active.offsetTop}px`);
+}
+
+function setRailWide(wide) {
+	if (!ui.sidebar) return;
+	ui.sidebar.classList.toggle('lx-narrow', !wide);
+	const tog = document.getElementById('railToggle');
+	if (tog) {
+		tog.setAttribute('aria-expanded', String(wide));
+		tog.setAttribute('aria-label', wide ? 'Thu gọn thanh bên' : 'Mở rộng thanh bên');
+	}
+	placeRailHighlight();
+}
+
+const railToggle = document.getElementById('railToggle');
+if (railToggle) {
+	railToggle.addEventListener('click', () => {
+		setRailWide(ui.sidebar ? ui.sidebar.classList.contains('lx-narrow') : true);
+	});
+}
+/* Rail đang thu mà bấm vào hàng profile: mở rail ra trước — popout
+   không thoát được khỏi khung cuộn 76px nên mở popout ở rail hẹp sẽ
+   bị cắt ngang. Popout mở cùng cú bấm này và nở theo rail. */
+if (ui.upRow) {
+	ui.upRow.addEventListener('click', () => {
+		if (ui.sidebar && ui.sidebar.classList.contains('lx-narrow') && window.innerWidth >= 1024) {
+			setRailWide(true);
+		}
+	});
+}
+/* ArrowUp/Down di chuyển giữa các mục nav (Lucian #040). */
+const railNavList = document.querySelector('.sidebar .nav-list');
+if (railNavList) {
+	railNavList.addEventListener('keydown', (e) => {
+		if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+		const items = [...railNavList.querySelectorAll('.nav-item')];
+		const idx = items.indexOf(document.activeElement);
+		if (idx === -1) return;
+		e.preventDefault();
+		const next = e.key === 'ArrowDown' ? Math.min(items.length - 1, idx + 1) : Math.max(0, idx - 1);
+		items[next].focus();
+	});
+}
+let railResizeTimer = null;
+window.addEventListener('resize', () => {
+	if (railResizeTimer) clearTimeout(railResizeTimer);
+	railResizeTimer = setTimeout(placeRailHighlight, 150);
+});
+placeRailHighlight();
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(placeRailHighlight);
 
 async function saveTokenDirectly() {
 	const token = cleanTokenClient(ui.token.value);

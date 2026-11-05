@@ -42,7 +42,8 @@
 
 		<div class="shell">
 			<!-- ============ SIDEBAR 256px (kasumu) ============ -->
-			<aside class="sidebar" id="sidebar">
+			<!-- Lucian UX/UI Prompt #040 · MIT License (c) 2026 Seokwoooo · https://lucianlabs.dev/uxui-prompt/#040 -->
+			<aside class="sidebar ux u040-rail" id="sidebar">
 				<div class="side-inner">
 					<!-- Wave#96 — BRANDING: logo nằm CẠNH tên (không còn absolute xa tít),
 					     có vòng bao quanh; tên app CHỈ "ZoZ Development" — đã XOÁ hẳn
@@ -58,6 +59,7 @@
 					     profile chuyển xuống gần đáy. -->
 					<nav class="side-nav" aria-label="Điều hướng chính">
 						<ul class="nav-list">
+							<li class="u040-hl" role="presentation" aria-hidden="true"></li>
 							<li>
 								<button class="nav-item active" id="navQuest" aria-selected="true">
 									<span class="nav-ind" aria-hidden="true"></span>
@@ -179,6 +181,10 @@
 						</button>
 					</div>
 				</div>
+				<!-- Lucian #040: nút thu/mở rail (desktop; ẩn trên mobile — xem mobile.css). -->
+				<button class="u040-tog" id="railToggle" type="button" aria-expanded="true" aria-controls="sidebar" aria-label="Thu gọn thanh bên">
+					<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+				</button>
 			</aside>
 
 			<!-- ============ MAIN (kasumu max-w-6xl) ============ -->
@@ -266,7 +272,8 @@
 							     Giữ NGUYÊN vị trí cũ (hàng thẻ cạnh Số dư), không tràn viền.
 							     Toàn bộ tiến trình quét + trạng thái loading chạy bằng
 							     các DÒNG terminal trong khung này — không loader riêng. -->
-							<section class="card console-card animate-rise stagger-2" id="consoleCard">
+							<!-- Lucian UX/UI Prompt #229 · MIT License (c) 2026 Seokwoooo · https://lucianlabs.dev/uxui-prompt/#229 -->
+							<section class="card console-card animate-rise stagger-2 ux lx229" id="consoleCard">
 								<div class="log-head">
 									<span class="log-dots" aria-hidden="true">
 										<i class="log-dot d-red"></i>
@@ -281,7 +288,7 @@
 									<button class="ghost-btn log-recover" id="btnRecover" type="button" title="Khởi động lại tiến trình vừa lỗi" hidden>Khôi phục</button>
 									<button class="ghost-btn log-clear" id="btnClearLog" type="button">Xóa</button>
 								</div>
-								<div class="u229 mono" id="console" role="log" aria-live="polite" aria-label="Nhật ký hoạt động"></div>
+								<div class="u229 mono lx229-tm" id="console" role="log" aria-live="polite" aria-label="Nhật ký hoạt động"></div>
 							</section>
 						</div>
 
@@ -306,18 +313,47 @@
 								     "Đã làm"), gọn trong lưới quest — KHÔNG còn tiêu đề
 								     "Điều khiển"/"Menu", không nhét ở đáy sidebar nữa. -->
 								<div class="side-actions" id="sideActions">
-									<button class="btn btn-outline side-act" id="btnScan">
-										<svg class="btn-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
-										<span class="side-act-text">Quét nhiệm vụ</span>
-									</button>
-									<button class="btn btn-primary side-act" id="btnStart" disabled>
-										<svg class="btn-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="6 3 20 12 6 21 6 3"/></svg>
-										<span class="side-act-text">Auto ORBs</span>
-									</button>
-									<button class="btn btn-danger side-act" id="btnStop" disabled>
-										<svg class="btn-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="18" x="3" y="3" rx="2"/></svg>
-										<span class="side-act-text">Dừng</span>
-									</button>
+									<!-- Lucian UX/UI Prompt #001 · MIT License (c) 2026 Seokwoooo · https://lucianlabs.dev/uxui-prompt/#001 -->
+									<span class="ux u001" data-state="idle">
+										<span class="u001-mag">
+											<button class="btn btn-outline side-act u001-btn" id="btnScan" type="button">
+												<span class="u001-sheen" aria-hidden="true"></span>
+												<span class="u001-txt">
+													<svg class="btn-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
+													<span class="side-act-text">Quét nhiệm vụ</span>
+												</span>
+												<span class="u001-spin" aria-hidden="true"><svg viewBox="0 0 30 30"><circle cx="15" cy="15" r="10"/></svg></span>
+												<span class="u001-done" aria-hidden="true"><b><svg viewBox="0 0 16 16"><path d="M3.5 8.4l3 3 6-6.4"/></svg></b><span class="u001-done-text"></span></span>
+											</button>
+										</span>
+										<span class="u001-live" aria-live="polite"></span>
+									</span>
+									<span class="ux u001" data-state="idle">
+										<span class="u001-mag">
+											<button class="btn btn-primary side-act u001-btn" id="btnStart" type="button" disabled>
+												<span class="u001-sheen" aria-hidden="true"></span>
+												<span class="u001-txt">
+													<svg class="btn-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="6 3 20 12 6 21 6 3"/></svg>
+													<span class="side-act-text">Chạy</span>
+												</span>
+												<span class="u001-spin" aria-hidden="true"><svg viewBox="0 0 30 30"><circle cx="15" cy="15" r="10"/></svg></span>
+											</button>
+										</span>
+										<span class="u001-live" aria-live="polite"></span>
+									</span>
+									<span class="ux u001" data-state="idle">
+										<span class="u001-mag">
+											<button class="btn btn-danger side-act u001-btn" id="btnStop" type="button" disabled>
+												<span class="u001-sheen" aria-hidden="true"></span>
+												<span class="u001-txt">
+													<svg class="btn-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="18" x="3" y="3" rx="2"/></svg>
+													<span class="side-act-text">Dừng</span>
+												</span>
+												<span class="u001-spin" aria-hidden="true"><svg viewBox="0 0 30 30"><circle cx="15" cy="15" r="10"/></svg></span>
+											</button>
+										</span>
+										<span class="u001-live" aria-live="polite"></span>
+									</span>
 								</div>
 								<span class="chip mono" id="questCounter">0 / 0</span>
 							</div>
@@ -545,15 +581,17 @@
 									<h2 class="card-title">Giao diện</h2>
 								</div>
 							</div>
-							<div class="theme-toggle-row" id="themeToggleRow" role="radiogroup" aria-label="Chế độ hiển thị">
-								<button class="theme-opt" id="themeDark" data-theme="dark" role="radio" aria-checked="true">
-									<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
-									<span>Tối</span>
-								</button>
-								<button class="theme-opt" id="themeLight" data-theme="light" role="radio" aria-checked="false">
-									<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
-									<span>Sáng</span>
-								</button>
+							<div class="theme-toggle-row" id="themeToggleRow">
+								<!-- Lucian UX/UI Prompt #021 · MIT License (c) 2026 Seokwoooo · https://lucianlabs.dev/uxui-prompt/#021 -->
+								<div class="ux u021 is-night" id="themeSwitchRoot">
+									<button class="u021-sw" id="themeSwitch" type="button" role="switch" aria-checked="true" aria-label="Chế độ hiển thị">
+										<span class="u021-halo" aria-hidden="true"><i></i><i></i><i></i></span>
+										<span class="u021-stars" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></span>
+										<span class="u021-clouds" aria-hidden="true"><i></i><i></i></span>
+										<span class="u021-knob" aria-hidden="true"><span class="u021-moon"><i></i><i></i><i></i></span></span>
+									</button>
+									<p class="u021-lab" aria-hidden="true"><span id="themeSwitchDay">Sáng</span><span id="themeSwitchNight">Tối</span></p>
+								</div>
 							</div>
 							<div class="setting-row">
 								<span class="setting-label">Ngôn ngữ giao diện</span>

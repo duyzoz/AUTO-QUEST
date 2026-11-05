@@ -5097,46 +5097,16 @@ body {
 }
 [data-theme="light"] .btn-copy-script:hover { background: color-mix(in oklab, var(--brand) 18%, #ffffff); }
 
-/* --- Nút chọn chế độ Sáng/Tối --- */
-[data-theme="light"] .theme-opt { background: #fff; }
-[data-theme="light"] .theme-opt[aria-checked="true"] {
-	background: color-mix(in oklab, var(--brand) 12%, #fff);
-}
-
-/* --- Scrollbar --- */
 [data-theme="light"] ::-webkit-scrollbar-thumb { background: var(--scroll-thumb); }
 [data-theme="light"] ::-webkit-scrollbar-thumb:hover { background: var(--scroll-thumb-hover); }
 
-/* ---------- Waves 28: nút chọn chế độ Sáng/Tối ---------- */
+/* ---------- Waves 28: nút chọn chế độ Sáng/Tối ----------
+   Lucian #021 thay thế 2 nút radio .theme-opt (đã xoá cả CSS) — xem cuối file. */
 .theme-toggle-row {
 	display: flex;
 	gap: 10px;
 	margin-top: 4px;
-}
-.theme-opt {
-	flex: 1;
-	display: flex;
-	align-items: center;
 	justify-content: center;
-	gap: 8px;
-	padding: 12px 14px;
-	border-radius: 0.75rem;
-	border: 1px solid var(--line-strong);
-	background: var(--well);
-	color: var(--fg-muted);
-	font-family: var(--font-sans);
-	font-size: 0.82rem;
-	font-weight: 600;
-	cursor: pointer;
-	transition: border-color 0.18s ease, background 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
-}
-.theme-opt svg { width: 17px; height: 17px; }
-.theme-opt:hover { border-color: color-mix(in oklab, var(--brand) 45%, var(--line-strong)); color: var(--fg); }
-.theme-opt[aria-checked="true"] {
-	color: var(--fg);
-	border-color: color-mix(in oklab, var(--brand) 70%, var(--line-strong));
-	background: color-mix(in oklab, var(--brand) 14%, var(--well));
-	box-shadow: 0 0 0 1px color-mix(in oklab, var(--brand) 35%, transparent);
 }
 
 /* ============================================================
@@ -6178,3 +6148,366 @@ body.lite .claim-pill-spin { animation-duration: 1.6s; }
 :root[data-theme="light"] .version-item { background: rgba(15, 23, 42, 0.035); }
 :root[data-theme="light"] .lock-card { background: #ffffff; box-shadow: 0 30px 80px rgba(15, 23, 42, 0.35); }
 :root[data-theme="light"] .lock-veil { background: rgba(238, 241, 247, 0.8); }
+
+/* ================================================================
+   LUCIAN UX/UI — 4 elements ported (2026-11-05, Ethan order).
+   #229 terminal log · #001 liquid glass buttons · #021 day-night
+   switch · #040 expanding side rail.
+   Rules:
+   · --ux-* tokens defined ONCE below, mapped to project vars, both
+     themes. Element-local literals (glass rgba, sun/moon/sky) stay
+     inside their .uNNN scope — they are the element's fixed artwork.
+   · All element CSS scoped under its .uNNN class (.lx229 for #229 —
+     repo already owns .u229 for the log body).
+   · License line kept at the top of each element block.
+   · DEVIATION (Ethan ordered Lucian 100%, overrides old UI law
+     §1.2 purple-"AI"-gradient ban): --ux-accent maps to the repo's
+     own purple --brand/--brand-bright, and --ux-grad keeps Lucian's
+     literal purple/blue/mint gradient — it appears only on the rail
+     highlight bar (4px) and nowhere else.
+   · DEVIATION: Lucian's global `.ux` reduced-motion clamp
+     (animation/transition .001ms !important) is NOT included — it
+     would freeze the repo's deliberate progress signals (typing
+     cursor, scan progress). Per-element reduced-motion rules below
+     disable decor only and keep progress signals.
+   ================================================================ */
+
+/* ---------- Lucian tokens — defined ONCE, mapped to project vars ---------- */
+:root {
+	--ux-page: var(--ink-950);
+	--ux-surface: var(--card);
+	--ux-surface-2: var(--ink-800);
+	--ux-surface-3: var(--ink-600);
+	--ux-ink: var(--fg);
+	--ux-ink-2: var(--fg-muted);
+	--ux-ink-3: var(--fg-subtle);
+	--ux-line: var(--line);
+	--ux-line-2: var(--line-strong);
+	--ux-accent: var(--brand-bright);
+	--ux-accent-2: var(--cyan);
+	--ux-accent-soft: color-mix(in oklab, var(--brand) 15%, transparent);
+	--ux-accent-ink: var(--ink-950);
+	--ux-mint: var(--emerald);
+	--ux-warn: var(--brown-accent);
+	--ux-danger: var(--danger);
+	--ux-glass: rgba(255,255,255,.07);
+	--ux-glass-line: rgba(255,255,255,.18);
+	--ux-shadow: rgba(0,0,0,.45);
+	--ux-shadow-strong: rgba(0,0,0,.72);
+	--ux-grad: linear-gradient(120deg,#B7A4FF,#7DB4FF 55%,#A5F2D3);
+	--ux-glow: color-mix(in srgb, var(--emerald) 10%, transparent);
+	--ux-term-bg: #0B0D12;
+	--ux-term-line: #232733;
+	--ux-term-fg: #D1D5DB;
+	--ux-term-dim: #6B7280;
+	--ux-pb-a: #34D399;
+	--ux-pb-b: #A78BFA;
+	--ux-ease: cubic-bezier(.2,.8,.2,1);
+	--ux-spring: cubic-bezier(.34,1.45,.64,1);
+}
+:root[data-theme="light"] {
+	--ux-page: var(--ink-850);
+	--ux-surface: var(--card);
+	--ux-surface-2: var(--ink-700);
+	--ux-surface-3: var(--ink-600);
+	--ux-ink: var(--fg);
+	--ux-ink-2: var(--fg-muted);
+	--ux-ink-3: var(--fg-subtle);
+	--ux-line: var(--line);
+	--ux-line-2: var(--line-strong);
+	--ux-accent: var(--brand);
+	--ux-accent-2: var(--cyan);
+	--ux-accent-soft: color-mix(in oklab, var(--brand) 12%, transparent);
+	--ux-accent-ink: var(--ink-900);
+	--ux-mint: var(--emerald);
+	--ux-warn: var(--brown-accent);
+	--ux-danger: var(--danger);
+	--ux-glass: rgba(255,255,255,.58);
+	--ux-glass-line: rgba(255,255,255,.85);
+	--ux-shadow: rgba(40,30,80,.14);
+	--ux-shadow-strong: rgba(40,30,80,.3);
+	--ux-grad: linear-gradient(120deg,#7B61FF,#3D8BFF 55%,#1FB89A);
+	--ux-glow: color-mix(in srgb, var(--emerald) 10%, transparent);
+	--ux-term-bg: #0B0D12;
+	--ux-term-line: #232733;
+	--ux-term-fg: #D1D5DB;
+	--ux-term-dim: #6B7280;
+	--ux-pb-a: #34D399;
+	--ux-pb-b: #A78BFA;
+	--ux-ease: cubic-bezier(.2,.8,.2,1);
+	--ux-spring: cubic-bezier(.34,1.45,.64,1);
+}
+
+/* ---------- Lucian base ---------- */
+.ux { font-family: inherit; -webkit-tap-highlight-color: transparent; }
+
+/* ================================================================
+   Lucian UX/UI Prompt #229 · MIT License (c) 2026 Seokwoooo · https://lucianlabs.dev/uxui-prompt/#229
+   Terminal chrome for the Activity Log frame (.console-card).
+   Renamed .u229 → .lx229: the repo already owns .u229 for the log
+   body itself (styles.css ~4198, Waves 41-46e). Log data flow is
+   untouched — appendLog(), streams, counter, Xóa button all keep
+   their own classes. The repo's char-by-char typing (Waves 41,
+   "TERMINAL #229 self-typing") is KEPT as-is; Lucian's Replay
+   button + browser-preview popup are demo-only and not ported.
+   ================================================================ */
+.lx229 {
+	background:
+		radial-gradient(90% 70% at 50% 0%, var(--ux-glow), transparent 70%),
+		var(--ux-surface);
+	box-shadow: 0 0 0 1px var(--ux-line), 0 30px 60px -36px var(--ux-shadow-strong);
+}
+/* Lucian terminal bar: 28px, traffic-light dots already exist (.log-dots). */
+.lx229 .log-head {
+	height: 28px;
+	padding: 0 12px;
+	border-bottom: 1px solid var(--ux-term-line);
+}
+[data-theme="light"] .lx229 .log-head { border-bottom-color: var(--line); }
+/* Dark theme only: Lucian's #0B0D12 terminal body. Light theme keeps the
+   repo's proven white body ([data-theme="light"] .u229, 0,2,0 wins). */
+:root:not([data-theme="light"]) .lx229-tm {
+	background: var(--ux-term-bg);
+	border-color: var(--ux-term-line);
+	box-shadow: 0 0 0 1px var(--ux-term-line), 0 20px 40px -20px rgba(0,0,0,.6);
+	color: var(--ux-term-fg);
+}
+/* Lucian's gradient progress bar, applied to the repo's ASCII progress
+   line (.u229-prog-bar renders "[████░░]" text): dark theme only, so the
+   light theme keeps its proven emerald bar. The % number beside it stays
+   the real information — the bar is decor, never the only signal. */
+:root:not([data-theme="light"]) .lx229-tm .u229-prog-bar {
+	background: linear-gradient(90deg, var(--ux-pb-a), var(--ux-pb-b));
+	-webkit-background-clip: text;
+	background-clip: text;
+	color: transparent;
+}
+@media (prefers-reduced-motion: reduce) {
+	.lx229-tm .u229-line.is-typing::after,
+	.lx229-tm .u229-prog.is-live .u229-prog-bar { animation: none; }
+}
+
+/* ================================================================
+   Lucian UX/UI Prompt #001 · MIT License (c) 2026 Seokwoooo · https://lucianlabs.dev/uxui-prompt/#001
+   Liquid glass buttons for the 3 action buttons (.side-actions).
+   Adapted from the 252×78px demo capsule to toolbar size (34px high,
+   auto width): the demo's drifting blobs (.u001-blobs) and infinite
+   float bob are dropped (gallery-only decor — a toolbar must not bob);
+   the magnetic hover uses --tx/--ty CSS vars (no inline styles);
+   the load state shrinks via max-width instead of a fixed width, so
+   labels/counts of any length still fit. .u001-txt is in-flow in
+   idle/ok (it sizes the button) and absolute only in load (so the
+   button can shrink to a circle); the ok layer copies the live label
+   from JS — no new i18n keys.
+   ================================================================ */
+.u001 {
+	--g1: rgba(255,255,255,.2);
+	--g2: rgba(255,255,255,.03);
+	--g3: rgba(255,255,255,.1);
+	--hi: rgba(255,255,255,.5);
+	--rim: rgba(255,255,255,.16);
+	--drop: rgba(0,0,0,.75);
+	position: relative;
+	display: inline-block;
+	isolation: isolate;
+}
+:root[data-theme="light"] .u001 {
+	--g1: rgba(255,255,255,.66);
+	--g2: rgba(255,255,255,.16);
+	--g3: rgba(255,255,255,.4);
+	--hi: rgba(255,255,255,.95);
+	--rim: rgba(255,255,255,.65);
+	--drop: rgba(70,48,160,.42);
+}
+.u001-mag { display: flex; justify-content: center; transition: translate .8s var(--ux-spring); translate: var(--tx, 0px) var(--ty, 0px); }
+.u001-btn {
+	--u001-circle: 34px;
+	position: relative;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	height: 34px;
+	max-width: 320px;
+	padding: 0 14px;
+	border: 0;
+	border-radius: 999px;
+	overflow: hidden;
+	isolation: isolate;
+	color: var(--ux-ink);
+	background: linear-gradient(150deg, var(--g1), var(--g2) 55%, var(--g3));
+	-webkit-backdrop-filter: blur(18px) saturate(180%);
+	backdrop-filter: blur(18px) saturate(180%);
+	box-shadow: inset 0 1.5px 0 var(--hi), inset 0 -12px 20px -14px var(--hi), inset 0 0 0 1px var(--rim), 0 26px 44px -22px var(--drop), 0 3px 8px -4px var(--drop);
+	transition: max-width .7s var(--ux-ease), transform .55s var(--ux-spring), box-shadow .6s var(--ux-ease);
+}
+.u001-btn::before { content: ""; position: absolute; left: 9%; right: 9%; top: 7%; height: 42%; border-radius: 999px; pointer-events: none; background: linear-gradient(180deg, rgba(255,255,255,.42), rgba(255,255,255,0)); }
+.u001-btn::after { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; opacity: 0; transition: opacity .4s var(--ux-ease); background: radial-gradient(130px 70px at var(--mx, 50%) var(--my, 0%), rgba(255,255,255,.4), transparent 70%); }
+.u001-btn:hover::after { opacity: 1; }
+.u001-btn:active { transform: scale(1.03, .92); }
+.u001-btn:focus-visible { outline: 2px solid var(--ux-accent); outline-offset: 6px; }
+/* Disabled glass: keep the glass, mute the text (beats .btn:disabled's
+   flat background at the same specificity — this block is later). */
+.u001-btn:disabled {
+	background: linear-gradient(150deg, var(--g1), var(--g2) 55%, var(--g3));
+	color: var(--ux-ink-2);
+	box-shadow: inset 0 1.5px 0 var(--hi), inset 0 0 0 1px var(--rim), 0 3px 8px -4px var(--drop);
+	cursor: not-allowed;
+}
+.u001-sheen { position: absolute; top: -40%; bottom: -40%; left: 0; width: 38%; pointer-events: none; background: linear-gradient(100deg, transparent, rgba(255,255,255,.45) 50%, transparent); transform: translateX(-150%) skewX(-12deg); transition: transform 1.1s var(--ux-ease); }
+.u001-btn:hover .u001-sheen { transform: translateX(300%) skewX(-12deg); }
+.u001-txt, .u001-done { display: flex; align-items: center; justify-content: center; gap: 6px; font-weight: 700; letter-spacing: -.01em; white-space: nowrap; transition: opacity .35s var(--ux-ease), transform .55s var(--ux-ease), filter .4s var(--ux-ease); }
+/* In-flow in idle/ok so the button sizes to its label; absolute only in
+   load so max-width can shrink it to a circle. */
+.u001-txt { position: static; }
+.u001-done { position: absolute; inset: 0; gap: 8px; opacity: 0; transform: translateY(14px); filter: blur(4px); }
+.u001-done b { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; background: var(--ux-mint); color: #fff; box-shadow: 0 0 0 6px color-mix(in srgb, var(--ux-mint) 22%, transparent); }
+.u001-done svg { width: 12px; height: 12px; fill: none; stroke: currentColor; stroke-width: 2.8; stroke-linecap: round; stroke-linejoin: round; }
+.u001-done path { stroke-dasharray: 18; stroke-dashoffset: 18; transition: stroke-dashoffset .5s var(--ux-ease) .3s; }
+.u001-spin { position: absolute; left: 50%; top: 50%; width: 30px; height: 30px; margin: -15px 0 0 -15px; opacity: 0; transform: scale(.5); transition: opacity .35s var(--ux-ease), transform .6s var(--ux-spring); }
+.u001-spin svg { width: 100%; height: 100%; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; animation: u001-rot 1s linear infinite; }
+.u001-spin circle { stroke-dasharray: 1 56; animation: u001-arc 1.4s ease-in-out infinite; }
+@keyframes u001-rot { to { transform: rotate(360deg); } }
+@keyframes u001-arc { 0%, 100% { stroke-dasharray: 1 56; } 50% { stroke-dasharray: 38 19; } }
+.u001[data-state="load"] .u001-btn { max-width: var(--u001-circle); cursor: progress; }
+.u001[data-state="load"] .u001-txt { position: absolute; inset: 0; opacity: 0; transform: translateY(-14px); filter: blur(5px); }
+.u001[data-state="load"] .u001-spin { opacity: 1; transform: none; }
+.u001[data-state="ok"] .u001-btn { transition-timing-function: var(--ux-spring); box-shadow: inset 0 1.5px 0 var(--hi), inset 0 0 0 1px var(--rim), 0 26px 44px -22px var(--drop), 0 0 52px -8px color-mix(in srgb, var(--ux-mint) 70%, transparent); }
+.u001[data-state="ok"] .u001-txt { opacity: 0; transform: translateY(-14px); filter: blur(5px); }
+.u001[data-state="ok"] .u001-done { opacity: 1; transform: none; filter: none; }
+.u001[data-state="ok"] .u001-done path { stroke-dashoffset: 0; }
+.u001-live { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+@media (prefers-reduced-motion: reduce) {
+	.u001-mag { transition: none; }
+	.u001-btn { transition: none; }
+	.u001-sheen { display: none; }
+	/* The spinner keeps rotating: it is a progress signal, not decor. */
+}
+
+/* ================================================================
+   Lucian UX/UI Prompt #021 · MIT License (c) 2026 Seokwoooo · https://lucianlabs.dev/uxui-prompt/#021
+   Day-night switch replacing the two Settings radio buttons
+   (#themeDark/#themeLight, CSS deleted). One press-button
+   (role=switch) toggling applyTheme('dark'/'light'). Demo labels
+   ("Clear day 2:30 PM" / "Quiet night 9:30 PM") replaced with the
+   real Sáng / Tối via the existing settings.themeLight/Dark keys.
+   Star positions moved from Lucian's inline styles to nth-child
+   rules (no new inline styles). Sun/moon/sky colors are Lucian's
+   fixed pictorial palette, scoped to .u021.
+   ================================================================ */
+.u021 { position: relative; width: min(300px, 100%); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; }
+.u021-sw { position: relative; width: 224px; height: 94px; border: 0; padding: 0; border-radius: 999px; overflow: hidden; isolation: isolate; background: linear-gradient(180deg, #5DB7FF, #9ED8FF); box-shadow: inset 0 4px 10px rgba(0,30,80,.28), inset 0 -2px 4px rgba(255,255,255,.4), 0 18px 34px -18px rgba(40,110,200,.7); transition: box-shadow .8s var(--ux-ease); cursor: pointer; }
+.u021-sw::before { content: ""; position: absolute; inset: 0; z-index: 0; background: linear-gradient(180deg, #141A3A, #232C5C); opacity: 0; transition: opacity .8s var(--ux-ease); }
+.u021-sw:focus-visible { outline: 2px solid var(--ux-accent); outline-offset: 5px; }
+.u021.is-night .u021-sw::before { opacity: 1; }
+.u021.is-night .u021-sw { box-shadow: inset 0 4px 10px rgba(0,0,0,.5), inset 0 -2px 4px rgba(255,255,255,.08), 0 18px 34px -18px rgba(20,24,70,.9); }
+.u021-halo { position: absolute; z-index: 1; left: 47px; top: 47px; width: 0; height: 0; transition: transform .9s var(--ux-spring); }
+.u021-halo i { position: absolute; border-radius: 50%; background: rgba(255,255,255,.12); }
+.u021-halo i:nth-child(1) { width: 130px; height: 130px; margin: -65px; }
+.u021-halo i:nth-child(2) { width: 176px; height: 176px; margin: -88px; }
+.u021-halo i:nth-child(3) { width: 222px; height: 222px; margin: -111px; }
+.u021.is-night .u021-halo { transform: translateX(130px); }
+.u021-knob { position: absolute; z-index: 3; left: 8px; top: 8px; width: 78px; height: 78px; border-radius: 50%; overflow: hidden; background: radial-gradient(circle at 35% 30%, #FFF1A8, #FFD23F 45%, #F8A91E); box-shadow: 0 6px 14px -4px rgba(140,80,0,.5), inset -4px -6px 10px rgba(200,110,0,.35), inset 4px 4px 8px rgba(255,255,255,.5); transition: transform .9s var(--ux-spring); }
+.u021-moon { position: absolute; inset: 0; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #F4F6FB, #C9CFDD 60%, #A9B0C2); opacity: 0; transform: translateX(100%); transition: transform .8s var(--ux-ease), opacity .4s var(--ux-ease); }
+.u021-moon i { position: absolute; border-radius: 50%; background: #A3AABC; box-shadow: inset 1px 2px 2px rgba(0,0,0,.18); }
+.u021-moon i:nth-child(1) { left: 20px; top: 16px; width: 20px; height: 20px; }
+.u021-moon i:nth-child(2) { left: 46px; top: 40px; width: 14px; height: 14px; }
+.u021-moon i:nth-child(3) { left: 24px; top: 48px; width: 9px; height: 9px; }
+.u021.is-night .u021-knob { transform: translateX(130px) rotate(200deg); }
+.u021.is-night .u021-moon { opacity: 1; transform: none; }
+.u021-clouds { position: absolute; z-index: 2; inset: 0; transition: transform .8s var(--ux-ease), opacity .6s var(--ux-ease); }
+.u021-clouds i { position: absolute; border-radius: 999px; background: #fff; }
+.u021-clouds i:nth-child(1) { right: -10px; bottom: -18px; width: 120px; height: 56px; box-shadow: -46px 8px 0 -6px #fff, -80px 18px 0 -10px #fff; }
+.u021-clouds i:nth-child(2) { right: 20px; bottom: -30px; width: 96px; height: 52px; background: #E3F1FF; box-shadow: -44px 6px 0 -8px #E3F1FF; z-index: -1; }
+.u021.is-night .u021-clouds { transform: translateY(80px); opacity: 0; }
+.u021-stars { position: absolute; z-index: 1; inset: 0; opacity: 0; transform: translateY(-30px); transition: transform .8s var(--ux-ease), opacity .6s var(--ux-ease); }
+.u021-stars i { position: absolute; width: 4px; height: 4px; border-radius: 50%; background: #fff; box-shadow: 0 0 6px #fff; animation: u021-tw 2.4s ease-in-out infinite; }
+.u021-stars i:nth-child(1) { left: 30px; top: 20px; }
+.u021-stars i:nth-child(2) { left: 58px; top: 56px; animation-delay: -.6s; width: 3px; height: 3px; }
+.u021-stars i:nth-child(3) { left: 86px; top: 26px; animation-delay: -1.2s; }
+.u021-stars i:nth-child(4) { left: 44px; top: 72px; animation-delay: -1.8s; width: 3px; height: 3px; }
+.u021-stars i:nth-child(5) { left: 110px; top: 60px; animation-delay: -.9s; width: 2px; height: 2px; }
+.u021-stars i:nth-child(6) { left: 20px; top: 46px; animation-delay: -1.5s; width: 2px; height: 2px; }
+.u021.is-night .u021-stars { opacity: 1; transform: none; }
+@keyframes u021-tw { 50% { opacity: .3; transform: scale(.6); } }
+.u021-lab { margin: 0; position: relative; width: 200px; height: 24px; overflow: hidden; text-align: center; font-size: 1rem; font-weight: 700; letter-spacing: -.02em; color: var(--ux-ink); }
+.u021-lab span { position: absolute; left: 0; right: 0; top: 0; line-height: 24px; transition: transform .55s var(--ux-spring), opacity .3s var(--ux-ease); }
+.u021-lab span + span { transform: translateY(100%); opacity: 0; }
+.u021.is-night .u021-lab span:first-child { transform: translateY(-100%); opacity: 0; }
+.u021.is-night .u021-lab span + span { transform: none; opacity: 1; }
+@media (prefers-reduced-motion: reduce) {
+	.u021-sw, .u021-sw::before, .u021-halo, .u021-knob, .u021-moon, .u021-clouds, .u021-stars, .u021-lab span { transition: none; }
+	.u021-stars i { animation: none; }
+}
+
+/* ================================================================
+   Lucian UX/UI Prompt #040 · MIT License (c) 2026 Seokwoooo · https://lucianlabs.dev/uxui-prompt/#040
+   Expanding side rail for the sidebar (#sidebar). 4 REAL nav items
+   (ids/handlers untouched); the 5th demo item + badge dot are not
+   ported (no badge data exists). Rail bg = var(--ux-ink) with
+   var(--ux-page) text — Lucian's inversion, so in the dark theme the
+   sidebar becomes a LIGHT slab with dark text; in the light theme it
+   stays dark ink. Width/collapse rules are desktop-only
+   (min-width:1024px); on mobile the sidebar stays a 256px drawer
+   with labels always visible. Profile row: in narrow mode the text +
+   switch/logout hide (visibility:hidden drops them from tab order)
+   and the avatar centres; clicking the row expands the rail first
+   (JS) because the popout cannot escape the 76px rail's scroll box.
+   ================================================================ */
+.sidebar.u040-rail { background: var(--ux-ink); color: var(--ux-page); }
+.sidebar.u040-rail .brand-name { color: var(--ux-page); }
+.sidebar.u040-rail .nav-list { position: relative; }
+.sidebar.u040-rail .nav-item {
+	height: 48px;
+	padding: 0 0 0 16px;
+	gap: 14px;
+	color: var(--ux-page);
+	opacity: .62;
+	background: transparent;
+	transition: opacity .25s;
+}
+.sidebar.u040-rail .nav-item:hover { background: transparent; opacity: 1; }
+.sidebar.u040-rail .nav-item.active { background: transparent; opacity: 1; }
+.sidebar.u040-rail .nav-item:focus-visible { outline: 2px solid var(--ux-accent); outline-offset: -2px; }
+.sidebar.u040-rail .nav-ind { display: none; }
+.sidebar.u040-rail .nav-text { transition: opacity .2s, transform .35s var(--ux-ease); }
+.sidebar.u040-rail .up-row { color: var(--ux-page); background: color-mix(in srgb, var(--ux-page) 8%, transparent); }
+.sidebar.u040-rail .up-row:hover { background: color-mix(in srgb, var(--ux-page) 14%, transparent); }
+/* Sliding highlight pill (JS sets --y on the pill itself). */
+.u040-hl { position: absolute; left: 0; right: 0; top: 0; height: 48px; border-radius: 15px; background: color-mix(in srgb, var(--ux-page) 15%, transparent); transform: translateY(var(--y, 0)); transition: transform .5s var(--ux-spring); pointer-events: none; }
+.u040-hl::before { content: ""; position: absolute; left: -10px; top: 12px; bottom: 12px; width: 4px; border-radius: 0 4px 4px 0; background: var(--ux-grad); }
+/* Expand/collapse arrow (desktop only — hidden on mobile, see mobile.css). */
+.u040-tog { position: absolute; right: -1px; top: 16px; width: 30px; height: 36px; border: 0; padding: 0; border-radius: 10px 0 0 10px; background: color-mix(in srgb, var(--ux-page) 14%, transparent); color: inherit; display: grid; place-items: center; opacity: 0; transition: opacity .2s; cursor: pointer; z-index: 5; }
+.sidebar.u040-rail:hover .u040-tog, .u040-tog:focus-visible, .sidebar.u040-rail:not(.lx-narrow) .u040-tog { opacity: 1; }
+@media (hover: none) { .u040-tog { opacity: 1; } }
+.u040-tog:focus-visible { outline: 2px solid var(--ux-accent); outline-offset: -2px; }
+.u040-tog svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; transition: transform .5s var(--ux-spring); }
+.sidebar.u040-rail:not(.lx-narrow) .u040-tog svg { transform: rotate(180deg); }
+@media (min-width: 1024px) {
+	.sidebar.u040-rail { width: 200px; transition: width .6s var(--ux-spring), transform .35s var(--ease-out-quint), opacity .25s ease; }
+	.sidebar.u040-rail.lx-narrow { width: 76px; }
+	.sidebar.u040-rail ~ .main-wrap { margin-left: 200px; }
+	.sidebar.u040-rail.lx-narrow ~ .main-wrap { margin-left: 76px; }
+	.sidebar.u040-rail .side-inner { padding: 12px 10px; transition: padding .6s var(--ux-spring); }
+	.sidebar.u040-rail.lx-narrow .side-brand { justify-content: center; padding: 4px 0 0; }
+	.sidebar.u040-rail .brand-name { max-width: 200px; overflow: hidden; white-space: nowrap; transition: opacity .3s .15s, max-width .5s var(--ux-spring); }
+	.sidebar.u040-rail.lx-narrow .brand-name { opacity: 0; max-width: 0; transition: opacity .2s, max-width .5s var(--ux-spring); }
+	/* Labels stagger in when wide, slide out when narrow. nth-child is
+	   offset +1 because the highlight <li> is the first child. */
+	.sidebar.u040-rail:not(.lx-narrow) .nav-text { opacity: 1; transform: none; transition: opacity .3s var(--ux-ease), transform .5s var(--ux-spring); }
+	.sidebar.u040-rail:not(.lx-narrow) .nav-list > li:nth-child(2) .nav-text { transition-delay: .12s; }
+	.sidebar.u040-rail:not(.lx-narrow) .nav-list > li:nth-child(3) .nav-text { transition-delay: .155s; }
+	.sidebar.u040-rail:not(.lx-narrow) .nav-list > li:nth-child(4) .nav-text { transition-delay: .19s; }
+	.sidebar.u040-rail:not(.lx-narrow) .nav-list > li:nth-child(5) .nav-text { transition-delay: .225s; }
+	.sidebar.u040-rail.lx-narrow .nav-text { opacity: 0; transform: translateX(-8px); transition: opacity .2s, transform .35s var(--ux-ease); }
+	/* Profile row: text/switch/logout fade out of tab order; avatar centres. */
+	.sidebar.u040-rail.lx-narrow .up-row { justify-content: center; }
+	.sidebar.u040-rail.lx-narrow .up-text,
+	.sidebar.u040-rail.lx-narrow .up-switch,
+	.sidebar.u040-rail.lx-narrow .up-logout { opacity: 0; visibility: hidden; transition: opacity .2s, visibility 0s .2s; }
+	.sidebar.u040-rail:not(.lx-narrow) .up-text,
+	.sidebar.u040-rail:not(.lx-narrow) .up-switch,
+	.sidebar.u040-rail:not(.lx-narrow) .up-logout { transition: opacity .3s .15s, visibility 0s; }
+}
+@media (prefers-reduced-motion: reduce) {
+	.sidebar.u040-rail, .sidebar.u040-rail .side-inner, .u040-hl, .u040-tog svg, .sidebar.u040-rail .nav-text, .sidebar.u040-rail .brand-name { transition: none; }
+}

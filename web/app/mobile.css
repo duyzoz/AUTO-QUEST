@@ -74,6 +74,24 @@
 		white-space: nowrap;
 	}
 
+	/* Lucian #040: rail expand/collapse is desktop-only — the sidebar is
+	   a drawer here, labels always visible (no .lx-narrow rules apply). */
+	.u040-tog {
+		display: none;
+	}
+
+	/* Lucian #001: glass wrappers are the grid cells; buttons fill them.
+	   The load circle is 44px here to match .btn min-height:44px. */
+	.side-actions .u001 {
+		display: flex;
+		width: 100%;
+		min-width: 0;
+	}
+	.side-actions .u001-btn {
+		width: 100%;
+		--u001-circle: 44px;
+	}
+
 	/* Lưới nhiệm vụ: 2 cột tablet, 1 cột điện thoại — thẻ không bị bóp. */
 	.quest-list {
 		grid-template-columns: repeat(2, minmax(0, 1fr));
