@@ -66,7 +66,7 @@
 	--glass-border: rgba(255, 255, 255, 0.14);
 	--glass-border-strong: rgba(255, 255, 255, 0.26);
 	--glass-highlight: rgba(255, 255, 255, 0.12);
-	--glass-shadow: 0 12px 32px -16px rgba(60, 90, 200, 0.35);
+	--glass-shadow: 0 0 0 0 transparent; /* theme Tối: KHÔNG bóng đổ ngoài trên mặt kính — chỉ viền sáng + highlight inset trên. Dùng bóng 0/transparent thay vì `none` vì token này còn nằm trong danh sách box-shadow (xem quy tắc mặt kính) mà `none` không hợp lệ trong danh sách. */
 	--glass-blur: blur(20px) saturate(180%);
 	--glass-tint: rgba(120, 140, 255, 0.05);
 	--font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "SF Pro", "Segoe UI", Inter, system-ui, sans-serif;
@@ -212,7 +212,7 @@ body {
 	display: flex;
 	flex-direction: row;
 	align-items: center;
-	gap: 10px;
+	gap: 8px;
 	padding: 4px 4px 0;
 	position: relative;
 }
@@ -225,9 +225,9 @@ body {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
-	width: 34px;
-	height: 34px;
-	flex: 0 0 34px;
+	width: 30px;
+	height: 30px;
+	flex: 0 0 30px;
 	border-radius: 50%;
 	/* viền vòng mảnh, TRUNG TÍNH (không xanh) */
 	border: 1px solid var(--line-strong);
@@ -236,8 +236,8 @@ body {
 }
 .brand-logo {
 	position: static;
-	width: 34px;
-	height: 34px;
+	width: 30px;
+	height: 30px;
 	border: none;
 	border-radius: 50%;
 	object-fit: cover;
@@ -252,7 +252,7 @@ body {
    lên trên nhờ đó). Dùng con `flex:1` trong `.side-inner` (column). */
 .side-spacer { flex: 1 1 auto; min-height: 8px; }
 .brand-name {
-	font-size: 1.1rem;
+	font-size: 1rem;
 	font-weight: 700;
 	letter-spacing: -0.02em;
 	color: var(--fg);
@@ -4837,7 +4837,7 @@ body {
 	--glass-border: rgba(15, 23, 42, 0.12);
 	--glass-border-strong: rgba(15, 23, 42, 0.24);
 	--glass-highlight: rgba(255, 255, 255, 0.7);
-	--glass-shadow: 0 12px 32px -16px rgba(60, 90, 200, 0.22);
+	--glass-shadow: 0 12px 32px -16px rgba(15, 23, 42, 0.14); /* theme Sáng: chỉ bóng xám nhạt rất mờ */
 	--glass-blur: blur(20px) saturate(180%);
 	--glass-tint: rgba(120, 140, 255, 0.06);
 }
@@ -6219,7 +6219,7 @@ body.lite .claim-pill-spin { animation-duration: 1.6s; }
 	--ux-glass: rgba(255,255,255,.07);
 	--ux-glass-line: rgba(255,255,255,.18);
 	--ux-shadow: rgba(40,60,160,.35);
-	--ux-shadow-strong: rgba(40,60,160,.5);
+	--ux-shadow-strong: transparent; /* theme Tối: thẻ terminal (.lx229) không bóng đổ ngoài */
 	--ux-grad: linear-gradient(120deg,#B7A4FF,#7DB4FF 55%,#A5F2D3);
 	--ux-glow: color-mix(in srgb, var(--emerald) 10%, transparent);
 	--ux-term-bg: #0B0D12;
@@ -6251,7 +6251,7 @@ body.lite .claim-pill-spin { animation-duration: 1.6s; }
 	--ux-glass: rgba(255,255,255,.58);
 	--ux-glass-line: rgba(255,255,255,.85);
 	--ux-shadow: rgba(40,30,80,.14);
-	--ux-shadow-strong: rgba(40,30,80,.3);
+	--ux-shadow-strong: rgba(15, 23, 42, 0.14); /* theme Sáng: bóng xám nhạt rất mờ */
 	--ux-grad: linear-gradient(120deg,#7B61FF,#3D8BFF 55%,#1FB89A);
 	--ux-glow: color-mix(in srgb, var(--emerald) 10%, transparent);
 	--ux-term-bg: #0B0D12;
@@ -6332,7 +6332,7 @@ body.lite .claim-pill-spin { animation-duration: 1.6s; }
 	--g3: rgba(255,255,255,.1);
 	--hi: rgba(255,255,255,.5);
 	--rim: rgba(255,255,255,.16);
-	--drop: rgba(60,90,200,.55);
+	--drop: transparent; /* theme Tối: nút kính (.u001) không bóng đổ ngoài */
 	position: relative;
 	display: inline-block;
 	isolation: isolate;
@@ -6343,7 +6343,7 @@ body.lite .claim-pill-spin { animation-duration: 1.6s; }
 	--g3: rgba(255,255,255,.4);
 	--hi: rgba(255,255,255,.95);
 	--rim: rgba(255,255,255,.65);
-	--drop: rgba(70,48,160,.42);
+	--drop: rgba(15, 23, 42, 0.14); /* theme Sáng: bóng xám nhạt rất mờ */
 }
 .u001-mag { display: flex; justify-content: center; transition: translate .8s var(--ux-spring); translate: var(--tx, 0px) var(--ty, 0px); }
 .u001-btn {
@@ -6482,8 +6482,10 @@ body.lite .claim-pill-spin { animation-duration: 1.6s; }
    nền là --glass-bg (tối ở theme Tối, sáng ở theme Sáng), chữ var(--fg).
    Nút thu/mở (.u040-tog) rời khỏi góc absolute (đè lên tên app) → thành
    hàng riêng 44px trong .side-inner (xem index.html); nhãn hiện = chính
-   aria-label qua ::after (JS giữ aria-label đồng bộ). Rail rộng 220px
-   để "ZoZ Development" vừa đủ, không cắt.
+   aria-label qua ::after (JS giữ aria-label đồng bộ). Rail rộng 240px —
+   slot chữ = 240 − 20 (side-inner) − 8 (side-brand) − 30 (logo) − 8 (gap)
+   = 174px; "ZoZ Development" ở 1rem/700 đo ≈ 130px (Liberation Bold,
+   proxy Segoe UI — font rộng nhất trong stack) → thừa ~44px, không cắt.
    ================================================================ */
 .sidebar.u040-rail { background: var(--glass-bg); -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur); color: var(--fg); border-right: 1px solid var(--glass-border); box-shadow: inset -1px 0 0 var(--glass-highlight); }
 .sidebar.u040-rail .brand-name { color: var(--fg); flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
@@ -6517,9 +6519,9 @@ body.lite .claim-pill-spin { animation-duration: 1.6s; }
 .u040-tog svg { flex-shrink: 0; width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; transition: transform .5s var(--ux-spring); }
 .sidebar.u040-rail:not(.lx-narrow) .u040-tog svg { transform: rotate(180deg); }
 @media (min-width: 1024px) {
-	.sidebar.u040-rail { width: 220px; transition: width .6s var(--ux-spring), transform .35s var(--ease-out-quint), opacity .25s ease; }
+	.sidebar.u040-rail { width: 240px; transition: width .6s var(--ux-spring), transform .35s var(--ease-out-quint), opacity .25s ease; }
 	.sidebar.u040-rail.lx-narrow { width: 76px; }
-	.sidebar.u040-rail ~ .main-wrap { margin-left: 220px; }
+	.sidebar.u040-rail ~ .main-wrap { margin-left: 240px; }
 	.sidebar.u040-rail.lx-narrow ~ .main-wrap { margin-left: 76px; }
 	.sidebar.u040-rail .side-inner { padding: 12px 10px; transition: padding .6s var(--ux-spring); }
 	.sidebar.u040-rail.lx-narrow .side-brand { justify-content: center; padding: 4px 0 0; }
