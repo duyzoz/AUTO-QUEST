@@ -1,7 +1,9 @@
 /* ============================================================
    AUTO QUEST — Kasumu Reskin (Waves 13)
    Design tokens trích 1:1 từ kasumu.cloud (ink/fg/line/brand)
-   Font: Inter + JetBrains Mono. Icon: SVG stroke, KHÔNG emoji.
+   Font: SF Pro qua system stack (-apple-system, "SF Pro Display/Text") —
+   KHÔNG bundle file font Apple (bản quyền); Inter/JetBrains Mono chỉ
+   là fallback. Icon: SVG stroke, KHÔNG emoji.
    ============================================================ */
 :root {
 	--ink-950: #05060b;
@@ -39,12 +41,12 @@
 	   Waves 49c: HẠ bóng avatar 0.45/28px → 0.30/16px. Bro báo "viền đen mờ mờ
 	   đèn lên avt": bóng đen 28px blur nằm ngay trên tác phẩm khung → thành
 	   quầng đen nhoè. Đây là bóng trang trí, không phải tín hiệu thị giác. */
-	--avatar-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+	--avatar-shadow: 0 6px 16px rgba(60, 90, 180, 0.28);
 	/* Waves 49c: vòng bao avatar. Discord dùng bề mặt SÁNG HƠN nền để avatar
 	   trông như được khoét lỗ, không phải dán đè. `--card` (#090b13) tối hơn
 	   nền thẻ ⇒ thành viền đen. Đây là bề mặt nổi, tách khỏi artwork phía sau. */
 	--avatar-ring: #1b2030;
-	--orb-shadow: rgba(0, 0, 0, 0.55);
+	--orb-shadow: rgba(60, 90, 180, 0.45);
 	--orb-num: #e9d5ff;
 	--qdone-bg-a: #1b1c20;
 	--qdone-bg-b: #0c0d10;
@@ -55,8 +57,20 @@
 	--radius-field: 0.75rem;
 	--radius-card: 1.125rem;
 	--ease-out-quint: cubic-bezier(0.22, 1, 0.36, 1);
-	--font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-	--font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+	/* LIQUID GLASS — token kính mờ kiểu iOS (xem khối LIQUID GLASS cuối file).
+	   --glass-bg: nền mờ cho bề mặt; --glass-bg-strong: nền mờ đậm hơn cho
+	   vùng chữ (đủ tương phản 4.5:1); border/highlight sáng mờ; bóng là
+	   ambient MÀU (xanh dương), KHÔNG bao giờ bóng đen. */
+	--glass-bg: rgba(13, 16, 28, 0.55);
+	--glass-bg-strong: rgba(13, 16, 28, 0.74);
+	--glass-border: rgba(255, 255, 255, 0.14);
+	--glass-border-strong: rgba(255, 255, 255, 0.26);
+	--glass-highlight: rgba(255, 255, 255, 0.12);
+	--glass-shadow: 0 12px 32px -16px rgba(60, 90, 200, 0.35);
+	--glass-blur: blur(20px) saturate(180%);
+	--glass-tint: rgba(120, 140, 255, 0.05);
+	--font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "SF Pro", "Segoe UI", Inter, system-ui, sans-serif;
+	--font-mono: "SF Mono", ui-monospace, Menlo, "JetBrains Mono", monospace;
 	/* Waves 44 — TÔNG ĐEN NÂU cho khối "Cấu hình tài khoản" (bro: "hoàn toàn
 	   màu đen nâu chỉnh một chút ở phần cấu hình tài khoản").
 	   Đặt thành token riêng để không đụng nền các thẻ khác. */
@@ -123,9 +137,12 @@ body {
 .bg-glow {
 	position: absolute;
 	inset: 0;
+	/* LIQUID GLASS: mesh nền rất nhạt (tím/xanh ngọc/lục, ≤0.12) để tấm kính
+	   mờ có cái để khúc xạ — không neon, không tràn gradient tím. */
 	background:
-		radial-gradient(ellipse 70% 55% at 20% 0%, rgba(222, 68, 59, 0.08), transparent 60%),
-		radial-gradient(ellipse 60% 50% at 85% 25%, rgba(0, 107, 180, 0.08), transparent 65%),
+		radial-gradient(ellipse 60% 45% at 15% 0%, rgba(109, 63, 240, 0.12), transparent 60%),
+		radial-gradient(ellipse 55% 45% at 88% 18%, rgba(14, 116, 144, 0.10), transparent 65%),
+		radial-gradient(ellipse 70% 55% at 50% 100%, rgba(0, 210, 148, 0.06), transparent 70%),
 		radial-gradient(ellipse 80% 60% at 50% 100%, rgba(16, 24, 39, 0.4), transparent 70%);
 }
 .bg-overlay {
@@ -398,7 +415,7 @@ body {
 	position: fixed;
 	inset: 0;
 	z-index: 35;
-	background: rgba(0, 0, 0, 0.55);
+	background: rgba(8, 12, 28, 0.55);
 	opacity: 0;
 	pointer-events: none;
 	transition: opacity 0.2s ease;
@@ -598,7 +615,7 @@ body {
 	color: var(--danger);
 	background: var(--ink-600);
 	border: 1px solid var(--line-strong);
-	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.18);
+	box-shadow: none;
 }
 [data-theme="dark"] .up-logout,
 [data-theme="dark"] .up-logout-red,
@@ -793,7 +810,7 @@ body {
 	   thẻ. Nên KHÔNG cần cắt: cắt đi là mất cánh khung.
 	   Vấn đề thật của bro (khung lệch / trống) nằm ở hình học cánh — đã xử lý
 	   ở khối `.pf-frame` bên dưới (`--pf-fit:999`, `--pf-shift:0`). */
-	box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
+	box-shadow: var(--glass-shadow);
 	z-index: 60;
 	animation: upPopIn 0.18s var(--ease-out-quint);
 }
@@ -1198,7 +1215,7 @@ body {
 	-webkit-text-stroke: 0;
 	paint-order: normal;
 	color: var(--theme-fg, var(--fg-muted));
-	text-shadow: var(--theme-text-shadow, 0 1px 2px rgba(0, 0, 0, 0.38));
+	text-shadow: var(--theme-text-shadow, 0 1px 2px rgba(10, 16, 40, 0.38));
 }
 .profile-hero .ph-userid {
 	color: var(--theme-fg-soft, var(--fg-subtle));
@@ -1233,7 +1250,7 @@ body {
 	/* Waves 54 — dòng `@username` trong popout nằm TRÊN dải Nitro (không nằm
 	   trong bảng tên) nên KHÔNG dùng `--np-fg`; chỉ theo `--theme-fg-soft`. */
 	color: var(--theme-fg-soft, var(--fg-muted));
-	text-shadow: var(--theme-text-shadow, 0 1px 2px rgba(0, 0, 0, 0.38));
+	text-shadow: var(--theme-text-shadow, 0 1px 2px rgba(10, 16, 40, 0.38));
 }
 /* Clan badge/tag giờ nằm TRONG nameplate pill (Waves 18) — .up-pop-clan cũ đã bỏ */
 .dp-clan-badge { width: 18px; height: 18px; flex-shrink: 0; }
@@ -1668,7 +1685,7 @@ body {
 	-webkit-user-drag: none;
 	user-select: none;
 	/* Bóng theo token → chế độ Sáng không bị viền đen nặng. */
-	filter: drop-shadow(0 6px 16px var(--orb-shadow, rgba(0, 0, 0, 0.5)));
+	filter: drop-shadow(0 6px 16px var(--orb-shadow, rgba(60, 90, 180, 0.45)));
 }
 /* Khi có ảnh orb thật thì ẩn hình người mặc định; nếu ảnh lỗi/không có thì
    JS gỡ class `.has-orb` để hình người quay lại (không bao giờ ô trống). */
@@ -1730,7 +1747,7 @@ body {
 	overflow: hidden;
 	position: relative;
 	/* Waves 46/49c: bóng đổ trang trí, đã hạ độ đậm — xem --avatar-shadow. */
-	box-shadow: var(--avatar-shadow, 0 6px 16px rgba(0, 0, 0, 0.3));
+	box-shadow: var(--avatar-shadow, 0 6px 16px rgba(60, 90, 180, 0.28));
 }
 .ph-avatar.is-default { background: #5865f2; }
 .ph-avatar svg { width: 52px; height: 52px; }
@@ -1963,7 +1980,7 @@ body {
 }
 :root[data-theme='dark'] .ph-display[data-dns-lift='1'] {
 	filter: drop-shadow(0 0 1px rgba(255, 255, 255, 0.9)) drop-shadow(0 0 1px rgba(255, 255, 255, 0.9))
-		drop-shadow(0 1px 2px rgba(0, 0, 0, 0.85));
+		drop-shadow(0 1px 2px rgba(10, 16, 40, 0.85));
 }
 
 /* ---------- @keyframes chép nguyên từ Discord ---------- */
@@ -2260,7 +2277,7 @@ body {
 }
 :root[data-theme='dark'] .dp-display[data-dns-lift='1'],
 :root[data-theme='dark'] .up-name[data-dns-lift='1'] {
-	filter: drop-shadow(0 0 1px rgba(255, 255, 255, 0.9)) drop-shadow(0 1px 2px rgba(0, 0, 0, 0.85));
+	filter: drop-shadow(0 0 1px rgba(255, 255, 255, 0.9)) drop-shadow(0 1px 2px rgba(10, 16, 40, 0.85));
 }
 
 /* Tôn trọng giảm chuyển động: giữ nguyên màu/gradient, chỉ dừng animation */
@@ -2334,7 +2351,7 @@ body {
 	position: fixed;
 	inset: 0;
 	z-index: 200;
-	background: rgba(3, 4, 8, 0.72);
+	background: rgba(8, 12, 30, 0.72);
 	backdrop-filter: blur(6px);
 	display: flex;
 	align-items: center;
@@ -2358,7 +2375,7 @@ body {
 	flex-direction: column;
 	align-items: center;
 	gap: 10px;
-	box-shadow: 0 30px 80px rgba(0, 0, 0, 0.65);
+	box-shadow: var(--glass-shadow);
 	animation: upPopIn 0.2s var(--ease-out-quint);
 }
 .modal-ico {
@@ -2518,7 +2535,7 @@ body {
 .ph-nameplate .ph-display {
 	/* Mặc định là quầng TỐI (đúng cho theme Tối, chữ trắng). JS ghi đè
 	   `--np-shadow` theo mực thật khi có bảng tên — xem npInkFor(). */
-	text-shadow: var(--np-shadow, 0 1px 6px rgba(0, 0, 0, 0.6));
+	text-shadow: var(--np-shadow, 0 1px 6px rgba(10, 16, 40, 0.6));
 }
 /* Clan badge + tag nằm TRONG khung bo tròn nameplate (bao trùm cả tên lẫn tag) */
 .ph-np-clan {
@@ -2616,7 +2633,7 @@ body {
 	z-index: -1;
 	pointer-events: none;
 }
-.up-nameplate .dp-display { text-shadow: 0 1px 6px rgba(0, 0, 0, 0.5); }
+.up-nameplate .dp-display { text-shadow: 0 1px 6px rgba(10, 16, 40, 0.5); }
 .up-nameplate .dp-display {
 	font-size: 0.92rem;
 	white-space: nowrap;
@@ -3520,7 +3537,7 @@ body {
 	max-height: 17px;
 	max-width: 58%;
 	object-fit: contain;
-	filter: drop-shadow(0 1px 5px rgba(0, 0, 0, 0.85));
+	filter: drop-shadow(0 1px 5px rgba(10, 16, 40, 0.85));
 	pointer-events: none;
 }
 
@@ -3536,13 +3553,13 @@ body {
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	background: rgba(0, 0, 0, 0.55);
+	background: rgba(8, 12, 28, 0.55);
 	border: 1px solid rgba(255, 255, 255, 0.28);
 	backdrop-filter: blur(4px);
 	cursor: pointer;
 	transition: background 0.15s ease, border-color 0.15s ease;
 }
-.qcard-check:hover { background: rgba(0, 0, 0, 0.72); border-color: rgba(255, 255, 255, 0.5); }
+.qcard-check:hover { background: rgba(8, 12, 28, 0.72); border-color: rgba(255, 255, 255, 0.5); }
 .qcard-check input {
 	appearance: none;
 	-webkit-appearance: none;
@@ -3557,7 +3574,7 @@ body {
 .qcard-check input:checked {
 	background: var(--brand);
 	border-color: var(--brand);
-	box-shadow: inset 0 0 0 2px #12131a;
+	box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.25);
 }
 .qcard-check input:disabled { opacity: 0.4; cursor: not-allowed; }
 
@@ -3573,7 +3590,7 @@ body {
 	text-transform: uppercase;
 	padding: 2px 7px;
 	border-radius: 999px;
-	background: rgba(0, 0, 0, 0.62);
+	background: rgba(8, 12, 28, 0.62);
 	border: 1px solid var(--tint-14);
 	color: #e3e5e8;
 	backdrop-filter: blur(4px);
@@ -3707,7 +3724,7 @@ body {
 	height: 40px;
 	border-radius: 50%;
 	background: rgba(8, 9, 12, 0.82);
-	box-shadow: 0 0 0 1.5px var(--tint-14), 0 4px 12px -2px rgba(0, 0, 0, 0.6);
+	box-shadow: 0 0 0 1.5px var(--tint-14), 0 4px 12px -2px rgba(60, 90, 180, 0.35);
 	font-family: var(--font-mono);
 	font-size: 0.64rem;
 	font-weight: 700;
@@ -3844,7 +3861,7 @@ body {
 	object-fit: contain;
 	display: block;
 	/* Waves 46: bóng theo token, không hardcode đen cho mọi theme */
-	filter: drop-shadow(0 6px 12px var(--orb-shadow, rgba(0, 0, 0, 0.5)));
+	filter: drop-shadow(0 6px 12px var(--orb-shadow, rgba(60, 90, 180, 0.45)));
 	-webkit-user-drag: none;
 	user-select: none;
 }
@@ -4111,7 +4128,7 @@ body {
 	height: 9px;
 	border-radius: 50%;
 	display: block;
-	box-shadow: inset 0 0 0 0.5px rgba(0, 0, 0, 0.35);
+	box-shadow: inset 0 0 0 0.5px rgba(255, 255, 255, 0.25);
 }
 .log-dot.d-red { background: #ff5f57; }
 .log-dot.d-amber { background: #febc2e; }
@@ -4275,7 +4292,7 @@ body {
 	border-radius: 9999px;
 	font-size: 0.84rem;
 	font-weight: 500;
-	box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
+	box-shadow: var(--glass-shadow);
 	border: 1px solid var(--line-strong);
 	opacity: 0;
 	transition: transform 0.25s var(--ease-out-quint), opacity 0.25s ease;
@@ -4342,7 +4359,7 @@ body {
 	.sidebar {
 		transform: translateX(-100%);
 		transition: transform 0.25s var(--ease-out-quint);
-		box-shadow: 0 0 40px rgba(0, 0, 0, 0.5);
+		box-shadow: var(--glass-shadow);
 	}
 	.sidebar.open { transform: translateX(0); }
 	.drawer-overlay.show { opacity: 1; pointer-events: auto; }
@@ -4798,10 +4815,10 @@ body {
 	--bg-base: #eaeef6;
 	--up-row-bg: #ffffff;
 	/* Waves 46: chế độ Sáng dùng bóng NHẸ, ám nâu-xám thay vì đen đặc 45%. */
-	--avatar-shadow: 0 8px 22px rgba(15, 23, 42, 0.16);
+	--avatar-shadow: 0 8px 22px rgba(60, 90, 180, 0.18);
 	/* Waves 49c: vòng avatar chế độ Sáng = trắng (khớp bề mặt thẻ). */
 	--avatar-ring: #ffffff;
-	--orb-shadow: rgba(15, 23, 42, 0.22);
+	--orb-shadow: rgba(60, 90, 180, 0.25);
 	--orb-num: #5b21b6;
 	--qdone-bg-a: #ffffff;
 	--qdone-bg-b: #f1f3f9;
@@ -4814,6 +4831,15 @@ body {
 	   hình gần như biến mất). Hạ độ sáng GIỮ NGUYÊN HUE ⇒ #966408 = 4.58:1, đủ
 	   cho cả chữ (guide-header/step-item code) lẫn icon SVG. */
 	--brown-accent: #966408;
+	/* LIQUID GLASS (theme Sáng): nền kính trắng mờ, viền/bóng theo tông sáng. */
+	--glass-bg: rgba(255, 255, 255, 0.55);
+	--glass-bg-strong: rgba(255, 255, 255, 0.8);
+	--glass-border: rgba(15, 23, 42, 0.12);
+	--glass-border-strong: rgba(15, 23, 42, 0.24);
+	--glass-highlight: rgba(255, 255, 255, 0.7);
+	--glass-shadow: 0 12px 32px -16px rgba(60, 90, 200, 0.22);
+	--glass-blur: blur(20px) saturate(180%);
+	--glass-tint: rgba(120, 140, 255, 0.06);
 }
 
 /* --- Nền app: sáng, glow nhẹ, KHÔNG còn mảng đen nào --- */
@@ -5821,7 +5847,7 @@ body {
 	border: 1px solid var(--line-strong);
 	border-radius: 9999px;
 	background: var(--ink-850);
-	box-shadow: 0 18px 44px -18px rgba(0, 0, 0, 0.7);
+	box-shadow: var(--glass-shadow);
 	animation: kasumi-rise 0.3s var(--ease-out-quint);
 }
 .update-bar-text {
@@ -5895,7 +5921,7 @@ body {
 	border-radius: 9999px;
 	border: 1px solid var(--line-strong);
 	background: var(--ink-850);
-	box-shadow: 0 16px 40px -16px rgba(0, 0, 0, 0.7);
+	box-shadow: var(--glass-shadow);
 	font-size: 0.78rem;
 	font-weight: 600;
 	color: var(--fg);
@@ -6087,7 +6113,7 @@ body {
 	border: 1px solid var(--line-strong);
 	border-radius: 1.125rem;
 	background: var(--ink-850);
-	box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
+	box-shadow: var(--glass-shadow);
 	max-width: 340px;
 	width: 100%;
 }
@@ -6192,8 +6218,8 @@ body.lite .claim-pill-spin { animation-duration: 1.6s; }
 	--ux-danger: var(--danger);
 	--ux-glass: rgba(255,255,255,.07);
 	--ux-glass-line: rgba(255,255,255,.18);
-	--ux-shadow: rgba(0,0,0,.45);
-	--ux-shadow-strong: rgba(0,0,0,.72);
+	--ux-shadow: rgba(40,60,160,.35);
+	--ux-shadow-strong: rgba(40,60,160,.5);
 	--ux-grad: linear-gradient(120deg,#B7A4FF,#7DB4FF 55%,#A5F2D3);
 	--ux-glow: color-mix(in srgb, var(--emerald) 10%, transparent);
 	--ux-term-bg: #0B0D12;
@@ -6269,7 +6295,7 @@ body.lite .claim-pill-spin { animation-duration: 1.6s; }
 :root:not([data-theme="light"]) .lx229-tm {
 	background: var(--ux-term-bg);
 	border-color: var(--ux-term-line);
-	box-shadow: 0 0 0 1px var(--ux-term-line), 0 20px 40px -20px rgba(0,0,0,.6);
+	box-shadow: 0 0 0 1px var(--ux-term-line), 0 20px 40px -20px var(--ux-shadow-strong);
 	color: var(--ux-term-fg);
 }
 /* Lucian's gradient progress bar, applied to the repo's ASCII progress
@@ -6306,7 +6332,7 @@ body.lite .claim-pill-spin { animation-duration: 1.6s; }
 	--g3: rgba(255,255,255,.1);
 	--hi: rgba(255,255,255,.5);
 	--rim: rgba(255,255,255,.16);
-	--drop: rgba(0,0,0,.75);
+	--drop: rgba(60,90,200,.55);
 	position: relative;
 	display: inline-block;
 	isolation: isolate;
@@ -6399,7 +6425,7 @@ body.lite .claim-pill-spin { animation-duration: 1.6s; }
 .u021-sw::before { content: ""; position: absolute; inset: 0; z-index: 0; background: linear-gradient(180deg, #141A3A, #232C5C); opacity: 0; transition: opacity .8s var(--ux-ease); }
 .u021-sw:focus-visible { outline: 2px solid var(--ux-accent); outline-offset: 5px; }
 .u021.is-night .u021-sw::before { opacity: 1; }
-.u021.is-night .u021-sw { box-shadow: inset 0 4px 10px rgba(0,0,0,.5), inset 0 -2px 4px rgba(255,255,255,.08), 0 18px 34px -18px rgba(20,24,70,.9); }
+.u021.is-night .u021-sw { box-shadow: inset 0 4px 10px rgba(10,15,50,.55), inset 0 -2px 4px rgba(255,255,255,.08), 0 18px 34px -18px rgba(20,24,70,.9); }
 .u021-halo { position: absolute; z-index: 1; left: 47px; top: 47px; width: 0; height: 0; transition: transform .9s var(--ux-spring); }
 .u021-halo i { position: absolute; border-radius: 50%; background: rgba(255,255,255,.12); }
 .u021-halo i:nth-child(1) { width: 130px; height: 130px; margin: -65px; }
@@ -6408,7 +6434,7 @@ body.lite .claim-pill-spin { animation-duration: 1.6s; }
 .u021.is-night .u021-halo { transform: translateX(130px); }
 .u021-knob { position: absolute; z-index: 3; left: 8px; top: 8px; width: 78px; height: 78px; border-radius: 50%; overflow: hidden; background: radial-gradient(circle at 35% 30%, #FFF1A8, #FFD23F 45%, #F8A91E); box-shadow: 0 6px 14px -4px rgba(140,80,0,.5), inset -4px -6px 10px rgba(200,110,0,.35), inset 4px 4px 8px rgba(255,255,255,.5); transition: transform .9s var(--ux-spring); }
 .u021-moon { position: absolute; inset: 0; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #F4F6FB, #C9CFDD 60%, #A9B0C2); opacity: 0; transform: translateX(100%); transition: transform .8s var(--ux-ease), opacity .4s var(--ux-ease); }
-.u021-moon i { position: absolute; border-radius: 50%; background: #A3AABC; box-shadow: inset 1px 2px 2px rgba(0,0,0,.18); }
+.u021-moon i { position: absolute; border-radius: 50%; background: #A3AABC; box-shadow: inset 1px 2px 2px rgba(60,70,110,.35); }
 .u021-moon i:nth-child(1) { left: 20px; top: 16px; width: 20px; height: 20px; }
 .u021-moon i:nth-child(2) { left: 46px; top: 40px; width: 14px; height: 14px; }
 .u021-moon i:nth-child(3) { left: 24px; top: 48px; width: 9px; height: 9px; }
@@ -6443,25 +6469,31 @@ body.lite .claim-pill-spin { animation-duration: 1.6s; }
    Lucian UX/UI Prompt #040 · MIT License (c) 2026 Seokwoooo · https://lucianlabs.dev/uxui-prompt/#040
    Expanding side rail for the sidebar (#sidebar). 4 REAL nav items
    (ids/handlers untouched); the 5th demo item + badge dot are not
-   ported (no badge data exists). Rail bg = var(--ux-ink) with
-   var(--ux-page) text — Lucian's inversion, so in the dark theme the
-   sidebar becomes a LIGHT slab with dark text; in the light theme it
-   stays dark ink. Width/collapse rules are desktop-only
+   ported (no badge data exists). Rail bg was var(--ux-ink) — Lucian's
+   inversion (LIGHT slab in dark theme, dark ink in light theme); the
+   LIQUID GLASS rewrite below replaces it with theme-following glass.
+   Width/collapse rules are desktop-only
    (min-width:1024px); on mobile the sidebar stays a 256px drawer
    with labels always visible. Profile row: in narrow mode the text +
    switch/logout hide (visibility:hidden drops them from tab order)
    and the avatar centres; clicking the row expands the rail first
    (JS) because the popout cannot escape the 76px rail's scroll box.
+   LIQUID GLASS rewrite (2026-11-05): rail KHÔNG còn đảo màu theo theme —
+   nền là --glass-bg (tối ở theme Tối, sáng ở theme Sáng), chữ var(--fg).
+   Nút thu/mở (.u040-tog) rời khỏi góc absolute (đè lên tên app) → thành
+   hàng riêng 44px trong .side-inner (xem index.html); nhãn hiện = chính
+   aria-label qua ::after (JS giữ aria-label đồng bộ). Rail rộng 220px
+   để "ZoZ Development" vừa đủ, không cắt.
    ================================================================ */
-.sidebar.u040-rail { background: var(--ux-ink); color: var(--ux-page); }
-.sidebar.u040-rail .brand-name { color: var(--ux-page); }
+.sidebar.u040-rail { background: var(--glass-bg); -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur); color: var(--fg); border-right: 1px solid var(--glass-border); box-shadow: inset -1px 0 0 var(--glass-highlight); }
+.sidebar.u040-rail .brand-name { color: var(--fg); flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .sidebar.u040-rail .nav-list { position: relative; }
 .sidebar.u040-rail .nav-item {
 	height: 48px;
 	padding: 0 0 0 16px;
 	gap: 14px;
-	color: var(--ux-page);
-	opacity: .62;
+	color: var(--fg);
+	opacity: .8;
 	background: transparent;
 	transition: opacity .25s;
 }
@@ -6470,27 +6502,32 @@ body.lite .claim-pill-spin { animation-duration: 1.6s; }
 .sidebar.u040-rail .nav-item:focus-visible { outline: 2px solid var(--ux-accent); outline-offset: -2px; }
 .sidebar.u040-rail .nav-ind { display: none; }
 .sidebar.u040-rail .nav-text { transition: opacity .2s, transform .35s var(--ux-ease); }
-.sidebar.u040-rail .up-row { color: var(--ux-page); background: color-mix(in srgb, var(--ux-page) 8%, transparent); }
-.sidebar.u040-rail .up-row:hover { background: color-mix(in srgb, var(--ux-page) 14%, transparent); }
+.sidebar.u040-rail .up-row { color: var(--fg); background: color-mix(in srgb, var(--fg) 8%, transparent); }
+.sidebar.u040-rail .up-row:hover { background: color-mix(in srgb, var(--fg) 14%, transparent); }
 /* Sliding highlight pill (JS sets --y on the pill itself). */
-.u040-hl { position: absolute; left: 0; right: 0; top: 0; height: 48px; border-radius: 15px; background: color-mix(in srgb, var(--ux-page) 15%, transparent); transform: translateY(var(--y, 0)); transition: transform .5s var(--ux-spring); pointer-events: none; }
+.u040-hl { position: absolute; left: 0; right: 0; top: 0; height: 48px; border-radius: 15px; background: color-mix(in srgb, var(--fg) 10%, transparent); border: 1px solid var(--glass-border); transform: translateY(var(--y, 0)); transition: transform .5s var(--ux-spring); pointer-events: none; }
 .u040-hl::before { content: ""; position: absolute; left: -10px; top: 12px; bottom: 12px; width: 4px; border-radius: 0 4px 4px 0; background: var(--ux-grad); }
 /* Expand/collapse arrow (desktop only — hidden on mobile, see mobile.css). */
-.u040-tog { position: absolute; right: -1px; top: 16px; width: 30px; height: 36px; border: 0; padding: 0; border-radius: 10px 0 0 10px; background: color-mix(in srgb, var(--ux-page) 14%, transparent); color: inherit; display: grid; place-items: center; opacity: 0; transition: opacity .2s; cursor: pointer; z-index: 5; }
-.sidebar.u040-rail:hover .u040-tog, .u040-tog:focus-visible, .sidebar.u040-rail:not(.lx-narrow) .u040-tog { opacity: 1; }
-@media (hover: none) { .u040-tog { opacity: 1; } }
+/* LIQUID GLASS: nút thu/mở giờ là HÀNG RIÊNG trong .side-inner (không còn
+   absolute đè lên tên app). 44px, full chiều rộng rail, luôn hiện, nhãn
+   = chính aria-label (JS đồng bộ) qua ::after — không cần JS mới. */
+.u040-tog { position: static; width: 100%; height: 44px; min-height: 44px; margin: 0; border: 1px solid var(--glass-border); padding: 0 12px; border-radius: 12px; background: var(--glass-bg); -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur); color: var(--fg); display: flex; align-items: center; justify-content: center; gap: 8px; font: inherit; font-size: .8rem; font-weight: 600; box-shadow: inset 0 1px 0 var(--glass-highlight); cursor: pointer; }
+.u040-tog::after { content: attr(aria-label); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .u040-tog:focus-visible { outline: 2px solid var(--ux-accent); outline-offset: -2px; }
-.u040-tog svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; transition: transform .5s var(--ux-spring); }
+.u040-tog svg { flex-shrink: 0; width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; transition: transform .5s var(--ux-spring); }
 .sidebar.u040-rail:not(.lx-narrow) .u040-tog svg { transform: rotate(180deg); }
 @media (min-width: 1024px) {
-	.sidebar.u040-rail { width: 200px; transition: width .6s var(--ux-spring), transform .35s var(--ease-out-quint), opacity .25s ease; }
+	.sidebar.u040-rail { width: 220px; transition: width .6s var(--ux-spring), transform .35s var(--ease-out-quint), opacity .25s ease; }
 	.sidebar.u040-rail.lx-narrow { width: 76px; }
-	.sidebar.u040-rail ~ .main-wrap { margin-left: 200px; }
+	.sidebar.u040-rail ~ .main-wrap { margin-left: 220px; }
 	.sidebar.u040-rail.lx-narrow ~ .main-wrap { margin-left: 76px; }
 	.sidebar.u040-rail .side-inner { padding: 12px 10px; transition: padding .6s var(--ux-spring); }
 	.sidebar.u040-rail.lx-narrow .side-brand { justify-content: center; padding: 4px 0 0; }
-	.sidebar.u040-rail .brand-name { max-width: 200px; overflow: hidden; white-space: nowrap; transition: opacity .3s .15s, max-width .5s var(--ux-spring); }
+	.sidebar.u040-rail .side-brand { min-width: 0; }
+	.sidebar.u040-rail .brand-name { max-width: none; overflow: hidden; white-space: nowrap; transition: opacity .3s .15s, max-width .5s var(--ux-spring); }
 	.sidebar.u040-rail.lx-narrow .brand-name { opacity: 0; max-width: 0; transition: opacity .2s, max-width .5s var(--ux-spring); }
+	.sidebar.u040-rail.lx-narrow .u040-tog { padding: 0; }
+	.sidebar.u040-rail.lx-narrow .u040-tog::after { display: none; }
 	/* Labels stagger in when wide, slide out when narrow. nth-child is
 	   offset +1 because the highlight <li> is the first child. */
 	.sidebar.u040-rail:not(.lx-narrow) .nav-text { opacity: 1; transform: none; transition: opacity .3s var(--ux-ease), transform .5s var(--ux-spring); }
@@ -6510,4 +6547,178 @@ body.lite .claim-pill-spin { animation-duration: 1.6s; }
 }
 @media (prefers-reduced-motion: reduce) {
 	.sidebar.u040-rail, .sidebar.u040-rail .side-inner, .u040-hl, .u040-tog svg, .sidebar.u040-rail .nav-text, .sidebar.u040-rail .brand-name { transition: none; }
+}
+
+/* ================================================================
+   LIQUID GLASS — kính mờ kiểu iOS (áp dụng cho TOÀN BỘ UI)
+   Kỹ thuật (port từ mkj0kjay/vue-web-liquid-glass + kube.io):
+   - Nền: màu mờ theo theme (--glass-bg) + backdrop-filter blur 20px
+     saturate 180% (nền tảng kính mờ); viền sáng mờ + highlight trong
+     ở mép trên (ánh sáng đi qua mép kính); bóng ambient MÀU, KHÔNG
+     bóng đen (xem --glass-shadow).
+   - Khúc xạ viền: MỘT filter SVG duy nhất #lg-refract (index.html,
+     feTurbulence + feDisplacementMap, scale 12) — chỉ 4 loại bề mặt
+     đặc trưng (nút kính, rail, modal, toast). Chrome hỗ trợ
+     backdrop-filter với URL filter; trình duyệt khác rơi về blur thường.
+     Lite mode (body.lite) đã tắt backdrop-filter sẵn (xem khối lite).
+   - Giảm chuyển động: tắt khúc xạ, giữ blur + tín hiệu tiến trình.
+   - Tương phản: vùng chữ dùng --glass-bg-strong (đậm hơn) để giữ
+     ≥ 4.5:1; trạng thái (running/stop/selected) giữ nguyên glow màu
+     + viền + nhãn chữ, không chỉ dựa vào màu.
+   ================================================================ */
+
+/* --- Khúc xạ viền cho bề mặt đặc trưng (Chrome-only, có fallback) --- */
+.u001-btn,
+.sidebar.u040-rail,
+.modal-card,
+.capture-card,
+.toast {
+	-webkit-backdrop-filter: var(--glass-blur);
+	backdrop-filter: var(--glass-blur);
+}
+@supports (backdrop-filter: url(#lg-refract)) {
+	.u001-btn,
+	.sidebar.u040-rail,
+	.modal-card,
+	.capture-card,
+	.toast {
+		-webkit-backdrop-filter: url(#lg-refract) var(--glass-blur);
+		backdrop-filter: url(#lg-refract) var(--glass-blur);
+	}
+}
+@media (prefers-reduced-motion: reduce) {
+	.u001-btn,
+	.sidebar.u040-rail,
+	.modal-card,
+	.capture-card,
+	.toast {
+		-webkit-backdrop-filter: var(--glass-blur);
+		backdrop-filter: var(--glass-blur);
+	}
+}
+
+/* --- Bề mặt kính: thẻ / panel / modal / toast / popout / chip --- */
+.card,
+.hero-card,
+.console-card,
+.qcard,
+.qdone,
+.modal-card,
+.capture-card,
+.toast,
+.up-pop,
+.update-bar,
+.lock-card,
+.claim-pill,
+.topbar,
+.tab-bar,
+.net-badge,
+.claim-queue-chip,
+.custom-select,
+.loop-box {
+	background: var(--glass-bg-strong);
+	-webkit-backdrop-filter: var(--glass-blur);
+	backdrop-filter: var(--glass-blur);
+	border: 1px solid var(--glass-border);
+	box-shadow: inset 0 1px 0 var(--glass-highlight), var(--glass-shadow);
+}
+/* Giữ nguyên tín hiệu trạng thái của thẻ nhiệm vụ (glow màu + viền). */
+.qcard[data-selected="1"] { box-shadow: inset 0 1px 0 var(--glass-highlight), 0 0 0 1px color-mix(in oklab, var(--brand) 35%, transparent); }
+.qcard[data-status="running"] { box-shadow: inset 0 1px 0 var(--glass-highlight), 0 0 16px -8px rgba(35, 165, 90, 0.8); }
+.qcard[data-status="stop"] { box-shadow: inset 0 1px 0 var(--glass-highlight), 0 0 16px -8px rgba(251, 44, 54, 0.85); }
+/* Thẻ Cấu hình (nền nâu/kem cũ → kính mờ, giữ viền ấm + chữ 2 theme). */
+#pageSettings .config-card {
+	background: var(--glass-bg-strong);
+	-webkit-backdrop-filter: var(--glass-blur);
+	backdrop-filter: var(--glass-blur);
+	border-color: var(--glass-border-strong);
+	box-shadow: inset 0 1px 0 var(--glass-highlight), var(--glass-shadow);
+}
+#pageSettings .config-card .input-wrap,
+#pageSettings .config-card .bot-field input {
+	background: var(--glass-bg);
+	-webkit-backdrop-filter: var(--glass-blur);
+	backdrop-filter: var(--glass-blur);
+}
+/* Ô nhập / select / textarea: kính mờ (ghi đè nền đặc cũ). */
+input,
+select,
+textarea,
+.input-wrap {
+	background: var(--glass-bg);
+	-webkit-backdrop-filter: var(--glass-blur);
+	backdrop-filter: var(--glass-blur);
+	border: 1px solid var(--glass-border);
+	box-shadow: inset 0 1px 0 var(--glass-highlight);
+}
+/* Nút trong suốt + chip: kính mờ nhẹ, giữ màu ngữ nghĩa của nút chính. */
+.btn-outline,
+.btn-ghost,
+.ghost-btn,
+.chip {
+	background: var(--glass-bg);
+	-webkit-backdrop-filter: var(--glass-blur);
+	backdrop-filter: var(--glass-blur);
+	border: 1px solid var(--glass-border);
+	box-shadow: inset 0 1px 0 var(--glass-highlight);
+}
+/* Thẻ Số dư giữ tint emerald, chỉ thêm blur kính. */
+.side-balance {
+	-webkit-backdrop-filter: var(--glass-blur);
+	backdrop-filter: var(--glass-blur);
+}
+/* Hàng profile trong rail + veil mờ. */
+.up-row {
+	-webkit-backdrop-filter: var(--glass-blur);
+	backdrop-filter: var(--glass-blur);
+}
+.drawer-overlay {
+	-webkit-backdrop-filter: blur(6px) saturate(140%);
+	backdrop-filter: blur(6px) saturate(140%);
+}
+
+/* --- Theme Sáng: cùng kính, nền trắng mờ (ghi đè các rule [data-theme="light"] cũ) --- */
+:root[data-theme="light"] .card,
+:root[data-theme="light"] .hero-card,
+:root[data-theme="light"] .console-card,
+:root[data-theme="light"] .qcard,
+:root[data-theme="light"] .qdone,
+:root[data-theme="light"] .modal-card,
+:root[data-theme="light"] .capture-card,
+:root[data-theme="light"] .toast,
+:root[data-theme="light"] .up-pop,
+:root[data-theme="light"] .update-bar,
+:root[data-theme="light"] .lock-card,
+:root[data-theme="light"] .claim-pill,
+:root[data-theme="light"] .topbar,
+:root[data-theme="light"] .tab-bar,
+:root[data-theme="light"] .net-badge,
+:root[data-theme="light"] .claim-queue-chip,
+:root[data-theme="light"] .custom-select,
+:root[data-theme="light"] .loop-box,
+:root[data-theme="light"] .chip,
+:root[data-theme="light"] .btn-outline,
+:root[data-theme="light"] .btn-ghost,
+:root[data-theme="light"] .ghost-btn,
+:root[data-theme="light"] input,
+:root[data-theme="light"] select,
+:root[data-theme="light"] textarea,
+:root[data-theme="light"] .input-wrap {
+	background: var(--glass-bg-strong);
+	-webkit-backdrop-filter: var(--glass-blur);
+	backdrop-filter: var(--glass-blur);
+	border: 1px solid var(--glass-border);
+	box-shadow: inset 0 1px 0 var(--glass-highlight), var(--glass-shadow);
+}
+[data-theme="light"] #pageSettings .config-card {
+	background: var(--glass-bg-strong);
+	-webkit-backdrop-filter: var(--glass-blur);
+	backdrop-filter: var(--glass-blur);
+	border-color: var(--glass-border-strong);
+	box-shadow: inset 0 1px 0 var(--glass-highlight), var(--glass-shadow);
+}
+[data-theme="light"] #pageSettings .config-card .loop-box {
+	background: var(--glass-bg);
+	-webkit-backdrop-filter: var(--glass-blur);
+	backdrop-filter: var(--glass-blur);
 }

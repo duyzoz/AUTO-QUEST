@@ -16,6 +16,18 @@
 		<link rel="stylesheet" href="mobile.css" />
 	</head>
 	<body data-page="quest">
+		<!-- LIQUID GLASS: MỘT filter SVG duy nhất cho khúc xạ viền (#lg-refract,
+		     feTurbulence + feDisplacementMap, kỹ thuật kube.io / vue-web-liquid-glass).
+		     Chỉ dùng qua backdrop-filter trên 4 loại bề mặt đặc trưng (xem khối
+		     LIQUID GLASS cuối styles.css); trình duyệt không hỗ trợ rơi về blur. -->
+		<svg width="0" height="0" aria-hidden="true" focusable="false">
+			<defs>
+				<filter id="lg-refract" x="-5%" y="-5%" width="110%" height="110%" color-interpolation-filters="sRGB">
+					<feTurbulence type="fractalNoise" baseFrequency="0.012 0.02" numOctaves="2" seed="7" result="lg-noise" />
+					<feDisplacementMap in="SourceGraphic" in2="lg-noise" scale="12" xChannelSelector="R" yChannelSelector="G" />
+				</filter>
+			</defs>
+		</svg>
 		<a class="skip-link" href="#pageQuest" id="skipLink">Tới nội dung chính</a>
 		<!-- Lớp nền kasumu: base + 2 radial glow + overlay -->
 		<div class="bg-layers" aria-hidden="true">
@@ -54,6 +66,13 @@
 						</span>
 						<span class="brand-name">ZoZ Development</span>
 					</div>
+
+					<!-- LIQUID GLASS: nút thu/mở rail là HÀNG RIÊNG 44px ngay dưới
+					     tên app (không còn absolute đè lên chữ). Nhãn hiện = chính
+					     aria-label qua CSS ::after (JS giữ aria-label đồng bộ). -->
+					<button class="u040-tog" id="railToggle" type="button" aria-expanded="true" aria-controls="sidebar" aria-label="Thu gọn thanh bên">
+						<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+					</button>
 
 					<!-- Điều hướng chính — Wave#87 (bro lệnh): 3 mục ĐẨY LÊN TRÊN,
 					     profile chuyển xuống gần đáy. -->
@@ -181,10 +200,6 @@
 						</button>
 					</div>
 				</div>
-				<!-- Lucian #040: nút thu/mở rail (desktop; ẩn trên mobile — xem mobile.css). -->
-				<button class="u040-tog" id="railToggle" type="button" aria-expanded="true" aria-controls="sidebar" aria-label="Thu gọn thanh bên">
-					<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
-				</button>
 			</aside>
 
 			<!-- ============ MAIN (kasumu max-w-6xl) ============ -->

@@ -4589,7 +4589,7 @@ function themeColorToHex(n) {
  *  chìm → thêm viền tối để vẫn đọc được. KHÔNG dùng ở theme Tối (nền đã tối). */
 function themeTextShadow() {
 	const light = document.documentElement.dataset.theme === 'light';
-	return light ? '0 1px 3px rgba(0,0,0,.55)' : '0 1px 3px rgba(0,0,0,.45)';
+	return light ? '0 1px 3px rgba(10,16,40,.55)' : '0 1px 3px rgba(10,16,40,.45)';
 }
 
 /** Áp theme colors [primary, accent] — Waves 50.
@@ -4758,7 +4758,7 @@ function applyThemeColors(colors, bannerEl, cardEl) {
 
 	/* Bóng chữ CHỈ bật khi tương phản Ở GIỮA DẢI mỏng. Bro: "@username và uid
 	   hiện rất thô" — quầng đen trên chữ vốn đã 8–11:1 chỉ làm nhoè nét. */
-	const textShadow = midContrast >= 7 ? 'none' : '0 1px 2px rgba(0, 0, 0, 0.34)';
+	const textShadow = midContrast >= 7 ? 'none' : '0 1px 2px rgba(10, 16, 40, 0.34)';
 
 	for (const el of targets) {
 		el.style.setProperty('--theme-a', hexA);
@@ -5663,7 +5663,7 @@ const NP_INK_LIGHT_BG = '#0b0d14';
  * artwork bảng tên, đúng như cũ.
  */
 function npShadowFor(hex) {
-	return dnsRelLum(dnsHexToRgb(hex)) > 0.5 ? '0 1px 6px rgba(0, 0, 0, 0.6)' : 'none';
+	return dnsRelLum(dnsHexToRgb(hex)) > 0.5 ? '0 1px 6px rgba(10, 16, 40, 0.6)' : 'none';
 }
 function npInkFor(holder) {
 	if (!holder) return NP_INK_LIGHT_BG;

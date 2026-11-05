@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "version": "2.0.0",
-  "createdAt": "2026-11-05T14:24:40.490Z",
+  "createdAt": "2026-11-05T15:14:54.627Z",
   "files": {
-    "index.html": "9hbKsX1c+kj5TRyfBLAX7nCcihLkzhQ8khclp0wBmVE=",
-    "renderer.js": "8y6lwk8SM5jCGAIIrDrysz9ZiyDaUVg02pxEkMcU+TY=",
-    "styles.css": "8ZaBKBdgxI6GQCapnkfnx1CT0dqZaZYj5Ribbnxno/4=",
+    "index.html": "4UycFs+rNkCtLKXqaqOHpNcZvrTA3DnhN1o0OhNS0xk=",
+    "renderer.js": "emHQ0GGEY+Os9eL/EeaaoEN6yOYuL10VwWwD+hJvoXs=",
+    "styles.css": "ejuPc86BCJmFp/zcg8Nij+Jh9vngL2zl4Jn8Ot4UxmU=",
     "mobile.css": "2pDC30CYAe6iDcwoKbEnq/84R4zl5gO4jvLMUlyB3FU=",
     "fonts.css": "U4/m5jmHWyfQzMd2EDNkTD6WuO20V4R2+WQkLB8W8LU=",
     "manifest.webmanifest": "+8CGfetQJwgP75mb0wBoXCgDMQ0+hVdPUTAuZydGRQA=",
